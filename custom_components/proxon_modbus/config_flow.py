@@ -101,18 +101,21 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
         """Configure a TCP (Modbus TCP / gateway) connection."""
         errors: dict[str, str] = {}
         if user_input is not None:
+            # NumberSelector-sourced values come back as float (e.g. 10.0,
+            # 502.0) - pymodbus/socket code downstream needs real ints.
+            port = int(user_input[CONF_PORT])
+            unit_id = int(user_input[CONF_UNIT_ID])
+
             await self.async_set_unique_id(
-                f"tcp_{user_input[CONF_HOST]}_{user_input[CONF_PORT]}_{user_input[CONF_UNIT_ID]}"
+                f"tcp_{user_input[CONF_HOST]}_{port}_{unit_id}"
             )
             self._abort_if_unique_id_configured()
 
             try:
                 await _async_test_connection(
                     CONNECTION_TYPE_TCP,
-                    TcpConnectionParams(
-                        host=user_input[CONF_HOST], port=user_input[CONF_PORT]
-                    ),
-                    user_input[CONF_UNIT_ID],
+                    TcpConnectionParams(host=user_input[CONF_HOST], port=port),
+                    unit_id,
                 )
             except ProxonModbusError as err:
                 _LOGGER.warning("Proxon FWT connection test failed: %s", err)
@@ -125,8 +128,8 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
                     CONF_CONNECTION_TYPE: CONNECTION_TYPE_TCP,
                     CONF_NAME: user_input[CONF_NAME],
                     CONF_HOST: user_input[CONF_HOST],
-                    CONF_PORT: user_input[CONF_PORT],
-                    CONF_UNIT_ID: user_input[CONF_UNIT_ID],
+                    CONF_PORT: port,
+                    CONF_UNIT_ID: unit_id,
                 }
                 return await self.async_step_rooms()
 
@@ -152,14 +155,16 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
         """Configure a serial (RTU, USB-to-serial) connection."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            # The baudrate/bytesize/stopbits selectors are string-valued
-            # (their options lists are strings) - pyserial wants real ints.
+            # NumberSelector/SelectSelector-sourced values come back as
+            # float or str (e.g. 10.0, "9600") - pymodbus/pyserial need
+            # real ints.
             baudrate = int(user_input[CONF_BAUDRATE])
             bytesize = int(user_input[CONF_BYTESIZE])
             stopbits = int(user_input[CONF_STOPBITS])
+            unit_id = int(user_input[CONF_UNIT_ID])
 
             await self.async_set_unique_id(
-                f"serial_{user_input[CONF_SERIAL_PORT]}_{user_input[CONF_UNIT_ID]}"
+                f"serial_{user_input[CONF_SERIAL_PORT]}_{unit_id}"
             )
             self._abort_if_unique_id_configured()
 
@@ -173,7 +178,7 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
                         parity=user_input[CONF_PARITY],
                         stopbits=stopbits,
                     ),
-                    user_input[CONF_UNIT_ID],
+                    unit_id,
                 )
             except ProxonModbusError as err:
                 _LOGGER.warning("Proxon FWT connection test failed: %s", err)
@@ -190,7 +195,7 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
                     CONF_BYTESIZE: bytesize,
                     CONF_PARITY: user_input[CONF_PARITY],
                     CONF_STOPBITS: stopbits,
-                    CONF_UNIT_ID: user_input[CONF_UNIT_ID],
+                    CONF_UNIT_ID: unit_id,
                 }
                 return await self.async_step_rooms()
 

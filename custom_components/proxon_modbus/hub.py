@@ -57,7 +57,10 @@ class ProxonModbusHub:
     ) -> None:
         self._connection_type = connection_type
         self._params = params
-        self.unit_id = unit_id
+        # Home Assistant's selectors don't guarantee int types (e.g.
+        # NumberSelector returns float); cast defensively so a stray float
+        # never reaches pymodbus's PDU encoding (which requires real ints).
+        self.unit_id = int(unit_id)
         self._lock = asyncio.Lock()
         self._client = self._build_client()
         # pymodbus renamed the per-request unit-id keyword from `slave` to
@@ -74,17 +77,17 @@ class ProxonModbusHub:
             assert isinstance(self._params, TcpConnectionParams)
             return AsyncModbusTcpClient(
                 host=self._params.host,
-                port=self._params.port,
+                port=int(self._params.port),
                 timeout=DEFAULT_TIMEOUT,
             )
         if self._connection_type == CONNECTION_TYPE_SERIAL:
             assert isinstance(self._params, SerialConnectionParams)
             return AsyncModbusSerialClient(
                 port=self._params.port,
-                baudrate=self._params.baudrate,
-                bytesize=self._params.bytesize,
+                baudrate=int(self._params.baudrate),
+                bytesize=int(self._params.bytesize),
                 parity=self._params.parity,
-                stopbits=self._params.stopbits,
+                stopbits=int(self._params.stopbits),
                 timeout=DEFAULT_TIMEOUT,
             )
         raise ValueError(f"Unknown connection type: {self._connection_type}")

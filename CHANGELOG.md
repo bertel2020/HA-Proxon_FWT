@@ -6,6 +6,18 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 1.0.3 – 2026-09-05
+
+- Bugfix: Jeder Register-Zugriff (Verbindungstest im Config-Flow **und**
+  normaler Betrieb) scheiterte mit `'float' object has no attribute
+  'to_bytes'`. Ursache: Home Assistants `NumberSelector` liefert für die
+  Felder "Port" und "Modbus-Teilnehmeradresse (Unit-ID)" einen `float`
+  (z. B. `10.0`) statt eines `int`, und dieser Wert wurde nirgends
+  explizit umgewandelt, bevor er bis zur PDU-Kodierung von pymodbus
+  durchgereicht wurde. Jetzt werden Port und Unit-ID im Config-Flow und
+  zusätzlich defensiv in `hub.py` (Port, Unit-ID, Baudrate, Datenbits,
+  Stopbits) in `int` umgewandelt.
+
 ## 1.0.2 – 2026-09-05
 
 - Der Config-Flow protokolliert jetzt den tatsächlichen Grund eines

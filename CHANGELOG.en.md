@@ -5,6 +5,17 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
+## 1.0.3 – 2026-09-05
+
+- Bugfix: every register access (the config flow's connection test **and**
+  normal operation) failed with `'float' object has no attribute
+  'to_bytes'`. Root cause: Home Assistant's `NumberSelector` returns a
+  `float` (e.g. `10.0`) for the "Port" and "Modbus unit ID" fields instead
+  of an `int`, and that value was never explicitly cast before reaching
+  pymodbus's PDU encoding. The config flow now casts port and unit ID to
+  `int`, and `hub.py` additionally casts port, unit ID, baudrate, byte
+  size, and stop bits defensively.
+
 ## 1.0.2 – 2026-09-05
 
 - The config flow now logs the actual reason a connection test failed
