@@ -5,6 +5,14 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
+## 1.0.1 – 2026-09-05
+
+- Bugfix: a failed connection attempt showed a generic "Unexpected error" in
+  the config flow instead of a clear message, because some pymodbus/pyserial
+  versions raise an exception from `connect()` instead of cleanly returning
+  `False` — nothing caught that. Also affected a mid-operation reconnect
+  attempt during reads/writes.
+
 ## 1.0.0 – 2026-09-05
 
 Initial release.
@@ -43,8 +51,3 @@ Initial release.
   temporarily unreachable), the integration now raises `ConfigEntryNotReady`
   so Home Assistant retries automatically with backoff, instead of marking
   the entry permanently failed.
-- Bugfix: a failed connection attempt showed a generic "Unexpected error" in
-  the config flow instead of a clear message, because some pymodbus/pyserial
-  versions raise an exception from `connect()` instead of cleanly returning
-  `False` — nothing caught that. Also affected a mid-operation reconnect
-  attempt during reads/writes.

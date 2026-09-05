@@ -6,6 +6,14 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 1.0.1 – 2026-09-05
+
+- Bugfix: Ein fehlgeschlagener Verbindungsaufbau zeigte im Config-Flow
+  "Unerwarteter Fehler." statt einer verständlichen Meldung, weil `connect()`
+  bei manchen pymodbus-/pyserial-Versionen eine Exception wirft statt sauber
+  `False` zurückzugeben — das wurde nirgends abgefangen. Betraf auch einen
+  Reconnect-Versuch mitten im laufenden Betrieb bei Lese-/Schreibzugriffen.
+
 ## 1.0.0 – 2026-09-05
 
 Erstveröffentlichung.
@@ -49,8 +57,3 @@ Erstveröffentlichung.
   gerade nicht erreichbar), löst die Integration jetzt `ConfigEntryNotReady`
   aus, damit Home Assistant automatisch mit Backoff erneut versucht, statt
   den Eintrag dauerhaft als fehlgeschlagen zu markieren.
-- Bugfix: Ein fehlgeschlagener Verbindungsaufbau zeigte im Config-Flow
-  "Unerwarteter Fehler." statt einer verständlichen Meldung, weil `connect()`
-  bei manchen pymodbus-/pyserial-Versionen eine Exception wirft statt sauber
-  `False` zurückzugeben — das wurde nirgends abgefangen. Betraf auch einen
-  Reconnect-Versuch mitten im laufenden Betrieb bei Lese-/Schreibzugriffen.
