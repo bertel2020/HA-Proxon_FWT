@@ -2,7 +2,7 @@
 
 *[🇩🇪 Deutsche Version](README.md)*
 
-<img src="brands/icon.png" alt="" width="64" height="64" align="left" style="margin-right: 12px">
+<img src="https://raw.githubusercontent.com/bertel2020/HA-Proxon_FWT/main/brands/icon.png" alt="" width="64" height="64" align="left" style="margin-right: 12px">
 
 A UI-configurable Home Assistant custom integration for the **Proxon FWT** heat-recovery/heat-pump ventilation unit, talking Modbus to its **BusBridge Zimmermann** gateway. It uses a proper config-entry integration: a config flow, a shared `DataUpdateCoordinator`, and typed entities (`climate`, `sensor`, `binary_sensor`, `switch`, `select`) — in the spirit of the [modernized Modbus architecture](https://developers.home-assistant.io/blog/2026/07/05/modernizing-modbus/) (config-entry setup instead of hand-written YAML register maps, one shared connection per device, entity-description-driven platforms).
 
@@ -75,7 +75,7 @@ The previous `configuration.yaml` `modbus:` platform block is no longer needed o
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) — in particular, a couple of placeholders (GitHub handle, repository URL) need to be filled in before this is published.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Changelog
 

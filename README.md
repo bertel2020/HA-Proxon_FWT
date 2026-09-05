@@ -2,7 +2,7 @@
 
 *[🇬🇧 English version](README.en.md)*
 
-<img src="brands/icon.png" alt="" width="64" height="64" align="left" style="margin-right: 12px">
+<img src="https://raw.githubusercontent.com/bertel2020/HA-Proxon_FWT/main/brands/icon.png" alt="" width="64" height="64" align="left" style="margin-right: 12px">
 
 Eine über die Oberfläche konfigurierbare Home-Assistant-Custom-Integration für die **Proxon FWT** Wärmerückgewinnungs-/Wärmepumpen-Lüftungsanlage, die per Modbus mit ihrem **BusBridge Zimmermann**-Gateway kommuniziert. Sie nutzt eine vollwertige Config-Entry-Integration: einen Config-Flow, einen gemeinsam genutzten `DataUpdateCoordinator` und typisierte Entities (`climate`, `sensor`, `binary_sensor`, `switch`, `select`) — im Sinne der [modernisierten Modbus-Architektur](https://developers.home-assistant.io/blog/2026/07/05/modernizing-modbus/) (Einrichtung über einen Config-Entry statt handgeschriebener YAML-Registerlisten, eine gemeinsame Verbindung pro Gerät, Plattformen auf Basis von Entity-Descriptions).
 
@@ -75,7 +75,7 @@ Der bisherige `modbus:`-Plattform-Block in der `configuration.yaml` wird nach de
 
 ## Mitwirken
 
-Siehe [CONTRIBUTING.md](CONTRIBUTING.md) — insbesondere müssen vor der Veröffentlichung noch ein paar Platzhalter (GitHub-Handle, Repository-URL) ausgefüllt werden.
+Siehe [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Änderungsprotokoll
 
