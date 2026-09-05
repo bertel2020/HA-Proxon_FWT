@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Proxon FWT",
-        "description": "How is the FWT / BusBridge Zimmermann gateway connected?",
+        "description": "How is the FWT Modbus gateway connected?",
         "menu_options": {
           "tcp": "Network (Modbus TCP)",
           "serial": "USB / RS-485 (Modbus RTU)"

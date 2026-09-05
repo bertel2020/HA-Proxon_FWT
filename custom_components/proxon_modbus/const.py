@@ -14,7 +14,7 @@ from __future__ import annotations
 DOMAIN = "proxon_modbus"
 
 MANUFACTURER = "Proxon"
-MODEL = "FWT (BusBridge Zimmermann)"
+MODEL = "FWT - Frischluftwärmetechnik"
 
 # --- Config flow keys -------------------------------------------------------
 

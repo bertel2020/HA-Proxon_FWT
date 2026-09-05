@@ -4,7 +4,7 @@
 
 <img src="https://raw.githubusercontent.com/bertel2020/HA-Proxon_FWT/main/brands/icon.png" alt="" width="64" height="64" align="left" style="margin-right: 12px">
 
-Eine über die Oberfläche konfigurierbare Home-Assistant-Custom-Integration für die **Proxon FWT** Wärmerückgewinnungs-/Wärmepumpen-Lüftungsanlage, die per Modbus mit ihrem **BusBridge Zimmermann**-Gateway kommuniziert. Sie nutzt eine vollwertige Config-Entry-Integration: einen Config-Flow, einen gemeinsam genutzten `DataUpdateCoordinator` und typisierte Entities (`climate`, `sensor`, `binary_sensor`, `switch`, `select`) — im Sinne der [modernisierten Modbus-Architektur](https://developers.home-assistant.io/blog/2026/07/05/modernizing-modbus/) (Einrichtung über einen Config-Entry statt handgeschriebener YAML-Registerlisten, eine gemeinsame Verbindung pro Gerät, Plattformen auf Basis von Entity-Descriptions).
+Eine über die Oberfläche konfigurierbare Home-Assistant-Custom-Integration für die **Proxon FWT - Frischluftwärmetechnik**, die per Modbus mit ihrem **FWT Modbus-Gateway** kommuniziert. Sie nutzt eine vollwertige Config-Entry-Integration: einen Config-Flow, einen gemeinsam genutzten `DataUpdateCoordinator` und typisierte Entities (`climate`, `sensor`, `binary_sensor`, `switch`, `select`) — im Sinne der [modernisierten Modbus-Architektur](https://developers.home-assistant.io/blog/2026/07/05/modernizing-modbus/) (Einrichtung über einen Config-Entry statt handgeschriebener YAML-Registerlisten, eine gemeinsame Verbindung pro Gerät, Plattformen auf Basis von Entity-Descriptions).
 
 Beide Übertragungsarten werden unterstützt:
 - **Modbus TCP** — das Gateway über das Netzwerk erreichbar (z.B. `192.168.x.x:502`).
@@ -97,13 +97,13 @@ Siehe [CHANGELOG.md](CHANGELOG.md).
 
 ## Haftungsausschluss
 
-Dies ist eine unabhängige, community-entwickelte Integration. Sie steht in keiner Verbindung zu Proxon, Zimmermann oder anderen Herstellern der angesprochenen Hardware und wird von diesen weder unterstützt noch empfohlen. Die zugrunde liegende Registerbelegung wurde unabhängig ermittelt und kann für dein konkretes Gerät oder deine Firmware-Version unvollständig oder ungenau sein.
+Dies ist eine unabhängige, community-entwickelte Integration. Sie steht in keiner Verbindung zu Proxon oder anderen Herstellern der angesprochenen Hardware und wird von diesen weder unterstützt noch empfohlen. Die zugrunde liegende Registerbelegung wurde unabhängig ermittelt und kann für dein konkretes Gerät oder deine Firmware-Version unvollständig oder ungenau sein.
 
 Diese Integration kann Werte auf echte Heizungs- und Lüftungshardware schreiben. Sie wird **"wie besehen", ohne jegliche Gewährleistung** bereitgestellt (siehe [LICENSE](LICENSE)) — die Nutzung erfolgt auf eigenes Risiko; überprüfe ihr Verhalten an deiner eigenen Anlage, bevor du dich darauf verlässt, und setze sie nicht in sicherheitskritischem Zusammenhang ein.
 
 ## Markenhinweis
 
-„Proxon“, „BusBridge Zimmermann“ sowie alle sonstigen in diesem Repository genannten Produkt- und Firmennamen sind Marken oder eingetragene Marken ihrer jeweiligen Inhaber. Ihre Nennung dient ausschließlich der Beschreibung, mit welcher Hardware diese Integration kompatibel ist, und impliziert keine Zugehörigkeit, Empfehlung oder Unterstützung durch die jeweiligen Markeninhaber. „Home Assistant“ ist eine Marke der Open Home Foundation.
+„Proxon“ sowie alle sonstigen in diesem Repository genannten Produkt- und Firmennamen sind Marken oder eingetragene Marken ihrer jeweiligen Inhaber. Ihre Nennung dient ausschließlich der Beschreibung, mit welcher Hardware diese Integration kompatibel ist, und impliziert keine Zugehörigkeit, Empfehlung oder Unterstützung durch die jeweiligen Markeninhaber. „Home Assistant“ ist eine Marke der Open Home Foundation.
 
 ## Copyright & Lizenz
 

@@ -29,7 +29,7 @@ class ProxonModbusError(Exception):
 
 @dataclass
 class TcpConnectionParams:
-    """Connection parameters for a TCP-connected Proxon FWT / BusBridge."""
+    """Connection parameters for a TCP-connected Proxon FWT Modbus gateway."""
 
     host: str
     port: int
@@ -37,7 +37,7 @@ class TcpConnectionParams:
 
 @dataclass
 class SerialConnectionParams:
-    """Connection parameters for an RTU-connected Proxon FWT / BusBridge."""
+    """Connection parameters for an RTU-connected Proxon FWT Modbus gateway."""
 
     port: str
     baudrate: int

@@ -4,7 +4,7 @@
 
 <img src="https://raw.githubusercontent.com/bertel2020/HA-Proxon_FWT/main/brands/icon.png" alt="" width="64" height="64" align="left" style="margin-right: 12px">
 
-A UI-configurable Home Assistant custom integration for the **Proxon FWT** heat-recovery/heat-pump ventilation unit, talking Modbus to its **BusBridge Zimmermann** gateway. It uses a proper config-entry integration: a config flow, a shared `DataUpdateCoordinator`, and typed entities (`climate`, `sensor`, `binary_sensor`, `switch`, `select`) — in the spirit of the [modernized Modbus architecture](https://developers.home-assistant.io/blog/2026/07/05/modernizing-modbus/) (config-entry setup instead of hand-written YAML register maps, one shared connection per device, entity-description-driven platforms).
+A UI-configurable Home Assistant custom integration for the **Proxon FWT - Frischluftwärmetechnik** ventilation unit, talking Modbus to its **FWT Modbus gateway**. It uses a proper config-entry integration: a config flow, a shared `DataUpdateCoordinator`, and typed entities (`climate`, `sensor`, `binary_sensor`, `switch`, `select`) — in the spirit of the [modernized Modbus architecture](https://developers.home-assistant.io/blog/2026/07/05/modernizing-modbus/) (config-entry setup instead of hand-written YAML register maps, one shared connection per device, entity-description-driven platforms).
 
 Both transports are supported:
 - **Modbus TCP** — the gateway reachable over the network (e.g. `192.168.x.x:502`).
@@ -95,13 +95,13 @@ See [CHANGELOG.en.md](CHANGELOG.en.md).
 
 ## Disclaimer
 
-This is an independent, community-built integration. It is not affiliated with, endorsed by, or supported by Proxon, Zimmermann, or any other manufacturer of the hardware it talks to. The register map it relies on was arrived at independently and may be incomplete or imprecise for your specific unit or firmware version.
+This is an independent, community-built integration. It is not affiliated with, endorsed by, or supported by Proxon or any other manufacturer of the hardware it talks to. The register map it relies on was arrived at independently and may be incomplete or imprecise for your specific unit or firmware version.
 
 This integration can write values to real heating and ventilation hardware. It is provided **"as is", without warranty of any kind** (see [LICENSE](LICENSE)) — use it at your own risk, verify its behavior against your own installation before relying on it, and do not use it in any safety-critical capacity.
 
 ## Trademark Notice
 
-"Proxon", "BusBridge Zimmermann", and any other product or company names mentioned in this repository are trademarks or registered trademarks of their respective owners. Their use here is solely to describe what hardware this integration is compatible with, and does not imply any affiliation, endorsement, or sponsorship by the respective trademark holders. "Home Assistant" is a trademark of the Open Home Foundation.
+"Proxon" and any other product or company names mentioned in this repository are trademarks or registered trademarks of their respective owners. Their use here is solely to describe what hardware this integration is compatible with, and does not imply any affiliation, endorsement, or sponsorship by the respective trademark holders. "Home Assistant" is a trademark of the Open Home Foundation.
 
 ## Copyright & License
 

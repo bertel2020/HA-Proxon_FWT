@@ -6,6 +6,13 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 1.0.4 – 2026-09-05
+
+- Terminologie korrigiert: "Proxon FWT" ist eine Frischluftwärmetechnik-
+  Anlage (nicht "Wärmerückgewinnungs-/Wärmepumpen-Lüftungsanlage"), und das
+  Gateway heißt "FWT Modbus-Gateway" (nicht "BusBridge Zimmermann"). Der
+  Markenhinweis nennt jetzt nur noch "Proxon" als Marke.
+
 ## 1.0.3 – 2026-09-05
 
 - Bugfix: Jeder Register-Zugriff (Verbindungstest im Config-Flow **und**

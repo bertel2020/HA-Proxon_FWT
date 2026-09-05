@@ -5,6 +5,14 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
+## 1.0.4 – 2026-09-05
+
+- Terminology fix: "Proxon FWT" is a fresh-air heat-exchange unit
+  ("Frischluftwärmetechnik"), not a "heat-recovery/heat-pump ventilation
+  unit", and the gateway is now called the "FWT Modbus gateway" rather
+  than "BusBridge Zimmermann". The trademark notice now only names
+  "Proxon".
+
 ## 1.0.3 – 2026-09-05
 
 - Bugfix: every register access (the config flow's connection test **and**

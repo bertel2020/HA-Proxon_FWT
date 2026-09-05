@@ -92,7 +92,7 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """First step: choose how the FWT / BusBridge gateway is reached."""
+        """First step: choose how the FWT Modbus gateway is reached."""
         return self.async_show_menu(step_id="user", menu_options=["tcp", "serial"])
 
     async def async_step_tcp(
