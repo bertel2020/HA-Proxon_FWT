@@ -13,9 +13,14 @@ Both transports are supported:
 ## Installation
 
 ### Option A: HACS (custom repository)
-1. HACS → Integrations → ⋮ → *Custom repositories*.
-2. Add `https://github.com/bertel2020/HA-Proxon_FWT` with category *Integration*.
-3. Install "Proxon FWT (Modbus)", then restart Home Assistant.
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=bertel2020&repository=HA-Proxon_FWT&category=integration)
+
+1. Open HACS with the repository pre-filled (button above) — or manually: HACS → Integrations → ⋮ → *Custom repositories* → add `https://github.com/bertel2020/HA-Proxon_FWT` with category *Integration*.
+2. Install "Proxon FWT (Modbus)", then restart Home Assistant.
+3. Then jump straight into setup:
+
+   [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=proxon_modbus)
 
 ### Option B: Manual copy
 Copy the `custom_components/proxon_modbus` folder into your Home Assistant `config/custom_components/` directory, then restart Home Assistant.
