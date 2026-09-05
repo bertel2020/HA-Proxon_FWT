@@ -13,7 +13,6 @@ import logging
 from dataclasses import dataclass
 
 from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient
-from pymodbus.exceptions import ModbusException
 
 from .const import (
     CONNECTION_TYPE_SERIAL,
@@ -93,7 +92,18 @@ class ProxonModbusHub:
     async def async_setup(self) -> None:
         """Open the connection."""
         async with self._lock:
-            if not await self._client.connect():
+            try:
+                connected = await self._client.connect()
+            except Exception as err:  # noqa: BLE001 - pymodbus/pyserial raise a
+                # wide, version-dependent variety of exceptions here (OSError,
+                # socket.gaierror, asyncio.TimeoutError, SerialException, ...)
+                # instead of always returning False; normalize all of them to
+                # ProxonModbusError so callers only ever have one thing to
+                # catch.
+                raise ProxonModbusError(
+                    f"Could not establish Modbus connection to the Proxon FWT: {err}"
+                ) from err
+            if not connected:
                 raise ProxonModbusError(
                     "Could not establish Modbus connection to the Proxon FWT"
                 )
@@ -118,7 +128,7 @@ class ProxonModbusHub:
                 result = await self._client.read_holding_registers(
                     address, count=count, **{self._unit_kwarg: self.unit_id}
                 )
-            except ModbusException as err:
+            except Exception as err:  # noqa: BLE001 - see async_setup
                 raise ProxonModbusError(
                     f"Error reading register {address} ({count}): {err}"
                 ) from err
@@ -137,7 +147,7 @@ class ProxonModbusHub:
                 result = await self._client.write_register(
                     address, value, **{self._unit_kwarg: self.unit_id}
                 )
-            except ModbusException as err:
+            except Exception as err:  # noqa: BLE001 - see async_setup
                 raise ProxonModbusError(
                     f"Error writing {value} to register {address}: {err}"
                 ) from err
