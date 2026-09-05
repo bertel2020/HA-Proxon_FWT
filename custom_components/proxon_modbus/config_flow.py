@@ -114,7 +114,8 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
                     ),
                     user_input[CONF_UNIT_ID],
                 )
-            except ProxonModbusError:
+            except ProxonModbusError as err:
+                _LOGGER.warning("Proxon FWT connection test failed: %s", err)
                 errors["base"] = "cannot_connect"
             except Exception:
                 _LOGGER.exception("Unexpected error testing Proxon FWT connection")
@@ -174,7 +175,8 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
                     ),
                     user_input[CONF_UNIT_ID],
                 )
-            except ProxonModbusError:
+            except ProxonModbusError as err:
+                _LOGGER.warning("Proxon FWT connection test failed: %s", err)
                 errors["base"] = "cannot_connect"
             except Exception:
                 _LOGGER.exception("Unexpected error testing Proxon FWT connection")
