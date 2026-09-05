@@ -83,7 +83,7 @@
       "power_consumption": { "name": "Power consumption" },
       "fan_speed_supply": { "name": "Supply fan speed" },
       "fan_speed_extract": { "name": "Extract fan speed" },
-      "mid_temperature": { "name": "{room} mid-room temperature" },
+      "mid_temperature": { "name": "Mid-room temperature" },
       "operating_mode_state": {
         "name": "Operating mode (full state)",
         "state": {
@@ -101,7 +101,8 @@
     },
     "binary_sensor": {
       "bypass_active": { "name": "Bypass active" },
-      "ptc_active": { "name": "{room} electric reheater active" },
+      "cooling_available": { "name": "Cooling available" },
+      "ptc_active": { "name": "PTC element active" },
       "error_system": { "name": "System error" },
       "filter_device": { "name": "Device filter" },
       "filter_recirculation": { "name": "Recirculation filter" },
@@ -122,7 +123,7 @@
       "cooling_enable": { "name": "Cooling enabled" },
       "fan_auto": { "name": "Fan auto mode (Eco summer/winter)" },
       "fan_intensive": { "name": "Intensive ventilation" },
-      "ptc_enable": { "name": "{room} electric reheater enabled" }
+      "ptc_enable": { "name": "PTC element enabled" }
     },
     "select": {
       "fan_stage": {

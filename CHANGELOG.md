@@ -6,6 +6,14 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 1.1.0 – 2026-09-05
+
+- **Räume und Zentralfunktionen sind jetzt getrennte Geräte.** Es gibt weiterhin ein zentrales Gerät (Zu-/Ab-/Fortluft-Sensorik, Kühl-/Lüfter-Schalter, Lüfterstufe/Betriebsart), aber jeder Raum bekommt zusätzlich sein eigenes, mit dem zentralen Gerät verknüpftes Gerät (climate, PTC-Element-Zustand und -Freigabe, Mittentemperatur). Dadurch lassen sich die Entities eines Raums (z. B. der PTC-Zustand) viel leichter finden.
+- **Neuer Sensor `binary_sensor.cooling_available`** (zentrales Gerät, standardmäßig aktiviert): zeigt direkt an, ob die Anlage laut Gerät (Register 315, Bit 8) überhaupt Kühlen unterstützt.
+- Ist Kühlen laut diesem Bit nicht möglich, wird `switch.cooling_enable` **nicht verfügbar** (wie die bestehenden Lüfterstufen-/Automatik-Bedienelemente außerhalb ihrer Betriebsart), ebenso `binary_sensor.heat_pump_cooling`, da die Anlage diesen Zustand dann ohnehin nie melden kann.
+- Terminologie: "Zusatzheizung" heißt jetzt durchgängig "PTC-Element".
+- Interner Kommentar in `const.py`, der noch den Namen des Gateway-Herstellers zitierte, entfernt.
+
 ## 1.0.4 – 2026-09-05
 
 - Terminologie korrigiert: "Proxon FWT" ist eine Frischluftwärmetechnik-

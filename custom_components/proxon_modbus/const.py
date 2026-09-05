@@ -1,7 +1,7 @@
 """Constants for the Proxon FWT Modbus integration.
 
 Register map reverse-engineered from:
-- "Modbus Parameterbeschreibung - 24.10.13.xlsx" (BusBridge Zimmermann gateway doc)
+- "Modbus Parameterbeschreibung - 24.10.13.xlsx" (gateway parameter documentation)
 - Symcon/IP-Symcon PHP scripts controlling the same device
 - The previously used `modbus:` YAML platform configuration
 
@@ -106,7 +106,7 @@ REG_ROOM_SETPOINT_READ_BASE = 180  # Sollwert (device confirmed), int16, scale 0
 REG_ROOM_SETPOINT_WRITE_BASE = 200  # Sollwert schreiben, plain integer degrees
 REG_ROOM_MID_TEMP_BASE = 220  # Mittentemperatur Nebenraum, covers room index 1..15 (room 2..16)
 
-# PTC (electric reheater) per-room bitfields, single 16-bit register, bit = room index
+# PTC element per-room bitfields, single 16-bit register, bit = room index
 REG_PTC_STATE = 300  # aktueller Zustand (1 = aktiv)
 REG_PTC_ENABLE_WRITE = 301  # Freigabe setzen
 REG_PTC_ENABLE_READ = 302  # Freigabe lesen (source of truth for current enable state)

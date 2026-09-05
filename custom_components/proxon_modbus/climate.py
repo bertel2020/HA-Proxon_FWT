@@ -15,7 +15,7 @@ from homeassistant.components.climate import (
     ClimateEntityFeature,
     HVACMode,
 )
-from homeassistant.const import ATTR_TEMPERATURE, CONF_NAME, UnitOfTemperature
+from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -27,7 +27,7 @@ from .const import (
     ROOM_SETPOINT_MIN,
 )
 from .coordinator import ProxonModbusCoordinator
-from .entity import ProxonEntity
+from .entity import ProxonRoomEntity
 
 
 async def async_setup_entry(
@@ -37,18 +37,23 @@ async def async_setup_entry(
 ) -> None:
     """Set up one climate entity per configured room."""
     coordinator = entry.runtime_data
-    device_name = entry.data[CONF_NAME]
     room_names = entry.options.get(CONF_ROOM_NAMES, [])
 
     async_add_entities(
-        ProxonRoomClimate(coordinator, entry.entry_id, device_name, i, room_name)
+        ProxonRoomClimate(coordinator, entry.entry_id, i, room_name)
         for i, room_name in enumerate(room_names)
     )
 
 
-class ProxonRoomClimate(ProxonEntity, ClimateEntity):
-    """A single room of the Proxon FWT, controlled via its setpoint registers."""
+class ProxonRoomClimate(ProxonRoomEntity, ClimateEntity):
+    """A single room of the Proxon FWT, controlled via its setpoint registers.
 
+    This is the room device's main entity, so it takes no name of its own
+    (`_attr_has_entity_name` on the base entity makes it show up as just the
+    room's device name, e.g. "Wohnen" rather than "Wohnen Wohnen").
+    """
+
+    _attr_name = None
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_hvac_modes = [HVACMode.HEAT_COOL]
@@ -61,13 +66,10 @@ class ProxonRoomClimate(ProxonEntity, ClimateEntity):
         self,
         coordinator: ProxonModbusCoordinator,
         entry_id: str,
-        device_name: str,
         room_index: int,
         room_name: str,
     ) -> None:
-        super().__init__(coordinator, entry_id, device_name, f"room_{room_index}_climate")
-        self._room_index = room_index
-        self._attr_name = room_name
+        super().__init__(coordinator, entry_id, room_index, room_name, f"room_{room_index}_climate")
 
     @property
     def current_temperature(self) -> float | None:

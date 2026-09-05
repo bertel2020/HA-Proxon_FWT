@@ -5,6 +5,14 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
+## 1.1.0 – 2026-09-05
+
+- **Rooms and central functions are now separate devices.** There's still one central device (supply/extract/exhaust sensors, cooling/fan switches, fan stage/operating mode), but every room now also gets its own device linked to the central one (climate, PTC element state and enable, mid-room temperature). This makes a room's entities (e.g. its PTC state) much easier to find.
+- **New sensor `binary_sensor.cooling_available`** (central device, enabled by default): shows directly whether the unit reports supporting cooling at all (register 315, bit 8).
+- When that bit says cooling isn't possible, `switch.cooling_enable` now goes **unavailable** (like the existing fan-stage/auto controls outside their operating mode), and so does `binary_sensor.heat_pump_cooling`, since the unit can then never report that state.
+- Terminology: "electric reheater" is now consistently called "PTC element".
+- Removed an internal comment in `const.py` that still named the gateway manufacturer.
+
 ## 1.0.4 – 2026-09-05
 
 - Terminology fix: "Proxon FWT" is a fresh-air heat-exchange unit

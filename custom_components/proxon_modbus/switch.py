@@ -21,7 +21,7 @@ from .const import (
     REG_PTC_ENABLE_WRITE,
 )
 from .coordinator import ProxonData, ProxonModbusCoordinator
-from .entity import ProxonEntity
+from .entity import ProxonCentralEntity, ProxonRoomEntity
 from .hub import set_bit
 
 
@@ -35,6 +35,10 @@ def _available_in_eco_mode(data: ProxonData) -> bool:
 
 def _available_in_comfort_mode(data: ProxonData) -> bool:
     return data.function_block.get("operating_mode_read") in INTENSIVE_VENTILATION_MODE_VALUES
+
+
+def _available_when_cooling_possible(data: ProxonData) -> bool:
+    return bool(data.capabilities.get("cooling_enable_possible"))
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -51,6 +55,10 @@ FUNCTION_SWITCHES: tuple[ProxonSwitchDescription, ...] = (
         icon="mdi:snowflake",
         is_on_fn=lambda d: bool(d.function_block.get("cooling_enable_read")),
         write_register=REG_COOLING_ENABLE_WRITE,
+        # Hidden on units that don't support cooling at all - see the
+        # always-visible "cooling_available" binary sensor on the central
+        # device, decoded from the same capability bit (register 315).
+        available_fn=_available_when_cooling_possible,
     ),
     ProxonSwitchDescription(
         key="fan_auto",
@@ -91,13 +99,13 @@ async def async_setup_entry(
     room_names = entry.options.get(CONF_ROOM_NAMES, [])
     for i, room_name in enumerate(room_names):
         entities.append(
-            ProxonRoomPtcEnableSwitch(coordinator, entry.entry_id, device_name, i, room_name)
+            ProxonRoomPtcEnableSwitch(coordinator, entry.entry_id, i, room_name)
         )
 
     async_add_entities(entities)
 
 
-class ProxonFunctionSwitch(ProxonEntity, SwitchEntity):
+class ProxonFunctionSwitch(ProxonCentralEntity, SwitchEntity):
     """A simple write-register / read-back-register switch."""
 
     entity_description: ProxonSwitchDescription
@@ -129,8 +137,8 @@ class ProxonFunctionSwitch(ProxonEntity, SwitchEntity):
         await self.coordinator.async_write_register(self.entity_description.write_register, 0)
 
 
-class ProxonRoomPtcEnableSwitch(ProxonEntity, SwitchEntity):
-    """Enable/disable the PTC electric reheater for one room.
+class ProxonRoomPtcEnableSwitch(ProxonRoomEntity, SwitchEntity):
+    """Enable/disable the PTC element for one room.
 
     Registers 301 (write) and 302 (readback) are single 16-bit bitfields
     covering all 16 rooms, so toggling one room means flipping a single bit
@@ -144,13 +152,10 @@ class ProxonRoomPtcEnableSwitch(ProxonEntity, SwitchEntity):
         self,
         coordinator: ProxonModbusCoordinator,
         entry_id: str,
-        device_name: str,
         room_index: int,
         room_name: str,
     ) -> None:
-        super().__init__(coordinator, entry_id, device_name, f"room_{room_index}_ptc_enable")
-        self._room_index = room_index
-        self._attr_translation_placeholders = {"room": room_name}
+        super().__init__(coordinator, entry_id, room_index, room_name, f"room_{room_index}_ptc_enable")
 
     @property
     def is_on(self) -> bool | None:

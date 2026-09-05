@@ -33,7 +33,7 @@ from .const import (
     OPERATING_MODE_WRITE_OPTIONS,
 )
 from .coordinator import ProxonData, ProxonModbusCoordinator
-from .entity import ProxonEntity
+from .entity import ProxonCentralEntity, ProxonRoomEntity
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -211,7 +211,7 @@ async def async_setup_entry(
         if i == 0:
             continue  # no mid-room sensor for the main room (register base starts at room 2)
         entities.append(
-            ProxonRoomMidTempSensor(coordinator, entry.entry_id, device_name, i, room_name)
+            ProxonRoomMidTempSensor(coordinator, entry.entry_id, i, room_name)
         )
 
     co2_names = entry.options.get(CONF_CO2_NAMES, [])
@@ -247,7 +247,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class ProxonSensor(ProxonEntity, SensorEntity):
+class ProxonSensor(ProxonCentralEntity, SensorEntity):
     """A device-level Proxon FWT sensor."""
 
     entity_description: ProxonSensorDescription
@@ -267,7 +267,7 @@ class ProxonSensor(ProxonEntity, SensorEntity):
         return self.entity_description.value_fn(self.coordinator.data)
 
 
-class ProxonRoomMidTempSensor(ProxonEntity, SensorEntity):
+class ProxonRoomMidTempSensor(ProxonRoomEntity, SensorEntity):
     """Mid-room temperature reported by a room's control panel (rooms 2..N)."""
 
     _attr_device_class = SensorDeviceClass.TEMPERATURE
@@ -280,13 +280,10 @@ class ProxonRoomMidTempSensor(ProxonEntity, SensorEntity):
         self,
         coordinator: ProxonModbusCoordinator,
         entry_id: str,
-        device_name: str,
         room_index: int,
         room_name: str,
     ) -> None:
-        super().__init__(coordinator, entry_id, device_name, f"room_{room_index}_mid_temp")
-        self._room_index = room_index
-        self._attr_translation_placeholders = {"room": room_name}
+        super().__init__(coordinator, entry_id, room_index, room_name, f"room_{room_index}_mid_temp")
 
     @property
     def native_value(self) -> float | None:
@@ -294,7 +291,7 @@ class ProxonRoomMidTempSensor(ProxonEntity, SensorEntity):
         return room.mid_temperature if room else None
 
 
-class ProxonExternalSensor(ProxonEntity, SensorEntity):
+class ProxonExternalSensor(ProxonCentralEntity, SensorEntity):
     """CO2 / humidity sensor connected to an external Proxon input."""
 
     _attr_state_class = SensorStateClass.MEASUREMENT

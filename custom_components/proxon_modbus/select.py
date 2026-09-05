@@ -15,7 +15,7 @@ from .const import (
     REG_OPERATING_MODE_WRITE,
 )
 from .coordinator import ProxonModbusCoordinator
-from .entity import ProxonEntity
+from .entity import ProxonCentralEntity
 
 
 async def async_setup_entry(
@@ -35,7 +35,7 @@ async def async_setup_entry(
     )
 
 
-class ProxonFanStageSelect(ProxonEntity, SelectEntity):
+class ProxonFanStageSelect(ProxonCentralEntity, SelectEntity):
     """Select the ventilation (ECO) fan stage (register 307, read back 308).
 
     Only meaningful in Eco summer/winter — the manufacturer's own Symcon
@@ -69,7 +69,7 @@ class ProxonFanStageSelect(ProxonEntity, SelectEntity):
         await self.coordinator.async_write_register(REG_FAN_STAGE_WRITE, value)
 
 
-class ProxonOperatingModeSelect(ProxonEntity, SelectEntity):
+class ProxonOperatingModeSelect(ProxonCentralEntity, SelectEntity):
     """Select the operating mode (register 313, read back 314).
 
     Register 314 can also report states (Notbetrieb, Einfrierschutz,

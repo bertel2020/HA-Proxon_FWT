@@ -44,36 +44,45 @@ Settings → Devices & Services → Add Integration → **Proxon FWT (Modbus)**.
 
 ## Entities
 
-One device is created ("Proxon FWT" by default) with:
+Two kinds of devices are created: a **central device** ("Proxon FWT" by default) for whole-unit functions, and **one device per configured room** (named after the room), linked to the central device.
 
-- **`climate.<room>`** — one per room: current temperature (register `150+n`), target temperature (read from `180+n`, written to the separate write-only register `200+n`). Home Assistant's slider is limited to 18–24 °C.
-- **`sensor.*`** — supply/extract/exhaust/fresh air temperatures, refrigerant-circuit temperatures, outside temperature, compressor speed, power consumption, fan speeds, plus a diagnostic "operating mode (full state)" sensor and per-room mid-temperature sensors (rooms 2–N, control-panel readback), and any configured CO₂/humidity sensors.
-- **`binary_sensor.*`** — bypass state, per-room electric-reheater (PTC) active state, system/filter messages, heat-pump heating/cooling/continuous-operation flags, and (disabled by default, diagnostic) the "is X currently selectable" capability flags from register 315.
-- **`switch.*`** — global cooling enable, fan auto mode (Eco summer/winter), intensive ventilation, and per-room PTC (electric reheater) enable.
+**Central device (central functions):**
+
+- **`sensor.*`** — supply/extract/exhaust/fresh air temperatures, refrigerant-circuit temperatures, outside temperature, compressor speed, power consumption, fan speeds, plus a diagnostic "operating mode (full state)" sensor and any configured CO₂/humidity sensors.
+- **`binary_sensor.*`** — bypass state, **cooling available** (see below), system/filter messages, heat-pump heating/cooling/continuous-operation flags, and (disabled by default, diagnostic) the remaining "is X currently selectable" capability flags from register 315.
+- **`switch.*`** — global cooling enable, fan auto mode (Eco summer/winter), intensive ventilation.
 - **`select.*`** — fan stage (Off/1–4) and operating mode (Off/Eco summer/Eco winter/Comfort/Furnace).
 
-Three controls only make sense in specific operating modes and go **unavailable** outside them:
+**Per room:**
 
-| Entity | Available only in |
+- **`climate.<room>`** — current temperature (register `150+n`), target temperature (read from `180+n`, written to the separate write-only register `200+n`). Home Assistant's slider is limited to 18–24 °C.
+- **`binary_sensor.*`** — PTC element active (current **state**, register 300).
+- **`switch.*`** — PTC element enabled (**enable**, registers 301/302).
+- **`sensor.*`** — mid-room temperature (rooms 2–N, control-panel readback, disabled by default).
+
+Four controls only make sense under specific conditions and go **unavailable** otherwise:
+
+| Entity | Available only when |
 |---|---|
 | `select.fan_stage` | Eco summer / Eco winter |
 | `switch.fan_auto` | Eco summer / Eco winter |
 | `switch.fan_intensive` | Comfort |
+| `switch.cooling_enable` | the device reports cooling as possible (`binary_sensor.cooling_available`, register 315 bit 8) |
 
-An "unavailable" entity still exists (so automations referencing it don't break when you switch modes) but won't accept commands and typically renders greyed-out on a dashboard.
+An "unavailable" entity still exists (so automations referencing it don't break when you switch modes) but won't accept commands and typically renders greyed-out on a dashboard. For the same reason, `binary_sensor.heat_pump_cooling` also goes unavailable when the device reports no cooling support, since the unit can then never report that state.
 
 ## Register map
 
 See [`custom_components/proxon_modbus/const.py`](custom_components/proxon_modbus/const.py) for the full, commented address list. Worth knowing:
 
-- **PTC (electric reheater) state, per-room enable, and enable-readback (registers 300/301/302) are single 16-bit bitfields**, one bit per room (bit *N* = room *N+1*), not per-room registers. Because register 301 is write-only (no independent readback), toggling one room's PTC switch reads the current state from register 302, flips just that room's bit, and writes the whole mask back. This reconstructed mask is a snapshot from the last poll: two rooms toggled faster than one poll cycle apart could theoretically race and clobber each other's bit — not a concern for manual dashboard use, but worth knowing if you automate several rooms' PTC at once.
+- **PTC element state, per-room enable, and enable-readback (registers 300/301/302) are single 16-bit bitfields**, one bit per room (bit *N* = room *N+1*), not per-room registers. Because register 301 is write-only (no independent readback), toggling one room's PTC switch reads the current state from register 302, flips just that room's bit, and writes the whole mask back. This reconstructed mask is a snapshot from the last poll: two rooms toggled faster than one poll cycle apart could theoretically race and clobber each other's bit — not a concern for manual dashboard use, but worth knowing if you automate several rooms' PTC at once.
 - **Mid-room temperature (register `220+n`, rooms 2–16 only)** has no documented scale and is treated the same as every other temperature register (signed, ×0.1 °C) by analogy; disabled by default since it doesn't appear to be relied on in practice.
 - **Room setpoints (`200+n`) take a plain absolute integer degree value for every room**, not an offset relative to a room's physical control-panel dial.
-- **Three controls are gated by operating mode** — see the availability table above. Register 315 ("Freischaltungen") reports the same information live from the device and is exposed as diagnostic capability `binary_sensor`s, disabled by default, if you want to build on the live signal instead of the mode number.
+- **Four controls are gated by operating mode or device capability** — see the availability table above. Register 315 ("Freischaltungen") reports the same information live from the device; bit 8 (cooling possible) is always visible as `binary_sensor.cooling_available`, and the remaining bits as diagnostic capability `binary_sensor`s (disabled by default) if you want to build on the live signal instead of the mode number.
 
 ## How target (Soll) vs. actual (Ist) works
 
-Almost every controllable value on the device has **two separate registers**: a write-only "Soll" one and a read-only "Ist" one that reports what the device actually applied (room setpoint 200+n / 180+n, fan stage 307/308, fan auto 309/310, intensive 311/312, cooling 305/306, mode 313/314; PTC is the bitfield exception described above). This integration always follows the same pattern for all of them:
+Almost every controllable value on the device has **two separate registers**: a write-only "Soll" one and a read-only "Ist" one that reports what the device actually applied (room setpoint 200+n / 180+n, fan stage 307/308, fan auto 309/310, intensive 311/312, cooling 305/306, mode 313/314; the PTC element is the bitfield exception described above). This integration always follows the same pattern for all of them:
 
 1. **Every entity displays the "Ist" register**, never the value you just requested. `climate.target_temperature` reads register `180+n`, `select.fan_stage.current_option` reads `308`, `switch.cooling_enable.is_on` reads `306`, and so on.
 2. **A command (`set_temperature`, `select_option`, `turn_on`/`turn_off`) writes only the "Soll" register**, then immediately calls the coordinator's `async_request_refresh()` — an out-of-cycle poll of every register, including the "Ist" one, rather than waiting for the next scheduled interval.

@@ -83,7 +83,7 @@
       "power_consumption": { "name": "Leistungsaufnahme" },
       "fan_speed_supply": { "name": "Drehzahl Zuluftventilator" },
       "fan_speed_extract": { "name": "Drehzahl Abluftventilator" },
-      "mid_temperature": { "name": "{room} Mittentemperatur" },
+      "mid_temperature": { "name": "Mittentemperatur" },
       "operating_mode_state": {
         "name": "Betriebsart (vollständiger Zustand)",
         "state": {
@@ -101,7 +101,8 @@
     },
     "binary_sensor": {
       "bypass_active": { "name": "Bypass aktiv" },
-      "ptc_active": { "name": "{room} Zusatzheizung aktiv" },
+      "cooling_available": { "name": "Kühlen verfügbar" },
+      "ptc_active": { "name": "PTC-Element aktiv" },
       "error_system": { "name": "Systemfehler" },
       "filter_device": { "name": "Gerätefilter" },
       "filter_recirculation": { "name": "Umluftfilter" },
@@ -122,7 +123,7 @@
       "cooling_enable": { "name": "Kühlung freigegeben" },
       "fan_auto": { "name": "Lüfter-Automatik (Eco Sommer/Winter)" },
       "fan_intensive": { "name": "Intensivlüftung" },
-      "ptc_enable": { "name": "{room} Zusatzheizung freigegeben" }
+      "ptc_enable": { "name": "PTC-Element freigegeben" }
     },
     "select": {
       "fan_stage": {

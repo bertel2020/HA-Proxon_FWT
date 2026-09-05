@@ -46,36 +46,45 @@ Einstellungen → Geräte & Dienste → Integration hinzufügen → **Proxon FWT
 
 ## Entities
 
-Es wird ein Gerät angelegt (standardmäßig "Proxon FWT") mit:
+Es werden zwei Arten von Geräten angelegt: ein **zentrales Gerät** (standardmäßig "Proxon FWT") für die Funktionen der Gesamtanlage, und **ein eigenes Gerät je konfiguriertem Raum** (benannt nach dem jeweiligen Raumnamen), das mit dem zentralen Gerät verknüpft ist.
 
-- **`climate.<raum>`** — eines pro Raum: aktuelle Temperatur (Register `150+n`), Solltemperatur (gelesen von `180+n`, geschrieben auf das separate, nur schreibbare Register `200+n`). Der Home-Assistant-Regler ist auf 18–24 °C begrenzt.
-- **`sensor.*`** — Zu-/Ab-/Fort-/Frischlufttemperaturen, Kältemittelkreislauf-Temperaturen, Außentemperatur, Kompressor-Drehzahl, Leistungsaufnahme, Lüfterdrehzahlen, dazu ein diagnostischer "Betriebsart (vollständiger Zustand)"-Sensor, Mittentemperatur-Sensoren pro Raum (Raum 2–N, Rückmeldung vom Bedienteil) sowie alle konfigurierten CO₂-/Feuchtesensoren.
-- **`binary_sensor.*`** — Bypass-Zustand, Zusatzheizung (PTC) aktiv je Raum, System-/Filtermeldungen, Wärmepumpe im Heiz-/Kühl-/Dauerbetrieb, sowie (standardmäßig deaktiviert, Diagnose) die "ist X gerade wählbar"-Freischaltungs-Flags aus Register 315.
-- **`switch.*`** — globale Kühlfreigabe, Lüfter-Automatik (Eco Sommer/Winter), Intensivlüftung, sowie Zusatzheizung (PTC) je Raum.
+**Zentrales Gerät (Zentralfunktionen):**
+
+- **`sensor.*`** — Zu-/Ab-/Fort-/Frischlufttemperaturen, Kältemittelkreislauf-Temperaturen, Außentemperatur, Kompressor-Drehzahl, Leistungsaufnahme, Lüfterdrehzahlen, dazu ein diagnostischer "Betriebsart (vollständiger Zustand)"-Sensor sowie alle konfigurierten CO₂-/Feuchtesensoren.
+- **`binary_sensor.*`** — Bypass-Zustand, **Kühlen verfügbar** (siehe unten), System-/Filtermeldungen, Wärmepumpe im Heiz-/Kühl-/Dauerbetrieb, sowie (standardmäßig deaktiviert, Diagnose) die übrigen "ist X gerade wählbar"-Freischaltungs-Flags aus Register 315.
+- **`switch.*`** — globale Kühlfreigabe, Lüfter-Automatik (Eco Sommer/Winter), Intensivlüftung.
 - **`select.*`** — Lüfterstufe (Aus/1–4) und Betriebsart (Aus/Eco Sommer/Eco Winter/Komfort/Ofenbetrieb).
 
-Drei Bedienelemente ergeben nur in bestimmten Betriebsarten Sinn und werden außerhalb davon **nicht verfügbar**:
+**Je Raum:**
+
+- **`climate.<raum>`** — aktuelle Temperatur (Register `150+n`), Solltemperatur (gelesen von `180+n`, geschrieben auf das separate, nur schreibbare Register `200+n`). Der Home-Assistant-Regler ist auf 18–24 °C begrenzt.
+- **`binary_sensor.*`** — PTC-Element aktiv (aktueller **Zustand**, Register 300).
+- **`switch.*`** — PTC-Element freigegeben (**Freigabe**, Register 301/302).
+- **`sensor.*`** — Mittentemperatur (Raum 2–N, Rückmeldung vom Bedienteil, standardmäßig deaktiviert).
+
+Vier Bedienelemente ergeben nur unter bestimmten Bedingungen Sinn und werden sonst **nicht verfügbar**:
 
 | Entity | Nur verfügbar bei |
 |---|---|
 | `select.fan_stage` | Eco Sommer / Eco Winter |
 | `switch.fan_auto` | Eco Sommer / Eco Winter |
 | `switch.fan_intensive` | Komfort |
+| `switch.cooling_enable` | Gerät meldet Kühlen als möglich (`binary_sensor.cooling_available`, Register 315 Bit 8) |
 
-Eine "nicht verfügbare" Entity existiert weiterhin (damit Automationen, die darauf verweisen, beim Moduswechsel nicht kaputtgehen), nimmt aber keine Befehle an und wird im Dashboard üblicherweise ausgegraut dargestellt.
+Eine "nicht verfügbare" Entity existiert weiterhin (damit Automationen, die darauf verweisen, beim Moduswechsel nicht kaputtgehen), nimmt aber keine Befehle an und wird im Dashboard üblicherweise ausgegraut dargestellt. Meldet das Gerät kein verfügbares Kühlen, wird aus demselben Grund zusätzlich `binary_sensor.heat_pump_cooling` nicht verfügbar — die Anlage kann diesen Zustand dann ohnehin nie melden.
 
 ## Registerbelegung
 
 Siehe [`custom_components/proxon_modbus/const.py`](custom_components/proxon_modbus/const.py) für die vollständige, kommentierte Adressliste. Wissenswert:
 
-- **Zusatzheizung (PTC): Zustand, Freigabe je Raum und Freigabe-Rücklesung (Register 300/301/302) sind einzelne 16-Bit-Bitfelder**, ein Bit pro Raum (Bit *N* = Raum *N+1*), keine Register pro Raum. Da Register 301 nur schreibbar ist (keine eigene Rücklesung), liest das Umschalten der PTC-Freigabe eines Raums den aktuellen Zustand aus Register 302, kippt nur das Bit dieses Raums und schreibt die gesamte Maske zurück. Diese rekonstruierte Maske ist eine Momentaufnahme des letzten Abfragezyklus: Werden zwei Räume schneller als ein Abfragezyklus hintereinander umgeschaltet, könnten sie sich theoretisch gegenseitig überschreiben — für die manuelle Bedienung im Dashboard unkritisch, aber relevant, wenn mehrere Räume automatisiert gleichzeitig geschaltet werden.
+- **PTC-Element: Zustand, Freigabe je Raum und Freigabe-Rücklesung (Register 300/301/302) sind einzelne 16-Bit-Bitfelder**, ein Bit pro Raum (Bit *N* = Raum *N+1*), keine Register pro Raum. Da Register 301 nur schreibbar ist (keine eigene Rücklesung), liest das Umschalten der PTC-Freigabe eines Raums den aktuellen Zustand aus Register 302, kippt nur das Bit dieses Raums und schreibt die gesamte Maske zurück. Diese rekonstruierte Maske ist eine Momentaufnahme des letzten Abfragezyklus: Werden zwei Räume schneller als ein Abfragezyklus hintereinander umgeschaltet, könnten sie sich theoretisch gegenseitig überschreiben — für die manuelle Bedienung im Dashboard unkritisch, aber relevant, wenn mehrere Räume automatisiert gleichzeitig geschaltet werden.
 - **Mittentemperatur (Register `220+n`, nur Raum 2–16)** hat keine dokumentierte Skalierung und wird analog zu allen anderen Temperaturregistern behandelt (vorzeichenbehaftet, ×0,1 °C); standardmäßig deaktiviert, da sie in der Praxis offenbar nicht genutzt wird.
 - **Raum-Sollwerte (`200+n`) nehmen für jeden Raum einen einfachen absoluten Ganzzahl-Gradwert** entgegen, keinen Offset relativ zum physischen Bedienteil-Drehregler.
-- **Drei Bedienelemente sind an die Betriebsart gekoppelt** — siehe Tabelle oben. Register 315 ("Freischaltungen") liefert dieselbe Information live vom Gerät und wird als diagnostische Freischaltungs-`binary_sensor`s bereitgestellt (standardmäßig deaktiviert), falls du lieber auf das Live-Signal statt auf die Modus-Nummer aufbauen willst.
+- **Vier Bedienelemente sind an Betriebsart bzw. Gerätefähigkeit gekoppelt** — siehe Tabelle oben. Register 315 ("Freischaltungen") liefert dieselbe Information live vom Gerät; Bit 8 (Kühlen möglich) steht immer sichtbar als `binary_sensor.cooling_available` zur Verfügung, die übrigen Bits als diagnostische Freischaltungs-`binary_sensor`s (standardmäßig deaktiviert), falls du lieber auf das Live-Signal statt auf die Modus-Nummer aufbauen willst.
 
 ## Wie Soll und Ist zusammenspielen
 
-Fast jeder steuerbare Wert am Gerät hat **zwei getrennte Register**: ein nur schreibbares "Soll"-Register und ein nur lesbares "Ist"-Register, das zurückmeldet, was das Gerät tatsächlich übernommen hat (Raum-Sollwert 200+n / 180+n, Lüfterstufe 307/308, Lüfter-Automatik 309/310, Intensivlüftung 311/312, Kühlung 305/306, Betriebsart 313/314; die Zusatzheizung ist mit ihrem Bitfeld die oben beschriebene Ausnahme). Diese Integration folgt dabei immer demselben Muster:
+Fast jeder steuerbare Wert am Gerät hat **zwei getrennte Register**: ein nur schreibbares "Soll"-Register und ein nur lesbares "Ist"-Register, das zurückmeldet, was das Gerät tatsächlich übernommen hat (Raum-Sollwert 200+n / 180+n, Lüfterstufe 307/308, Lüfter-Automatik 309/310, Intensivlüftung 311/312, Kühlung 305/306, Betriebsart 313/314; das PTC-Element ist mit seinem Bitfeld die oben beschriebene Ausnahme). Diese Integration folgt dabei immer demselben Muster:
 
 1. **Jede Entity zeigt das "Ist"-Register an**, nie den gerade angeforderten Wert. `climate.target_temperature` liest Register `180+n`, `select.fan_stage.current_option` liest `308`, `switch.cooling_enable.is_on` liest `306`, und so weiter.
 2. **Ein Befehl (`set_temperature`, `select_option`, `turn_on`/`turn_off`) schreibt nur das "Soll"-Register**, danach wird sofort `async_request_refresh()` des Coordinators aufgerufen — eine außerplanmäßige Abfrage aller Register, einschließlich des "Ist"-Registers, statt auf das nächste reguläre Intervall zu warten.
