@@ -6,6 +6,10 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 1.1.1 – 2026-09-05
+
+- Bugfix: `binary_sensor.ptc_active` zeigte "Normal"/"Hot" statt "An"/"Aus", weil die Entity fälschlich die Home-Assistant-Geräteklasse `heat` nutzte (die für Temperatur-Warnschwellen gedacht ist, nicht für einen einfachen Ein/Aus-Zustand). Zeigt jetzt korrekt "An"/"Aus".
+
 ## 1.1.0 – 2026-09-05
 
 - **Räume und Zentralfunktionen sind jetzt getrennte Geräte.** Es gibt weiterhin ein zentrales Gerät (Zu-/Ab-/Fortluft-Sensorik, Kühl-/Lüfter-Schalter, Lüfterstufe/Betriebsart), aber jeder Raum bekommt zusätzlich sein eigenes, mit dem zentralen Gerät verknüpftes Gerät (climate, PTC-Element-Zustand und -Freigabe, Mittentemperatur). Dadurch lassen sich die Entities eines Raums (z. B. der PTC-Zustand) viel leichter finden.

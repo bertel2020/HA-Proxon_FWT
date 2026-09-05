@@ -167,9 +167,13 @@ class ProxonCapabilityBinarySensor(ProxonCentralEntity, BinarySensorEntity):
 
 
 class ProxonRoomPtcActiveSensor(ProxonRoomEntity, BinarySensorEntity):
-    """Whether the room's PTC element is currently active."""
+    """Whether the room's PTC element is currently active.
 
-    _attr_device_class = BinarySensorDeviceClass.HEAT
+    Deliberately no device_class: BinarySensorDeviceClass.HEAT renders as
+    "Normal"/"Hot" instead of a plain on/off, which reads as a temperature
+    judgement rather than "is the heater element currently switched on".
+    """
+
     _attr_translation_key = "ptc_active"
 
     def __init__(
