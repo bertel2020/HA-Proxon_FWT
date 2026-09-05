@@ -12,18 +12,27 @@ Beide Übertragungsarten werden unterstützt:
 
 ## Installation
 
-### Option A: HACS (Custom Repository)
+### Über HACS (empfohlen)
 
-[![Repository zu Home Assistant Community Store hinzufügen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=bertel2020&repository=HA-Proxon_FWT&category=integration)
+[![HACS-Repository in My Home Assistant öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=bertel2020&repository=HA-Proxon_FWT&category=integration)
+[![Proxon FWT (Modbus) zu My Home Assistant hinzufügen](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=proxon_modbus)
 
-1. Öffnet HACS direkt mit vorausgefülltem Repository (Button oben) — oder manuell: HACS → Integrationen → ⋮ → *Benutzerdefinierte Repositories* → `https://github.com/bertel2020/HA-Proxon_FWT` mit Kategorie *Integration* hinzufügen.
-2. "Proxon FWT (Modbus)" installieren, danach Home Assistant neu starten.
-3. Danach direkt mit der Einrichtung starten:
+1. Über den ersten Button das Proxon-FWT-Repository in HACS öffnen.
+2. **Proxon FWT (Modbus)** herunterladen und Home Assistant neu starten.
+3. Über den zweiten Button die Integration hinzufügen. Alternativ in Home
+   Assistant **Einstellungen → Geräte & Dienste → Integration hinzufügen →
+   Proxon FWT (Modbus)** öffnen.
 
-   [![Integration einrichten](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=proxon_modbus)
+Falls der erste Button nicht funktioniert, in HACS unter **Integrationen →
+Benutzerdefinierte Repositories**
+`https://github.com/bertel2020/HA-Proxon_FWT` als Kategorie **Integration**
+eintragen.
 
-### Option B: Manuelles Kopieren
-Den Ordner `custom_components/proxon_modbus` in das Verzeichnis `config/custom_components/` deiner Home-Assistant-Installation kopieren, danach Home Assistant neu starten.
+### Manuell
+
+Das Verzeichnis `custom_components/proxon_modbus` nach
+`/config/custom_components/proxon_modbus` kopieren und Home Assistant neu
+starten.
 
 ## Einrichtung
 
