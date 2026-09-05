@@ -5,6 +5,13 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
+## 1.0.2 – 2026-09-05
+
+- The config flow now logs the actual reason a connection test failed
+  (previously only logged for genuinely unexpected errors, not the regular
+  "cannot_connect" case) — visible under Settings → System → Logs as
+  "Proxon FWT connection test failed: ...".
+
 ## 1.0.1 – 2026-09-05
 
 - Bugfix: a failed connection attempt showed a generic "Unexpected error" in

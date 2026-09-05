@@ -6,6 +6,14 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 1.0.2 – 2026-09-05
+
+- Der Config-Flow protokolliert jetzt den tatsächlichen Grund eines
+  fehlgeschlagenen Verbindungstests (bisher nur bei wirklich unerwarteten
+  Fehlern, nicht beim regulären "cannot_connect"-Fall) — sichtbar unter
+  Einstellungen → System → Protokolle als "Proxon FWT connection test
+  failed: ...".
+
 ## 1.0.1 – 2026-09-05
 
 - Bugfix: Ein fehlgeschlagener Verbindungsaufbau zeigte im Config-Flow
