@@ -5,6 +5,16 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
+## 1.2.1 – 2026-09-05
+
+- **New "Cooling available on this unit" option** (initial setup and options flow, default: Yes) acting as a master switch for all cooling-related entities:
+  - **Yes (default):** `switch.cooling_enable` and `binary_sensor.heat_pump_cooling` are created as before; their availability still follows the live cooling-capability bit from register 315 (bit 8) - unchanged from previous behavior.
+  - **No:** `switch.cooling_enable`, `binary_sensor.heat_pump_cooling`, and `binary_sensor.cooling_available` aren't created at all, instead of just going "unavailable" - for units where that bit has proven unreliable.
+- "Compressor speed" German label reworded for consistency with the fan-speed sensors; "Temperature after preheater" German label shortened; "Heat pump heating/cooling" German labels dropped the filler "im".
+- Default CO₂/humidity sensor names "CO2 1"/"Luftfeuchte 1" → "CO2-Sensor 1"/"Luftfeuchte-Sensor 1".
+- Removed the dead `cooling_enable_possible` translation entry (no entity has used it since `binary_sensor.cooling_available` was introduced).
+- READMEs: added a full entity list with friendly name, entity ID, and description, including an explanation of how entity IDs derive from device name and interface language.
+
 ## 1.2.0 – 2026-09-05
 
 - **CO₂/humidity sensors can now optionally be assigned to a room.** The integration options (names step) now show a dropdown per sensor - "Central (no room)" or one of the configured rooms - and assigning one moves that sensor to the room's own device instead of the central device. Leaving it unassigned changes nothing.

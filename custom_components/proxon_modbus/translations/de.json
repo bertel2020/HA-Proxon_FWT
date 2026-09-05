@@ -37,7 +37,8 @@
           "num_rooms": "Anzahl Räume",
           "num_co2_sensors": "Anzahl CO₂-Sensoren",
           "num_rf_sensors": "Anzahl Feuchtesensoren",
-          "scan_interval": "Abfrageintervall"
+          "scan_interval": "Abfrageintervall",
+          "cooling_available": "Kühlen am Gerät verfügbar"
         }
       }
     },
@@ -57,7 +58,8 @@
           "num_rooms": "Anzahl Räume",
           "num_co2_sensors": "Anzahl CO₂-Sensoren",
           "num_rf_sensors": "Anzahl Feuchtesensoren",
-          "scan_interval": "Abfrageintervall"
+          "scan_interval": "Abfrageintervall",
+          "cooling_available": "Kühlen am Gerät verfügbar"
         }
       },
       "names": {
@@ -74,12 +76,12 @@
       "temp_fresh_air": { "name": "Temperatur Frischluft" },
       "temp_pre_evaporator": { "name": "Temperatur vor Verdampfer" },
       "temp_evaporator": { "name": "Temperatur Verdampfer" },
-      "temp_post_preheat": { "name": "Temperatur nach Vorwärmer" },
+      "temp_post_preheat": { "name": "Temperatur nach Vorwärme" },
       "temp_pre_condenser": { "name": "Temperatur vor Kondensator" },
       "temp_condenser": { "name": "Temperatur Kondensator" },
       "temp_compressor": { "name": "Temperatur Kompressor" },
       "temp_outside": { "name": "Temperatur Außen" },
-      "compressor_speed": { "name": "Kompressor-Drehzahl" },
+      "compressor_speed": { "name": "Drehzahl Kompressor" },
       "power_consumption": { "name": "Leistungsaufnahme" },
       "fan_speed_supply": { "name": "Drehzahl Zuluftventilator" },
       "fan_speed_extract": { "name": "Drehzahl Abluftventilator" },
@@ -106,8 +108,8 @@
       "error_system": { "name": "Systemfehler" },
       "filter_device": { "name": "Gerätefilter" },
       "filter_recirculation": { "name": "Umluftfilter" },
-      "heat_pump_heating": { "name": "Wärmepumpe im Heizbetrieb" },
-      "heat_pump_cooling": { "name": "Wärmepumpe im Kühlbetrieb" },
+      "heat_pump_heating": { "name": "Wärmepumpe Heizbetrieb" },
+      "heat_pump_cooling": { "name": "Wärmepumpe Kühlbetrieb" },
       "heat_pump_continuous": { "name": "Wärmepumpe Dauerbetrieb" },
       "mode_change_possible": { "name": "Betriebsartwechsel möglich" },
       "fan_off_selectable": { "name": "Lüfterstufe Aus wählbar" },
@@ -116,8 +118,7 @@
       "fan_stage_3_selectable": { "name": "Lüfterstufe 3 wählbar" },
       "fan_stage_4_selectable": { "name": "Lüfterstufe 4 wählbar" },
       "fan_auto_selectable": { "name": "Lüfterstufe Automatik wählbar" },
-      "intensive_ventilation_selectable": { "name": "Intensivlüftung wählbar" },
-      "cooling_enable_possible": { "name": "Globale Kühlfreigabe möglich" }
+      "intensive_ventilation_selectable": { "name": "Intensivlüftung wählbar" }
     },
     "switch": {
       "cooling_enable": { "name": "Kühlung freigegeben" },

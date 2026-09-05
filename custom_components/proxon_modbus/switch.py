@@ -12,7 +12,9 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import ProxonConfigEntry
 from .const import (
+    CONF_COOLING_AVAILABLE,
     CONF_ROOM_NAMES,
+    DEFAULT_COOLING_AVAILABLE,
     ECO_MODE_VALUES,
     INTENSIVE_VENTILATION_MODE_VALUES,
     REG_COOLING_ENABLE_WRITE,
@@ -38,6 +40,10 @@ def _available_in_comfort_mode(data: ProxonData) -> bool:
 
 
 def _available_when_cooling_possible(data: ProxonData) -> bool:
+    # Live register 315 capability bit. Only consulted at all when
+    # CONF_COOLING_AVAILABLE hasn't ruled cooling out entirely for this
+    # unit - see async_setup_entry, which skips creating this switch
+    # altogether in that case.
     return bool(data.capabilities.get("cooling_enable_possible"))
 
 
@@ -55,9 +61,10 @@ FUNCTION_SWITCHES: tuple[ProxonSwitchDescription, ...] = (
         icon="mdi:snowflake",
         is_on_fn=lambda d: bool(d.function_block.get("cooling_enable_read")),
         write_register=REG_COOLING_ENABLE_WRITE,
-        # Hidden on units that don't support cooling at all - see the
-        # always-visible "cooling_available" binary sensor on the central
-        # device, decoded from the same capability bit (register 315).
+        # Goes unavailable when the device's own capability bit (register
+        # 315, bit 8) reports cooling as not currently possible. This
+        # switch isn't created at all if CONF_COOLING_AVAILABLE says the
+        # unit has no cooling support - see async_setup_entry.
         available_fn=_available_when_cooling_possible,
     ),
     ProxonSwitchDescription(
@@ -90,10 +97,16 @@ async def async_setup_entry(
     """Set up Proxon FWT switches from a config entry."""
     coordinator = entry.runtime_data
     device_name = entry.data[CONF_NAME]
+    cooling_available = entry.options.get(CONF_COOLING_AVAILABLE, DEFAULT_COOLING_AVAILABLE)
 
+    switch_descriptions = (
+        FUNCTION_SWITCHES
+        if cooling_available
+        else tuple(d for d in FUNCTION_SWITCHES if d.key != "cooling_enable")
+    )
     entities: list[SwitchEntity] = [
         ProxonFunctionSwitch(coordinator, entry.entry_id, device_name, description)
-        for description in FUNCTION_SWITCHES
+        for description in switch_descriptions
     ]
 
     room_names = entry.options.get(CONF_ROOM_NAMES, [])

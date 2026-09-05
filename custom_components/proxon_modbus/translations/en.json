@@ -37,7 +37,8 @@
           "num_rooms": "Number of rooms",
           "num_co2_sensors": "Number of CO₂ sensors",
           "num_rf_sensors": "Number of humidity sensors",
-          "scan_interval": "Polling interval"
+          "scan_interval": "Polling interval",
+          "cooling_available": "Cooling available on this unit"
         }
       }
     },
@@ -57,7 +58,8 @@
           "num_rooms": "Number of rooms",
           "num_co2_sensors": "Number of CO₂ sensors",
           "num_rf_sensors": "Number of humidity sensors",
-          "scan_interval": "Polling interval"
+          "scan_interval": "Polling interval",
+          "cooling_available": "Cooling available on this unit"
         }
       },
       "names": {
@@ -116,8 +118,7 @@
       "fan_stage_3_selectable": { "name": "Fan stage 3 selectable" },
       "fan_stage_4_selectable": { "name": "Fan stage 4 selectable" },
       "fan_auto_selectable": { "name": "Fan auto mode selectable" },
-      "intensive_ventilation_selectable": { "name": "Intensive ventilation selectable" },
-      "cooling_enable_possible": { "name": "Global cooling enable possible" }
+      "intensive_ventilation_selectable": { "name": "Intensive ventilation selectable" }
     },
     "switch": {
       "cooling_enable": { "name": "Cooling enabled" },

@@ -16,6 +16,7 @@ from .const import (
     CONF_CO2_NAMES,
     CONF_CO2_ROOMS,
     CONF_CONNECTION_TYPE,
+    CONF_COOLING_AVAILABLE,
     CONF_NUM_CO2_SENSORS,
     CONF_NUM_ROOMS,
     CONF_NUM_RF_SENSORS,
@@ -31,6 +32,7 @@ from .const import (
     CONNECTION_TYPE_TCP,
     DEFAULT_BAUDRATE,
     DEFAULT_BYTESIZE,
+    DEFAULT_COOLING_AVAILABLE,
     DEFAULT_NAME,
     DEFAULT_NUM_CO2_SENSORS,
     DEFAULT_NUM_ROOMS,
@@ -267,6 +269,7 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
                     for i in range(1, int(user_input[CONF_NUM_RF_SENSORS]) + 1)
                 ],
                 CONF_SCAN_INTERVAL: int(user_input[CONF_SCAN_INTERVAL]),
+                CONF_COOLING_AVAILABLE: bool(user_input[CONF_COOLING_AVAILABLE]),
             }
             return self.async_create_entry(
                 title=self._data[CONF_NAME], data=self._data, options=options
@@ -300,6 +303,9 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
                         min=5, max=3600, unit_of_measurement="s", mode="box"
                     )
                 ),
+                vol.Required(
+                    CONF_COOLING_AVAILABLE, default=DEFAULT_COOLING_AVAILABLE
+                ): selector.BooleanSelector(),
             }
         )
         return self.async_show_form(step_id="rooms", data_schema=schema)
@@ -327,6 +333,7 @@ class ProxonModbusOptionsFlow(OptionsFlow):
                 CONF_NUM_CO2_SENSORS: int(user_input[CONF_NUM_CO2_SENSORS]),
                 CONF_NUM_RF_SENSORS: int(user_input[CONF_NUM_RF_SENSORS]),
                 CONF_SCAN_INTERVAL: int(user_input[CONF_SCAN_INTERVAL]),
+                CONF_COOLING_AVAILABLE: bool(user_input[CONF_COOLING_AVAILABLE]),
             }
             return await self.async_step_names()
 
@@ -362,6 +369,10 @@ class ProxonModbusOptionsFlow(OptionsFlow):
                         min=5, max=3600, unit_of_measurement="s", mode="box"
                     )
                 ),
+                vol.Required(
+                    CONF_COOLING_AVAILABLE,
+                    default=options.get(CONF_COOLING_AVAILABLE, DEFAULT_COOLING_AVAILABLE),
+                ): selector.BooleanSelector(),
             }
         )
         return self.async_show_form(step_id="init", data_schema=schema)

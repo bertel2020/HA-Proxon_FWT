@@ -15,14 +15,21 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import ProxonConfigEntry
-from .const import CAPABILITY_FLAGS, CONF_ROOM_NAMES, MESSAGE_FLAGS
+from .const import (
+    CAPABILITY_FLAGS,
+    CONF_COOLING_AVAILABLE,
+    CONF_ROOM_NAMES,
+    DEFAULT_COOLING_AVAILABLE,
+    MESSAGE_FLAGS,
+)
 from .coordinator import ProxonData, ProxonModbusCoordinator
 from .entity import ProxonCentralEntity, ProxonRoomEntity
 
-# Surfaced separately (always visible, not a diagnostic-disabled flag) so it's
-# easy to spot in the central device whether cooling is even a possibility on
-# this unit - other controls/sensors gate on it too, see
-# _available_when_cooling_possible / MESSAGE_AVAILABILITY below.
+# Surfaced separately (always visible, not a diagnostic-disabled flag) so
+# it's easy to spot what the device itself reports for cooling support -
+# read from the live register 315 bit 8. Not created at all if
+# CONF_COOLING_AVAILABLE says this unit has no cooling support in the
+# first place - see async_setup_entry.
 _COOLING_CAPABILITY_KEY = "cooling_enable_possible"
 
 
@@ -56,8 +63,9 @@ MESSAGE_DEVICE_CLASSES: dict[str, BinarySensorDeviceClass | None] = {
     # plain on/off state - see the same reasoning for ptc_active.
 }
 
-# Hide message flags that can't possibly occur when the underlying function
-# isn't available on this unit at all.
+# Hide message flags that can't possibly occur right now per the live
+# capability bit. This entity isn't created at all if CONF_COOLING_AVAILABLE
+# rules out cooling support entirely - see async_setup_entry.
 MESSAGE_AVAILABILITY: dict[str, Callable[[ProxonData], bool]] = {
     "heat_pump_cooling": lambda d: bool(d.capabilities.get(_COOLING_CAPABILITY_KEY)),
 }
@@ -71,20 +79,28 @@ async def async_setup_entry(
     """Set up Proxon FWT binary sensors from a config entry."""
     coordinator = entry.runtime_data
     device_name = entry.data[CONF_NAME]
+    cooling_available = entry.options.get(CONF_COOLING_AVAILABLE, DEFAULT_COOLING_AVAILABLE)
 
+    device_sensor_descriptions = (
+        DEVICE_BINARY_SENSORS
+        if cooling_available
+        else tuple(d for d in DEVICE_BINARY_SENSORS if d.key != "cooling_available")
+    )
     entities: list[BinarySensorEntity] = [
         ProxonBinarySensor(coordinator, entry.entry_id, device_name, description)
-        for description in DEVICE_BINARY_SENSORS
+        for description in device_sensor_descriptions
     ]
 
     for key in MESSAGE_FLAGS.values():
+        if key == "heat_pump_cooling" and not cooling_available:
+            continue  # unit has no cooling support at all - see CONF_COOLING_AVAILABLE
         entities.append(
             ProxonMessageBinarySensor(coordinator, entry.entry_id, device_name, key)
         )
 
     for key in CAPABILITY_FLAGS.values():
         if key == _COOLING_CAPABILITY_KEY:
-            continue  # already surfaced as the always-visible "cooling_available" sensor above
+            continue  # handled above instead, as the always-visible "cooling_available" sensor (or dropped entirely, see cooling_available)
         entities.append(
             ProxonCapabilityBinarySensor(coordinator, entry.entry_id, device_name, key)
         )

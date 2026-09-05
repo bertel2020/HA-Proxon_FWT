@@ -6,6 +6,16 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 1.2.1 – 2026-09-05
+
+- **Neue Option "Kühlen am Gerät verfügbar"** (Ersteinrichtung und Options-Flow, Standard: Ja) als Hauptschalter für alle Kühl-Entities:
+  - **Ja (Standard):** `switch.cooling_enable` und `binary_sensor.heat_pump_cooling` werden wie gewohnt angelegt; ihre Verfügbarkeit richtet sich weiterhin live nach dem Kühlfähigkeits-Bit aus Register 315 (Bit 8) — unverändert zum bisherigen Verhalten.
+  - **Nein:** `switch.cooling_enable`, `binary_sensor.heat_pump_cooling` und `binary_sensor.cooling_available` werden gar nicht erst angelegt, statt nur "nicht verfügbar" zu sein — für Anlagen, bei denen sich das Bit als unzuverlässig erwiesen hat.
+- "Kompressor-Drehzahl" → "Drehzahl Kompressor" (passend zum Schema der Lüfterdrehzahlen); "Temperatur nach Vorwärmer" → "Temperatur nach Vorwärme"; "Wärmepumpe im Heiz-/Kühlbetrieb" → "Wärmepumpe Heiz-/Kühlbetrieb".
+- CO₂-/Feuchte-Sensor-Standardnamen "CO2 1"/"Luftfeuchte 1" → "CO2-Sensor 1"/"Luftfeuchte-Sensor 1".
+- Toten Übersetzungseintrag `cooling_enable_possible` entfernt (keine Entity nutzt ihn mehr seit `binary_sensor.cooling_available` eingeführt wurde).
+- READMEs: vollständige Entity-Liste mit Friendly Name, Entity-ID und Beschreibung ergänzt, inklusive Erklärung, wie sich Entity-IDs aus Gerätename und Oberflächensprache ergeben.
+
 ## 1.2.0 – 2026-09-05
 
 - **CO₂-/Feuchtesensoren können jetzt optional einem Raum zugeordnet werden.** In den Integrationsoptionen (Namen-Schritt) gibt es je Sensor ein Dropdown "Zentral (kein Raum)" oder einen der konfigurierten Räume — bei Zuordnung landet der Sensor auf dem Gerät dieses Raums statt auf dem zentralen Gerät. Ohne Zuordnung ändert sich nichts.

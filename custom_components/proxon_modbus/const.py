@@ -42,6 +42,13 @@ CONF_RF_NAMES = "rf_sensor_names"
 CONF_CO2_ROOMS = "co2_sensor_rooms"
 CONF_RF_ROOMS = "rf_sensor_rooms"
 CONF_SCAN_INTERVAL = "scan_interval"
+# Manual override for whether this unit supports cooling at all. Register
+# 315 bit 8 is meant to report this live, but has proven unreliable in
+# practice, so this option - not the bit - is the sole source of truth for
+# gating switch.cooling_enable and binary_sensor.heat_pump_cooling. The raw
+# bit is still shown separately (binary_sensor.cooling_available) purely as
+# a diagnostic of what the device itself reports.
+CONF_COOLING_AVAILABLE = "cooling_available"
 
 # --- Defaults ----------------------------------------------------------------
 
@@ -54,6 +61,7 @@ DEFAULT_PARITY = "E"
 DEFAULT_STOPBITS = 1
 DEFAULT_SCAN_INTERVAL = 30
 DEFAULT_TIMEOUT = 5
+DEFAULT_COOLING_AVAILABLE = True
 
 # How long to wait after writing a "Soll" register before polling for
 # confirmation - the device needs a moment to actually apply a new value,
