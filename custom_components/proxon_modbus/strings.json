@@ -1,0 +1,150 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Proxon FWT",
+        "description": "How is the FWT / BusBridge Zimmermann gateway connected?",
+        "menu_options": {
+          "tcp": "Network (Modbus TCP)",
+          "serial": "USB / RS-485 (Modbus RTU)"
+        }
+      },
+      "tcp": {
+        "title": "Modbus TCP connection",
+        "data": {
+          "name": "Name",
+          "host": "Host / IP address",
+          "port": "Port",
+          "unit_id": "Modbus unit ID (slave address)"
+        }
+      },
+      "serial": {
+        "title": "Modbus RTU (serial) connection",
+        "data": {
+          "name": "Name",
+          "serial_port": "Serial device",
+          "baudrate": "Baud rate",
+          "bytesize": "Data bits",
+          "parity": "Parity",
+          "stopbits": "Stop bits",
+          "unit_id": "Modbus unit ID (slave address)"
+        }
+      },
+      "rooms": {
+        "title": "Rooms and external sensors",
+        "description": "You can rename rooms and sensors, or add more rooms later, from the integration's options.",
+        "data": {
+          "num_rooms": "Number of rooms",
+          "num_co2_sensors": "Number of CO₂ sensors",
+          "num_rf_sensors": "Number of humidity sensors",
+          "scan_interval": "Polling interval"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to the Proxon FWT.",
+      "unknown": "Unexpected error."
+    },
+    "abort": {
+      "already_configured": "This device is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Rooms and polling",
+        "data": {
+          "num_rooms": "Number of rooms",
+          "num_co2_sensors": "Number of CO₂ sensors",
+          "num_rf_sensors": "Number of humidity sensors",
+          "scan_interval": "Polling interval"
+        }
+      },
+      "names": {
+        "title": "Names",
+        "description": "Give each room and external sensor a name."
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "temp_supply_air": { "name": "Supply air temperature" },
+      "temp_extract_air": { "name": "Extract air temperature" },
+      "temp_exhaust_air": { "name": "Exhaust air temperature" },
+      "temp_fresh_air": { "name": "Fresh air temperature" },
+      "temp_pre_evaporator": { "name": "Temperature before evaporator" },
+      "temp_evaporator": { "name": "Evaporator temperature" },
+      "temp_post_preheat": { "name": "Temperature after preheater" },
+      "temp_pre_condenser": { "name": "Temperature before condenser" },
+      "temp_condenser": { "name": "Condenser temperature" },
+      "temp_compressor": { "name": "Compressor temperature" },
+      "temp_outside": { "name": "Outside temperature" },
+      "compressor_speed": { "name": "Compressor speed" },
+      "power_consumption": { "name": "Power consumption" },
+      "fan_speed_supply": { "name": "Supply fan speed" },
+      "fan_speed_extract": { "name": "Extract fan speed" },
+      "mid_temperature": { "name": "{room} mid-room temperature" },
+      "operating_mode_state": {
+        "name": "Operating mode (full state)",
+        "state": {
+          "off": "Off",
+          "eco_summer": "Eco summer",
+          "eco_winter": "Eco winter",
+          "comfort": "Comfort",
+          "furnace": "Furnace mode",
+          "not_used": "Not used",
+          "emergency": "Emergency operation",
+          "frost_protection": "Frost protection",
+          "commissioning": "Commissioning"
+        }
+      }
+    },
+    "binary_sensor": {
+      "bypass_active": { "name": "Bypass active" },
+      "ptc_active": { "name": "{room} electric reheater active" },
+      "error_system": { "name": "System error" },
+      "filter_device": { "name": "Device filter" },
+      "filter_recirculation": { "name": "Recirculation filter" },
+      "heat_pump_heating": { "name": "Heat pump heating" },
+      "heat_pump_cooling": { "name": "Heat pump cooling" },
+      "heat_pump_continuous": { "name": "Heat pump continuous operation" },
+      "mode_change_possible": { "name": "Mode change possible" },
+      "fan_off_selectable": { "name": "Fan stage off selectable" },
+      "fan_stage_1_selectable": { "name": "Fan stage 1 selectable" },
+      "fan_stage_2_selectable": { "name": "Fan stage 2 selectable" },
+      "fan_stage_3_selectable": { "name": "Fan stage 3 selectable" },
+      "fan_stage_4_selectable": { "name": "Fan stage 4 selectable" },
+      "fan_auto_selectable": { "name": "Fan auto mode selectable" },
+      "intensive_ventilation_selectable": { "name": "Intensive ventilation selectable" },
+      "cooling_enable_possible": { "name": "Global cooling enable possible" }
+    },
+    "switch": {
+      "cooling_enable": { "name": "Cooling enabled" },
+      "fan_auto": { "name": "Fan auto mode (Eco summer/winter)" },
+      "fan_intensive": { "name": "Intensive ventilation" },
+      "ptc_enable": { "name": "{room} electric reheater enabled" }
+    },
+    "select": {
+      "fan_stage": {
+        "name": "Fan stage",
+        "state": {
+          "off": "Off",
+          "stage_1": "Stage 1",
+          "stage_2": "Stage 2",
+          "stage_3": "Stage 3",
+          "stage_4": "Stage 4"
+        }
+      },
+      "operating_mode": {
+        "name": "Operating mode",
+        "state": {
+          "off": "Off",
+          "eco_summer": "Eco summer",
+          "eco_winter": "Eco winter",
+          "comfort": "Comfort",
+          "furnace": "Furnace mode"
+        }
+      }
+    }
+  }
+}

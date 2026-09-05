@@ -1,0 +1,150 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Proxon FWT",
+        "description": "Wie ist das FWT / BusBridge Zimmermann Gateway angeschlossen?",
+        "menu_options": {
+          "tcp": "Netzwerk (Modbus TCP)",
+          "serial": "USB / RS-485 (Modbus RTU)"
+        }
+      },
+      "tcp": {
+        "title": "Modbus-TCP-Verbindung",
+        "data": {
+          "name": "Name",
+          "host": "Host / IP-Adresse",
+          "port": "Port",
+          "unit_id": "Modbus-Teilnehmeradresse (Unit-ID)"
+        }
+      },
+      "serial": {
+        "title": "Modbus-RTU-Verbindung (seriell)",
+        "data": {
+          "name": "Name",
+          "serial_port": "Serielle Schnittstelle",
+          "baudrate": "Baudrate",
+          "bytesize": "Datenbits",
+          "parity": "Parität",
+          "stopbits": "Stopbits",
+          "unit_id": "Modbus-Teilnehmeradresse (Unit-ID)"
+        }
+      },
+      "rooms": {
+        "title": "Räume und externe Sensoren",
+        "description": "Räume und Sensoren lassen sich später in den Integrationsoptionen umbenennen, weitere Räume lassen sich dort ebenfalls hinzufügen.",
+        "data": {
+          "num_rooms": "Anzahl Räume",
+          "num_co2_sensors": "Anzahl CO₂-Sensoren",
+          "num_rf_sensors": "Anzahl Feuchtesensoren",
+          "scan_interval": "Abfrageintervall"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zur Proxon FWT konnte nicht hergestellt werden.",
+      "unknown": "Unerwarteter Fehler."
+    },
+    "abort": {
+      "already_configured": "Dieses Gerät ist bereits eingerichtet."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Räume und Abfrage",
+        "data": {
+          "num_rooms": "Anzahl Räume",
+          "num_co2_sensors": "Anzahl CO₂-Sensoren",
+          "num_rf_sensors": "Anzahl Feuchtesensoren",
+          "scan_interval": "Abfrageintervall"
+        }
+      },
+      "names": {
+        "title": "Namen",
+        "description": "Vergib Namen für jeden Raum und jeden externen Sensor."
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "temp_supply_air": { "name": "Zuluft-Temperatur" },
+      "temp_extract_air": { "name": "Abluft-Temperatur" },
+      "temp_exhaust_air": { "name": "Fortluft-Temperatur" },
+      "temp_fresh_air": { "name": "Frischluft-Temperatur" },
+      "temp_pre_evaporator": { "name": "Temperatur vor Verdampfer" },
+      "temp_evaporator": { "name": "Verdampfer-Temperatur" },
+      "temp_post_preheat": { "name": "Temperatur nach Vorwärmer" },
+      "temp_pre_condenser": { "name": "Temperatur vor Kondensator" },
+      "temp_condenser": { "name": "Kondensator-Temperatur" },
+      "temp_compressor": { "name": "Kompressor-Temperatur" },
+      "temp_outside": { "name": "Außentemperatur" },
+      "compressor_speed": { "name": "Kompressor-Drehzahl" },
+      "power_consumption": { "name": "Leistungsaufnahme" },
+      "fan_speed_supply": { "name": "Drehzahl Zuluftventilator" },
+      "fan_speed_extract": { "name": "Drehzahl Abluftventilator" },
+      "mid_temperature": { "name": "{room} Mittentemperatur" },
+      "operating_mode_state": {
+        "name": "Betriebsart (vollständiger Zustand)",
+        "state": {
+          "off": "Aus",
+          "eco_summer": "Eco Sommer",
+          "eco_winter": "Eco Winter",
+          "comfort": "Komfort",
+          "furnace": "Ofenbetrieb",
+          "not_used": "Nicht belegt",
+          "emergency": "Notbetrieb",
+          "frost_protection": "Einfrierschutz",
+          "commissioning": "Einregulierung"
+        }
+      }
+    },
+    "binary_sensor": {
+      "bypass_active": { "name": "Bypass aktiv" },
+      "ptc_active": { "name": "{room} Zusatzheizung aktiv" },
+      "error_system": { "name": "Systemfehler" },
+      "filter_device": { "name": "Gerätefilter" },
+      "filter_recirculation": { "name": "Umluftfilter" },
+      "heat_pump_heating": { "name": "Wärmepumpe im Heizbetrieb" },
+      "heat_pump_cooling": { "name": "Wärmepumpe im Kühlbetrieb" },
+      "heat_pump_continuous": { "name": "Wärmepumpe Dauerbetrieb" },
+      "mode_change_possible": { "name": "Betriebsartwechsel möglich" },
+      "fan_off_selectable": { "name": "Lüfterstufe Aus wählbar" },
+      "fan_stage_1_selectable": { "name": "Lüfterstufe 1 wählbar" },
+      "fan_stage_2_selectable": { "name": "Lüfterstufe 2 wählbar" },
+      "fan_stage_3_selectable": { "name": "Lüfterstufe 3 wählbar" },
+      "fan_stage_4_selectable": { "name": "Lüfterstufe 4 wählbar" },
+      "fan_auto_selectable": { "name": "Lüfterstufe Automatik wählbar" },
+      "intensive_ventilation_selectable": { "name": "Intensivlüftung wählbar" },
+      "cooling_enable_possible": { "name": "Globale Kühlfreigabe möglich" }
+    },
+    "switch": {
+      "cooling_enable": { "name": "Kühlung freigegeben" },
+      "fan_auto": { "name": "Lüfter-Automatik (Eco Sommer/Winter)" },
+      "fan_intensive": { "name": "Intensivlüftung" },
+      "ptc_enable": { "name": "{room} Zusatzheizung freigegeben" }
+    },
+    "select": {
+      "fan_stage": {
+        "name": "Lüfterstufe",
+        "state": {
+          "off": "Aus",
+          "stage_1": "Stufe 1",
+          "stage_2": "Stufe 2",
+          "stage_3": "Stufe 3",
+          "stage_4": "Stufe 4"
+        }
+      },
+      "operating_mode": {
+        "name": "Betriebsart",
+        "state": {
+          "off": "Aus",
+          "eco_summer": "Eco Sommer",
+          "eco_winter": "Eco Winter",
+          "comfort": "Komfort",
+          "furnace": "Ofenbetrieb"
+        }
+      }
+    }
+  }
+}

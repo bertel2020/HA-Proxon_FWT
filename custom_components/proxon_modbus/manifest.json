@@ -1,0 +1,10 @@
+{
+  "domain": "proxon_modbus",
+  "name": "Proxon FWT (Modbus)",
+  "codeowners": [],
+  "config_flow": true,
+  "integration_type": "hub",
+  "iot_class": "local_polling",
+  "requirements": ["pymodbus>=3.6.6,<4.0.0"],
+  "version": "1.0.0"
+}
