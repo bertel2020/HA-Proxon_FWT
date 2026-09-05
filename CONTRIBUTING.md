@@ -4,17 +4,6 @@ This started as a single-installation integration for one Proxon FWT unit, so
 there's no CI test suite yet — contributions that add one (`pytest` +
 `pytest-homeassistant-custom-component`) are very welcome.
 
-## Before publishing this repository on GitHub
-
-A few things are left as placeholders on purpose, because they need to be
-filled in with your own account/repo details rather than guessed:
-
-- `custom_components/proxon_modbus/manifest.json`: set `codeowners` to your
-  GitHub handle (e.g. `["@yourname"]`), and once the repo exists, add
-  `"documentation"` and `"issue_tracker"` URLs pointing at it.
-- `README.md`: replace the "Add this folder's Git repository URL" placeholder
-  in the HACS installation section with the actual repository URL.
-
 ## Local development
 
 ```bash

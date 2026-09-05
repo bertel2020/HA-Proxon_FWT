@@ -14,7 +14,7 @@ Beide Übertragungsarten werden unterstützt:
 
 ### Option A: HACS (Custom Repository)
 1. HACS → Integrationen → ⋮ → *Benutzerdefinierte Repositories*.
-2. Die GitHub-URL dieses Repositories hinzufügen (sobald es dort veröffentlicht ist — siehe [CONTRIBUTING.md](CONTRIBUTING.md) für die vorher noch auszufüllenden Platzhalter) mit Kategorie *Integration*.
+2. `https://github.com/bertel2020/HA-Proxon_FWT` mit Kategorie *Integration* hinzufügen.
 3. "Proxon FWT (Modbus)" installieren, danach Home Assistant neu starten.
 
 ### Option B: Manuelles Kopieren
