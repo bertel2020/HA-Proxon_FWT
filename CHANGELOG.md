@@ -6,6 +6,14 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 1.2.0 – 2026-09-05
+
+- **CO₂-/Feuchtesensoren können jetzt optional einem Raum zugeordnet werden.** In den Integrationsoptionen (Namen-Schritt) gibt es je Sensor ein Dropdown "Zentral (kein Raum)" oder einen der konfigurierten Räume — bei Zuordnung landet der Sensor auf dem Gerät dieses Raums statt auf dem zentralen Gerät. Ohne Zuordnung ändert sich nichts.
+- Standard-Sensornamen "CO2 1" / "Luftfeuchte 1" heißen jetzt "CO2-Sensor 1" / "Luftfeuchte-Sensor 1".
+- Temperatursensoren des zentralen Geräts einheitlich nach dem Schema "Temperatur *Ort*" benannt (z. B. "Temperatur Zuluft" statt "Zuluft-Temperatur").
+- `binary_sensor`-Entities für Wärmepumpe im Heiz-/Kühl-/Dauerbetrieb zeigen jetzt "An"/"Aus" statt "In Betrieb"/"Außer Betrieb" (gleicher Grund wie der `ptc_active`-Fix in 1.1.1: die Geräteklasse `running` liest sich wie eine Verfügbarkeits- statt eine Ein/Aus-Aussage).
+- Alle bisher standardmäßig deaktivierten Entities sind jetzt von Anfang an aktiviert (Kältemittelkreislauf-Temperaturen, Freischaltungs-Diagnose-Sensoren aus Register 315) — außer der Mittentemperatur je Raum, die weiterhin standardmäßig deaktiviert bleibt.
+
 ## 1.1.1 – 2026-09-05
 
 - Bugfix: `binary_sensor.ptc_active` zeigte "Normal"/"Hot" statt "An"/"Aus", weil die Entity fälschlich die Home-Assistant-Geräteklasse `heat` nutzte (die für Temperatur-Warnschwellen gedacht ist, nicht für einen einfachen Ein/Aus-Zustand). Zeigt jetzt korrekt "An"/"Aus".

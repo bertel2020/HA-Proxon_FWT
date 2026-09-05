@@ -14,12 +14,14 @@ from .const import (
     CONF_BAUDRATE,
     CONF_BYTESIZE,
     CONF_CO2_NAMES,
+    CONF_CO2_ROOMS,
     CONF_CONNECTION_TYPE,
     CONF_NUM_CO2_SENSORS,
     CONF_NUM_ROOMS,
     CONF_NUM_RF_SENSORS,
     CONF_PARITY,
     CONF_RF_NAMES,
+    CONF_RF_ROOMS,
     CONF_ROOM_NAMES,
     CONF_SCAN_INTERVAL,
     CONF_SERIAL_PORT,
@@ -56,6 +58,10 @@ _LOGGER = logging.getLogger(__name__)
 BAUDRATES = [1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200]
 PARITIES = ["N", "E", "O"]
 STOPBITS = [1, 2]
+
+# Sentinel select value meaning "keep this external sensor on the central
+# device" rather than assigning it to one of the rooms.
+_NO_ROOM = "none"
 
 
 def _default_room_name(index: int) -> str:
@@ -253,11 +259,11 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
                 CONF_ROOM_NAMES: [_default_room_name(i) for i in range(1, num_rooms + 1)],
                 CONF_NUM_CO2_SENSORS: int(user_input[CONF_NUM_CO2_SENSORS]),
                 CONF_CO2_NAMES: [
-                    f"CO2 {i}" for i in range(1, int(user_input[CONF_NUM_CO2_SENSORS]) + 1)
+                    f"CO2-Sensor {i}" for i in range(1, int(user_input[CONF_NUM_CO2_SENSORS]) + 1)
                 ],
                 CONF_NUM_RF_SENSORS: int(user_input[CONF_NUM_RF_SENSORS]),
                 CONF_RF_NAMES: [
-                    f"Luftfeuchte {i}"
+                    f"Luftfeuchte-Sensor {i}"
                     for i in range(1, int(user_input[CONF_NUM_RF_SENSORS]) + 1)
                 ],
                 CONF_SCAN_INTERVAL: int(user_input[CONF_SCAN_INTERVAL]),
@@ -363,7 +369,8 @@ class ProxonModbusOptionsFlow(OptionsFlow):
     async def async_step_names(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Let the user (re)name every room and external sensor."""
+        """Let the user (re)name every room and external sensor, and
+        optionally assign each external sensor to one of the rooms."""
         options = self.config_entry.options
         num_rooms = self._pending[CONF_NUM_ROOMS]
         num_co2 = self._pending[CONF_NUM_CO2_SENSORS]
@@ -372,6 +379,11 @@ class ProxonModbusOptionsFlow(OptionsFlow):
         existing_rooms = options.get(CONF_ROOM_NAMES, [])
         existing_co2 = options.get(CONF_CO2_NAMES, [])
         existing_rf = options.get(CONF_RF_NAMES, [])
+        existing_co2_rooms = options.get(CONF_CO2_ROOMS, [])
+        existing_rf_rooms = options.get(CONF_RF_ROOMS, [])
+
+        def parse_room(raw: str) -> int | None:
+            return None if raw == _NO_ROOM else int(raw)
 
         if user_input is not None:
             room_names = [
@@ -379,25 +391,68 @@ class ProxonModbusOptionsFlow(OptionsFlow):
             ]
             co2_names = [user_input[f"co2_{i + 1}"] for i in range(num_co2)]
             rf_names = [user_input[f"rf_{i + 1}"] for i in range(num_rf)]
+            co2_rooms = [parse_room(user_input[f"co2_{i + 1}_room"]) for i in range(num_co2)]
+            rf_rooms = [parse_room(user_input[f"rf_{i + 1}_room"]) for i in range(num_rf)]
             new_options = {
                 **self._pending,
                 CONF_ROOM_NAMES: room_names,
                 CONF_CO2_NAMES: co2_names,
                 CONF_RF_NAMES: rf_names,
+                CONF_CO2_ROOMS: co2_rooms,
+                CONF_RF_ROOMS: rf_rooms,
             }
             return self.async_create_entry(title="", data=new_options)
 
+        room_labels = [
+            existing_rooms[i] if i < len(existing_rooms) else _default_room_name(i + 1)
+            for i in range(num_rooms)
+        ]
+        no_room_label = (
+            "Zentral (kein Raum)"
+            if (self.hass.config.language or "").startswith("de")
+            else "Central (no room)"
+        )
+        room_select_options = [
+            selector.SelectOptionDict(value=_NO_ROOM, label=no_room_label)
+        ] + [
+            selector.SelectOptionDict(value=str(i), label=room_labels[i])
+            for i in range(num_rooms)
+        ]
+
+        def room_default(existing_rooms_assignment: list[int | None], i: int) -> str:
+            if i >= len(existing_rooms_assignment) or existing_rooms_assignment[i] is None:
+                return _NO_ROOM
+            room_index = existing_rooms_assignment[i]
+            return str(room_index) if room_index < num_rooms else _NO_ROOM
+
         fields: dict[Any, Any] = {}
         for i in range(num_rooms):
-            default = (
-                existing_rooms[i] if i < len(existing_rooms) else _default_room_name(i + 1)
-            )
-            fields[vol.Required(f"room_{i + 1}", default=default)] = str
+            fields[vol.Required(f"room_{i + 1}", default=room_labels[i])] = str
         for i in range(num_co2):
-            default = existing_co2[i] if i < len(existing_co2) else f"CO2 {i + 1}"
+            default = existing_co2[i] if i < len(existing_co2) else f"CO2-Sensor {i + 1}"
             fields[vol.Required(f"co2_{i + 1}", default=default)] = str
+            fields[
+                vol.Required(
+                    f"co2_{i + 1}_room", default=room_default(existing_co2_rooms, i)
+                )
+            ] = selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=room_select_options,
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            )
         for i in range(num_rf):
-            default = existing_rf[i] if i < len(existing_rf) else f"Luftfeuchte {i + 1}"
+            default = existing_rf[i] if i < len(existing_rf) else f"Luftfeuchte-Sensor {i + 1}"
             fields[vol.Required(f"rf_{i + 1}", default=default)] = str
+            fields[
+                vol.Required(
+                    f"rf_{i + 1}_room", default=room_default(existing_rf_rooms, i)
+                )
+            ] = selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=room_select_options,
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            )
 
         return self.async_show_form(step_id="names", data_schema=vol.Schema(fields))

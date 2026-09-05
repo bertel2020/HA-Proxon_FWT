@@ -15,6 +15,27 @@ from .const import DOMAIN, MANUFACTURER, MODEL
 from .coordinator import ProxonModbusCoordinator
 
 
+def central_device_info(entry_id: str, device_name: str) -> DeviceInfo:
+    """DeviceInfo for the FWT's single central device."""
+    return DeviceInfo(
+        identifiers={(DOMAIN, entry_id)},
+        name=device_name,
+        manufacturer=MANUFACTURER,
+        model=MODEL,
+    )
+
+
+def room_device_info(entry_id: str, room_index: int, room_name: str) -> DeviceInfo:
+    """DeviceInfo for a single room's own device, linked to the central one."""
+    return DeviceInfo(
+        identifiers={(DOMAIN, f"{entry_id}_room_{room_index}")},
+        name=room_name,
+        manufacturer=MANUFACTURER,
+        model=MODEL,
+        via_device=(DOMAIN, entry_id),
+    )
+
+
 class ProxonEntity(CoordinatorEntity[ProxonModbusCoordinator]):
     """Base entity shared by the central and room entity variants."""
 
@@ -47,12 +68,7 @@ class ProxonCentralEntity(ProxonEntity):
             coordinator,
             entry_id,
             unique_id_suffix,
-            DeviceInfo(
-                identifiers={(DOMAIN, entry_id)},
-                name=device_name,
-                manufacturer=MANUFACTURER,
-                model=MODEL,
-            ),
+            central_device_info(entry_id, device_name),
         )
 
 
@@ -76,12 +92,6 @@ class ProxonRoomEntity(ProxonEntity):
             coordinator,
             entry_id,
             unique_id_suffix,
-            DeviceInfo(
-                identifiers={(DOMAIN, f"{entry_id}_room_{room_index}")},
-                name=room_name,
-                manufacturer=MANUFACTURER,
-                model=MODEL,
-                via_device=(DOMAIN, entry_id),
-            ),
+            room_device_info(entry_id, room_index, room_name),
         )
         self._room_index = room_index

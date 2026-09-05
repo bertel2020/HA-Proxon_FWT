@@ -35,6 +35,12 @@ CONF_NUM_CO2_SENSORS = "num_co2_sensors"
 CONF_NUM_RF_SENSORS = "num_rf_sensors"
 CONF_CO2_NAMES = "co2_sensor_names"
 CONF_RF_NAMES = "rf_sensor_names"
+# Optional room assignment per external sensor (index-parallel to
+# CONF_CO2_NAMES / CONF_RF_NAMES): room index (int) if the sensor is
+# physically located in - and should show up under the device of - a
+# specific room, or missing/None to keep it on the central device.
+CONF_CO2_ROOMS = "co2_sensor_rooms"
+CONF_RF_ROOMS = "rf_sensor_rooms"
 CONF_SCAN_INTERVAL = "scan_interval"
 
 # --- Defaults ----------------------------------------------------------------

@@ -50,9 +50,10 @@ MESSAGE_DEVICE_CLASSES: dict[str, BinarySensorDeviceClass | None] = {
     "error_system": BinarySensorDeviceClass.PROBLEM,
     "filter_device": BinarySensorDeviceClass.PROBLEM,
     "filter_recirculation": BinarySensorDeviceClass.PROBLEM,
-    "heat_pump_heating": BinarySensorDeviceClass.RUNNING,
-    "heat_pump_cooling": BinarySensorDeviceClass.RUNNING,
-    "heat_pump_continuous": BinarySensorDeviceClass.RUNNING,
+    # Deliberately no device_class for the three heat-pump flags:
+    # BinarySensorDeviceClass.RUNNING renders as "In Betrieb"/"Außer
+    # Betrieb", which reads as an availability judgement rather than a
+    # plain on/off state - see the same reasoning for ptc_active.
 }
 
 # Hide message flags that can't possibly occur when the underlying function
@@ -148,7 +149,6 @@ class ProxonCapabilityBinarySensor(ProxonCentralEntity, BinarySensorEntity):
     """A 'this option is currently selectable' diagnostic flag (register 315)."""
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_entity_registry_enabled_default = False
 
     def __init__(
         self,

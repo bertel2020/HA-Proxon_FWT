@@ -5,6 +5,14 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
+## 1.2.0 – 2026-09-05
+
+- **CO₂/humidity sensors can now optionally be assigned to a room.** The integration options (names step) now show a dropdown per sensor - "Central (no room)" or one of the configured rooms - and assigning one moves that sensor to the room's own device instead of the central device. Leaving it unassigned changes nothing.
+- Default sensor names "CO2 1" / "Luftfeuchte 1" are now "CO2-Sensor 1" / "Luftfeuchte-Sensor 1".
+- Central device temperature sensors renamed to a consistent "Temperatur *location*" scheme in German (e.g. "Temperatur Zuluft" instead of "Zuluft-Temperatur"); English names were already idiomatic and are unchanged.
+- The heat-pump heating/cooling/continuous-operation `binary_sensor` entities now show "On"/"Off" instead of "Running"/"Not running" (same reasoning as the `ptc_active` fix in 1.1.1: the `running` device class reads as an availability judgement rather than a plain on/off state).
+- Every entity that used to be disabled by default is now enabled from the start (refrigerant-circuit temperatures, the register-315 capability diagnostic sensors) - except the per-room mid-room temperature, which stays disabled by default.
+
 ## 1.1.1 – 2026-09-05
 
 - Bugfix: `binary_sensor.ptc_active` showed "Normal"/"Hot" instead of "On"/"Off", because the entity incorrectly used Home Assistant's `heat` device class (meant for temperature-threshold warnings, not a plain on/off state). Now correctly shows "On"/"Off".

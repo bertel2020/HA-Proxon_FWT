@@ -25,15 +25,17 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from . import ProxonConfigEntry
 from .const import (
     CONF_CO2_NAMES,
+    CONF_CO2_ROOMS,
     CONF_NUM_CO2_SENSORS,
     CONF_NUM_RF_SENSORS,
     CONF_RF_NAMES,
+    CONF_RF_ROOMS,
     CONF_ROOM_NAMES,
     OPERATING_MODE_READ_ONLY_STATES,
     OPERATING_MODE_WRITE_OPTIONS,
 )
 from .coordinator import ProxonData, ProxonModbusCoordinator
-from .entity import ProxonCentralEntity, ProxonRoomEntity
+from .entity import ProxonCentralEntity, ProxonEntity, ProxonRoomEntity, central_device_info, room_device_info
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -79,7 +81,6 @@ DEVICE_SENSORS: tuple[ProxonSensorDescription, ...] = (
     ProxonSensorDescription(
         key="temp_pre_evaporator",
         translation_key="temp_pre_evaporator",
-        entity_registry_enabled_default=False,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -88,7 +89,6 @@ DEVICE_SENSORS: tuple[ProxonSensorDescription, ...] = (
     ProxonSensorDescription(
         key="temp_evaporator",
         translation_key="temp_evaporator",
-        entity_registry_enabled_default=False,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -97,7 +97,6 @@ DEVICE_SENSORS: tuple[ProxonSensorDescription, ...] = (
     ProxonSensorDescription(
         key="temp_post_preheat",
         translation_key="temp_post_preheat",
-        entity_registry_enabled_default=False,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -106,7 +105,6 @@ DEVICE_SENSORS: tuple[ProxonSensorDescription, ...] = (
     ProxonSensorDescription(
         key="temp_pre_condenser",
         translation_key="temp_pre_condenser",
-        entity_registry_enabled_default=False,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -115,7 +113,6 @@ DEVICE_SENSORS: tuple[ProxonSensorDescription, ...] = (
     ProxonSensorDescription(
         key="temp_condenser",
         translation_key="temp_condenser",
-        entity_registry_enabled_default=False,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -214,8 +211,19 @@ async def async_setup_entry(
             ProxonRoomMidTempSensor(coordinator, entry.entry_id, i, room_name)
         )
 
+    def _assigned_room(rooms: list[int | None], i: int) -> tuple[int, str] | tuple[None, None]:
+        """Resolve sensor i's configured room index to (index, name), or
+        (None, None) if unassigned or the room no longer exists (e.g. the
+        room count was reduced after the assignment was made)."""
+        room_index = rooms[i] if i < len(rooms) else None
+        if room_index is None or room_index >= len(room_names):
+            return None, None
+        return room_index, room_names[room_index]
+
+    co2_rooms = entry.options.get(CONF_CO2_ROOMS, [])
     co2_names = entry.options.get(CONF_CO2_NAMES, [])
     for i, name in enumerate(co2_names[: entry.options.get(CONF_NUM_CO2_SENSORS, 0)]):
+        room_index, room_name = _assigned_room(co2_rooms, i)
         entities.append(
             ProxonExternalSensor(
                 coordinator,
@@ -226,11 +234,15 @@ async def async_setup_entry(
                 unit=CONCENTRATION_PARTS_PER_MILLION,
                 device_class=SensorDeviceClass.CO2,
                 value_fn=lambda d, idx=i: d.co2.get(idx),
+                room_index=room_index,
+                room_name=room_name,
             )
         )
 
+    rf_rooms = entry.options.get(CONF_RF_ROOMS, [])
     rf_names = entry.options.get(CONF_RF_NAMES, [])
     for i, name in enumerate(rf_names[: entry.options.get(CONF_NUM_RF_SENSORS, 0)]):
+        room_index, room_name = _assigned_room(rf_rooms, i)
         entities.append(
             ProxonExternalSensor(
                 coordinator,
@@ -241,6 +253,8 @@ async def async_setup_entry(
                 unit=PERCENTAGE,
                 device_class=SensorDeviceClass.HUMIDITY,
                 value_fn=lambda d, idx=i: d.humidity.get(idx),
+                room_index=room_index,
+                room_name=room_name,
             )
         )
 
@@ -291,8 +305,13 @@ class ProxonRoomMidTempSensor(ProxonRoomEntity, SensorEntity):
         return room.mid_temperature if room else None
 
 
-class ProxonExternalSensor(ProxonCentralEntity, SensorEntity):
-    """CO2 / humidity sensor connected to an external Proxon input."""
+class ProxonExternalSensor(ProxonEntity, SensorEntity):
+    """CO2 / humidity sensor connected to an external Proxon input.
+
+    Lives on the central device by default, but can be assigned to a room's
+    own device instead (see CONF_CO2_ROOMS / CONF_RF_ROOMS in the options
+    flow) for a sensor that's physically installed in that room.
+    """
 
     _attr_state_class = SensorStateClass.MEASUREMENT
 
@@ -306,8 +325,15 @@ class ProxonExternalSensor(ProxonCentralEntity, SensorEntity):
         unit: str,
         device_class: SensorDeviceClass,
         value_fn: Callable[[ProxonData], int | None],
+        room_index: int | None = None,
+        room_name: str | None = None,
     ) -> None:
-        super().__init__(coordinator, entry_id, device_name, key)
+        device_info = (
+            room_device_info(entry_id, room_index, room_name)
+            if room_index is not None
+            else central_device_info(entry_id, device_name)
+        )
+        super().__init__(coordinator, entry_id, key, device_info)
         self._attr_name = name
         self._attr_native_unit_of_measurement = unit
         self._attr_device_class = device_class
