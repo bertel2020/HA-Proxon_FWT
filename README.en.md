@@ -4,11 +4,15 @@
 
 <img src="https://raw.githubusercontent.com/bertel2020/HA-Proxon_FWT/main/brands/icon.png" alt="" width="64" height="64" align="left" style="margin-right: 12px">
 
-A UI-configurable Home Assistant custom integration for the **Proxon FWT - Frischluftwärmetechnik** ventilation unit, talking Modbus to its **FWT Modbus gateway**. It uses a proper config-entry integration: a config flow, a shared `DataUpdateCoordinator`, and typed entities (`climate`, `sensor`, `binary_sensor`, `switch`, `select`) — in the spirit of the [modernized Modbus architecture](https://developers.home-assistant.io/blog/2026/07/05/modernizing-modbus/) (config-entry setup instead of hand-written YAML register maps, one shared connection per device, entity-description-driven platforms).
+A UI-configurable Home Assistant custom integration for the **Proxon FWT - Frischluftwärmetechnik** ventilation unit, talking Modbus to its **FWT Modbus gateway**. It uses a proper config-entry integration: a config flow, a shared `DataUpdateCoordinator`, and typed entities (`climate`, `sensor`, `binary_sensor`, `switch`, `select`) — built on Home Assistant's [modernized Modbus architecture](https://developers.home-assistant.io/blog/2026/07/05/modernizing-modbus/) (config-entry setup instead of hand-written YAML register maps, the connection is a shared unit provided by the `modbus` integration, entity-description-driven platforms).
 
 Both transports are supported:
 - **Modbus TCP** — the gateway reachable over the network (e.g. `192.168.x.x:502`).
 - **Modbus RTU** — a direct USB-to-serial (RS-485) connection, e.g. `/dev/ttyUSB0`.
+
+## Requirements
+
+- Home Assistant **2026.8.0** or newer (the integration uses Home Assistant's `modbus` integration for the connection).
 
 ## Installation
 
