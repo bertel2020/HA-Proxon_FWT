@@ -1,8 +1,29 @@
-# Proxon FWT (Modbus) – Home-Assistant-Integration
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bertel2020/HA-Proxon_FWT/main/brands/logo.png" alt="Proxon FWT" width="160">
+</p>
 
-*[🇬🇧 English version](README.en.md)*
+<h1 align="center">Proxon FWT (Modbus)</h1>
 
-<img src="https://raw.githubusercontent.com/bertel2020/HA-Proxon_FWT/main/brands/icon.png" alt="" width="64" height="64" align="left" style="margin-right: 12px">
+<p align="center">
+  Home-Assistant-Integration für die Proxon FWT Frischluftwärmetechnik – per Modbus TCP oder RTU, komplett über die Oberfläche einrichtbar.
+</p>
+
+<p align="center">
+  <a href="https://github.com/hacs/integration"><img src="https://img.shields.io/badge/HACS-Custom-41BDF5.svg" alt="HACS Custom"></a>
+  <a href="https://www.home-assistant.io/"><img src="https://img.shields.io/badge/Home%20Assistant-Custom%20Integration-18BCF2.svg?logo=home-assistant&logoColor=white" alt="Home Assistant"></a>
+  <a href="https://github.com/bertel2020/HA-Proxon_FWT/releases"><img src="https://img.shields.io/github/v/release/bertel2020/HA-Proxon_FWT?sort=semver&include_prereleases" alt="Release"></a>
+  <a href="https://github.com/bertel2020/HA-Proxon_FWT/actions/workflows/hassfest.yaml"><img src="https://github.com/bertel2020/HA-Proxon_FWT/actions/workflows/hassfest.yaml/badge.svg" alt="hassfest"></a>
+  <a href="https://github.com/bertel2020/HA-Proxon_FWT/actions/workflows/hacs.yaml"><img src="https://github.com/bertel2020/HA-Proxon_FWT/actions/workflows/hacs.yaml/badge.svg" alt="HACS"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/bertel2020/HA-Proxon_FWT" alt="Lizenz"></a>
+</p>
+
+<p align="center">
+  <a href="https://buymeacoffee.com/bertel2020"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support-FFDD00?logo=buy-me-a-coffee&logoColor=black" alt="Buy Me a Coffee"></a>
+  <a href="https://ko-fi.com/bertel2020"><img src="https://img.shields.io/badge/Ko--fi-support-FF5E5B?logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
+  <a href="https://paypal.me/RobertoMartins"><img src="https://img.shields.io/badge/PayPal-donate-00457C?logo=paypal&logoColor=white" alt="PayPal"></a>
+</p>
+
+<p align="center"><em><a href="README.en.md">🇬🇧 English version</a></em></p>
 
 Eine über die Oberfläche konfigurierbare Home-Assistant-Custom-Integration für die **Proxon FWT - Frischluftwärmetechnik**, die per Modbus mit ihrem **FWT Modbus-Gateway** kommuniziert. Sie nutzt eine vollwertige Config-Entry-Integration: einen Config-Flow, einen gemeinsam genutzten `DataUpdateCoordinator` und typisierte Entities (`climate`, `sensor`, `binary_sensor`, `switch`, `select`) — auf Basis der [modernisierten Modbus-Architektur](https://developers.home-assistant.io/blog/2026/07/05/modernizing-modbus/) von Home Assistant (Einrichtung über einen Config-Entry statt handgeschriebener YAML-Registerlisten, die Verbindung kommt als gemeinsam genutzte Unit von der `modbus`-Integration, Plattformen auf Basis von Entity-Descriptions).
 
