@@ -7,8 +7,11 @@ from typing import Any
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
-from homeassistant.core import callback
+from homeassistant.components.modbus import async_get_temporary_unit
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import selector
+from modbus_connection import ModbusSerialParams, ModbusTcpParams
 
 from .const import (
     CONF_BAUDRATE,
@@ -48,12 +51,7 @@ from .const import (
     MAX_ROOMS,
     REG_DEVICE_DATA_BASE,
 )
-from .hub import (
-    ProxonModbusError,
-    ProxonModbusHub,
-    SerialConnectionParams,
-    TcpConnectionParams,
-)
+from .hub import ProxonModbusError, ProxonModbusHub
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -74,19 +72,21 @@ def _default_room_name(index: int) -> str:
 
 
 async def _async_test_connection(
-    connection_type: str,
-    params: TcpConnectionParams | SerialConnectionParams,
+    hass: HomeAssistant,
+    params: ModbusTcpParams | ModbusSerialParams,
     unit_id: int,
 ) -> None:
-    """Open a connection and read one known register to confirm a Proxon
-    FWT is actually answering - not just that a TCP port/serial device
-    exists. Raises ProxonModbusError on failure; always closes the hub."""
-    hub = ProxonModbusHub(connection_type, params, unit_id)
+    """Read one known register to confirm a Proxon FWT is actually answering -
+    not just that a TCP port/serial device exists. Raises ProxonModbusError on
+    failure."""
     try:
-        await hub.async_setup()
-        await hub.async_read_holding_registers(REG_DEVICE_DATA_BASE, 1)
-    finally:
-        await hub.async_close()
+        async with async_get_temporary_unit(hass, params, unit_id) as unit:
+            await ProxonModbusHub(unit).async_read_holding_registers(
+                REG_DEVICE_DATA_BASE, 1
+            )
+    except HomeAssistantError as err:
+        # e.g. the same serial port is already in use with other line settings
+        raise ProxonModbusError(str(err)) from err
 
 
 class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -121,8 +121,8 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
 
             try:
                 await _async_test_connection(
-                    CONNECTION_TYPE_TCP,
-                    TcpConnectionParams(host=user_input[CONF_HOST], port=port),
+                    self.hass,
+                    ModbusTcpParams(host=user_input[CONF_HOST], port=port),
                     unit_id,
                 )
             except ProxonModbusError as err:
@@ -178,9 +178,9 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
 
             try:
                 await _async_test_connection(
-                    CONNECTION_TYPE_SERIAL,
-                    SerialConnectionParams(
-                        port=user_input[CONF_SERIAL_PORT],
+                    self.hass,
+                    ModbusSerialParams(
+                        device=user_input[CONF_SERIAL_PORT],
                         baudrate=baudrate,
                         bytesize=bytesize,
                         parity=user_input[CONF_PARITY],

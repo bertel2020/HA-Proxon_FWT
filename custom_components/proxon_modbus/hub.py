@@ -1,23 +1,33 @@
-"""Modbus connection handling for the Proxon FWT integration.
+"""Modbus access for the Proxon FWT integration.
 
-A single hub instance owns one Modbus connection (TCP or serial/RTU) for the
-whole config entry and serializes all reads/writes through an asyncio.Lock,
-so the integration never opens more than one connection per configured
-device and never overlaps requests on the wire.
+The connection itself is owned by Home Assistant's `modbus` integration: it
+hands out a unit on a shared connection (one connection per physical link,
+requests serialized, lazy connect/reconnect), so this module only wraps that
+unit and normalizes its errors to ProxonModbusError.
 """
 from __future__ import annotations
 
-import asyncio
-import inspect
 import logging
-from dataclasses import dataclass
+from collections.abc import Mapping
+from typing import Any
 
-from pymodbus.client import AsyncModbusSerialClient, AsyncModbusTcpClient
+from homeassistant.const import CONF_HOST, CONF_PORT
+from homeassistant.exceptions import HomeAssistantError
+from modbus_connection import (
+    ModbusError,
+    ModbusSerialParams,
+    ModbusTcpParams,
+    ModbusUnit,
+)
 
 from .const import (
-    CONNECTION_TYPE_SERIAL,
+    CONF_BAUDRATE,
+    CONF_BYTESIZE,
+    CONF_CONNECTION_TYPE,
+    CONF_PARITY,
+    CONF_SERIAL_PORT,
+    CONF_STOPBITS,
     CONNECTION_TYPE_TCP,
-    DEFAULT_TIMEOUT,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -27,137 +37,57 @@ class ProxonModbusError(Exception):
     """Raised when a Modbus read or write to the Proxon FWT fails."""
 
 
-@dataclass
-class TcpConnectionParams:
-    """Connection parameters for a TCP-connected Proxon FWT Modbus gateway."""
+def build_params(
+    connection_type: str, data: Mapping[str, Any]
+) -> ModbusTcpParams | ModbusSerialParams:
+    """Build the connection params for the `modbus` integration.
 
-    host: str
-    port: int
+    Home Assistant's selectors don't guarantee int types (e.g. NumberSelector
+    returns float), so everything numeric is cast defensively.
+    """
+    if connection_type == CONNECTION_TYPE_TCP:
+        return ModbusTcpParams(host=data[CONF_HOST], port=int(data[CONF_PORT]))
+    return ModbusSerialParams(
+        device=data[CONF_SERIAL_PORT],
+        baudrate=int(data[CONF_BAUDRATE]),
+        bytesize=int(data[CONF_BYTESIZE]),
+        parity=data[CONF_PARITY],
+        stopbits=int(data[CONF_STOPBITS]),
+    )
 
 
-@dataclass
-class SerialConnectionParams:
-    """Connection parameters for an RTU-connected Proxon FWT Modbus gateway."""
-
-    port: str
-    baudrate: int
-    bytesize: int
-    parity: str
-    stopbits: int
+def params_from_entry_data(
+    data: Mapping[str, Any],
+) -> ModbusTcpParams | ModbusSerialParams:
+    """Build connection params from a config entry's data."""
+    return build_params(data[CONF_CONNECTION_TYPE], data)
 
 
 class ProxonModbusHub:
-    """Owns the Modbus client and serializes access to a single device."""
+    """Reads and writes holding registers of one Proxon FWT unit."""
 
-    def __init__(
-        self,
-        connection_type: str,
-        params: TcpConnectionParams | SerialConnectionParams,
-        unit_id: int,
-    ) -> None:
-        self._connection_type = connection_type
-        self._params = params
-        # Home Assistant's selectors don't guarantee int types (e.g.
-        # NumberSelector returns float); cast defensively so a stray float
-        # never reaches pymodbus's PDU encoding (which requires real ints).
-        self.unit_id = int(unit_id)
-        self._lock = asyncio.Lock()
-        self._client = self._build_client()
-        # pymodbus renamed the per-request unit-id keyword from `slave` to
-        # `device_id` in 3.9; detect which one this installed version wants
-        # so we work across the whole 3.6-3.x range without pinning tightly.
-        self._unit_kwarg = (
-            "device_id"
-            if "device_id" in inspect.signature(self._client.read_holding_registers).parameters
-            else "slave"
-        )
-
-    def _build_client(self):
-        if self._connection_type == CONNECTION_TYPE_TCP:
-            assert isinstance(self._params, TcpConnectionParams)
-            return AsyncModbusTcpClient(
-                host=self._params.host,
-                port=int(self._params.port),
-                timeout=DEFAULT_TIMEOUT,
-            )
-        if self._connection_type == CONNECTION_TYPE_SERIAL:
-            assert isinstance(self._params, SerialConnectionParams)
-            return AsyncModbusSerialClient(
-                port=self._params.port,
-                baudrate=int(self._params.baudrate),
-                bytesize=int(self._params.bytesize),
-                parity=self._params.parity,
-                stopbits=int(self._params.stopbits),
-                timeout=DEFAULT_TIMEOUT,
-            )
-        raise ValueError(f"Unknown connection type: {self._connection_type}")
-
-    async def async_setup(self) -> None:
-        """Open the connection."""
-        async with self._lock:
-            try:
-                connected = await self._client.connect()
-            except Exception as err:  # noqa: BLE001 - pymodbus/pyserial raise a
-                # wide, version-dependent variety of exceptions here (OSError,
-                # socket.gaierror, asyncio.TimeoutError, SerialException, ...)
-                # instead of always returning False; normalize all of them to
-                # ProxonModbusError so callers only ever have one thing to
-                # catch.
-                raise ProxonModbusError(
-                    f"Could not establish Modbus connection to the Proxon FWT: {err}"
-                ) from err
-            if not connected:
-                raise ProxonModbusError(
-                    "Could not establish Modbus connection to the Proxon FWT"
-                )
-
-    async def async_close(self) -> None:
-        """Close the connection."""
-        async with self._lock:
-            self._client.close()
-
-    @property
-    def connected(self) -> bool:
-        return bool(self._client.connected)
+    def __init__(self, unit: ModbusUnit) -> None:
+        self._unit = unit
 
     async def async_read_holding_registers(
         self, address: int, count: int
     ) -> list[int]:
         """Read `count` holding registers starting at `address`."""
-        async with self._lock:
-            try:
-                if not self._client.connected:
-                    await self._client.connect()
-                result = await self._client.read_holding_registers(
-                    address, count=count, **{self._unit_kwarg: self.unit_id}
-                )
-            except Exception as err:  # noqa: BLE001 - see async_setup
-                raise ProxonModbusError(
-                    f"Error reading register {address} ({count}): {err}"
-                ) from err
-            if result.isError():
-                raise ProxonModbusError(
-                    f"Modbus error reading register {address} ({count}): {result}"
-                )
-            return list(result.registers)
+        try:
+            return list(await self._unit.read_holding_registers(address, count))
+        except (ModbusError, HomeAssistantError, OSError, TimeoutError) as err:
+            raise ProxonModbusError(
+                f"Error reading register {address} ({count}): {err}"
+            ) from err
 
     async def async_write_register(self, address: int, value: int) -> None:
         """Write a single holding register."""
-        async with self._lock:
-            try:
-                if not self._client.connected:
-                    await self._client.connect()
-                result = await self._client.write_register(
-                    address, value, **{self._unit_kwarg: self.unit_id}
-                )
-            except Exception as err:  # noqa: BLE001 - see async_setup
-                raise ProxonModbusError(
-                    f"Error writing {value} to register {address}: {err}"
-                ) from err
-            if result.isError():
-                raise ProxonModbusError(
-                    f"Modbus error writing {value} to register {address}: {result}"
-                )
+        try:
+            await self._unit.write_register(address, value)
+        except (ModbusError, HomeAssistantError, OSError, TimeoutError) as err:
+            raise ProxonModbusError(
+                f"Error writing {value} to register {address}: {err}"
+            ) from err
 
 
 def decode_int16(raw: int) -> int:

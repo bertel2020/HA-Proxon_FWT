@@ -6,6 +6,14 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 2.0.0 – 2026-10-14
+
+- **Umstellung auf das neue Modbus-Modell von Home Assistant:** Die Integration öffnet keine eigene pymodbus-Verbindung mehr, sondern fordert über `homeassistant.components.modbus.async_get_unit` eine Unit auf einer gemeinsam genutzten Verbindung an (Abhängigkeit `modbus`, Bibliothek `modbus-connection`). Anfragen werden zentral serialisiert, die Verbindung wird beim ersten Lesen geöffnet und nach Abbruch automatisch wieder aufgebaut, und sie schließt sich, wenn der letzte Nutzer entladen wird.
+- Der Verbindungstest im Config-Flow nutzt `async_get_temporary_unit`.
+- Konfiguration, Unique-IDs, Entities und Register bleiben unverändert — bestehende Einrichtungen funktionieren weiter.
+- Die eigene Abhängigkeit `pymodbus` entfällt; die eigene Versionserkennung (`slave`/`device_id`) und Lock-Logik wurden entfernt.
+- **Voraussetzung:** Eine Home-Assistant-Version, die die neue `modbus`-Unit-API enthält.
+
 ## 1.2.1 – 2026-09-05
 
 - **Neue Option "Kühlen am Gerät verfügbar"** (Ersteinrichtung und Options-Flow, Standard: Ja) als Hauptschalter für alle Kühl-Entities:
