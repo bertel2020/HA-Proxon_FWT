@@ -62,6 +62,12 @@ DEVICE_BINARY_SENSORS: tuple[ProxonBinarySensorDescription, ...] = (
     ),
 )
 
+# Operating states of the heat pump: technical status rather than something
+# to act on, so they go under "Diagnostic" on the device page.
+DIAGNOSTIC_MESSAGES = frozenset(
+    {"heat_pump_heating", "heat_pump_cooling", "heat_pump_continuous"}
+)
+
 MESSAGE_DEVICE_CLASSES: dict[str, BinarySensorDeviceClass | None] = {
     "error_system": BinarySensorDeviceClass.PROBLEM,
     "filter_device": BinarySensorDeviceClass.PROBLEM,
@@ -162,6 +168,8 @@ class ProxonMessageBinarySensor(ProxonCentralEntity, BinarySensorEntity):
         self._key = key
         self._attr_translation_key = key
         self._attr_device_class = MESSAGE_DEVICE_CLASSES.get(key)
+        if key in DIAGNOSTIC_MESSAGES:
+            self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def available(self) -> bool:

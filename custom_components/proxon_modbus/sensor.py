@@ -89,6 +89,7 @@ DEVICE_SENSORS: tuple[ProxonSensorDescription, ...] = (
     ),
     ProxonSensorDescription(
         key="temp_pre_evaporator",
+        entity_category=EntityCategory.DIAGNOSTIC,
         translation_key="temp_pre_evaporator",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -97,6 +98,7 @@ DEVICE_SENSORS: tuple[ProxonSensorDescription, ...] = (
     ),
     ProxonSensorDescription(
         key="temp_evaporator",
+        entity_category=EntityCategory.DIAGNOSTIC,
         translation_key="temp_evaporator",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -105,6 +107,7 @@ DEVICE_SENSORS: tuple[ProxonSensorDescription, ...] = (
     ),
     ProxonSensorDescription(
         key="temp_post_preheat",
+        entity_category=EntityCategory.DIAGNOSTIC,
         translation_key="temp_post_preheat",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -113,6 +116,7 @@ DEVICE_SENSORS: tuple[ProxonSensorDescription, ...] = (
     ),
     ProxonSensorDescription(
         key="temp_pre_condenser",
+        entity_category=EntityCategory.DIAGNOSTIC,
         translation_key="temp_pre_condenser",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -121,6 +125,7 @@ DEVICE_SENSORS: tuple[ProxonSensorDescription, ...] = (
     ),
     ProxonSensorDescription(
         key="temp_condenser",
+        entity_category=EntityCategory.DIAGNOSTIC,
         translation_key="temp_condenser",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -129,6 +134,7 @@ DEVICE_SENSORS: tuple[ProxonSensorDescription, ...] = (
     ),
     ProxonSensorDescription(
         key="temp_compressor",
+        entity_category=EntityCategory.DIAGNOSTIC,
         translation_key="temp_compressor",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -145,6 +151,7 @@ DEVICE_SENSORS: tuple[ProxonSensorDescription, ...] = (
     ),
     ProxonSensorDescription(
         key="compressor_speed",
+        entity_category=EntityCategory.DIAGNOSTIC,
         translation_key="compressor_speed",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=REVOLUTIONS_PER_MINUTE,

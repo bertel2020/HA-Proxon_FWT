@@ -6,6 +6,10 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 2.6.2 – 2026-11-02
+
+- **Geräteseite besser gruppiert:** Die technischen Kältekreis-Werte (Temperatur vor Verdampfer, Verdampfer, nach Vorwärme, vor Kondensator, Kondensator, Kompressor, Drehzahl Kompressor) und die Wärmepumpen-Betriebszustände (Heiz-, Kühl-, Dauerbetrieb) stehen jetzt unter „Diagnose“. Die Entities bleiben aktiviert; Fehler-, Filter-Meldungen und die normalen Temperaturen bleiben unter „Sensoren“. Hinweis: Diagnose-Entities erscheinen nicht in automatisch erzeugten Dashboards und Bereichskarten.
+
 ## 2.6.1 – 2026-11-02
 
 - **Thermostat-Betriebsart korrigiert:** Die `climate`-Entity zeigte immer „Heizen/Kühlen“. Jetzt ist sie „Heizen“ und nur dann „Heizen/Kühlen“, wenn „Kühlen am Gerät verfügbar“ aktiv ist, das Gerät Kühlen freigeschaltet hat (Register 315, Bit 8) und die Kühlfreigabe (Register 306) an ist.
