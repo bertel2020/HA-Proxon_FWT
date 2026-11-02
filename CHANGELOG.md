@@ -6,6 +6,11 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 2.6.1 – 2026-11-02
+
+- **Thermostat-Betriebsart korrigiert:** Die `climate`-Entity zeigte immer „Heizen/Kühlen“. Jetzt ist sie „Heizen“ und nur dann „Heizen/Kühlen“, wenn „Kühlen am Gerät verfügbar“ aktiv ist, das Gerät Kühlen freigeschaltet hat (Register 315, Bit 8) und die Kühlfreigabe (Register 306) an ist.
+- **Einstellbarer Temperaturbereich korrigiert:** Statt fest 18–24 °C gilt der Bereich laut Registerliste: Raum 1 (Wohnen) 18–30 °C direkt, alle anderen Räume ihre Mittentemperatur (Register 220+) ±3 °C in ganzen Grad, begrenzt auf 18–30 °C. Fehlt eine plausible Mittentemperatur, gilt 18–30 °C.
+
 ## 2.6.0 – 2026-11-02
 
 - **Neuer Diagnose-Sensor „Letzter Schreibfehler“:** Zeigt das zuletzt fehlgeschlagene Schreiben (Register, Wert, Grund). Attribute: Zeitpunkt und Anzahl der Fehler seit dem Start. So ist ein vom Gerät abgelehnter Befehl sichtbar, ohne ins Log zu schauen.

@@ -82,7 +82,7 @@ Es werden zwei Arten von Geräten angelegt: ein **zentrales Gerät** (standardm�
 
 **Je Raum:**
 
-- **`climate.<raum>`** — aktuelle Temperatur (Register `150+n`), Solltemperatur (gelesen von `180+n`, geschrieben auf das separate, nur schreibbare Register `200+n`). Der Home-Assistant-Regler ist auf 18–24 °C begrenzt.
+- **`climate.<raum>`** — aktuelle Temperatur (Register `150+n`), Solltemperatur (gelesen von `180+n`, geschrieben auf das separate, nur schreibbare Register `200+n`). Der einstellbare Bereich folgt dem Gerät: Raum 1 (Wohnen) direkt 18–30 °C, alle anderen Räume ihre Mittentemperatur ±3 °C (ganze Grad, innerhalb 18–30 °C; fehlt die Mittentemperatur, gilt 18–30 °C). Die Betriebsart ist „Heizen“, und nur „Heizen/Kühlen“, wenn Kühlen am Gerät verfügbar (Freischaltung, Register 315) und freigegeben (Register 306) ist.
 - **`binary_sensor.*`** — PTC-Element aktiv (aktueller **Zustand**, Register 300).
 - **`switch.*`** — PTC-Element freigegeben (**Freigabe**, Register 301/302).
 - **`sensor.*`** — Mittentemperatur (Raum 2–N, Rückmeldung vom Bedienteil, standardmäßig deaktiviert).
@@ -180,7 +180,7 @@ Die Tabellen unten gehen vom Standard-Gerätenamen **"Proxon FWT"** (→ `proxon
 
 | Friendly Name | Entity-ID | Beschreibung |
 |---|---|---|
-| Wohnen (Raumname, `climate`) | `climate.wohnen` | Ist-Temperatur (Register 150+n) und Solltemperatur (gelesen von 180+n, geschrieben auf 200+n), Regler 18–24 °C |
+| Wohnen (Raumname, `climate`) | `climate.wohnen` | Ist-Temperatur (Register 150+n) und Solltemperatur (gelesen von 180+n, geschrieben auf 200+n), Regler 18–30 °C (Raum 1) bzw. Mittentemperatur ±3 °C |
 | PTC-Element aktiv | `binary_sensor.wohnen_ptc_element_aktiv` | Aktueller **Zustand** der elektrischen Zusatzheizung dieses Raums (Register 300, Bit n) |
 | PTC-Element freigegeben | `switch.wohnen_ptc_element_freigegeben` | **Freigabe** der elektrischen Zusatzheizung dieses Raums (Register 301 schreiben / 302 lesen, Bit n) |
 | Mittentemperatur | `sensor.wohnen_mittentemperatur` | Rückmeldung vom Bedienteil des Raums (Register 220+n, nur Raum 2–N); standardmäßig deaktiviert |

@@ -80,7 +80,7 @@ Two kinds of devices are created: a **central device** ("Proxon FWT" by default)
 
 **Per room:**
 
-- **`climate.<room>`** — current temperature (register `150+n`), target temperature (read from `180+n`, written to the separate write-only register `200+n`). Home Assistant's slider is limited to 18–24 °C.
+- **`climate.<room>`** — current temperature (register `150+n`), target temperature (read from `180+n`, written to the separate write-only register `200+n`). The settable range follows the device: room 1 (Wohnen) directly 18–30 °C, every other room its mid temperature ±3 °C (whole degrees, within 18–30 °C; without a mid temperature 18–30 °C applies). The mode is "Heat", and "Heat/Cool" only when cooling is available on the unit (unlock bit, register 315) and enabled (register 306).
 - **`binary_sensor.*`** — PTC element active (current **state**, register 300).
 - **`switch.*`** — PTC element enabled (**enable**, registers 301/302).
 - **`sensor.*`** — mid-room temperature (rooms 2–N, control-panel readback, disabled by default).
@@ -178,7 +178,7 @@ The tables below assume the default device name **"Proxon FWT"** (→ `proxon_fw
 
 | Friendly Name | Entity ID | Description |
 |---|---|---|
-| Wohnen (room name, `climate`) | `climate.wohnen` | Actual temperature (register 150+n) and target temperature (read from 180+n, written to 200+n), 18-24 °C slider |
+| Wohnen (room name, `climate`) | `climate.wohnen` | Actual temperature (register 150+n) and target temperature (read from 180+n, written to 200+n), 18–30 °C slider (room 1) or mid temperature ±3 °C |
 | PTC element active | `binary_sensor.wohnen_ptc_element_active` | Current **state** of this room's electric reheater element (register 300, bit n) |
 | PTC element enabled | `switch.wohnen_ptc_element_enabled` | **Enable** for this room's electric reheater element (register 301 write / 302 read, bit n) |
 | Mid-room temperature | `sensor.wohnen_mid_room_temperature` | Readback from the room's control panel (register 220+n, rooms 2-N only); disabled by default |

@@ -8,6 +8,7 @@ is expected to reflect it on the next poll.
 """
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from homeassistant.components.climate import (
@@ -21,9 +22,12 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import ProxonConfigEntry
 from .const import (
+    CONF_COOLING_AVAILABLE,
     CONF_ROOM_NAMES,
+    DEFAULT_COOLING_AVAILABLE,
     REG_ROOM_SETPOINT_WRITE_BASE,
     ROOM_SETPOINT_MAX,
+    ROOM_SETPOINT_MID_SPAN,
     ROOM_SETPOINT_MIN,
 )
 from .coordinator import BLOCK_ROOMS, ProxonModbusCoordinator
@@ -47,21 +51,21 @@ async def async_setup_entry(
 
 
 class ProxonRoomClimate(ProxonRoomEntity, ClimateEntity):
-    _blocks = frozenset({BLOCK_ROOMS})
     """A single room of the Proxon FWT, controlled via its setpoint registers.
 
     This is the room device's main entity, so it takes no name of its own
     (`_attr_has_entity_name` on the base entity makes it show up as just the
     room's device name, e.g. "Wohnen" rather than "Wohnen Wohnen").
+
+    The settable range follows the device: room 1 takes 18-30 degC directly,
+    every other room its mid temperature +/- 3 degC. The mode is HEAT, or
+    HEAT_COOL while cooling is available and enabled on the unit.
     """
 
+    _blocks = frozenset({BLOCK_ROOMS})
     _attr_name = None
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
-    _attr_hvac_modes = [HVACMode.HEAT_COOL]
-    _attr_hvac_mode = HVACMode.HEAT_COOL
-    _attr_min_temp = ROOM_SETPOINT_MIN
-    _attr_max_temp = ROOM_SETPOINT_MAX
     _attr_target_temperature_step = 1
 
     def __init__(
@@ -72,6 +76,46 @@ class ProxonRoomClimate(ProxonRoomEntity, ClimateEntity):
         room_name: str,
     ) -> None:
         super().__init__(coordinator, entry_id, room_index, room_name, f"room_{room_index}_climate")
+
+    @property
+    def hvac_mode(self) -> HVACMode:
+        """HEAT_COOL only if the unit has cooling and it is enabled, else HEAT."""
+        options = self.coordinator.config_entry.options
+        if not options.get(CONF_COOLING_AVAILABLE, DEFAULT_COOLING_AVAILABLE):
+            return HVACMode.HEAT
+        data = self.coordinator.data
+        if data.capabilities.get("cooling_enable_possible") and data.function_block.get(
+            "cooling_enable_read"
+        ):
+            return HVACMode.HEAT_COOL
+        return HVACMode.HEAT
+
+    @property
+    def hvac_modes(self) -> list[HVACMode]:
+        return [self.hvac_mode]
+
+    def _setpoint_limits(self) -> tuple[int, int]:
+        """Settable range: 18-30 degC for room 1, otherwise the room's mid
+        temperature +/- 3 degC (clamped to 18-30, whole degrees)."""
+        if self._room_index == 0:
+            return ROOM_SETPOINT_MIN, ROOM_SETPOINT_MAX
+        room = self.coordinator.data.rooms.get(self._room_index)
+        mid = room.mid_temperature if room else None
+        # An implausible mid temperature (not reported by the panel) falls
+        # back to the full device range.
+        if mid is None or not ROOM_SETPOINT_MIN - 8 <= mid <= ROOM_SETPOINT_MAX + 5:
+            return ROOM_SETPOINT_MIN, ROOM_SETPOINT_MAX
+        low = max(ROOM_SETPOINT_MIN, math.ceil(mid - ROOM_SETPOINT_MID_SPAN))
+        high = min(ROOM_SETPOINT_MAX, math.floor(mid + ROOM_SETPOINT_MID_SPAN))
+        return (low, high) if low <= high else (ROOM_SETPOINT_MIN, ROOM_SETPOINT_MAX)
+
+    @property
+    def min_temp(self) -> float:
+        return self._setpoint_limits()[0]
+
+    @property
+    def max_temp(self) -> float:
+        return self._setpoint_limits()[1]
 
     @property
     def current_temperature(self) -> float | None:

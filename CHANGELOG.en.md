@@ -5,6 +5,11 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
+## 2.6.1 – 2026-11-02
+
+- **Thermostat mode fixed:** the `climate` entity always showed "Heat/Cool". It is now "Heat", and "Heat/Cool" only when "Cooling available on this unit" is on, the device has unlocked cooling (register 315, bit 8) and the cooling release (register 306) is on.
+- **Settable temperature range fixed:** instead of a fixed 18–24 °C the range follows the register list: room 1 (Wohnen) 18–30 °C directly, every other room its mid temperature (register 220+) ±3 °C in whole degrees, clamped to 18–30 °C. Without a plausible mid temperature 18–30 °C applies.
+
 ## 2.6.0 – 2026-11-02
 
 - **New diagnostic sensor "Last write error":** shows the most recent failed write (register, value, reason). Attributes: time and number of errors since startup. A command the device rejected is visible without reading the log.

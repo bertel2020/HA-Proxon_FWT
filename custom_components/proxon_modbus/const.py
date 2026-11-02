@@ -89,8 +89,13 @@ DEFAULT_ROOM_NAMES = [
     "Arbeiten",
 ]
 
+# Setpoint limits per the register list: room 1 (Wohnen) accepts a direct
+# 18-30 degC selection; every other room can only be set to its own mid
+# temperature (register 220+) +/- ROOM_SETPOINT_MID_SPAN ("Auswahl moeglich
+# Mittentemperatur +/- 3 degC"), always inside the device's 18-30 degC range.
 ROOM_SETPOINT_MIN = 18
-ROOM_SETPOINT_MAX = 24
+ROOM_SETPOINT_MAX = 30
+ROOM_SETPOINT_MID_SPAN = 3
 
 # --- Register addresses -------------------------------------------------------
 
