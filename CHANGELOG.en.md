@@ -5,6 +5,10 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
+## 2.4.0 – 2026-11-02
+
+- **Skip rooms that are not installed:** an empty room name in the names step of the options leaves that room out — no device, no entities. This covers gaps in the room numbering (e.g. rooms 1–3 and 5 but no room 4); the registers are still read because the order determines the register address.
+
 ## 2.3.0 – 2026-11-02
 
 - **Orphaned room devices are removed:** when the room count is reduced in the options, the devices of rooms that are no longer configured disappear from Home Assistant on reload (only this integration's devices).

@@ -116,6 +116,8 @@ async def async_setup_entry(
 
     room_names = entry.options.get(CONF_ROOM_NAMES, [])
     for i, room_name in enumerate(room_names):
+        if not room_name:
+            continue  # an empty name means this room slot is not installed
         entities.append(
             ProxonRoomPtcActiveSensor(coordinator, entry.entry_id, i, room_name)
         )

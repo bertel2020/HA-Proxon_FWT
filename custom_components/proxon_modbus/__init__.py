@@ -77,6 +77,7 @@ def _remove_stale_room_devices(hass: HomeAssistant, entry: ProxonConfigEntry) ->
     keep = {(DOMAIN, entry.entry_id)} | {
         (DOMAIN, f"{entry.entry_id}_room_{index}")
         for index, name in enumerate(entry.options.get(CONF_ROOM_NAMES, []))
+        if name
     }
     registry = dr.async_get(hass)
     for device in dr.async_entries_for_config_entry(registry, entry.entry_id):

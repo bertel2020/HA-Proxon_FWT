@@ -215,8 +215,8 @@ async def async_setup_entry(
 
     room_names = entry.options.get(CONF_ROOM_NAMES, [])
     for i, room_name in enumerate(room_names):
-        if i == 0:
-            continue  # no mid-room sensor for the main room (register base starts at room 2)
+        if i == 0 or not room_name:
+            continue  # no mid-room sensor for the main room (register base starts at room 2); empty name = room slot not installed
         entities.append(
             ProxonRoomMidTempSensor(coordinator, entry.entry_id, i, room_name)
         )
@@ -226,7 +226,7 @@ async def async_setup_entry(
         (None, None) if unassigned or the room no longer exists (e.g. the
         room count was reduced after the assignment was made)."""
         room_index = rooms[i] if i < len(rooms) else None
-        if room_index is None or room_index >= len(room_names):
+        if room_index is None or room_index >= len(room_names) or not room_names[room_index]:
             return None, None
         return room_index, room_names[room_index]
 

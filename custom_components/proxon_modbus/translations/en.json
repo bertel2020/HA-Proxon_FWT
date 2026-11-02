@@ -64,7 +64,7 @@
       },
       "names": {
         "title": "Names",
-        "description": "Give each room and external sensor a name. Optionally assign each room to a Home Assistant area (room_N_area): the room's device is then placed in that area. Rooms without an area are left unchanged."
+        "description": "Give each room and external sensor a name. Leave a room name empty if that room is not installed: it is then skipped (no device, no entities). Optionally assign each room to a Home Assistant area (room_N_area): the room's device is then placed in that area. Rooms without an area are left unchanged."
       }
     }
   },

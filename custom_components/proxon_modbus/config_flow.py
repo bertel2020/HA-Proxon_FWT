@@ -400,7 +400,8 @@ class ProxonModbusOptionsFlow(OptionsFlow):
 
         if user_input is not None:
             room_names = [
-                user_input[f"room_{i + 1}"] for i in range(num_rooms)
+                (user_input.get(f"room_{i + 1}") or "").strip()
+                for i in range(num_rooms)
             ]
             room_areas = [
                 user_input.get(f"room_{i + 1}_area") or None for i in range(num_rooms)
@@ -420,6 +421,7 @@ class ProxonModbusOptionsFlow(OptionsFlow):
             }
             return self.async_create_entry(title="", data=new_options)
 
+        # Empty stored name = this room slot is not installed (skipped).
         room_labels = [
             existing_rooms[i] if i < len(existing_rooms) else _default_room_name(i + 1)
             for i in range(num_rooms)
@@ -434,17 +436,24 @@ class ProxonModbusOptionsFlow(OptionsFlow):
         ] + [
             selector.SelectOptionDict(value=str(i), label=room_labels[i])
             for i in range(num_rooms)
+            if room_labels[i]
         ]
 
         def room_default(existing_rooms_assignment: list[int | None], i: int) -> str:
             if i >= len(existing_rooms_assignment) or existing_rooms_assignment[i] is None:
                 return _NO_ROOM
             room_index = existing_rooms_assignment[i]
-            return str(room_index) if room_index < num_rooms else _NO_ROOM
+            if room_index >= num_rooms or not room_labels[room_index]:
+                return _NO_ROOM
+            return str(room_index)
 
         fields: dict[Any, Any] = {}
         for i in range(num_rooms):
-            fields[vol.Required(f"room_{i + 1}", default=room_labels[i])] = str
+            fields[
+                vol.Optional(
+                    f"room_{i + 1}", description={"suggested_value": room_labels[i]}
+                )
+            ] = str
             area_default = (
                 existing_room_areas[i] if i < len(existing_room_areas) else None
             )

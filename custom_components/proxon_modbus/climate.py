@@ -42,6 +42,7 @@ async def async_setup_entry(
     async_add_entities(
         ProxonRoomClimate(coordinator, entry.entry_id, i, room_name)
         for i, room_name in enumerate(room_names)
+        if room_name  # an empty name means this room slot is not installed
     )
 
 
