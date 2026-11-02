@@ -77,7 +77,7 @@ Es werden zwei Arten von Geräten angelegt: ein **zentrales Gerät** (standardm�
 
 - **`sensor.*`** — Zu-/Ab-/Fort-/Frischlufttemperaturen, Kältemittelkreislauf-Temperaturen, Außentemperatur, Drehzahl Kompressor, Leistungsaufnahme, Lüfterdrehzahlen, dazu ein diagnostischer "Betriebsart (vollständiger Zustand)"-Sensor sowie alle konfigurierten CO₂-/Feuchtesensoren (sofern nicht einem Raum zugeordnet, siehe unten).
 - **`binary_sensor.*`** — Bypass-Zustand, **Kühlen verfügbar** (siehe unten), System-/Filtermeldungen, Wärmepumpe Heiz-/Kühl-/Dauerbetrieb, sowie (Diagnose) die übrigen "ist X gerade wählbar"-Freischaltungs-Flags aus Register 315.
-- **`switch.*`** — globale Kühlfreigabe, Lüfter-Automatik (Eco Sommer/Winter), Intensivlüftung.
+- **`switch.*`** — globale Kühlfreigabe, Lüfter-Automatik, Intensivlüftung.
 - **`select.*`** — Lüfterstufe (Aus/1–4) und Betriebsart (Aus/Eco Sommer/Eco Winter/Komfort/Ofenbetrieb).
 
 **Je Raum:**
@@ -104,7 +104,7 @@ Drei weitere Bedienelemente ergeben nur in bestimmten Betriebsarten Sinn und wer
 | Entity (Standardname "Proxon FWT") | Nur verfügbar bei |
 |---|---|
 | `select.proxon_fwt_lufterstufe` | Eco Sommer / Eco Winter |
-| `switch.proxon_fwt_lufter_automatik_eco_sommer_winter` | Eco Sommer / Eco Winter |
+| `switch.proxon_fwt_lufter_automatik` | Eco Sommer / Eco Winter |
 | `switch.proxon_fwt_intensivluftung` | Komfort |
 
 Eine "nicht verfügbare" Entity existiert weiterhin (damit Automationen, die darauf verweisen, beim Moduswechsel nicht kaputtgehen), nimmt aber keine Befehle an und wird im Dashboard üblicherweise ausgegraut dargestellt.
@@ -166,7 +166,7 @@ Die Tabellen unten gehen vom Standard-Gerätenamen **"Proxon FWT"** (→ `proxon
 | Friendly Name | Entity-ID | Beschreibung |
 |---|---|---|
 | Kühlung freigegeben | `switch.proxon_fwt_kuhlung_freigegeben` | Schaltet die globale Kühlfreigabe (Register 305 schreiben / 306 lesen); nur vorhanden, wenn "Kühlen am Gerät verfügbar" = Ja, und auch dann nicht verfügbar, solange das Gerät selbst (Register 315, Bit 8) gerade kein Kühlen meldet |
-| Lüfter-Automatik (Eco Sommer/Winter) | `switch.proxon_fwt_lufter_automatik_eco_sommer_winter` | Schaltet die automatische Lüfterstufenregelung (Register 309/310); nur verfügbar in Eco Sommer/Winter |
+| Lüfter-Automatik | `switch.proxon_fwt_lufter_automatik` | Schaltet die automatische Lüfterstufenregelung (Register 309/310); nur verfügbar in Eco Sommer/Winter |
 | Intensivlüftung | `switch.proxon_fwt_intensivluftung` | Schaltet die Intensivlüftung (Register 311/312); nur verfügbar im Komfort-Modus |
 
 **Zentrales Gerät — `select`**

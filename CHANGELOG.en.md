@@ -5,6 +5,10 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
+## 2.6.3 – 2026-11-02
+
+- **Switch renamed:** "Lüfter-Automatik (Eco Sommer/Winter)" is now just "Lüfter-Automatik" (English "Fan auto mode"). The restriction to Eco summer/winter is still documented in the README. Existing entity IDs are unchanged; new setups get `switch.<name>_fan_auto_mode`.
+
 ## 2.6.2 – 2026-11-02
 
 - **Device page grouped better:** the technical refrigerant-circuit values (temperature before evaporator, evaporator, after preheater, before condenser, condenser, compressor, compressor speed) and the heat pump operating states (heating, cooling, continuous) are now under "Diagnostic". The entities stay enabled; error and filter messages and the normal temperatures stay under "Sensors". Note: diagnostic entities don't appear in auto-generated dashboards and area cards.

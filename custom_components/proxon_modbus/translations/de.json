@@ -132,7 +132,7 @@
     },
     "switch": {
       "cooling_enable": { "name": "Kühlung freigegeben" },
-      "fan_auto": { "name": "Lüfter-Automatik (Eco Sommer/Winter)" },
+      "fan_auto": { "name": "Lüfter-Automatik" },
       "fan_intensive": { "name": "Intensivlüftung" },
       "ptc_enable": { "name": "PTC-Element freigegeben" }
     },

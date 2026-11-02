@@ -132,7 +132,7 @@
     },
     "switch": {
       "cooling_enable": { "name": "Cooling enabled" },
-      "fan_auto": { "name": "Fan auto mode (Eco summer/winter)" },
+      "fan_auto": { "name": "Fan auto mode" },
       "fan_intensive": { "name": "Intensive ventilation" },
       "ptc_enable": { "name": "PTC element enabled" }
     },

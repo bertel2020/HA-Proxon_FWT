@@ -6,6 +6,10 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 2.6.3 – 2026-11-02
+
+- **Schalter umbenannt:** „Lüfter-Automatik (Eco Sommer/Winter)“ heißt jetzt „Lüfter-Automatik“ (englisch „Fan auto mode“). Die Einschränkung auf Eco Sommer/Winter steht weiterhin in der README. Bestehende Entity-IDs bleiben unverändert; bei neuen Einrichtungen lautet sie `switch.<name>_lufter_automatik`.
+
 ## 2.6.2 – 2026-11-02
 
 - **Geräteseite besser gruppiert:** Die technischen Kältekreis-Werte (Temperatur vor Verdampfer, Verdampfer, nach Vorwärme, vor Kondensator, Kondensator, Kompressor, Drehzahl Kompressor) und die Wärmepumpen-Betriebszustände (Heiz-, Kühl-, Dauerbetrieb) stehen jetzt unter „Diagnose“. Die Entities bleiben aktiviert; Fehler-, Filter-Meldungen und die normalen Temperaturen bleiben unter „Sensoren“. Hinweis: Diagnose-Entities erscheinen nicht in automatisch erzeugten Dashboards und Bereichskarten.

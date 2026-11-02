@@ -75,7 +75,7 @@ Two kinds of devices are created: a **central device** ("Proxon FWT" by default)
 
 - **`sensor.*`** — supply/extract/exhaust/fresh air temperatures, refrigerant-circuit temperatures, outside temperature, compressor speed, power consumption, fan speeds, plus a diagnostic "operating mode (full state)" sensor and any configured CO₂/humidity sensors not assigned to a room (see below).
 - **`binary_sensor.*`** — bypass state, **cooling available** (see below), system/filter messages, heat-pump heating/cooling/continuous-operation flags, and (diagnostic) the remaining "is X currently selectable" capability flags from register 315.
-- **`switch.*`** — global cooling enable, fan auto mode (Eco summer/winter), intensive ventilation.
+- **`switch.*`** — global cooling enable, fan auto mode, intensive ventilation.
 - **`select.*`** — fan stage (Off/1–4) and operating mode (Off/Eco summer/Eco winter/Comfort/Furnace).
 
 **Per room:**
@@ -102,7 +102,7 @@ Three further controls only make sense in specific operating modes and go **unav
 | Entity (default name "Proxon FWT") | Available only in |
 |---|---|
 | `select.proxon_fwt_fan_stage` | Eco summer / Eco winter |
-| `switch.proxon_fwt_fan_auto_mode_eco_summer_winter` | Eco summer / Eco winter |
+| `switch.proxon_fwt_fan_auto_mode` | Eco summer / Eco winter |
 | `switch.proxon_fwt_intensive_ventilation` | Comfort |
 
 An "unavailable" entity still exists (so automations referencing it don't break when you switch modes) but won't accept commands and typically renders greyed-out on a dashboard.
@@ -164,7 +164,7 @@ The tables below assume the default device name **"Proxon FWT"** (→ `proxon_fw
 | Friendly Name | Entity ID | Description |
 |---|---|---|
 | Cooling enabled | `switch.proxon_fwt_cooling_enabled` | Toggles the global cooling enable (register 305 write / 306 read); only present when "Cooling available on this unit" = Yes, and even then unavailable whenever the unit itself (register 315, bit 8) currently reports no cooling |
-| Fan auto mode (Eco summer/winter) | `switch.proxon_fwt_fan_auto_mode_eco_summer_winter` | Toggles automatic fan-stage control (registers 309/310); available only in Eco summer/winter |
+| Fan auto mode | `switch.proxon_fwt_fan_auto_mode` | Toggles automatic fan-stage control (registers 309/310); available only in Eco summer/winter |
 | Intensive ventilation | `switch.proxon_fwt_intensive_ventilation` | Toggles intensive ventilation (registers 311/312); available only in Comfort mode |
 
 **Central device — `select`**
