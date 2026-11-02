@@ -9,9 +9,10 @@ from homeassistant.helpers import device_registry as dr
 
 from .const import (
     CONF_NUM_CO2_SENSORS,
-    CONF_ROOM_AREAS,
     CONF_NUM_ROOMS,
     CONF_NUM_RF_SENSORS,
+    CONF_ROOM_AREAS,
+    CONF_ROOM_NAMES,
     CONF_SCAN_INTERVAL,
     CONF_UNIT_ID,
     DEFAULT_NUM_CO2_SENSORS,
@@ -65,8 +66,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bo
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    _remove_stale_room_devices(hass, entry)
     _apply_room_areas(hass, entry)
     return True
+
+
+def _remove_stale_room_devices(hass: HomeAssistant, entry: ProxonConfigEntry) -> None:
+    """Remove devices of rooms that are no longer configured (room count
+    reduced). Only devices belonging to this config entry are touched."""
+    keep = {(DOMAIN, entry.entry_id)} | {
+        (DOMAIN, f"{entry.entry_id}_room_{index}")
+        for index, name in enumerate(entry.options.get(CONF_ROOM_NAMES, []))
+    }
+    registry = dr.async_get(hass)
+    for device in dr.async_entries_for_config_entry(registry, entry.entry_id):
+        if not device.identifiers & keep:
+            registry.async_update_device(
+                device.id, remove_config_entry_id=entry.entry_id
+            )
 
 
 def _apply_room_areas(hass: HomeAssistant, entry: ProxonConfigEntry) -> None:

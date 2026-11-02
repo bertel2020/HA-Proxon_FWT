@@ -6,6 +6,10 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 2.3.0 – 2026-11-02
+
+- **Verwaiste Raumgeräte werden entfernt:** Wird die Raumanzahl in den Optionen verringert, verschwinden die Geräte der nicht mehr konfigurierten Räume beim Neuladen automatisch aus Home Assistant (nur Geräte dieser Integration).
+
 ## 2.2.0 – 2026-11-02
 
 - **Ausfall pro Registerblock:** Schlägt das Lesen eines Registerblocks fehl (Gerät kurz beschäftigt, Block nicht vorhanden), werden nur die davon abhängigen Entities „nicht verfügbar“. Das gesamte Abfragen scheitert nur noch, wenn kein einziger Block antwortet (typisch: Verbindung weg). Bisher machte ein einzelner Lesefehler *alle* Entities nicht verfügbar.
