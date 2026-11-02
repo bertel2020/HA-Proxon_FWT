@@ -6,6 +6,10 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 2.6.4 – 2026-11-02
+
+- **Icons ergänzt:** PTC-Element aktiv (Heizkörper, durchgestrichen, wenn aus), Wärmepumpe Heizbetrieb (`mdi:heat-pump`), Kühlbetrieb (`mdi:snowflake`), Dauerbetrieb (`mdi:autorenew`), Betriebsart (vollständiger Zustand) und die Freischaltungs-Flags („… wählbar“) hatten bisher nur das Standard-Icon.
+
 ## 2.6.3 – 2026-11-02
 
 - **Schalter umbenannt:** „Lüfter-Automatik (Eco Sommer/Winter)“ heißt jetzt „Lüfter-Automatik“ (englisch „Fan auto mode“). Die Einschränkung auf Eco Sommer/Winter steht weiterhin in der README. Bestehende Entity-IDs bleiben unverändert; bei neuen Einrichtungen lautet sie `switch.<name>_lufter_automatik`.

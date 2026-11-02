@@ -68,6 +68,13 @@ DIAGNOSTIC_MESSAGES = frozenset(
     {"heat_pump_heating", "heat_pump_cooling", "heat_pump_continuous"}
 )
 
+# Icons for the flags that have no device class (and so no built-in icon).
+MESSAGE_ICONS: dict[str, str] = {
+    "heat_pump_heating": "mdi:heat-pump",
+    "heat_pump_cooling": "mdi:snowflake",
+    "heat_pump_continuous": "mdi:autorenew",
+}
+
 MESSAGE_DEVICE_CLASSES: dict[str, BinarySensorDeviceClass | None] = {
     "error_system": BinarySensorDeviceClass.PROBLEM,
     "filter_device": BinarySensorDeviceClass.PROBLEM,
@@ -170,6 +177,8 @@ class ProxonMessageBinarySensor(ProxonCentralEntity, BinarySensorEntity):
         self._attr_device_class = MESSAGE_DEVICE_CLASSES.get(key)
         if key in DIAGNOSTIC_MESSAGES:
             self._attr_entity_category = EntityCategory.DIAGNOSTIC
+        if key in MESSAGE_ICONS:
+            self._attr_icon = MESSAGE_ICONS[key]
 
     @property
     def available(self) -> bool:
@@ -187,6 +196,7 @@ class ProxonCapabilityBinarySensor(ProxonCentralEntity, BinarySensorEntity):
     """A 'this option is currently selectable' diagnostic flag (register 315)."""
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:lock-open-check-outline"
     _blocks = frozenset({BLOCK_FUNCTION})
 
     def __init__(
@@ -215,6 +225,10 @@ class ProxonRoomPtcActiveSensor(ProxonRoomEntity, BinarySensorEntity):
 
     _attr_translation_key = "ptc_active"
     _blocks = frozenset({BLOCK_PTC})
+
+    @property
+    def icon(self) -> str:
+        return "mdi:radiator" if self.is_on else "mdi:radiator-off"
 
     def __init__(
         self,

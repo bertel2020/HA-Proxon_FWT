@@ -195,6 +195,7 @@ OPERATING_MODE_SENSOR = ProxonSensorDescription(
     translation_key="operating_mode_state",
     entity_category=EntityCategory.DIAGNOSTIC,
     device_class=SensorDeviceClass.ENUM,
+    icon="mdi:heat-pump-outline",
     options=sorted(set(_OPERATING_MODE_LABELS.values())),
     blocks=frozenset({BLOCK_FUNCTION}),
     value_fn=lambda d: _OPERATING_MODE_LABELS.get(

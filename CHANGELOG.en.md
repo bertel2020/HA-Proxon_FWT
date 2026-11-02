@@ -5,6 +5,10 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
+## 2.6.4 – 2026-11-02
+
+- **Icons added:** PTC element active (radiator, crossed out when off), heat pump heating (`mdi:heat-pump`), cooling (`mdi:snowflake`), continuous operation (`mdi:autorenew`), operating mode (full state) and the unlock flags ("… selectable") previously only had the default icon.
+
 ## 2.6.3 – 2026-11-02
 
 - **Switch renamed:** "Lüfter-Automatik (Eco Sommer/Winter)" is now just "Lüfter-Automatik" (English "Fan auto mode"). The restriction to Eco summer/winter is still documented in the README. Existing entity IDs are unchanged; new setups get `switch.<name>_fan_auto_mode`.
