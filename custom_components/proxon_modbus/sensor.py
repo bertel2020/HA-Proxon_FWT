@@ -212,6 +212,7 @@ async def async_setup_entry(
     entities.append(
         ProxonSensor(coordinator, entry.entry_id, device_name, OPERATING_MODE_SENSOR)
     )
+    entities.append(ProxonLastWriteErrorSensor(coordinator, entry.entry_id, device_name))
 
     room_names = entry.options.get(CONF_ROOM_NAMES, [])
     for i, room_name in enumerate(room_names):
@@ -292,6 +293,34 @@ class ProxonSensor(ProxonCentralEntity, SensorEntity):
     @property
     def native_value(self):
         return self.entity_description.value_fn(self.coordinator.data)
+
+
+class ProxonLastWriteErrorSensor(ProxonCentralEntity, SensorEntity):
+    """Diagnostic sensor showing the most recent failed write (register and
+    reason), so a command the device rejected is visible without the log."""
+
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_translation_key = "last_write_error"
+    _attr_icon = "mdi:alert-circle-outline"
+
+    def __init__(
+        self,
+        coordinator: ProxonModbusCoordinator,
+        entry_id: str,
+        device_name: str,
+    ) -> None:
+        super().__init__(coordinator, entry_id, device_name, "last_write_error")
+
+    @property
+    def native_value(self) -> str | None:
+        return self.coordinator.last_write_error
+
+    @property
+    def extra_state_attributes(self) -> dict[str, object]:
+        return {
+            "occurred_at": self.coordinator.last_write_error_at,
+            "error_count": self.coordinator.write_error_count,
+        }
 
 
 class ProxonRoomMidTempSensor(ProxonRoomEntity, SensorEntity):

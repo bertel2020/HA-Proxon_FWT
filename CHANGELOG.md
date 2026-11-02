@@ -6,6 +6,10 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 2.6.0 – 2026-11-02
+
+- **Neuer Diagnose-Sensor „Letzter Schreibfehler“:** Zeigt das zuletzt fehlgeschlagene Schreiben (Register, Wert, Grund). Attribute: Zeitpunkt und Anzahl der Fehler seit dem Start. So ist ein vom Gerät abgelehnter Befehl sichtbar, ohne ins Log zu schauen.
+
 ## 2.5.0 – 2026-11-02
 
 - **Verbindung nachträglich ändern:** Neuer Reconfigure-Schritt (Einstellungen → Geräte & Dienste → Proxon FWT → ⋮ → **Neu konfigurieren**): Host, Port, serielle Parameter, Unit-ID und sogar der Wechsel zwischen TCP und RTU lassen sich ändern, ohne die Integration zu löschen. Das Formular ist mit den aktuellen Werten vorbelegt, die Verbindung wird vor dem Speichern getestet. Entities und Verlauf bleiben erhalten.

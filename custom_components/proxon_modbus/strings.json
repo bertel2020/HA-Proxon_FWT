@@ -94,6 +94,7 @@
       "power_consumption": { "name": "Power consumption" },
       "fan_speed_supply": { "name": "Supply fan speed" },
       "fan_speed_extract": { "name": "Extract fan speed" },
+      "last_write_error": { "name": "Last write error" },
       "mid_temperature": { "name": "Mid-room temperature" },
       "operating_mode_state": {
         "name": "Operating mode (full state)",

@@ -94,6 +94,7 @@
       "power_consumption": { "name": "Leistungsaufnahme" },
       "fan_speed_supply": { "name": "Drehzahl Zuluftventilator" },
       "fan_speed_extract": { "name": "Drehzahl Abluftventilator" },
+      "last_write_error": { "name": "Letzter Schreibfehler" },
       "mid_temperature": { "name": "Mittentemperatur" },
       "operating_mode_state": {
         "name": "Betriebsart (vollständiger Zustand)",

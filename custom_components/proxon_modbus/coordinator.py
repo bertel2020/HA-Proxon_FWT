@@ -4,11 +4,12 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from .const import (
     CAPABILITY_FLAGS,
@@ -122,6 +123,11 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
         self.num_rooms = num_rooms
         self.num_co2_sensors = num_co2_sensors
         self.num_rf_sensors = num_rf_sensors
+        # Most recent failed write, shown by the "Last write error" diagnostic
+        # sensor so a rejected command is visible without reading the log.
+        self.last_write_error: str | None = None
+        self.last_write_error_at: datetime | None = None
+        self.write_error_count = 0
 
     async def _async_update_data(self) -> ProxonData:
         try:
@@ -132,7 +138,14 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
     async def async_write_register(self, address: int, value: int) -> None:
         """Write a "Soll" register, then refresh once the device has had a
         moment to apply it and reflect the change in its "Ist" register."""
-        await self.hub.async_write_register(address, value)
+        try:
+            await self.hub.async_write_register(address, value)
+        except ProxonModbusError as err:
+            self.last_write_error = str(err)[:255]
+            self.last_write_error_at = dt_util.utcnow()
+            self.write_error_count += 1
+            self.async_update_listeners()
+            raise
         await asyncio.sleep(WRITE_SETTLE_DELAY)
         await self.async_request_refresh()
 
