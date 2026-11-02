@@ -5,6 +5,10 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
+## 2.5.0 – 2026-11-02
+
+- **Change the connection later:** new reconfigure step (Settings → Devices & Services → Proxon FWT → ⋮ → **Reconfigure**): host, port, serial parameters, unit ID and even switching between TCP and RTU can be changed without deleting the integration. The form is prefilled with the current values and the connection is tested before saving. Entities and history are kept.
+
 ## 2.4.0 – 2026-11-02
 
 - **Skip rooms that are not installed:** an empty room name in the names step of the options leaves that room out — no device, no entities. This covers gaps in the room numbering (e.g. rooms 1–3 and 5 but no room 4); the registers are still read because the order determines the register address.

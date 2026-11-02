@@ -6,6 +6,10 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 2.5.0 – 2026-11-02
+
+- **Verbindung nachträglich ändern:** Neuer Reconfigure-Schritt (Einstellungen → Geräte & Dienste → Proxon FWT → ⋮ → **Neu konfigurieren**): Host, Port, serielle Parameter, Unit-ID und sogar der Wechsel zwischen TCP und RTU lassen sich ändern, ohne die Integration zu löschen. Das Formular ist mit den aktuellen Werten vorbelegt, die Verbindung wird vor dem Speichern getestet. Entities und Verlauf bleiben erhalten.
+
 ## 2.4.0 – 2026-11-02
 
 - **Nicht verbaute Räume überspringen:** Ein leerer Raumname im Namen-Schritt der Optionen lässt diesen Raum aus — kein Gerät, keine Entities. So lassen sich Lücken in der Raumnummerierung abbilden (z. B. Raum 1–3 und 5, aber kein Raum 4); die Register werden weiter mitgelesen, weil die Reihenfolge die Registeradresse bestimmt.

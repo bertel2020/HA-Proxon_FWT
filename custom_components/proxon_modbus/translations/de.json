@@ -9,6 +9,14 @@
           "serial": "USB / RS-485 (Modbus RTU)"
         }
       },
+      "reconfigure": {
+        "title": "Verbindung neu konfigurieren",
+        "description": "Wie ist das FWT-Modbus-Gateway angebunden?",
+        "menu_options": {
+          "tcp": "Netzwerk (Modbus TCP)",
+          "serial": "USB / RS-485 (Modbus RTU)"
+        }
+      },
       "tcp": {
         "title": "Modbus-TCP-Verbindung",
         "data": {
@@ -47,7 +55,8 @@
       "unknown": "Unerwarteter Fehler."
     },
     "abort": {
-      "already_configured": "Dieses Gerät ist bereits eingerichtet."
+      "already_configured": "Dieses Gerät ist bereits eingerichtet.",
+      "reconfigure_successful": "Die Verbindungseinstellungen wurden aktualisiert."
     }
   },
   "options": {

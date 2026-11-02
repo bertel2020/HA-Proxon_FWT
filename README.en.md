@@ -65,7 +65,7 @@ Settings → Devices & Services → Add Integration → **Proxon FWT (Modbus)**.
    - TCP: host/IP, port (default `502`), Modbus unit ID (default `10`).
    - RTU: serial device path, baud rate (default `9600`), data bits (`8`), parity (default `E`/Even), stop bits (`1`), Modbus unit ID.
 2. Choose how many rooms (1–16) and external CO₂/humidity sensors (0–5) to create entities for, and whether the unit supports **cooling at all** (see below).
-3. Afterwards, use the integration's **Configure** button (Options) to rename rooms/sensors, optionally assign each room to a Home Assistant area (an empty room name skips a room that is not installed), optionally assign each CO₂/humidity sensor to a room, or change the room/sensor count, polling interval, or cooling availability without re-adding the integration.
+3. Afterwards, use the integration's **Configure** button (Options) to rename rooms/sensors, optionally assign each room to a Home Assistant area (an empty room name skips a room that is not installed), optionally assign each CO₂/humidity sensor to a room, or change the room/sensor count, polling interval, or cooling availability without re-adding the integration. Host, port, serial parameters and unit ID can be changed via ⋮ → **Reconfigure**.
 
 ## Entities
 

@@ -5,10 +5,17 @@ import logging
 from typing import Any
 
 import voluptuous as vol
-from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.config_entries import (
+    SOURCE_RECONFIGURE,
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
 from homeassistant.components.modbus import async_get_temporary_unit
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.data_entry_flow import AbortFlow
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import selector
 from modbus_connection import ModbusSerialParams, ModbusTcpParams
@@ -104,6 +111,39 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
         """First step: choose how the FWT Modbus gateway is reached."""
         return self.async_show_menu(step_id="user", menu_options=["tcp", "serial"])
 
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Change how the FWT Modbus gateway is reached (host, port, serial
+        settings, unit ID) without removing and re-adding the integration."""
+        return self.async_show_menu(step_id="reconfigure", menu_options=["tcp", "serial"])
+
+    def _current_data(self) -> dict[str, Any]:
+        """Existing entry data when reconfiguring (to prefill the form), else {}."""
+        if self.source == SOURCE_RECONFIGURE:
+            return dict(self._get_reconfigure_entry().data)
+        return {}
+
+    async def _async_claim_unique_id(self, unique_id: str) -> None:
+        """Abort if another entry already uses this connection. When
+        reconfiguring, the entry's own unique id is allowed (and is replaced
+        by the new one on success)."""
+        if self.source == SOURCE_RECONFIGURE:
+            own_id = self._get_reconfigure_entry().entry_id
+            if any(
+                entry.unique_id == unique_id and entry.entry_id != own_id
+                for entry in self._async_current_entries(include_ignore=False)
+            ):
+                raise AbortFlow("already_configured")
+            return
+        await self.async_set_unique_id(unique_id)
+        self._abort_if_unique_id_configured()
+
+    def _async_finish_reconfigure(self, unique_id: str) -> ConfigFlowResult:
+        return self.async_update_reload_and_abort(
+            self._get_reconfigure_entry(), unique_id=unique_id, data=self._data
+        )
+
     async def async_step_tcp(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -115,10 +155,8 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
             port = int(user_input[CONF_PORT])
             unit_id = int(user_input[CONF_UNIT_ID])
 
-            await self.async_set_unique_id(
-                f"tcp_{user_input[CONF_HOST]}_{port}_{unit_id}"
-            )
-            self._abort_if_unique_id_configured()
+            unique_id = f"tcp_{user_input[CONF_HOST]}_{port}_{unit_id}"
+            await self._async_claim_unique_id(unique_id)
 
             try:
                 await _async_test_connection(
@@ -140,17 +178,22 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
                     CONF_PORT: port,
                     CONF_UNIT_ID: unit_id,
                 }
+                if self.source == SOURCE_RECONFIGURE:
+                    return self._async_finish_reconfigure(unique_id)
                 return await self.async_step_rooms()
 
+        d = self._current_data()
         schema = vol.Schema(
             {
-                vol.Required(CONF_NAME, default=DEFAULT_NAME): str,
-                vol.Required(CONF_HOST): str,
-                vol.Required(CONF_PORT, default=DEFAULT_TCP_PORT): selector.NumberSelector(
+                vol.Required(CONF_NAME, default=d.get(CONF_NAME, DEFAULT_NAME)): str,
+                vol.Required(CONF_HOST, default=d.get(CONF_HOST, vol.UNDEFINED)): str,
+                vol.Required(
+                    CONF_PORT, default=d.get(CONF_PORT, DEFAULT_TCP_PORT)
+                ): selector.NumberSelector(
                     selector.NumberSelectorConfig(min=1, max=65535, mode="box")
                 ),
                 vol.Required(
-                    CONF_UNIT_ID, default=DEFAULT_UNIT_ID
+                    CONF_UNIT_ID, default=d.get(CONF_UNIT_ID, DEFAULT_UNIT_ID)
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(min=1, max=247, mode="box")
                 ),
@@ -172,10 +215,8 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
             stopbits = int(user_input[CONF_STOPBITS])
             unit_id = int(user_input[CONF_UNIT_ID])
 
-            await self.async_set_unique_id(
-                f"serial_{user_input[CONF_SERIAL_PORT]}_{unit_id}"
-            )
-            self._abort_if_unique_id_configured()
+            unique_id = f"serial_{user_input[CONF_SERIAL_PORT]}_{unit_id}"
+            await self._async_claim_unique_id(unique_id)
 
             try:
                 await _async_test_connection(
@@ -206,14 +247,19 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
                     CONF_STOPBITS: stopbits,
                     CONF_UNIT_ID: unit_id,
                 }
+                if self.source == SOURCE_RECONFIGURE:
+                    return self._async_finish_reconfigure(unique_id)
                 return await self.async_step_rooms()
 
+        d = self._current_data()
         schema = vol.Schema(
             {
-                vol.Required(CONF_NAME, default=DEFAULT_NAME): str,
-                vol.Required(CONF_SERIAL_PORT, default="/dev/ttyUSB0"): str,
+                vol.Required(CONF_NAME, default=d.get(CONF_NAME, DEFAULT_NAME)): str,
                 vol.Required(
-                    CONF_BAUDRATE, default=DEFAULT_BAUDRATE
+                    CONF_SERIAL_PORT, default=d.get(CONF_SERIAL_PORT, "/dev/ttyUSB0")
+                ): str,
+                vol.Required(
+                    CONF_BAUDRATE, default=str(d.get(CONF_BAUDRATE, DEFAULT_BAUDRATE))
                 ): selector.SelectSelector(
                     selector.SelectSelectorConfig(
                         options=[str(b) for b in BAUDRATES],
@@ -221,7 +267,7 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
                     )
                 ),
                 vol.Required(
-                    CONF_BYTESIZE, default=DEFAULT_BYTESIZE
+                    CONF_BYTESIZE, default=str(d.get(CONF_BYTESIZE, DEFAULT_BYTESIZE))
                 ): selector.SelectSelector(
                     selector.SelectSelectorConfig(
                         options=["5", "6", "7", "8"],
@@ -229,21 +275,21 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
                     )
                 ),
                 vol.Required(
-                    CONF_PARITY, default=DEFAULT_PARITY
+                    CONF_PARITY, default=d.get(CONF_PARITY, DEFAULT_PARITY)
                 ): selector.SelectSelector(
                     selector.SelectSelectorConfig(
                         options=PARITIES, mode=selector.SelectSelectorMode.DROPDOWN
                     )
                 ),
                 vol.Required(
-                    CONF_STOPBITS, default=DEFAULT_STOPBITS
+                    CONF_STOPBITS, default=str(d.get(CONF_STOPBITS, DEFAULT_STOPBITS))
                 ): selector.SelectSelector(
                     selector.SelectSelectorConfig(
                         options=["1", "2"], mode=selector.SelectSelectorMode.DROPDOWN
                     )
                 ),
                 vol.Required(
-                    CONF_UNIT_ID, default=DEFAULT_UNIT_ID
+                    CONF_UNIT_ID, default=d.get(CONF_UNIT_ID, DEFAULT_UNIT_ID)
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(min=1, max=247, mode="box")
                 ),

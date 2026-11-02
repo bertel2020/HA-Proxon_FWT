@@ -67,7 +67,7 @@ Einstellungen → Geräte & Dienste → Integration hinzufügen → **Proxon FWT
    - TCP: Host/IP, Port (Standard `502`), Modbus-Unit-ID (Standard `10`).
    - RTU: serielle Schnittstelle, Baudrate (Standard `9600`), Datenbits (`8`), Parität (Standard `E`/Even), Stopbits (`1`), Modbus-Unit-ID.
 2. Anzahl der Räume (1–16) und externen CO₂-/Feuchtesensoren (0–5) festlegen, für die Entities angelegt werden, sowie ob am Gerät überhaupt **Kühlen verfügbar** ist (siehe unten).
-3. Danach über den **Konfigurieren**-Button (Optionen) der Integration Räume/Sensoren umbenennen, jeden Raum optional einem Home-Assistant-Bereich zuordnen (ein leerer Raumname überspringt einen nicht verbauten Raum), jeden CO₂-/Feuchtesensor optional einem Raum zuordnen, oder Anzahl/Abfrageintervall/Kühlverfügbarkeit ändern, ohne die Integration neu einzurichten.
+3. Danach über den **Konfigurieren**-Button (Optionen) der Integration Räume/Sensoren umbenennen, jeden Raum optional einem Home-Assistant-Bereich zuordnen (ein leerer Raumname überspringt einen nicht verbauten Raum), jeden CO₂-/Feuchtesensor optional einem Raum zuordnen, oder Anzahl/Abfrageintervall/Kühlverfügbarkeit ändern, ohne die Integration neu einzurichten. Host, Port, serielle Parameter und Unit-ID lassen sich über ⋮ → **Neu konfigurieren** ändern.
 
 ## Entities
 
