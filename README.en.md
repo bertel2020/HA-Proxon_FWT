@@ -33,7 +33,7 @@ Both transports are supported:
 
 ## Requirements
 
-- Home Assistant **2026.8.0** or newer (the integration uses Home Assistant's `modbus` integration for the connection).
+- Home Assistant **2026.9.0** or newer (the integration uses Home Assistant's `modbus` integration for the connection).
 
 ## Installation
 

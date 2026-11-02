@@ -8,5 +8,6 @@
   "integration_type": "hub",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/bertel2020/HA-Proxon_FWT/issues",
-  "version": "2.0.0"
+  "requirements": ["modbus-connection[tmodbus]>=4.12.1"],
+  "version": "2.0.1"
 }

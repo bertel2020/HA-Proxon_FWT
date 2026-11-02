@@ -6,6 +6,11 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 2.0.1 – 2026-11-02
+
+- **Mindestversion korrigiert:** Home Assistant **2026.9.0** statt 2026.8.0 (ab dieser Version steht die `modbus`-Unit-API bereit, siehe Referenzintegration `charly166/ha-modbus-proxon`).
+- `modbus-connection[tmodbus]>=4.12.1` ist jetzt explizit in `manifest.json` unter `requirements` eingetragen, statt sich nur auf die Abhängigkeit `modbus` zu verlassen.
+
 ## 2.0.0 – 2026-10-14
 
 - **Umstellung auf das neue Modbus-Modell von Home Assistant:** Die Integration öffnet keine eigene pymodbus-Verbindung mehr, sondern fordert über `homeassistant.components.modbus.async_get_unit` eine Unit auf einer gemeinsam genutzten Verbindung an (Abhängigkeit `modbus`, Bibliothek `modbus-connection`). Anfragen werden zentral serialisiert, die Verbindung wird beim ersten Lesen geöffnet und nach Abbruch automatisch wieder aufgebaut, und sie schließt sich, wenn der letzte Nutzer entladen wird.

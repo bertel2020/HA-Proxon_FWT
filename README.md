@@ -33,7 +33,7 @@ Beide Übertragungsarten werden unterstützt:
 
 ## Voraussetzungen
 
-- Home Assistant **2026.8.0** oder neuer (die Integration nutzt die `modbus`-Integration von Home Assistant für die Verbindung).
+- Home Assistant **2026.9.0** oder neuer (die Integration nutzt die `modbus`-Integration von Home Assistant für die Verbindung).
 
 ## Installation
 
