@@ -64,7 +64,7 @@
       },
       "names": {
         "title": "Namen",
-        "description": "Vergib Namen für jeden Raum und jeden externen Sensor."
+        "description": "Vergib für jeden Raum und externen Sensor einen Namen. Optional kann jeder Raum einem Home-Assistant-Bereich zugeordnet werden (room_N_area): Das Raumgerät wird dann in diesen Bereich gelegt. Räume ohne Bereich bleiben unverändert."
       }
     }
   },

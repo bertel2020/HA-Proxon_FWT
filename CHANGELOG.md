@@ -6,6 +6,10 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 2.1.0 – 2026-11-02
+
+- **Raum → Home-Assistant-Bereich:** Im Namen-Schritt der Optionen lässt sich jedem Raum optional ein Bereich zuordnen. Das Raumgerät wird dann in diesen Bereich gelegt. Räume ohne Bereich bleiben unverändert (von Hand gesetzte Bereiche werden nie überschrieben).
+
 ## 2.0.1 – 2026-11-02
 
 - **Mindestversion korrigiert:** Home Assistant **2026.9.0** statt 2026.8.0 (ab dieser Version steht die `modbus`-Unit-API bereit, siehe Referenzintegration `charly166/ha-modbus-proxon`).

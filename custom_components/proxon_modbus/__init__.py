@@ -5,9 +5,11 @@ from homeassistant.components.modbus import async_get_unit
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 
 from .const import (
     CONF_NUM_CO2_SENSORS,
+    CONF_ROOM_AREAS,
     CONF_NUM_ROOMS,
     CONF_NUM_RF_SENSORS,
     CONF_SCAN_INTERVAL,
@@ -16,6 +18,7 @@ from .const import (
     DEFAULT_NUM_ROOMS,
     DEFAULT_NUM_RF_SENSORS,
     DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
 )
 from .coordinator import ProxonModbusCoordinator
 from .hub import ProxonModbusHub, params_from_entry_data
@@ -62,7 +65,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bo
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    _apply_room_areas(hass, entry)
     return True
+
+
+def _apply_room_areas(hass: HomeAssistant, entry: ProxonConfigEntry) -> None:
+    """Put each room's device into the Home Assistant area chosen in the
+    options. Rooms without a chosen area are left alone, so areas set by hand
+    on those devices are never touched."""
+    registry = dr.async_get(hass)
+    for index, area_id in enumerate(entry.options.get(CONF_ROOM_AREAS, [])):
+        if not area_id:
+            continue
+        device = registry.async_get_device(
+            identifiers={(DOMAIN, f"{entry.entry_id}_room_{index}")}
+        )
+        if device is not None and device.area_id != area_id:
+            registry.async_update_device(device.id, area_id=area_id)
 
 
 async def _async_update_listener(hass: HomeAssistant, entry: ProxonConfigEntry) -> None:

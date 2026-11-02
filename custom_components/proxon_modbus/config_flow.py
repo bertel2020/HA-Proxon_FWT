@@ -26,6 +26,7 @@ from .const import (
     CONF_PARITY,
     CONF_RF_NAMES,
     CONF_RF_ROOMS,
+    CONF_ROOM_AREAS,
     CONF_ROOM_NAMES,
     CONF_SCAN_INTERVAL,
     CONF_SERIAL_PORT,
@@ -388,6 +389,7 @@ class ProxonModbusOptionsFlow(OptionsFlow):
         num_rf = self._pending[CONF_NUM_RF_SENSORS]
 
         existing_rooms = options.get(CONF_ROOM_NAMES, [])
+        existing_room_areas = options.get(CONF_ROOM_AREAS, [])
         existing_co2 = options.get(CONF_CO2_NAMES, [])
         existing_rf = options.get(CONF_RF_NAMES, [])
         existing_co2_rooms = options.get(CONF_CO2_ROOMS, [])
@@ -400,6 +402,9 @@ class ProxonModbusOptionsFlow(OptionsFlow):
             room_names = [
                 user_input[f"room_{i + 1}"] for i in range(num_rooms)
             ]
+            room_areas = [
+                user_input.get(f"room_{i + 1}_area") or None for i in range(num_rooms)
+            ]
             co2_names = [user_input[f"co2_{i + 1}"] for i in range(num_co2)]
             rf_names = [user_input[f"rf_{i + 1}"] for i in range(num_rf)]
             co2_rooms = [parse_room(user_input[f"co2_{i + 1}_room"]) for i in range(num_co2)]
@@ -407,6 +412,7 @@ class ProxonModbusOptionsFlow(OptionsFlow):
             new_options = {
                 **self._pending,
                 CONF_ROOM_NAMES: room_names,
+                CONF_ROOM_AREAS: room_areas,
                 CONF_CO2_NAMES: co2_names,
                 CONF_RF_NAMES: rf_names,
                 CONF_CO2_ROOMS: co2_rooms,
@@ -439,6 +445,15 @@ class ProxonModbusOptionsFlow(OptionsFlow):
         fields: dict[Any, Any] = {}
         for i in range(num_rooms):
             fields[vol.Required(f"room_{i + 1}", default=room_labels[i])] = str
+            area_default = (
+                existing_room_areas[i] if i < len(existing_room_areas) else None
+            )
+            fields[
+                vol.Optional(
+                    f"room_{i + 1}_area",
+                    description={"suggested_value": area_default},
+                )
+            ] = selector.AreaSelector()
         for i in range(num_co2):
             default = existing_co2[i] if i < len(existing_co2) else f"CO2-Sensor {i + 1}"
             fields[vol.Required(f"co2_{i + 1}", default=default)] = str

@@ -31,6 +31,7 @@ CONF_STOPBITS = "stopbits"
 
 CONF_NUM_ROOMS = "num_rooms"
 CONF_ROOM_NAMES = "room_names"
+CONF_ROOM_AREAS = "room_areas"
 CONF_NUM_CO2_SENSORS = "num_co2_sensors"
 CONF_NUM_RF_SENSORS = "num_rf_sensors"
 CONF_CO2_NAMES = "co2_sensor_names"
