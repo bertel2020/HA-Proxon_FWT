@@ -22,7 +22,7 @@ from .const import (
     REG_FAN_INTENSIVE_WRITE,
     REG_PTC_ENABLE_WRITE,
 )
-from .coordinator import ProxonData, ProxonModbusCoordinator
+from .coordinator import BLOCK_FUNCTION, BLOCK_PTC, ProxonData, ProxonModbusCoordinator
 from .entity import ProxonCentralEntity, ProxonRoomEntity
 from .hub import set_bit
 
@@ -121,6 +121,8 @@ async def async_setup_entry(
 class ProxonFunctionSwitch(ProxonCentralEntity, SwitchEntity):
     """A simple write-register / read-back-register switch."""
 
+    _blocks = frozenset({BLOCK_FUNCTION})
+
     entity_description: ProxonSwitchDescription
 
     def __init__(
@@ -159,6 +161,7 @@ class ProxonRoomPtcEnableSwitch(ProxonRoomEntity, SwitchEntity):
     """
 
     _attr_translation_key = "ptc_enable"
+    _blocks = frozenset({BLOCK_PTC})
     _attr_icon = "mdi:radiator"
 
     def __init__(

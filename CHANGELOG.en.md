@@ -5,6 +5,11 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
+## 2.2.0 – 2026-11-02
+
+- **Failures per register block:** if reading one register block fails (device briefly busy, block not present), only the entities depending on it become unavailable. The whole poll now only fails when no block answers at all (typically a lost connection). Previously a single read error made *all* entities unavailable.
+- **Diagnostics download:** Settings → Devices & Services → Proxon FWT → Download diagnostics (host/serial port redacted), including the blocks that failed in the last poll and the decoded data.
+
 ## 2.1.0 – 2026-11-02
 
 - **Room → Home Assistant area:** the names step of the options lets you optionally assign each room to an area. The room's device is then placed in that area. Rooms without an area stay untouched (areas set by hand are never overwritten).

@@ -14,7 +14,7 @@ from .const import (
     REG_FAN_STAGE_WRITE,
     REG_OPERATING_MODE_WRITE,
 )
-from .coordinator import ProxonModbusCoordinator
+from .coordinator import BLOCK_FUNCTION, ProxonModbusCoordinator
 from .entity import ProxonCentralEntity
 
 
@@ -44,6 +44,7 @@ class ProxonFanStageSelect(ProxonCentralEntity, SelectEntity):
     """
 
     _attr_translation_key = "fan_stage"
+    _blocks = frozenset({BLOCK_FUNCTION})
     _attr_icon = "mdi:fan"
     _attr_options = list(FAN_STAGE_OPTIONS.values())
 
@@ -79,6 +80,7 @@ class ProxonOperatingModeSelect(ProxonCentralEntity, SelectEntity):
     """
 
     _attr_translation_key = "operating_mode"
+    _blocks = frozenset({BLOCK_FUNCTION})
     _attr_icon = "mdi:heat-pump-outline"
     _attr_options = list(OPERATING_MODE_WRITE_OPTIONS.values())
 

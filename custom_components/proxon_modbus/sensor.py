@@ -34,7 +34,15 @@ from .const import (
     OPERATING_MODE_READ_ONLY_STATES,
     OPERATING_MODE_WRITE_OPTIONS,
 )
-from .coordinator import ProxonData, ProxonModbusCoordinator
+from .coordinator import (
+    BLOCK_CO2,
+    BLOCK_DEVICE,
+    BLOCK_FUNCTION,
+    BLOCK_HUMIDITY,
+    BLOCK_ROOMS,
+    ProxonData,
+    ProxonModbusCoordinator,
+)
 from .entity import ProxonCentralEntity, ProxonEntity, ProxonRoomEntity, central_device_info, room_device_info
 
 
@@ -43,6 +51,7 @@ class ProxonSensorDescription(SensorEntityDescription):
     """Sensor description with a getter into ProxonData.device."""
 
     value_fn: Callable[[ProxonData], float | int | str | None]
+    blocks: frozenset[str] = frozenset({BLOCK_DEVICE})
 
 
 DEVICE_SENSORS: tuple[ProxonSensorDescription, ...] = (
@@ -180,6 +189,7 @@ OPERATING_MODE_SENSOR = ProxonSensorDescription(
     entity_category=EntityCategory.DIAGNOSTIC,
     device_class=SensorDeviceClass.ENUM,
     options=sorted(set(_OPERATING_MODE_LABELS.values())),
+    blocks=frozenset({BLOCK_FUNCTION}),
     value_fn=lambda d: _OPERATING_MODE_LABELS.get(
         d.function_block.get("operating_mode_read")
     ),
@@ -234,6 +244,7 @@ async def async_setup_entry(
                 unit=CONCENTRATION_PARTS_PER_MILLION,
                 device_class=SensorDeviceClass.CO2,
                 value_fn=lambda d, idx=i: d.co2.get(idx),
+                block=BLOCK_CO2,
                 room_index=room_index,
                 room_name=room_name,
             )
@@ -253,6 +264,7 @@ async def async_setup_entry(
                 unit=PERCENTAGE,
                 device_class=SensorDeviceClass.HUMIDITY,
                 value_fn=lambda d, idx=i: d.humidity.get(idx),
+                block=BLOCK_HUMIDITY,
                 room_index=room_index,
                 room_name=room_name,
             )
@@ -275,6 +287,7 @@ class ProxonSensor(ProxonCentralEntity, SensorEntity):
     ) -> None:
         super().__init__(coordinator, entry_id, device_name, description.key)
         self.entity_description = description
+        self._blocks = description.blocks
 
     @property
     def native_value(self):
@@ -283,6 +296,8 @@ class ProxonSensor(ProxonCentralEntity, SensorEntity):
 
 class ProxonRoomMidTempSensor(ProxonRoomEntity, SensorEntity):
     """Mid-room temperature reported by a room's control panel (rooms 2..N)."""
+
+    _blocks = frozenset({BLOCK_ROOMS})
 
     _attr_device_class = SensorDeviceClass.TEMPERATURE
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -325,6 +340,7 @@ class ProxonExternalSensor(ProxonEntity, SensorEntity):
         unit: str,
         device_class: SensorDeviceClass,
         value_fn: Callable[[ProxonData], int | None],
+        block: str,
         room_index: int | None = None,
         room_name: str | None = None,
     ) -> None:
@@ -338,6 +354,7 @@ class ProxonExternalSensor(ProxonEntity, SensorEntity):
         self._attr_native_unit_of_measurement = unit
         self._attr_device_class = device_class
         self._value_fn = value_fn
+        self._blocks = frozenset({block})
 
     @property
     def native_value(self) -> int | None:

@@ -22,7 +22,14 @@ from .const import (
     DEFAULT_COOLING_AVAILABLE,
     MESSAGE_FLAGS,
 )
-from .coordinator import ProxonData, ProxonModbusCoordinator
+from .coordinator import (
+    BLOCK_DEVICE,
+    BLOCK_FUNCTION,
+    BLOCK_MESSAGES,
+    BLOCK_PTC,
+    ProxonData,
+    ProxonModbusCoordinator,
+)
 from .entity import ProxonCentralEntity, ProxonRoomEntity
 
 # Surfaced separately (always visible, not a diagnostic-disabled flag) so
@@ -36,6 +43,7 @@ _COOLING_CAPABILITY_KEY = "cooling_enable_possible"
 @dataclass(frozen=True, kw_only=True)
 class ProxonBinarySensorDescription(BinarySensorEntityDescription):
     value_fn: Callable[[ProxonData], bool | None]
+    blocks: frozenset[str] = frozenset({BLOCK_DEVICE})
 
 
 DEVICE_BINARY_SENSORS: tuple[ProxonBinarySensorDescription, ...] = (
@@ -50,6 +58,7 @@ DEVICE_BINARY_SENSORS: tuple[ProxonBinarySensorDescription, ...] = (
         translation_key="cooling_available",
         icon="mdi:snowflake-check",
         value_fn=lambda d: d.capabilities.get(_COOLING_CAPABILITY_KEY),
+        blocks=frozenset({BLOCK_FUNCTION}),
     ),
 )
 
@@ -128,6 +137,7 @@ class ProxonBinarySensor(ProxonCentralEntity, BinarySensorEntity):
     ) -> None:
         super().__init__(coordinator, entry_id, device_name, description.key)
         self.entity_description = description
+        self._blocks = description.blocks
 
     @property
     def is_on(self) -> bool | None:
@@ -136,6 +146,8 @@ class ProxonBinarySensor(ProxonCentralEntity, BinarySensorEntity):
 
 class ProxonMessageBinarySensor(ProxonCentralEntity, BinarySensorEntity):
     """A message/status flag decoded from register 380."""
+
+    _blocks = frozenset({BLOCK_MESSAGES})
 
     def __init__(
         self,
@@ -165,6 +177,7 @@ class ProxonCapabilityBinarySensor(ProxonCentralEntity, BinarySensorEntity):
     """A 'this option is currently selectable' diagnostic flag (register 315)."""
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _blocks = frozenset({BLOCK_FUNCTION})
 
     def __init__(
         self,
@@ -191,6 +204,7 @@ class ProxonRoomPtcActiveSensor(ProxonRoomEntity, BinarySensorEntity):
     """
 
     _attr_translation_key = "ptc_active"
+    _blocks = frozenset({BLOCK_PTC})
 
     def __init__(
         self,

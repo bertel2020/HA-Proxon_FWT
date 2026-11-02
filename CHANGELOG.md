@@ -6,6 +6,11 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 2.2.0 – 2026-11-02
+
+- **Ausfall pro Registerblock:** Schlägt das Lesen eines Registerblocks fehl (Gerät kurz beschäftigt, Block nicht vorhanden), werden nur die davon abhängigen Entities „nicht verfügbar“. Das gesamte Abfragen scheitert nur noch, wenn kein einziger Block antwortet (typisch: Verbindung weg). Bisher machte ein einzelner Lesefehler *alle* Entities nicht verfügbar.
+- **Diagnose-Download:** Unter Einstellungen → Geräte & Dienste → Proxon FWT → Diagnose herunterladen (Host/serielle Schnittstelle geschwärzt), inklusive der zuletzt fehlgeschlagenen Blöcke und der dekodierten Daten.
+
 ## 2.1.0 – 2026-11-02
 
 - **Raum → Home-Assistant-Bereich:** Im Namen-Schritt der Optionen lässt sich jedem Raum optional ein Bereich zuordnen. Das Raumgerät wird dann in diesen Bereich gelegt. Räume ohne Bereich bleiben unverändert (von Hand gesetzte Bereiche werden nie überschrieben).

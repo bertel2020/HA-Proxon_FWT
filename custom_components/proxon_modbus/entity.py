@@ -41,6 +41,10 @@ class ProxonEntity(CoordinatorEntity[ProxonModbusCoordinator]):
 
     _attr_has_entity_name = True
 
+    # Register blocks (coordinator.BLOCK_*) this entity's value depends on; it
+    # is unavailable while any of them failed to read.
+    _blocks: frozenset[str] = frozenset()
+
     def __init__(
         self,
         coordinator: ProxonModbusCoordinator,
@@ -52,6 +56,12 @@ class ProxonEntity(CoordinatorEntity[ProxonModbusCoordinator]):
         self._entry_id = entry_id
         self._attr_unique_id = f"{entry_id}_{unique_id_suffix}"
         self._attr_device_info = device_info
+
+    @property
+    def available(self) -> bool:
+        return super().available and not (
+            self._blocks & self.coordinator.data.failed
+        )
 
 
 class ProxonCentralEntity(ProxonEntity):

@@ -26,7 +26,7 @@ from .const import (
     ROOM_SETPOINT_MAX,
     ROOM_SETPOINT_MIN,
 )
-from .coordinator import ProxonModbusCoordinator
+from .coordinator import BLOCK_ROOMS, ProxonModbusCoordinator
 from .entity import ProxonRoomEntity
 
 
@@ -46,6 +46,7 @@ async def async_setup_entry(
 
 
 class ProxonRoomClimate(ProxonRoomEntity, ClimateEntity):
+    _blocks = frozenset({BLOCK_ROOMS})
     """A single room of the Proxon FWT, controlled via its setpoint registers.
 
     This is the room device's main entity, so it takes no name of its own
