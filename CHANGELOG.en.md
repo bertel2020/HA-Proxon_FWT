@@ -5,52 +5,26 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
-## 2.6.4 – 2026-11-02
-
-- **Icons added:** PTC element active (radiator, crossed out when off), heat pump heating (`mdi:heat-pump`), cooling (`mdi:snowflake`), continuous operation (`mdi:autorenew`), operating mode (full state) and the unlock flags ("… selectable") previously only had the default icon.
-
-## 2.6.3 – 2026-11-02
-
-- **Switch renamed:** "Lüfter-Automatik (Eco Sommer/Winter)" is now just "Lüfter-Automatik" (English "Fan auto mode"). The restriction to Eco summer/winter is still documented in the README. Existing entity IDs are unchanged; new setups get `switch.<name>_fan_auto_mode`.
-
-## 2.6.2 – 2026-11-02
-
-- **Device page grouped better:** the technical refrigerant-circuit values (temperature before evaporator, evaporator, after preheater, before condenser, condenser, compressor, compressor speed) and the heat pump operating states (heating, cooling, continuous) are now under "Diagnostic". The entities stay enabled; error and filter messages and the normal temperatures stay under "Sensors". Note: diagnostic entities don't appear in auto-generated dashboards and area cards.
-
-## 2.6.1 – 2026-11-02
-
-- **Thermostat mode fixed:** the `climate` entity always showed "Heat/Cool". It is now "Heat", and "Heat/Cool" only when "Cooling available on this unit" is on, the device has unlocked cooling (register 315, bit 8) and the cooling release (register 306) is on.
-- **Settable temperature range fixed:** instead of a fixed 18–24 °C the range follows the register list: room 1 (Wohnen) 18–30 °C directly, every other room its mid temperature (register 220+) ±3 °C in whole degrees, clamped to 18–30 °C. Without a plausible mid temperature 18–30 °C applies.
-
-## 2.6.0 – 2026-11-02
-
-- **New diagnostic sensor "Last write error":** shows the most recent failed write (register, value, reason). Attributes: time and number of errors since startup. A command the device rejected is visible without reading the log.
-
-## 2.5.0 – 2026-11-02
-
-- **Change the connection later:** new reconfigure step (Settings → Devices & Services → Proxon FWT → ⋮ → **Reconfigure**): host, port, serial parameters, unit ID and even switching between TCP and RTU can be changed without deleting the integration. The form is prefilled with the current values and the connection is tested before saving. Entities and history are kept.
-
-## 2.4.0 – 2026-11-02
-
-- **Skip rooms that are not installed:** an empty room name in the names step of the options leaves that room out — no device, no entities. This covers gaps in the room numbering (e.g. rooms 1–3 and 5 but no room 4); the registers are still read because the order determines the register address.
-
-## 2.3.0 – 2026-11-02
-
-- **Orphaned room devices are removed:** when the room count is reduced in the options, the devices of rooms that are no longer configured disappear from Home Assistant on reload (only this integration's devices).
-
-## 2.2.0 – 2026-11-02
-
-- **Failures per register block:** if reading one register block fails (device briefly busy, block not present), only the entities depending on it become unavailable. The whole poll now only fails when no block answers at all (typically a lost connection). Previously a single read error made *all* entities unavailable.
-- **Diagnostics download:** Settings → Devices & Services → Proxon FWT → Download diagnostics (host/serial port redacted), including the blocks that failed in the last poll and the decoded data.
-
 ## 2.1.0 – 2026-11-02
 
+**New**
 - **Room → Home Assistant area:** the names step of the options lets you optionally assign each room to an area. The room's device is then placed in that area. Rooms without an area stay untouched (areas set by hand are never overwritten).
+- **Skip rooms that are not installed:** an empty room name in the names step of the options leaves that room out — no device, no entities. This covers gaps in the room numbering (e.g. rooms 1–3 and 5 but no room 4); the registers are still read because the order determines the register address.
+- **Orphaned room devices are removed:** when the room count is reduced in the options, the devices of rooms that are no longer configured disappear from Home Assistant on reload (only this integration's devices).
+- **Change the connection later:** new reconfigure step (Settings → Devices & Services → Proxon FWT → ⋮ → **Reconfigure**): host, port, serial parameters, unit ID and even switching between TCP and RTU can be changed without deleting the integration. The form is prefilled with the current values and the connection is tested before saving. Entities and history are kept.
+- **Diagnostics download:** Settings → Devices & Services → Proxon FWT → Download diagnostics (host/serial port redacted), including the blocks that failed in the last poll and the decoded data.
+- **New diagnostic sensor "Last write error":** shows the most recent failed write (register, value, reason). Attributes: time and number of errors since startup. A command the device rejected is visible without reading the log.
 
-## 2.0.1 – 2026-11-02
+**Improved**
+- **Failures per register block:** if reading one register block fails (device briefly busy, block not present), only the entities depending on it become unavailable. The whole poll now only fails when no block answers at all (typically a lost connection). Previously a single read error made *all* entities unavailable.
+- **Device page grouped better:** the technical refrigerant-circuit values (temperature before evaporator, evaporator, after preheater, before condenser, condenser, compressor, compressor speed) and the heat pump operating states (heating, cooling, continuous) are now under "Diagnostic". The entities stay enabled; error and filter messages and the normal temperatures stay under "Sensors". Note: diagnostic entities don't appear in auto-generated dashboards and area cards.
+- **Icons added:** PTC element active (radiator, crossed out when off), heat pump heating (`mdi:heat-pump`), cooling (`mdi:snowflake`), continuous operation (`mdi:autorenew`), operating mode (full state) and the unlock flags ("… selectable") previously only had the default icon.
+- **Switch renamed:** "Lüfter-Automatik (Eco Sommer/Winter)" is now just "Lüfter-Automatik" (English "Fan auto mode"). The restriction to Eco summer/winter is still documented in the README. Existing entity IDs are unchanged; new setups get `switch.<name>_fan_auto_mode`.
 
-- **Corrected minimum version:** Home Assistant **2026.9.0** instead of 2026.8.0 (the `modbus` unit API is available from that version, see the reference integration `charly166/ha-modbus-proxon`).
-- `modbus-connection[tmodbus]>=4.12.1` is now listed explicitly under `requirements` in `manifest.json` instead of relying only on the `modbus` dependency.
+**Fixed**
+- **Thermostat mode:** the `climate` entity always showed "Heat/Cool". It is now "Heat", and "Heat/Cool" only when "Cooling available on this unit" is on, the device has unlocked cooling (register 315, bit 8) and the cooling release (register 306) is on.
+- **Settable temperature range:** instead of a fixed 18–24 °C the range follows the register list: room 1 (Wohnen) 18–30 °C directly, every other room its mid temperature (register 220+) ±3 °C in whole degrees, clamped to 18–30 °C. Without a plausible mid temperature 18–30 °C applies.
+- **Minimum version:** Home Assistant **2026.9.0** instead of 2026.8.0 (the `modbus` unit API is available from that version). `modbus-connection[tmodbus]>=4.12.1` is now listed explicitly under `requirements` in `manifest.json`.
 
 ## 2.0.0 – 2026-10-14
 

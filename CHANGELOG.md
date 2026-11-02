@@ -6,52 +6,26 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
-## 2.6.4 – 2026-11-02
-
-- **Icons ergänzt:** PTC-Element aktiv (Heizkörper, durchgestrichen, wenn aus), Wärmepumpe Heizbetrieb (`mdi:heat-pump`), Kühlbetrieb (`mdi:snowflake`), Dauerbetrieb (`mdi:autorenew`), Betriebsart (vollständiger Zustand) und die Freischaltungs-Flags („… wählbar“) hatten bisher nur das Standard-Icon.
-
-## 2.6.3 – 2026-11-02
-
-- **Schalter umbenannt:** „Lüfter-Automatik (Eco Sommer/Winter)“ heißt jetzt „Lüfter-Automatik“ (englisch „Fan auto mode“). Die Einschränkung auf Eco Sommer/Winter steht weiterhin in der README. Bestehende Entity-IDs bleiben unverändert; bei neuen Einrichtungen lautet sie `switch.<name>_lufter_automatik`.
-
-## 2.6.2 – 2026-11-02
-
-- **Geräteseite besser gruppiert:** Die technischen Kältekreis-Werte (Temperatur vor Verdampfer, Verdampfer, nach Vorwärme, vor Kondensator, Kondensator, Kompressor, Drehzahl Kompressor) und die Wärmepumpen-Betriebszustände (Heiz-, Kühl-, Dauerbetrieb) stehen jetzt unter „Diagnose“. Die Entities bleiben aktiviert; Fehler-, Filter-Meldungen und die normalen Temperaturen bleiben unter „Sensoren“. Hinweis: Diagnose-Entities erscheinen nicht in automatisch erzeugten Dashboards und Bereichskarten.
-
-## 2.6.1 – 2026-11-02
-
-- **Thermostat-Betriebsart korrigiert:** Die `climate`-Entity zeigte immer „Heizen/Kühlen“. Jetzt ist sie „Heizen“ und nur dann „Heizen/Kühlen“, wenn „Kühlen am Gerät verfügbar“ aktiv ist, das Gerät Kühlen freigeschaltet hat (Register 315, Bit 8) und die Kühlfreigabe (Register 306) an ist.
-- **Einstellbarer Temperaturbereich korrigiert:** Statt fest 18–24 °C gilt der Bereich laut Registerliste: Raum 1 (Wohnen) 18–30 °C direkt, alle anderen Räume ihre Mittentemperatur (Register 220+) ±3 °C in ganzen Grad, begrenzt auf 18–30 °C. Fehlt eine plausible Mittentemperatur, gilt 18–30 °C.
-
-## 2.6.0 – 2026-11-02
-
-- **Neuer Diagnose-Sensor „Letzter Schreibfehler“:** Zeigt das zuletzt fehlgeschlagene Schreiben (Register, Wert, Grund). Attribute: Zeitpunkt und Anzahl der Fehler seit dem Start. So ist ein vom Gerät abgelehnter Befehl sichtbar, ohne ins Log zu schauen.
-
-## 2.5.0 – 2026-11-02
-
-- **Verbindung nachträglich ändern:** Neuer Reconfigure-Schritt (Einstellungen → Geräte & Dienste → Proxon FWT → ⋮ → **Neu konfigurieren**): Host, Port, serielle Parameter, Unit-ID und sogar der Wechsel zwischen TCP und RTU lassen sich ändern, ohne die Integration zu löschen. Das Formular ist mit den aktuellen Werten vorbelegt, die Verbindung wird vor dem Speichern getestet. Entities und Verlauf bleiben erhalten.
-
-## 2.4.0 – 2026-11-02
-
-- **Nicht verbaute Räume überspringen:** Ein leerer Raumname im Namen-Schritt der Optionen lässt diesen Raum aus — kein Gerät, keine Entities. So lassen sich Lücken in der Raumnummerierung abbilden (z. B. Raum 1–3 und 5, aber kein Raum 4); die Register werden weiter mitgelesen, weil die Reihenfolge die Registeradresse bestimmt.
-
-## 2.3.0 – 2026-11-02
-
-- **Verwaiste Raumgeräte werden entfernt:** Wird die Raumanzahl in den Optionen verringert, verschwinden die Geräte der nicht mehr konfigurierten Räume beim Neuladen automatisch aus Home Assistant (nur Geräte dieser Integration).
-
-## 2.2.0 – 2026-11-02
-
-- **Ausfall pro Registerblock:** Schlägt das Lesen eines Registerblocks fehl (Gerät kurz beschäftigt, Block nicht vorhanden), werden nur die davon abhängigen Entities „nicht verfügbar“. Das gesamte Abfragen scheitert nur noch, wenn kein einziger Block antwortet (typisch: Verbindung weg). Bisher machte ein einzelner Lesefehler *alle* Entities nicht verfügbar.
-- **Diagnose-Download:** Unter Einstellungen → Geräte & Dienste → Proxon FWT → Diagnose herunterladen (Host/serielle Schnittstelle geschwärzt), inklusive der zuletzt fehlgeschlagenen Blöcke und der dekodierten Daten.
-
 ## 2.1.0 – 2026-11-02
 
+**Neu**
 - **Raum → Home-Assistant-Bereich:** Im Namen-Schritt der Optionen lässt sich jedem Raum optional ein Bereich zuordnen. Das Raumgerät wird dann in diesen Bereich gelegt. Räume ohne Bereich bleiben unverändert (von Hand gesetzte Bereiche werden nie überschrieben).
+- **Nicht verbaute Räume überspringen:** Ein leerer Raumname im Namen-Schritt der Optionen lässt diesen Raum aus — kein Gerät, keine Entities. So lassen sich Lücken in der Raumnummerierung abbilden (z. B. Raum 1–3 und 5, aber kein Raum 4); die Register werden weiter mitgelesen, weil die Reihenfolge die Registeradresse bestimmt.
+- **Verwaiste Raumgeräte werden entfernt:** Wird die Raumanzahl in den Optionen verringert, verschwinden die Geräte der nicht mehr konfigurierten Räume beim Neuladen automatisch aus Home Assistant (nur Geräte dieser Integration).
+- **Verbindung nachträglich ändern:** Neuer Reconfigure-Schritt (Einstellungen → Geräte & Dienste → Proxon FWT → ⋮ → **Neu konfigurieren**): Host, Port, serielle Parameter, Unit-ID und sogar der Wechsel zwischen TCP und RTU lassen sich ändern, ohne die Integration zu löschen. Das Formular ist mit den aktuellen Werten vorbelegt, die Verbindung wird vor dem Speichern getestet. Entities und Verlauf bleiben erhalten.
+- **Diagnose-Download:** Unter Einstellungen → Geräte & Dienste → Proxon FWT → Diagnose herunterladen (Host/serielle Schnittstelle geschwärzt), inklusive der zuletzt fehlgeschlagenen Blöcke und der dekodierten Daten.
+- **Neuer Diagnose-Sensor „Letzter Schreibfehler“:** Zeigt das zuletzt fehlgeschlagene Schreiben (Register, Wert, Grund). Attribute: Zeitpunkt und Anzahl der Fehler seit dem Start. So ist ein vom Gerät abgelehnter Befehl sichtbar, ohne ins Log zu schauen.
 
-## 2.0.1 – 2026-11-02
+**Verbessert**
+- **Ausfall pro Registerblock:** Schlägt das Lesen eines Registerblocks fehl (Gerät kurz beschäftigt, Block nicht vorhanden), werden nur die davon abhängigen Entities „nicht verfügbar“. Das gesamte Abfragen scheitert nur noch, wenn kein einziger Block antwortet (typisch: Verbindung weg). Bisher machte ein einzelner Lesefehler *alle* Entities nicht verfügbar.
+- **Geräteseite besser gruppiert:** Die technischen Kältekreis-Werte (Temperatur vor Verdampfer, Verdampfer, nach Vorwärme, vor Kondensator, Kondensator, Kompressor, Drehzahl Kompressor) und die Wärmepumpen-Betriebszustände (Heiz-, Kühl-, Dauerbetrieb) stehen jetzt unter „Diagnose“. Die Entities bleiben aktiviert; Fehler-, Filter-Meldungen und die normalen Temperaturen bleiben unter „Sensoren“. Hinweis: Diagnose-Entities erscheinen nicht in automatisch erzeugten Dashboards und Bereichskarten.
+- **Icons ergänzt:** PTC-Element aktiv (Heizkörper, durchgestrichen, wenn aus), Wärmepumpe Heizbetrieb (`mdi:heat-pump`), Kühlbetrieb (`mdi:snowflake`), Dauerbetrieb (`mdi:autorenew`), Betriebsart (vollständiger Zustand) und die Freischaltungs-Flags („… wählbar“) hatten bisher nur das Standard-Icon.
+- **Schalter umbenannt:** „Lüfter-Automatik (Eco Sommer/Winter)“ heißt jetzt „Lüfter-Automatik“ (englisch „Fan auto mode“). Die Einschränkung auf Eco Sommer/Winter steht weiterhin in der README. Bestehende Entity-IDs bleiben unverändert; bei neuen Einrichtungen lautet sie `switch.<name>_lufter_automatik`.
 
-- **Mindestversion korrigiert:** Home Assistant **2026.9.0** statt 2026.8.0 (ab dieser Version steht die `modbus`-Unit-API bereit, siehe Referenzintegration `charly166/ha-modbus-proxon`).
-- `modbus-connection[tmodbus]>=4.12.1` ist jetzt explizit in `manifest.json` unter `requirements` eingetragen, statt sich nur auf die Abhängigkeit `modbus` zu verlassen.
+**Korrigiert**
+- **Thermostat-Betriebsart:** Die `climate`-Entity zeigte immer „Heizen/Kühlen“. Jetzt ist sie „Heizen“ und nur dann „Heizen/Kühlen“, wenn „Kühlen am Gerät verfügbar“ aktiv ist, das Gerät Kühlen freigeschaltet hat (Register 315, Bit 8) und die Kühlfreigabe (Register 306) an ist.
+- **Einstellbarer Temperaturbereich:** Statt fest 18–24 °C gilt der Bereich laut Registerliste: Raum 1 (Wohnen) 18–30 °C direkt, alle anderen Räume ihre Mittentemperatur (Register 220+) ±3 °C in ganzen Grad, begrenzt auf 18–30 °C. Fehlt eine plausible Mittentemperatur, gilt 18–30 °C.
+- **Mindestversion:** Home Assistant **2026.9.0** statt 2026.8.0 (ab dieser Version steht die `modbus`-Unit-API bereit). `modbus-connection[tmodbus]>=4.12.1` ist jetzt explizit in `manifest.json` unter `requirements` eingetragen.
 
 ## 2.0.0 – 2026-10-14
 
