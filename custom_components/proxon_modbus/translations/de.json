@@ -181,5 +181,15 @@
         }
       }
     }
+  },
+  "issues": {
+    "connection_lost": {
+      "title": "Proxon FWT nicht erreichbar",
+      "description": "Die Anlage „{name}“ liefert seit mehr als 10 Minuten keine Daten. Prüfe Stromversorgung, Netzwerk- oder USB-Verbindung und die Einstellungen des Modbus-Gateways. Die Meldung verschwindet von selbst, sobald die Verbindung wieder funktioniert."
+    },
+    "write_failing": {
+      "title": "Proxon FWT nimmt keine Befehle an",
+      "description": "Mehrere Schreibbefehle an „{name}“ sind nacheinander fehlgeschlagen. Der Sensor „Letzter Schreibfehler“ nennt Register und Grund. Häufige Ursachen: falsche Modbus-Adresse oder ein Gateway im Nur-Lese-Modus. Die Meldung verschwindet nach dem nächsten erfolgreichen Schreibvorgang."
+    }
   }
 }

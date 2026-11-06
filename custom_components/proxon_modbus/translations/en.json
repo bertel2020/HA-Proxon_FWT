@@ -181,5 +181,15 @@
         }
       }
     }
+  },
+  "issues": {
+    "connection_lost": {
+      "title": "Proxon FWT unreachable",
+      "description": "The unit \"{name}\" has not delivered data for more than 10 minutes. Check power, the network or USB connection and the Modbus gateway settings. This notice disappears by itself once the connection works again."
+    },
+    "write_failing": {
+      "title": "Proxon FWT rejects commands",
+      "description": "Several write commands to \"{name}\" failed in a row. The \"Last write error\" sensor names the register and reason. Common causes: a wrong Modbus address or a gateway in read-only mode. This notice disappears after the next successful write."
+    }
   }
 }

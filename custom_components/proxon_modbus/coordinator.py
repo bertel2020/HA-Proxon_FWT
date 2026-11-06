@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
@@ -62,6 +63,11 @@ from .logic import FanStageTracker, RunStats
 from .hub import ProxonModbusError, ProxonModbusHub, bit, decode_int16
 
 _LOGGER = logging.getLogger(__name__)
+
+# Repair issues: raised only after a problem has persisted, so a brief
+# glitch doesn't nag. Cleared automatically as soon as things work again.
+CONNECTION_ISSUE_AFTER = 600  # seconds of failed polls
+WRITE_ISSUE_AFTER = 3  # consecutive failed writes
 
 # Independently polled register blocks; a failing block only makes the
 # entities that depend on it unavailable (see ProxonEntity.available).
@@ -142,15 +148,42 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
         self._store: Store = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}.stats")
         self._scan_interval = scan_interval
         self._last_poll: float | None = None
+        self._fail_since: float | None = None
+        self._write_fail_streak = 0
 
     async def _async_update_data(self) -> ProxonData:
         try:
             data = await self._async_read_all()
         except ProxonModbusError as err:
+            now = time.monotonic()
+            if self._fail_since is None:
+                self._fail_since = now
+            if now - self._fail_since >= CONNECTION_ISSUE_AFTER:
+                self._set_issue("connection_lost", True, ir.IssueSeverity.ERROR)
             raise UpdateFailed(str(err)) from err
+        self._fail_since = None
+        self._set_issue("connection_lost", False)
         self._track_fan_stage(data)
         self._track_stats(data)
         return data
+
+    def _set_issue(
+        self, key: str, active: bool, severity: ir.IssueSeverity = ir.IssueSeverity.WARNING
+    ) -> None:
+        assert self.config_entry is not None
+        issue_id = f"{key}_{self.config_entry.entry_id}"
+        if active:
+            ir.async_create_issue(
+                self.hass,
+                DOMAIN,
+                issue_id,
+                is_fixable=False,
+                severity=severity,
+                translation_key=key,
+                translation_placeholders={"name": self.config_entry.title},
+            )
+        else:
+            ir.async_delete_issue(self.hass, DOMAIN, issue_id)
 
     def _track_fan_stage(self, data: ProxonData) -> None:
         """Let the tracker learn/restore the fan stage (see logic.FanStageTracker)."""
@@ -218,8 +251,13 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
             self.last_write_error = str(err)[:255]
             self.last_write_error_at = dt_util.utcnow()
             self.write_error_count += 1
+            self._write_fail_streak += 1
+            if self._write_fail_streak >= WRITE_ISSUE_AFTER:
+                self._set_issue("write_failing", True)
             self.async_update_listeners()
             raise
+        self._write_fail_streak = 0
+        self._set_issue("write_failing", False)
         await asyncio.sleep(WRITE_SETTLE_DELAY)
         await self.async_request_refresh()
 

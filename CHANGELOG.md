@@ -17,6 +17,7 @@ Versionen folgen dem Feld `version` in
 - **Statistiken zur Wärmepumpe und zu den Filtern:** Neue Sensoren für Laufzeit und Starts der Wärmepumpe (heute und gesamt) sowie Betriebsstunden von Geräte- und Umluftfilter. Die Werte werden von der Integration selbst gezählt und überstehen Neustarts. Die Filterstunden beginnen von vorn, sobald die Anlage „Filter wechseln“ zurücknimmt. Sie zählen nur, solange die Anlage nicht aus ist.
 - **Blueprint „Nachtabsenkung der Lüfterstufe“:** Nachts eine niedrigere Lüfterstufe, morgens wieder die normale (nur Eco Sommer/Winter, Lüfter-Automatik aus).
 - **Diagnose-Download erweitert:** Enthält jetzt Abfrageintervall, letzten Schreibfehler, Stand der Lüfterstufen-Wiederherstellung und die Statistiken. Host und serielle Schnittstelle bleiben geschwärzt.
+- **Reparatur-Meldungen:** Ist die Anlage länger als 10 Minuten nicht erreichbar oder schlagen drei Schreibbefehle hintereinander fehl, erscheint unter „Reparaturen“ eine Meldung mit Hinweisen. Sie verschwindet von selbst, sobald alles wieder funktioniert.
 - **Grafischer Karten-Editor** für `custom:proxon-fwt-card`.
 - **Blueprints:** „CO₂-gesteuerte Intensivlüftung“ und „Wartung und Störung melden“ unter `blueprints/automation/proxon_modbus`.
 - **Raum → Home-Assistant-Bereich:** Im Namen-Schritt der Optionen lässt sich jedem Raum optional ein Bereich zuordnen. Das Raumgerät wird dann in diesen Bereich gelegt. Räume ohne Bereich bleiben unverändert (von Hand gesetzte Bereiche werden nie überschrieben).
