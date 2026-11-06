@@ -68,12 +68,28 @@
           "num_co2_sensors": "Anzahl CO₂-Sensoren",
           "num_rf_sensors": "Anzahl Feuchtesensoren",
           "scan_interval": "Abfrageintervall",
-          "cooling_available": "Kühlen am Gerät verfügbar"
+          "cooling_available": "Kühlen am Gerät verfügbar",
+          "outdoor_side": "Außenseite des Wärmetauschers (Dashboard)",
+          "power_entity": "Eigener Leistungssensor (optional)",
+          "outdoor_entity": "Eigener Außentemperatursensor (optional)"
+        },
+        "data_description": {
+          "outdoor_side": "Auf welcher Seite des Wärmetauschers liegen Frischluft und Fortluft? Bestimmt die Darstellung in Karte und Seitenpanel.",
+          "power_entity": "Ersetzt die Leistungsaufnahme des Geräts in Karte und Seitenpanel, z. B. ein Shelly an der Anlage. Leer lassen, um den Gerätesensor zu verwenden.",
+          "outdoor_entity": "Ersetzt die Außentemperatur des Geräts in Karte und Seitenpanel. Leer lassen, um den Gerätesensor zu verwenden."
         }
       },
       "names": {
         "title": "Namen",
         "description": "Vergib für jeden Raum und externen Sensor einen Namen. Lass einen Raumnamen leer, wenn dieser Raum nicht verbaut ist: Er wird dann übersprungen (kein Gerät, keine Entities). Optional kann jeder Raum einem Home-Assistant-Bereich zugeordnet werden (room_N_area): Das Raumgerät wird dann in diesen Bereich gelegt. Räume ohne Bereich bleiben unverändert."
+      }
+    }
+  },
+  "selector": {
+    "outdoor_side": {
+      "options": {
+        "left": "Links (Frischluft/Fortluft links)",
+        "right": "Rechts (Frischluft/Fortluft rechts)"
       }
     }
   },

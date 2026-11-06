@@ -51,6 +51,12 @@ CONF_SCAN_INTERVAL = "scan_interval"
 # a diagnostic of what the device itself reports.
 CONF_COOLING_AVAILABLE = "cooling_available"
 
+# Dashboard card / side panel settings (shared by every browser via the
+# proxon_modbus/settings websocket command).
+CONF_OUTDOOR_SIDE = "outdoor_side"  # "left" | "right": side of the heat exchanger the outdoor air is on
+CONF_POWER_ENTITY = "power_entity"  # optional own power sensor instead of the unit's register 113
+CONF_OUTDOOR_ENTITY = "outdoor_entity"  # optional own outdoor temperature sensor
+
 # --- Defaults ----------------------------------------------------------------
 
 DEFAULT_NAME = "Proxon FWT"

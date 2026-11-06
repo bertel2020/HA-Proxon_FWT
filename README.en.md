@@ -201,13 +201,15 @@ The card discovers all entities of the integration by itself (via platform and e
 - **Refrigerant circuit** (diagnostic temperatures) and **status and maintenance** (errors, filters)
 - **Rooms** as tiles or list with a detail view: target/actual, CO₂, humidity, PTC state and enable per room
 
-Anything the unit does not provide (e.g. power consumption or outdoor temperature) is hidden.
+Anything the unit does not provide (e.g. power consumption or outdoor temperature) is hidden. The card can be configured graphically in the card editor.
+
+`outdoor_side`, `power_entity` and `outdoor_entity` can also be set once centrally in the integration's **options** (Configure) and then apply in every browser, to the card and the side panel. A value in the card takes precedence.
 
 | Option | Default | Meaning |
 |---|---|---|
-| `outdoor_side` | `left` | `left` or `right`: which side of the heat exchanger fresh and exhaust air are on |
-| `power_entity` | – | own entity for the power consumption (e.g. a Shelly) instead of the device sensor |
-| `outdoor_entity` | – | own entity for the outdoor temperature instead of the device sensor |
+| `outdoor_side` | integration (`left`) | `left` or `right`: which side of the heat exchanger fresh and exhaust air are on |
+| `power_entity` | integration | own entity for the power consumption (e.g. a Shelly) instead of the device sensor |
+| `outdoor_entity` | integration | own entity for the outdoor temperature instead of the device sensor |
 | `sections` | all | list of sections to show: `mode`, `air`, `fan`, `heatpump`, `refrigerant`, `status`, `rooms`, plus optionally `schema`, `kpi`, `alerts`, `history` |
 | `max_fan_rpm` | `3000` | speed at which the fan bars are full |
 | `max_compressor_rpm` | `6000` | speed at which the compressor ring is full |
@@ -215,12 +217,21 @@ Anything the unit does not provide (e.g. power consumption or outdoor temperatur
 
 ### Side panel
 
-The integration also adds a **Proxon FWT** entry to the sidebar: a full-page view with an animated system diagram (cross-flow heat exchanger, fans, evaporator, condenser, compressor circuit and all temperature probes), key figures (including the heat recovery rate, calculated from fresh, extract and supply air temperature), room heat map, ventilation, heat pump, refrigerant circuit, status and a 24-hour temperature history. Notices about filter replacement, system errors, emergency/frost protection and write errors appear at the top as banners. The "outdoor side right" setting can be switched in the panel (remembered in the browser). The bypass is a status display only; the unit switches it by itself.
+The integration also adds a **Proxon FWT** entry to the sidebar: a full-page view with an animated system diagram (cross-flow heat exchanger, fans, evaporator, condenser, compressor circuit and all temperature probes), key figures (including the heat recovery rate, calculated from fresh, extract and supply air temperature), room heat map, ventilation, heat pump, refrigerant circuit, status and a 24-hour temperature history. Notices about filter replacement, system errors, emergency/frost protection and write errors appear at the top as banners. The "outdoor side" comes from the integration's options and can be overridden per browser in the panel. In cooling mode the diagram reverses the refrigerant circuit. The bypass is a status display only; the unit switches it by itself.
 
 ![Side panel (light)](docs/panel-light.png)
 ![Side panel (dark)](docs/panel-dark.png)
 
 *The images show the panel with sample data.*
+
+## Blueprints
+
+Two automation blueprints are in [`blueprints/automation/proxon_modbus`](blueprints/automation/proxon_modbus):
+
+| Blueprint | Import | Purpose |
+|---|---|---|
+| CO₂-controlled intensive ventilation | [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/co2_intensive_ventilation.yaml) | Switch to Comfort mode and turn on intensive ventilation when CO₂ is high; afterwards turn it off and restore the previous operating mode. The unit only offers intensive ventilation in Comfort mode. |
+| Report maintenance and faults | [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/maintenance_alert.yaml) | Notification (your choice) on filter replacement or system error. |
 
 ## Register map
 

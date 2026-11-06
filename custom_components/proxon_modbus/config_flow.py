@@ -28,6 +28,9 @@ from .const import (
     CONF_CONNECTION_TYPE,
     CONF_COOLING_AVAILABLE,
     CONF_NUM_CO2_SENSORS,
+    CONF_OUTDOOR_ENTITY,
+    CONF_OUTDOOR_SIDE,
+    CONF_POWER_ENTITY,
     CONF_NUM_ROOMS,
     CONF_NUM_RF_SENSORS,
     CONF_PARITY,
@@ -381,6 +384,9 @@ class ProxonModbusOptionsFlow(OptionsFlow):
                 CONF_NUM_RF_SENSORS: int(user_input[CONF_NUM_RF_SENSORS]),
                 CONF_SCAN_INTERVAL: int(user_input[CONF_SCAN_INTERVAL]),
                 CONF_COOLING_AVAILABLE: bool(user_input[CONF_COOLING_AVAILABLE]),
+                CONF_OUTDOOR_SIDE: user_input.get(CONF_OUTDOOR_SIDE, "left"),
+                CONF_POWER_ENTITY: user_input.get(CONF_POWER_ENTITY) or None,
+                CONF_OUTDOOR_ENTITY: user_input.get(CONF_OUTDOOR_ENTITY) or None,
             }
             return await self.async_step_names()
 
@@ -420,6 +426,28 @@ class ProxonModbusOptionsFlow(OptionsFlow):
                     CONF_COOLING_AVAILABLE,
                     default=options.get(CONF_COOLING_AVAILABLE, DEFAULT_COOLING_AVAILABLE),
                 ): selector.BooleanSelector(),
+                vol.Required(
+                    CONF_OUTDOOR_SIDE,
+                    default=options.get(CONF_OUTDOOR_SIDE, "left"),
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=["left", "right"],
+                        translation_key="outdoor_side",
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+                vol.Optional(
+                    CONF_POWER_ENTITY,
+                    description={"suggested_value": options.get(CONF_POWER_ENTITY)},
+                ): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain="sensor", device_class="power")
+                ),
+                vol.Optional(
+                    CONF_OUTDOOR_ENTITY,
+                    description={"suggested_value": options.get(CONF_OUTDOOR_ENTITY)},
+                ): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain="sensor", device_class="temperature")
+                ),
             }
         )
         return self.async_show_form(step_id="init", data_schema=schema)

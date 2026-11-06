@@ -203,13 +203,15 @@ Die Karte findet alle Entities der Integration selbst (über Plattform und Entit
 - **Kältekreis** (Diagnose-Temperaturen) sowie **Status und Wartung** (Fehler, Filter)
 - **Räume** als Kacheln oder Liste mit Detailansicht: Soll/Ist, CO₂, Feuchte, PTC-Zustand und -Freigabe je Raum
 
-Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wird ausgeblendet.
+Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wird ausgeblendet. Die Karte lässt sich im Karten-Editor grafisch konfigurieren.
+
+`outdoor_side`, `power_entity` und `outdoor_entity` lassen sich auch einmal zentral in den **Optionen der Integration** (Konfigurieren) einstellen und gelten dann für alle Browser, Karte und Seitenpanel. Eine Angabe in der Karte hat Vorrang.
 
 | Option | Standard | Bedeutung |
 |---|---|---|
-| `outdoor_side` | `left` | `left` oder `right`: auf welcher Seite des Wärmetauschers Frischluft/Fortluft liegen |
-| `power_entity` | – | eigene Entität für die Leistungsaufnahme (z. B. Shelly) statt des Gerätesensors |
-| `outdoor_entity` | – | eigene Entität für die Außentemperatur statt des Gerätesensors |
+| `outdoor_side` | Integration (`left`) | `left` oder `right`: auf welcher Seite des Wärmetauschers Frischluft/Fortluft liegen |
+| `power_entity` | Integration | eigene Entität für die Leistungsaufnahme (z. B. Shelly) statt des Gerätesensors |
+| `outdoor_entity` | Integration | eigene Entität für die Außentemperatur statt des Gerätesensors |
 | `sections` | alle | Liste der anzuzeigenden Bereiche: `mode`, `air`, `fan`, `heatpump`, `refrigerant`, `status`, `rooms` sowie optional `schema`, `kpi`, `alerts`, `history` |
 | `max_fan_rpm` | `3000` | Drehzahl, bei der die Lüfter-Balken voll sind |
 | `max_compressor_rpm` | `6000` | Drehzahl, bei der der Kompressor-Ring voll ist |
@@ -217,12 +219,21 @@ Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wi
 
 ### Seitenpanel
 
-Zusätzlich legt die Integration in der Seitenleiste den Eintrag **Proxon FWT** an: eine ganzseitige Ansicht mit animiertem Anlagenschema (Kreuzstrom-Wärmetauscher, Ventilatoren, Verdampfer, Kondensator, Kompressor-Kreislauf und alle Temperaturmesspunkte), Kennzahlen (u. a. Rückwärmzahl, berechnet aus Frisch-, Ab- und Zulufttemperatur), Raum-Heatmap, Lüftung, Wärmepumpe, Kältekreis, Status und einem 24-Stunden-Verlauf der Temperaturen. Hinweise zu Filterwechsel, Systemfehler, Notbetrieb/Einfrierschutz und Schreibfehlern erscheinen oben als Banner. Die Seite „Außenseite rechts“ lässt sich im Panel umschalten (wird im Browser gemerkt). Der Bypass ist eine reine Statusanzeige, das Gerät schaltet ihn selbst.
+Zusätzlich legt die Integration in der Seitenleiste den Eintrag **Proxon FWT** an: eine ganzseitige Ansicht mit animiertem Anlagenschema (Kreuzstrom-Wärmetauscher, Ventilatoren, Verdampfer, Kondensator, Kompressor-Kreislauf und alle Temperaturmesspunkte), Kennzahlen (u. a. Rückwärmzahl, berechnet aus Frisch-, Ab- und Zulufttemperatur), Raum-Heatmap, Lüftung, Wärmepumpe, Kältekreis, Status und einem 24-Stunden-Verlauf der Temperaturen. Hinweise zu Filterwechsel, Systemfehler, Notbetrieb/Einfrierschutz und Schreibfehlern erscheinen oben als Banner. Die Seite „Außenseite rechts“ kommt aus den Optionen der Integration und lässt sich im Panel pro Browser überschreiben. Im Kühlbetrieb kehrt das Schema den Kältekreis um. Der Bypass ist eine reine Statusanzeige, das Gerät schaltet ihn selbst.
 
 ![Seitenpanel (hell)](docs/panel-light.png)
 ![Seitenpanel (dunkel)](docs/panel-dark.png)
 
 *Die Bilder zeigen das Panel mit Beispieldaten.*
+
+## Blueprints
+
+Zwei Automatisierungs-Vorlagen liegen unter [`blueprints/automation/proxon_modbus`](blueprints/automation/proxon_modbus):
+
+| Blueprint | Import | Zweck |
+|---|---|---|
+| CO₂-gesteuerte Intensivlüftung | [![Blueprint importieren](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/co2_intensive_ventilation.yaml) | Bei hohem CO₂-Wert in den Komfort-Modus wechseln und die Intensivlüftung einschalten; danach Intensivlüftung aus und vorherige Betriebsart wiederherstellen. Die Intensivlüftung gibt es am Gerät nur im Komfort-Modus. |
+| Wartung und Störung melden | [![Blueprint importieren](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/maintenance_alert.yaml) | Benachrichtigung (frei wählbar) bei Filterwechsel oder Systemfehler. |
 
 ## Registerbelegung
 

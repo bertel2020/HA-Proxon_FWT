@@ -1,0 +1,143 @@
+blueprint:
+  name: Proxon FWT – CO₂-gesteuerte Intensivlüftung / CO₂-controlled intensive ventilation
+  description: >-
+    Schaltet bei hohem CO₂-Wert in den Komfort-Modus und aktiviert die
+    Intensivlüftung. Sinkt der CO₂-Wert wieder, wird die Intensivlüftung
+    ausgeschaltet und die vorherige Betriebsart wiederhergestellt.
+    Die Intensivlüftung ist am Gerät nur im Komfort-Modus verfügbar. Ist die
+    Anlage ausgeschaltet („Aus“), greift die Automatisierung nicht ein.
+
+
+    Switches to Comfort mode and turns on intensive ventilation when CO₂ is
+    high. Once CO₂ drops again, intensive ventilation is turned off and the
+    previous operating mode is restored. Intensive ventilation is only
+    available in Comfort mode on the unit. If the unit is switched off, the
+    automation does nothing.
+  domain: automation
+  source_url: https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/co2_intensive_ventilation.yaml
+  input:
+    co2_sensor:
+      name: CO₂-Sensor / CO₂ sensor
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: carbon_dioxide
+    mode_select:
+      name: Betriebsart / Operating mode
+      description: Die Auswahl-Entität „Betriebsart“ der Proxon FWT. / The "Operating mode" select of the Proxon FWT.
+      selector:
+        entity:
+          filter:
+            - integration: proxon_modbus
+              domain: select
+    intensive_switch:
+      name: Intensivlüftung / Intensive ventilation
+      selector:
+        entity:
+          filter:
+            - integration: proxon_modbus
+              domain: switch
+    threshold:
+      name: Einschaltschwelle / Turn-on threshold
+      default: 1000
+      selector:
+        number:
+          min: 600
+          max: 2000
+          step: 50
+          unit_of_measurement: ppm
+    hysteresis:
+      name: Hysterese / Hysteresis
+      description: Intensivlüftung endet unterhalb von Schwelle minus Hysterese. / Ends below threshold minus hysteresis.
+      default: 200
+      selector:
+        number:
+          min: 50
+          max: 500
+          step: 50
+          unit_of_measurement: ppm
+    on_delay:
+      name: Verzögerung Einschalten / Turn-on delay
+      default: 5
+      selector:
+        number:
+          min: 0
+          max: 60
+          unit_of_measurement: min
+    off_delay:
+      name: Verzögerung Ausschalten / Turn-off delay
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 120
+          unit_of_measurement: min
+
+mode: single
+max_exceeded: silent
+
+trigger_variables:
+  co2_entity: !input co2_sensor
+  threshold_ppm: !input threshold
+  hysteresis_ppm: !input hysteresis
+
+variables:
+  intensive_entity: !input intensive_switch
+
+trigger:
+  - trigger: template
+    id: high
+    value_template: "{{ states(co2_entity) | float(0) > threshold_ppm | float }}"
+    for:
+      minutes: !input on_delay
+  - trigger: template
+    id: low
+    value_template: >-
+      {{ states(co2_entity) | float(99999) < (threshold_ppm | float - hysteresis_ppm | float) }}
+    for:
+      minutes: !input off_delay
+
+condition:
+  - condition: not
+    conditions:
+      - condition: state
+        entity_id: !input mode_select
+        state:
+          - "off"
+          - unavailable
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: high
+        sequence:
+          - action: scene.create
+            data:
+              scene_id: proxon_co2_previous_mode
+              snapshot_entities:
+                - !input mode_select
+          - action: select.select_option
+            target:
+              entity_id: !input mode_select
+            data:
+              option: comfort
+          - wait_template: "{{ not is_state(intensive_entity, 'unavailable') }}"
+            timeout: "00:01:00"
+            continue_on_timeout: true
+          - action: switch.turn_on
+            target:
+              entity_id: !input intensive_switch
+      - conditions:
+          - condition: trigger
+            id: low
+        sequence:
+          - action: switch.turn_off
+            target:
+              entity_id: !input intensive_switch
+            continue_on_error: true
+          - action: scene.turn_on
+            target:
+              entity_id: scene.proxon_co2_previous_mode
+            continue_on_error: true

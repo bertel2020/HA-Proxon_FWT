@@ -293,14 +293,16 @@ class ProxonFwtBase extends HTMLElement {
     if (!h) return;
     const d = this._discover();
     this._d = d;
+    const centralId = d && this._config.device_id ? this._config.device_id : d && d.central && Object.keys(d.central).length ? (h.entities[d.central.operating_mode] || {}).device_id : null;
+    if (d && centralId && this._settingsFor !== centralId) this._loadSettings(centralId);
     const ids = d
       ? [...Object.values(d.central), ...d.rooms.flatMap((r) => [r.climate, r.co2, r.rf, ...Object.values(r.ents)]),
-        this._config.power_entity, this._config.outdoor_entity]
+        this._opt("power_entity"), this._opt("outdoor_entity")]
       : [];
     const sig = ids.filter(Boolean).map((i) => {
       const s = h.states[i];
       return s ? `${s.state}|${s.attributes.temperature}|${s.attributes.current_temperature}` : "-";
-    }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._histStamp || 0}|${this._wb || 0}`;
+    }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._histStamp || 0}|${this._wb || 0}|${this._settingsStamp || 0}`;
     if (sig === this._sig) return;
     this._sig = sig;
     this._render();
@@ -312,7 +314,28 @@ class ProxonFwtBase extends HTMLElement {
   }
 
   _flip() {
-    return this._config.outdoor_side === "right";
+    return this._opt("outdoor_side", "left") === "right";
+  }
+
+  // Effective option: card/panel config wins, then the integration's options
+  // (loaded once over websocket), then the default.
+  _opt(key, def) {
+    const v = this._config[key];
+    if (v !== undefined && v !== null && v !== "") return v;
+    const o = this._settings && this._settings[key];
+    return o !== undefined && o !== null && o !== "" ? o : def;
+  }
+
+  async _loadSettings(centralId) {
+    this._settingsFor = centralId;
+    try {
+      const all = await this._hass.callWS({ type: "proxon_modbus/settings" });
+      this._settings = all.find((e) => e.device_id === centralId) || all[0] || {};
+    } catch (err) {
+      this._settings = {};
+    }
+    this._settingsStamp = Date.now();
+    this._update();
   }
 
   // ---- helpers ----------------------------------------------------------
@@ -369,11 +392,11 @@ class ProxonFwtBase extends HTMLElement {
   }
 
   _outdoorId() {
-    return this._config.outdoor_entity || this._d.central.temp_outside;
+    return this._opt("outdoor_entity") || this._d.central.temp_outside;
   }
 
   _powerId() {
-    return this._config.power_entity || this._d.central.power_consumption;
+    return this._opt("power_entity") || this._d.central.power_consumption;
   }
 
   _efficiency() {
@@ -476,6 +499,7 @@ class ProxonFwtBase extends HTMLElement {
     const X = (x) => (flip ? 680 - x : x);
     const run = !(this._ok(c.operating_mode_state) && this._state(c.operating_mode_state).state === "off");
     const bypass = this._on(c.bypass_active);
+    const cool = this._on(c.heat_pump_cooling);
     const T = (id) => this._temp(id);
     const L = (pts, col, anim, arrow) => `<polyline points="${pts.map(([x, y]) => `${X(x)},${y}`).join(" ")}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" ${anim && run ? 'class="fl"' : ""} ${arrow ? 'marker-end="url(#sa)"' : ""}/>`;
     const pill = (cx, cy, label, id, col) => `<rect x="${X(cx) - 44}" y="${cy - 22}" width="88" height="44" rx="8" fill="${col}" fill-opacity=".14" stroke="${col}" stroke-opacity=".6" stroke-width=".7"/>
@@ -504,10 +528,13 @@ class ProxonFwtBase extends HTMLElement {
       ${bypass ? L([[250, 75], [250, 48], [430, 48], [430, 143]], BLUE, 1, 1) : ""}
       ${preheat}
       <text class="st" x="${X(340)}" y="198" text-anchor="middle">${this._t("exchanger")}</text>
-      ${coil(190, BLUE, this._t("evap_s"), c.temp_evaporator)}${coil(490, CORAL, this._t("cond_s"), c.temp_condenser)}
+      ${cool ? coil(190, CORAL, this._t("cond_s"), c.temp_condenser) + coil(490, BLUE, this._t("evap_s"), c.temp_evaporator)
+        : coil(190, BLUE, this._t("evap_s"), c.temp_evaporator) + coil(490, CORAL, this._t("cond_s"), c.temp_condenser)}
       ${fan(130, c.fan_speed_extract)}${fan(550, c.fan_speed_supply)}
-      ${probe(190, 75, 56, this._t("post_preheat_s"), c.temp_post_preheat, BLUE)}${probe(252, 145, 165, this._t("pre_evap_s"), c.temp_pre_evaporator, BLUE)}${probe(428, 145, 165, this._t("pre_cond_s"), c.temp_pre_condenser, CORAL)}
-      ${L([[366, 245], [500, 245], [500, 169]], CORAL, 1)}${L([[480, 169], [480, 305], [354, 305]], CORAL, 1)}${L([[326, 305], [200, 305], [200, 169]], BLUE, 1)}${L([[180, 169], [180, 245], [314, 245]], BLUE, 1)}
+      ${probe(190, 75, 56, this._t("post_preheat_s"), c.temp_post_preheat, BLUE)}${probe(cool ? 428 : 252, 145, 165, this._t("pre_evap_s"), c.temp_pre_evaporator, BLUE)}${probe(cool ? 252 : 428, 145, 165, this._t("pre_cond_s"), c.temp_pre_condenser, CORAL)}
+      ${cool
+        ? L([[314, 245], [180, 245], [180, 169]], CORAL, 1) + L([[200, 169], [200, 305], [326, 305]], CORAL, 1) + L([[354, 305], [480, 305], [480, 169]], BLUE, 1) + L([[500, 169], [500, 245], [366, 245]], BLUE, 1)
+        : L([[366, 245], [500, 245], [500, 169]], CORAL, 1) + L([[480, 169], [480, 305], [354, 305]], CORAL, 1) + L([[326, 305], [200, 305], [200, 169]], BLUE, 1) + L([[180, 169], [180, 245], [314, 245]], BLUE, 1)}
       <polygon points="${[[354, 305], [340, 297], [326, 305], [340, 313]].map(([x, y]) => `${X(x)},${y}`).join(" ")}" fill="var(--card-background-color)" stroke="var(--divider-color)"/>
       <circle cx="${X(340)}" cy="245" r="26" fill="var(--card-background-color)" stroke="${BLUE}" stroke-width="1.5"/>
       <text class="sh" x="${X(340)}" y="243" text-anchor="middle">${rpm === null ? "–" : rpm.toLocaleString(this._hass.language)}</text><text class="st" x="${X(340)}" y="258" text-anchor="middle">rpm</text>
@@ -515,9 +542,9 @@ class ProxonFwtBase extends HTMLElement {
       ${pill(48, 75, this._t("fresh"), c.temp_fresh_air, BLUE)}${pill(48, 145, this._t("exhaust"), c.temp_exhaust_air, BLUE)}
       ${pill(632, 75, this._t("extract"), c.temp_extract_air, CORAL)}${pill(632, 145, this._t("supply"), c.temp_supply_air, CORAL)}
       ${outdoor ? `<text class="sh" x="${X(48)}" y="38" text-anchor="middle">${this._t("outside")} ${outdoor}</text>` : ""}</svg>`;
-    const hp = this._on(c.heat_pump_heating);
+    const hp = this._on(c.heat_pump_heating) || cool;
     const chips = `${c.bypass_active && this._ok(c.bypass_active) ? `<span class="chip ${bypass ? "a" : ""}">${this._icon("mdi:routes")}${this._t(bypass ? "bypass_open" : "bypass_closed")}</span>` : ""}
-      ${c.heat_pump_heating ? `<span class="chip ${hp ? "g" : ""}">${this._icon(hp ? "mdi:fire" : "mdi:pause")}${this._t(hp ? "hp_heating" : "hp_idle")}</span>` : ""}`;
+      ${c.heat_pump_heating ? `<span class="chip ${cool ? "a" : hp ? "g" : ""}">${this._icon(cool ? "mdi:snowflake" : hp ? "mdi:fire" : "mdi:pause")}${this._t(cool ? "hp_cooling" : hp ? "hp_heating" : "hp_idle")}</span>` : ""}`;
     return `<ha-card>${this._header("mdi:sitemap-outline", this._t("schema"), chips)}${svg}<div class="note">${this._t("probes")}</div></ha-card>`;
   }
 
@@ -583,7 +610,7 @@ class ProxonFwtBase extends HTMLElement {
       ? `<div class="k"><div class="lb">${label}${sub}</div><div class="v">${this._temp(id)}</div></div>` : "";
     const row = (label, id) => this._ok(id) ? `<div class="row"><span class="lb">${label}</span><b>${this._temp(id)}</b></div>` : "";
     const tiles = tile(this._t("evaporator"), c.temp_evaporator) + tile(this._t("condenser"), c.temp_condenser) +
-      tile(this._t("compressor"), c.temp_compressor) + tile(this._t("outside"), this._outdoorId(), this._config.outdoor_entity ? " ·" : "");
+      tile(this._t("compressor"), c.temp_compressor) + tile(this._t("outside"), this._outdoorId(), this._opt("outdoor_entity") ? " ·" : "");
     const rows = row(this._t("pre_evaporator"), c.temp_pre_evaporator) + row(this._t("post_preheat"), c.temp_post_preheat) +
       row(this._t("pre_condenser"), c.temp_pre_condenser);
     if (!tiles && !rows) return "";
@@ -750,6 +777,10 @@ class ProxonFwtCard extends ProxonFwtBase {
     return { type: "custom:proxon-fwt-card" };
   }
 
+  static getConfigElement() {
+    return document.createElement("proxon-fwt-card-editor");
+  }
+
   setConfig(config) {
     const sections = config.sections || DEFAULT_SECTIONS;
     if (!Array.isArray(sections) || sections.some((s) => !ALL_SECTIONS.includes(s))) {
@@ -758,7 +789,7 @@ class ProxonFwtCard extends ProxonFwtBase {
     if (config.outdoor_side && !["left", "right"].includes(config.outdoor_side)) {
       throw new Error("outdoor_side must be 'left' or 'right'");
     }
-    this._config = { outdoor_side: "left", max_fan_rpm: 3000, max_compressor_rpm: 6000, ...config, sections };
+    this._config = { max_fan_rpm: 3000, max_compressor_rpm: 6000, ...config, sections };
     this._sig = "";
     if (this._hass) this._update();
   }
@@ -799,9 +830,13 @@ class ProxonFwtCard extends ProxonFwtBase {
 class ProxonFwtPanel extends ProxonFwtBase {
   constructor() {
     super();
-    let flip = false;
-    try { flip = localStorage.getItem("proxon_fwt_outdoor_right") === "1"; } catch (e) { /* ignore */ }
-    this._config = { outdoor_side: flip ? "right" : "left", max_fan_rpm: 3000, max_compressor_rpm: 6000 };
+    let flip = null;
+    try {
+      const v = localStorage.getItem("proxon_fwt_outdoor_right");
+      if (v !== null) flip = v === "1";
+    } catch (e) { /* ignore */ }
+    this._config = { max_fan_rpm: 3000, max_compressor_rpm: 6000 };
+    if (flip !== null) this._config.outdoor_side = flip ? "right" : "left";
   }
 
   set narrow(v) {
@@ -847,7 +882,62 @@ class ProxonFwtPanel extends ProxonFwtBase {
   }
 }
 
-for (const [name, cls] of [["proxon-fwt-card", ProxonFwtCard], ["proxon-fwt-panel", ProxonFwtPanel]]) {
+class ProxonFwtCardEditor extends HTMLElement {
+  setConfig(config) {
+    this._config = config;
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    if (this._form) this._form.hass = hass;
+  }
+
+  _label(name) {
+    const lang = ((this._hass && this._hass.language) || "en").split("-")[0];
+    const T = TEXT[lang] || TEXT.en;
+    const labels = lang === "de"
+      ? { sections: "Bereiche", outdoor_side: "Außenseite des Wärmetauschers", power_entity: "Leistungssensor (optional)",
+          outdoor_entity: "Außentemperatursensor (optional)", max_fan_rpm: "Lüfter-Drehzahl für volle Balken (rpm)",
+          max_compressor_rpm: "Kompressor-Drehzahl für vollen Ring (rpm)" }
+      : { sections: "Sections", outdoor_side: "Outdoor side of the heat exchanger", power_entity: "Power sensor (optional)",
+          outdoor_entity: "Outdoor temperature sensor (optional)", max_fan_rpm: "Fan speed for full bars (rpm)",
+          max_compressor_rpm: "Compressor speed for full ring (rpm)" };
+    return labels[name] || T[name] || name;
+  }
+
+  _render() {
+    if (!this._config) return;
+    const lang = ((this._hass && this._hass.language) || "en").split("-")[0];
+    const T = TEXT[lang] || TEXT.en;
+    if (!this._form) {
+      this._form = document.createElement("ha-form");
+      this._form.addEventListener("value-changed", (ev) => {
+        const cfg = { ...ev.detail.value };
+        if (cfg.outdoor_side === "auto") delete cfg.outdoor_side;
+        for (const k of Object.keys(cfg)) if (cfg[k] === "" || cfg[k] === undefined || cfg[k] === null) delete cfg[k];
+        this._config = cfg;
+        this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: cfg }, bubbles: true, composed: true }));
+      });
+      this.appendChild(this._form);
+    }
+    this._form.hass = this._hass;
+    this._form.computeLabel = (s) => this._label(s.name);
+    this._form.schema = [
+      { name: "sections", selector: { select: { multiple: true, mode: "list", options: ALL_SECTIONS.map((v) => ({ value: v, label: T[v] || v })) } } },
+      { name: "outdoor_side", selector: { select: { mode: "dropdown", options: [
+        { value: "auto", label: lang === "de" ? "Wie in der Integration" : "As set in the integration" },
+        { value: "left", label: lang === "de" ? "Links" : "Left" }, { value: "right", label: lang === "de" ? "Rechts" : "Right" }] } } },
+      { name: "power_entity", selector: { entity: { domain: "sensor", device_class: "power" } } },
+      { name: "outdoor_entity", selector: { entity: { domain: "sensor", device_class: "temperature" } } },
+      { name: "max_fan_rpm", selector: { number: { min: 500, max: 10000, step: 100, mode: "box" } } },
+      { name: "max_compressor_rpm", selector: { number: { min: 500, max: 20000, step: 100, mode: "box" } } },
+    ];
+    this._form.data = { sections: DEFAULT_SECTIONS, outdoor_side: "auto", max_fan_rpm: 3000, max_compressor_rpm: 6000, ...this._config };
+  }
+}
+
+for (const [name, cls] of [["proxon-fwt-card", ProxonFwtCard], ["proxon-fwt-panel", ProxonFwtPanel], ["proxon-fwt-card-editor", ProxonFwtCardEditor]]) {
   if (!customElements.get(name)) customElements.define(name, cls);
 }
 window.customCards = window.customCards || [];

@@ -3,13 +3,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from homeassistant.components import panel_custom
+import voluptuous as vol
+from homeassistant.components import panel_custom, websocket_api
 from homeassistant.components.frontend import add_extra_js_url, async_remove_panel
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.modbus import async_get_unit
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
@@ -18,6 +19,9 @@ from .const import (
     CONF_NUM_CO2_SENSORS,
     CONF_NUM_ROOMS,
     CONF_NUM_RF_SENSORS,
+    CONF_OUTDOOR_ENTITY,
+    CONF_OUTDOOR_SIDE,
+    CONF_POWER_ENTITY,
     CONF_ROOM_AREAS,
     CONF_ROOM_NAMES,
     CONF_SCAN_INTERVAL,
@@ -49,6 +53,32 @@ PANEL_PATH = "proxon-fwt"
 PANEL_ELEMENT = "proxon-fwt-panel"
 
 
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/settings"})
+@callback
+def _ws_settings(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
+) -> None:
+    """Return the dashboard settings (options) of every loaded entry.
+
+    The card and side panel read this once so the options chosen in the
+    integration apply in every browser. `device_id` identifies the unit's
+    central device, which is how the frontend matches settings to a unit.
+    """
+    registry = dr.async_get(hass)
+    result = []
+    for entry in hass.config_entries.async_loaded_entries(DOMAIN):
+        device = registry.async_get_device(identifiers={(DOMAIN, entry.entry_id)})
+        result.append(
+            {
+                "device_id": device.id if device else None,
+                "outdoor_side": entry.options.get(CONF_OUTDOOR_SIDE, "left"),
+                "power_entity": entry.options.get(CONF_POWER_ENTITY),
+                "outdoor_entity": entry.options.get(CONF_OUTDOOR_ENTITY),
+            }
+        )
+    connection.send_result(msg["id"], result)
+
+
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Serve the bundled dashboard card and load it in the frontend.
 
@@ -57,6 +87,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     The integration version is appended as a query string so the browser
     fetches the new file after an update.
     """
+    websocket_api.async_register_command(hass, _ws_settings)
     integration = await async_get_integration(hass, DOMAIN)
     await hass.http.async_register_static_paths(
         [

@@ -1,0 +1,54 @@
+blueprint:
+  name: Proxon FWT – Wartung und Störung melden / Report maintenance and faults
+  description: >-
+    Benachrichtigt, wenn ein Filter gewechselt werden muss oder die Anlage
+    einen Systemfehler meldet. Die Benachrichtigung legst du selbst fest
+    (z. B. Push, Telegram, Sprachausgabe). In deinen Aktionen steht die
+    Variable `message` zur Verfügung.
+
+
+    Notifies when a filter needs replacing or the unit reports a system
+    error. You choose how to be notified (push, Telegram, voice, ...). The
+    variable `message` is available in your actions.
+  domain: automation
+  source_url: https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/maintenance_alert.yaml
+  input:
+    problem_sensors:
+      name: Meldungen / Messages
+      description: Systemfehler, Gerätefilter und/oder Umluftfilter der Proxon FWT. / System error, device filter and/or recirculation filter of the Proxon FWT.
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - integration: proxon_modbus
+              domain: binary_sensor
+              device_class: problem
+    delay:
+      name: Verzögerung / Delay
+      description: So lange muss die Meldung anstehen, bevor benachrichtigt wird. / How long the message has to persist before notifying.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 1440
+          unit_of_measurement: min
+    notify_action:
+      name: Benachrichtigung / Notification
+      description: Aktionen, die ausgeführt werden. Die Variable `message` enthält den Text. / Actions to run. The variable `message` contains the text.
+      selector:
+        action: {}
+
+mode: queued
+max: 5
+
+trigger:
+  - trigger: state
+    entity_id: !input problem_sensors
+    to: "on"
+    for:
+      minutes: !input delay
+
+action:
+  - variables:
+      message: "{{ trigger.to_state.name }}"
+  - sequence: !input notify_action

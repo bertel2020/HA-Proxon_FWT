@@ -68,12 +68,28 @@
           "num_co2_sensors": "Number of CO₂ sensors",
           "num_rf_sensors": "Number of humidity sensors",
           "scan_interval": "Polling interval",
-          "cooling_available": "Cooling available on this unit"
+          "cooling_available": "Cooling available on this unit",
+          "outdoor_side": "Outdoor side of the heat exchanger (dashboard)",
+          "power_entity": "Own power sensor (optional)",
+          "outdoor_entity": "Own outdoor temperature sensor (optional)"
+        },
+        "data_description": {
+          "outdoor_side": "Which side of the heat exchanger are fresh and exhaust air on? Controls the layout in the card and side panel.",
+          "power_entity": "Replaces the unit's power consumption in the card and side panel, e.g. a Shelly on the unit. Leave empty to use the unit's sensor.",
+          "outdoor_entity": "Replaces the unit's outdoor temperature in the card and side panel. Leave empty to use the unit's sensor."
         }
       },
       "names": {
         "title": "Names",
         "description": "Give each room and external sensor a name. Leave a room name empty if that room is not installed: it is then skipped (no device, no entities). Optionally assign each room to a Home Assistant area (room_N_area): the room's device is then placed in that area. Rooms without an area are left unchanged."
+      }
+    }
+  },
+  "selector": {
+    "outdoor_side": {
+      "options": {
+        "left": "Left (fresh/exhaust air on the left)",
+        "right": "Right (fresh/exhaust air on the right)"
       }
     }
   },
