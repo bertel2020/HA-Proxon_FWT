@@ -226,12 +226,13 @@ The integration also adds a **Proxon FWT** entry to the sidebar: a full-page vie
 
 ## Blueprints
 
-Two automation blueprints are in [`blueprints/automation/proxon_modbus`](blueprints/automation/proxon_modbus):
+Three automation blueprints are in [`blueprints/automation/proxon_modbus`](blueprints/automation/proxon_modbus):
 
 | Blueprint | Import | Purpose |
 |---|---|---|
 | CO₂-controlled intensive ventilation | [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/co2_intensive_ventilation.yaml) | Switch to Comfort mode and turn on intensive ventilation when CO₂ is high; afterwards turn it off and restore the previous operating mode. The unit only offers intensive ventilation in Comfort mode. |
 | Report maintenance and faults | [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/maintenance_alert.yaml) | Notification (your choice) on filter replacement or system error. |
+| Night fan stage setback | [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/night_setback.yaml) | Lower fan stage at night, the normal one in the morning (Eco summer/winter only, fan auto off). |
 
 ## Register map
 

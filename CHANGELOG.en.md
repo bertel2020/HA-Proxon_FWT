@@ -14,6 +14,7 @@ All notable changes to this project are documented here. Versions follow the
 - **Cooling mode in the system diagram:** in cooling mode the diagram reverses the refrigerant circuit (evaporator and condenser swap sides).
 - **Restore fan stage after the heat pump has run:** The unit raises the fan stage when the heat pump starts and never lowers it again. The new switch "Restore fan stage after heat pump" (off by default) remembers the stage you chose while the heat pump was idle (Eco summer/winter only, fan auto off) and sets it back after the run. The card and side panel show the preferred stage.
 - **Heat pump and filter statistics:** New sensors for heat pump runtime and starts (today and total) and operating hours of the device and recirculation filters. The integration counts them itself and they survive restarts. Filter hours start over when the unit clears "change filter". They only count while the unit is not off.
+- **Blueprint "Night fan stage setback":** a lower fan stage at night, the normal one in the morning (Eco summer/winter only, fan auto off).
 - **Graphical card editor** for `custom:proxon-fwt-card`.
 - **Blueprints:** "CO₂-controlled intensive ventilation" and "Report maintenance and faults" in `blueprints/automation/proxon_modbus`.
 - **Room → Home Assistant area:** the names step of the options lets you optionally assign each room to an area. The room's device is then placed in that area. Rooms without an area stay untouched (areas set by hand are never overwritten).

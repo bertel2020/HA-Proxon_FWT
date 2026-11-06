@@ -228,12 +228,13 @@ Zusätzlich legt die Integration in der Seitenleiste den Eintrag **Proxon FWT** 
 
 ## Blueprints
 
-Zwei Automatisierungs-Vorlagen liegen unter [`blueprints/automation/proxon_modbus`](blueprints/automation/proxon_modbus):
+Drei Automatisierungs-Vorlagen liegen unter [`blueprints/automation/proxon_modbus`](blueprints/automation/proxon_modbus):
 
 | Blueprint | Import | Zweck |
 |---|---|---|
 | CO₂-gesteuerte Intensivlüftung | [![Blueprint importieren](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/co2_intensive_ventilation.yaml) | Bei hohem CO₂-Wert in den Komfort-Modus wechseln und die Intensivlüftung einschalten; danach Intensivlüftung aus und vorherige Betriebsart wiederherstellen. Die Intensivlüftung gibt es am Gerät nur im Komfort-Modus. |
 | Wartung und Störung melden | [![Blueprint importieren](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/maintenance_alert.yaml) | Benachrichtigung (frei wählbar) bei Filterwechsel oder Systemfehler. |
+| Nachtabsenkung der Lüfterstufe | [![Blueprint importieren](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/night_setback.yaml) | Nachts eine niedrigere Lüfterstufe, morgens wieder die normale (nur Eco Sommer/Winter, Lüfter-Automatik aus). |
 
 ## Registerbelegung
 

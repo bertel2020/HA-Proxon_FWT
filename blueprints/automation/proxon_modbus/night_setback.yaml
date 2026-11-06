@@ -1,0 +1,119 @@
+blueprint:
+  name: Proxon FWT – Nachtabsenkung der Lüfterstufe / Night fan stage setback
+  description: >-
+    Stellt nachts eine niedrigere Lüfterstufe ein und morgens wieder die
+    normale. Greift nur in Eco Sommer und Eco Winter und nur, wenn die
+    Lüfter-Automatik aus ist, denn nur dort ist die Stufe wählbar. Wechselt
+    die Betriebsart während der Nachtzeit in einen Eco-Modus, wird die
+    passende Stufe sofort gesetzt. Zusammen mit dem Schalter „Lüfterstufe nach
+    Wärmepumpe wiederherstellen“ bleibt die Nachtstufe auch nach einem
+    Wärmepumpenlauf erhalten.
+
+
+    Sets a lower fan stage at night and the normal one in the morning. Only
+    acts in Eco summer and Eco winter and only while fan auto is off, because
+    the stage can only be chosen there. If the operating mode changes to an eco
+    mode during the night, the matching stage is applied immediately. Together
+    with the "Restore fan stage after heat pump" switch the night stage also
+    survives a heat pump run.
+  domain: automation
+  source_url: https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/night_setback.yaml
+  input:
+    fan_stage:
+      name: Lüfterstufe / Fan stage
+      description: Die Auswahl-Entität „Lüfterstufe“ der Proxon FWT. / The "Fan stage" select of the Proxon FWT.
+      selector:
+        entity:
+          filter:
+            - integration: proxon_modbus
+              domain: select
+    mode_select:
+      name: Betriebsart / Operating mode
+      selector:
+        entity:
+          filter:
+            - integration: proxon_modbus
+              domain: select
+    fan_auto:
+      name: Lüfter-Automatik / Fan auto mode
+      selector:
+        entity:
+          filter:
+            - integration: proxon_modbus
+              domain: switch
+    night_start:
+      name: Beginn der Nacht / Night starts
+      default: "22:00:00"
+      selector:
+        time:
+    night_end:
+      name: Ende der Nacht / Night ends
+      default: "06:00:00"
+      selector:
+        time:
+    night_stage:
+      name: Nachtstufe / Night stage
+      default: stage_1
+      selector:
+        select:
+          options: &stages
+            - { value: "off", label: "0" }
+            - { value: stage_1, label: "1" }
+            - { value: stage_2, label: "2" }
+            - { value: stage_3, label: "3" }
+            - { value: stage_4, label: "4" }
+    day_stage:
+      name: Tagesstufe / Day stage
+      default: stage_2
+      selector:
+        select:
+          options: *stages
+
+mode: restart
+max_exceeded: silent
+
+variables:
+  night_stage: !input night_stage
+  day_stage: !input day_stage
+
+trigger:
+  - platform: time
+    at: !input night_start
+  - platform: time
+    at: !input night_end
+  - platform: state
+    entity_id: !input mode_select
+    to:
+      - eco_summer
+      - eco_winter
+  - platform: homeassistant
+    event: start
+
+condition:
+  - condition: state
+    entity_id: !input mode_select
+    state:
+      - eco_summer
+      - eco_winter
+  - condition: state
+    entity_id: !input fan_auto
+    state: "off"
+
+action:
+  - choose:
+      - conditions:
+          - condition: time
+            after: !input night_start
+            before: !input night_end
+        sequence:
+          - action: select.select_option
+            target:
+              entity_id: !input fan_stage
+            data:
+              option: "{{ night_stage }}"
+    default:
+      - action: select.select_option
+        target:
+          entity_id: !input fan_stage
+        data:
+          option: "{{ day_stage }}"

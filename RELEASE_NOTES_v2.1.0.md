@@ -6,6 +6,7 @@
 - **Dashboard card `custom:proxon-fwt-card` and side panel "Proxon FWT":** shipped with the integration and loaded automatically. Operating mode, cross-flow heat exchanger diagram with all temperature probes (reverses in cooling mode), ventilation, heat pump, refrigerant circuit, status, rooms with heat map, key figures including the heat recovery rate, notice banners and a 24-hour history. Graphical card editor included.
 - **Restore fan stage after heat pump:** new switch (off by default) that remembers the fan stage you chose while the heat pump idles and sets it back after each run. The unit otherwise leaves it raised.
 - **Heat pump and filter statistics:** runtime and starts of the heat pump (today/total) and filter operating hours, counted by the integration and kept across restarts.
+- **Blueprint "Night fan stage setback":** lower fan stage at night, normal in the morning.
 - **Dashboard settings in the integration options:** outdoor side of the heat exchanger, own power sensor and own outdoor temperature sensor, applied to card and panel in every browser.
 - **Blueprints:** CO₂-controlled intensive ventilation and maintenance/fault notification.
 - **Mid-room temperature** is now enabled by default (existing installations may need to enable it once by hand).
@@ -35,6 +36,7 @@
 - **Dashboard-Karte `custom:proxon-fwt-card` und Seitenpanel „Proxon FWT“:** Werden mit der Integration ausgeliefert und automatisch geladen. Betriebsart, Anlagenschema mit Kreuzstrom-Wärmetauscher und allen Temperaturmesspunkten (kehrt im Kühlbetrieb um), Lüftung, Wärmepumpe, Kältekreis, Status, Räume mit Heatmap, Kennzahlen inkl. Rückwärmzahl, Hinweis-Banner und 24-Stunden-Verlauf. Mit grafischem Karten-Editor.
 - **Lüfterstufe nach Wärmepumpe wiederherstellen:** neuer Schalter (standardmäßig aus), der die bei stehender Wärmepumpe gewählte Lüfterstufe merkt und nach jedem Lauf zurücksetzt. Die Anlage lässt sie sonst angehoben.
 - **Statistiken zu Wärmepumpe und Filtern:** Laufzeit und Starts der Wärmepumpe (heute/gesamt) und Filter-Betriebsstunden, von der Integration gezählt und neustartfest.
+- **Blueprint „Nachtabsenkung der Lüfterstufe“:** nachts niedrigere Lüfterstufe, morgens wieder die normale.
 - **Dashboard-Einstellungen in den Integrationsoptionen:** Außenseite des Wärmetauschers, eigener Leistungs- und Außentemperatursensor; gelten für Karte und Panel in jedem Browser.
 - **Blueprints:** CO₂-gesteuerte Intensivlüftung sowie Benachrichtigung bei Wartung und Störung.
 - **Mittentemperatur** ist jetzt standardmäßig aktiviert (bestehende Installationen müssen sie einmal von Hand aktivieren).
