@@ -1,14 +1,17 @@
 # Contributing
 
-This started as a single-installation integration for one Proxon FWT unit, so
-there's no CI test suite yet — contributions that add one (`pytest` +
-`pytest-homeassistant-custom-component`) are very welcome.
+This started as a single-installation integration for one Proxon FWT unit.
+There is a small `pytest` suite for the logic that does not need Home Assistant
+(fan stage restore, run statistics, register map, translations); tests that
+exercise the Home Assistant side (`pytest-homeassistant-custom-component`) are
+very welcome.
 
 ## Local development
 
 ```bash
 python3 -m py_compile custom_components/proxon_modbus/*.py
 python3 -m pyflakes custom_components/proxon_modbus/*.py
+python3 -m pytest -q tests
 ```
 
 For anything beyond a syntax/lint check you need a real Home Assistant
