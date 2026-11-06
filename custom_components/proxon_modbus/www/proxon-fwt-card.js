@@ -125,15 +125,15 @@ const BAD = ["unavailable", "unknown", undefined, null, ""];
 const CSS = `
 :host { display: block; color: var(--primary-text-color); }
 * { box-sizing: border-box; }
-.stack { display: grid; gap: 12px; }
+.stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
 .top { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 12px; align-items: start; }
-.col { display: grid; gap: 12px; min-width: 0; }
+.col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0; }
 .stack > *, .grid > *, .top > * { min-width: 0; }
 ha-card { padding: 14px 16px; display: block; }
 .h { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; margin-bottom: 12px; flex-wrap: wrap; }
 .h > ha-icon { --mdc-icon-size: 18px; color: var(--secondary-text-color); }
-.h .r { margin-left: auto; font-size: 12px; font-weight: 400; color: var(--secondary-text-color); display: flex; gap: 6px; align-items: center; }
+.h .r { margin-left: auto; font-size: 12px; font-weight: 400; color: var(--secondary-text-color); display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; align-items: center; min-width: 0; }
 .lb { font-size: 12px; color: var(--secondary-text-color); }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0 4px; }
 .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 10px; border-radius: 99px;
@@ -959,5 +959,7 @@ if (!window.customCards.some((c) => c.type === "proxon-fwt-card")) {
     type: "proxon-fwt-card",
     name: "Proxon FWT",
     description: "Dashboard card for the Proxon FWT (Modbus) integration: operating mode, air paths, ventilation, heat pump, rooms.",
+    preview: false,
+    documentationURL: "https://github.com/bertel2020/HA-Proxon_FWT#dashboard-karte",
   });
 }
