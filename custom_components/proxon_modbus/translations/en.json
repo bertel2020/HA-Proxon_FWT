@@ -111,6 +111,12 @@
       "fan_speed_supply": { "name": "Supply fan speed" },
       "fan_speed_extract": { "name": "Extract fan speed" },
       "last_write_error": { "name": "Last write error" },
+      "hp_runtime_today": { "name": "Heat pump runtime today" },
+      "hp_starts_today": { "name": "Heat pump starts today" },
+      "hp_runtime_total": { "name": "Heat pump runtime total" },
+      "hp_starts_total": { "name": "Heat pump starts total" },
+      "filter_hours": { "name": "Device filter operating hours" },
+      "recirculation_filter_hours": { "name": "Recirculation filter operating hours" },
       "mid_temperature": { "name": "Mid-room temperature" },
       "operating_mode_state": {
         "name": "Operating mode (full state)",

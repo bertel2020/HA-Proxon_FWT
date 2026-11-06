@@ -181,19 +181,19 @@ class ProxonFanRestoreSwitch(ProxonCentralEntity, SwitchEntity, RestoreEntity):
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
         last = await self.async_get_last_state()
-        self.coordinator.fan_restore_enabled = last is not None and last.state == "on"
+        self.coordinator.fan_tracker.enabled = last is not None and last.state == "on"
         if last is not None:
             stage = last.attributes.get("preferred_stage_value")
             if isinstance(stage, int) and stage in FAN_STAGE_OPTIONS:
-                self.coordinator.preferred_fan_stage = stage
+                self.coordinator.fan_tracker.preferred = stage
 
     @property
     def is_on(self) -> bool:
-        return self.coordinator.fan_restore_enabled
+        return self.coordinator.fan_tracker.enabled
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        stage = self.coordinator.preferred_fan_stage
+        stage = self.coordinator.fan_tracker.preferred
         restored = self.coordinator.fan_stage_restored_at
         return {
             "preferred_stage": FAN_STAGE_OPTIONS.get(stage) if stage is not None else None,
@@ -202,11 +202,11 @@ class ProxonFanRestoreSwitch(ProxonCentralEntity, SwitchEntity, RestoreEntity):
         }
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        self.coordinator.fan_restore_enabled = True
+        self.coordinator.fan_tracker.enabled = True
         self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        self.coordinator.fan_restore_enabled = False
+        self.coordinator.fan_tracker.enabled = False
         self.async_write_ha_state()
 
 

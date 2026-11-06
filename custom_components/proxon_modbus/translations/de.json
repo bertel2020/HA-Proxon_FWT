@@ -111,6 +111,12 @@
       "fan_speed_supply": { "name": "Drehzahl Zuluftventilator" },
       "fan_speed_extract": { "name": "Drehzahl Abluftventilator" },
       "last_write_error": { "name": "Letzter Schreibfehler" },
+      "hp_runtime_today": { "name": "Wärmepumpe Laufzeit heute" },
+      "hp_starts_today": { "name": "Wärmepumpe Starts heute" },
+      "hp_runtime_total": { "name": "Wärmepumpe Laufzeit gesamt" },
+      "hp_starts_total": { "name": "Wärmepumpe Starts gesamt" },
+      "filter_hours": { "name": "Betriebsstunden Gerätefilter" },
+      "recirculation_filter_hours": { "name": "Betriebsstunden Umluftfilter" },
       "mid_temperature": { "name": "Mittentemperatur" },
       "operating_mode_state": {
         "name": "Betriebsart (vollständiger Zustand)",

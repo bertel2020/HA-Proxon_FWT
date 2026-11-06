@@ -16,6 +16,7 @@ from homeassistant.const import (
     PERCENTAGE,
     REVOLUTIONS_PER_MINUTE,
     UnitOfPower,
+    UnitOfTime,
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
@@ -43,6 +44,7 @@ from .coordinator import (
     ProxonData,
     ProxonModbusCoordinator,
 )
+from .logic import RunStats
 from .entity import ProxonCentralEntity, ProxonEntity, ProxonRoomEntity, central_device_info, room_device_info
 
 
@@ -221,6 +223,9 @@ async def async_setup_entry(
         ProxonSensor(coordinator, entry.entry_id, device_name, OPERATING_MODE_SENSOR)
     )
     entities.append(ProxonLastWriteErrorSensor(coordinator, entry.entry_id, device_name))
+    entities.extend(
+        ProxonStatSensor(coordinator, entry.entry_id, device_name, d) for d in STAT_SENSORS
+    )
 
     room_names = entry.options.get(CONF_ROOM_NAMES, [])
     for i, room_name in enumerate(room_names):
@@ -280,6 +285,66 @@ async def async_setup_entry(
         )
 
     async_add_entities(entities)
+
+
+@dataclass(frozen=True, kw_only=True)
+class ProxonStatDescription(SensorEntityDescription):
+    value_fn: Callable[[RunStats], float | int]
+
+
+_HOURS = dict(
+    device_class=SensorDeviceClass.DURATION,
+    native_unit_of_measurement=UnitOfTime.HOURS,
+    suggested_display_precision=1,
+)
+
+# Statistics kept by the integration itself (persisted, see logic.RunStats).
+STAT_SENSORS: tuple[ProxonStatDescription, ...] = (
+    ProxonStatDescription(
+        key="hp_runtime_today", translation_key="hp_runtime_today", icon="mdi:heat-pump",
+        state_class=SensorStateClass.TOTAL_INCREASING, **_HOURS,
+        value_fn=lambda s: round(s.hp_seconds_today / 3600, 2),
+    ),
+    ProxonStatDescription(
+        key="hp_starts_today", translation_key="hp_starts_today", icon="mdi:counter",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda s: s.hp_starts_today,
+    ),
+    ProxonStatDescription(
+        key="hp_runtime_total", translation_key="hp_runtime_total", icon="mdi:heat-pump-outline",
+        state_class=SensorStateClass.TOTAL_INCREASING, entity_category=EntityCategory.DIAGNOSTIC,
+        **_HOURS, value_fn=lambda s: round(s.hp_seconds / 3600, 2),
+    ),
+    ProxonStatDescription(
+        key="hp_starts_total", translation_key="hp_starts_total", icon="mdi:counter",
+        state_class=SensorStateClass.TOTAL_INCREASING, entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda s: s.hp_starts,
+    ),
+    ProxonStatDescription(
+        key="filter_hours", translation_key="filter_hours", icon="mdi:air-filter",
+        state_class=SensorStateClass.MEASUREMENT, entity_category=EntityCategory.DIAGNOSTIC,
+        **_HOURS, value_fn=lambda s: round(s.filter_seconds / 3600, 1),
+    ),
+    ProxonStatDescription(
+        key="recirculation_filter_hours", translation_key="recirculation_filter_hours", icon="mdi:air-filter",
+        state_class=SensorStateClass.MEASUREMENT, entity_category=EntityCategory.DIAGNOSTIC,
+        **_HOURS, value_fn=lambda s: round(s.recirc_seconds / 3600, 1),
+    ),
+)
+
+
+class ProxonStatSensor(ProxonCentralEntity, SensorEntity):
+    """Heat pump runtime / starts and filter operating hours."""
+
+    entity_description: ProxonStatDescription
+
+    def __init__(self, coordinator, entry_id, device_name, description) -> None:
+        super().__init__(coordinator, entry_id, device_name, description.key)
+        self.entity_description = description
+
+    @property
+    def native_value(self):
+        return self.entity_description.value_fn(self.coordinator.stats)
 
 
 class ProxonSensor(ProxonCentralEntity, SensorEntity):
