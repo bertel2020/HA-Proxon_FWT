@@ -8,6 +8,7 @@ All notable changes to this project are documented here. Versions follow the
 ## 2.1.0 – 2026-11-02
 
 **New**
+- **Dashboard card `custom:proxon-fwt-card`:** the integration ships its own card (operating mode, air paths as a cross-flow heat exchanger, ventilation, heat pump, refrigerant circuit, status, rooms). It is loaded automatically and finds the entities by itself; power consumption and outdoor temperature are optional and can be replaced by your own entities. See the README for details.
 - **Room → Home Assistant area:** the names step of the options lets you optionally assign each room to an area. The room's device is then placed in that area. Rooms without an area stay untouched (areas set by hand are never overwritten).
 - **Skip rooms that are not installed:** an empty room name in the names step of the options leaves that room out — no device, no entities. This covers gaps in the room numbering (e.g. rooms 1–3 and 5 but no room 4); the registers are still read because the order determines the register address.
 - **Orphaned room devices are removed:** when the room count is reduced in the options, the devices of rooms that are no longer configured disappear from Home Assistant on reload (only this integration's devices).
@@ -50,7 +51,7 @@ All notable changes to this project are documented here. Versions follow the
 - Default sensor names "CO2 1" / "Luftfeuchte 1" are now "CO2-Sensor 1" / "Luftfeuchte-Sensor 1".
 - Central device temperature sensors renamed to a consistent "Temperatur *location*" scheme in German (e.g. "Temperatur Zuluft" instead of "Zuluft-Temperatur"); English names were already idiomatic and are unchanged.
 - The heat-pump heating/cooling/continuous-operation `binary_sensor` entities now show "On"/"Off" instead of "Running"/"Not running" (same reasoning as the `ptc_active` fix in 1.1.1: the `running` device class reads as an availability judgement rather than a plain on/off state).
-- Every entity that used to be disabled by default is now enabled from the start (refrigerant-circuit temperatures, the register-315 capability diagnostic sensors) - except the per-room mid-room temperature, which stays disabled by default.
+- Every entity that used to be disabled by default is now enabled from the start (refrigerant-circuit temperatures, the register-315 capability diagnostic sensors).
 
 ## 1.1.1 – 2026-09-05
 

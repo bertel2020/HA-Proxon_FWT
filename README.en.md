@@ -83,7 +83,7 @@ Two kinds of devices are created: a **central device** ("Proxon FWT" by default)
 - **`climate.<room>`** — current temperature (register `150+n`), target temperature (read from `180+n`, written to the separate write-only register `200+n`). The settable range follows the device: room 1 (Wohnen) directly 18–30 °C, every other room its mid temperature ±3 °C (whole degrees, within 18–30 °C; without a mid temperature 18–30 °C applies). The mode is "Heat", and "Heat/Cool" only when cooling is available on the unit (unlock bit, register 315) and enabled (register 306).
 - **`binary_sensor.*`** — PTC element active (current **state**, register 300).
 - **`switch.*`** — PTC element enabled (**enable**, registers 301/302).
-- **`sensor.*`** — mid-room temperature (rooms 2–N, control-panel readback, disabled by default).
+- **`sensor.*`** — mid-room temperature (rooms 2–N, control-panel readback).
 - Optionally, one or more **CO₂/humidity sensors**, if assigned to this room from the options flow's names step.
 
 A full table of every entity with a description is further down under [All entities in detail](#all-entities-in-detail).
@@ -181,15 +181,44 @@ The tables below assume the default device name **"Proxon FWT"** (→ `proxon_fw
 | Wohnen (room name, `climate`) | `climate.wohnen` | Actual temperature (register 150+n) and target temperature (read from 180+n, written to 200+n), 18–30 °C slider (room 1) or mid temperature ±3 °C |
 | PTC element active | `binary_sensor.wohnen_ptc_element_active` | Current **state** of this room's electric reheater element (register 300, bit n) |
 | PTC element enabled | `switch.wohnen_ptc_element_enabled` | **Enable** for this room's electric reheater element (register 301 write / 302 read, bit n) |
-| Mid-room temperature | `sensor.wohnen_mid_room_temperature` | Readback from the room's control panel (register 220+n, rooms 2-N only); disabled by default |
+| Mid-room temperature | `sensor.wohnen_mid_room_temperature` | Readback from the room's control panel (register 220+n, rooms 2-N only) |
 | *(custom name)* | `sensor.wohnen_<name>` | CO₂ or humidity sensor, if assigned to this room from the options flow |
+
+## Dashboard card
+
+The integration ships its own dashboard card: **`custom:proxon-fwt-card`**. It is loaded automatically when Home Assistant starts, no Lovelace resource is needed. After an update, clear the browser cache or hard-reload the page once.
+
+```yaml
+type: custom:proxon-fwt-card
+```
+
+The card discovers all entities of the integration by itself (via platform and entity key, not fixed entity IDs) and shows:
+
+- **Operating mode** (Off, Eco summer, Eco winter, Comfort, Stove mode) for switching; emergency, frost protection and commissioning are shown as a locked state
+- **Air paths** as a cross-flow heat exchanger with the four temperatures
+- **Ventilation** (fan stage, automatic, intensive ventilation, speeds); stages that can't be chosen are greyed out
+- **Heat pump** (compressor, power consumption, operating states, cooling enable)
+- **Refrigerant circuit** (diagnostic temperatures) and **status and maintenance** (errors, filters)
+- **Rooms** as tiles or list with a detail view: target/actual, CO₂, humidity, PTC state and enable per room
+
+Anything the unit does not provide (e.g. power consumption or outdoor temperature) is hidden.
+
+| Option | Default | Meaning |
+|---|---|---|
+| `outdoor_side` | `left` | `left` or `right`: which side of the heat exchanger fresh and exhaust air are on |
+| `power_entity` | – | own entity for the power consumption (e.g. a Shelly) instead of the device sensor |
+| `outdoor_entity` | – | own entity for the outdoor temperature instead of the device sensor |
+| `sections` | all | list of sections to show: `mode`, `air`, `fan`, `heatpump`, `refrigerant`, `status`, `rooms` |
+| `max_fan_rpm` | `3000` | speed at which the fan bars are full |
+| `max_compressor_rpm` | `6000` | speed at which the compressor ring is full |
+| `device_id` | – | only with several units: device ID of the central device |
 
 ## Register map
 
 See [`custom_components/proxon_modbus/const.py`](custom_components/proxon_modbus/const.py) for the full, commented address list. Worth knowing:
 
 - **PTC element state, per-room enable, and enable-readback (registers 300/301/302) are single 16-bit bitfields**, one bit per room (bit *N* = room *N+1*), not per-room registers. Because register 301 is write-only (no independent readback), toggling one room's PTC switch reads the current state from register 302, flips just that room's bit, and writes the whole mask back. This reconstructed mask is a snapshot from the last poll: two rooms toggled faster than one poll cycle apart could theoretically race and clobber each other's bit — not a concern for manual dashboard use, but worth knowing if you automate several rooms' PTC at once.
-- **Mid-room temperature (register `220+n`, rooms 2–16 only)** has no documented scale and is treated the same as every other temperature register (signed, ×0.1 °C) by analogy; disabled by default since it doesn't appear to be relied on in practice.
+- **Mid-room temperature (register `220+n`, rooms 2–16 only)** has no documented scale and is treated the same as every other temperature register (signed, ×0.1 °C) by analogy.
 - **Room setpoints (`200+n`) take a plain absolute integer degree value for every room**, not an offset relative to a room's physical control-panel dial.
 - **Four controls are gated by operating mode or the cooling-capability bit** — see the availability table above. Register 315 ("Freischaltungen") reports the same information live from the device; bit 8 (cooling possible) is available as `binary_sensor.proxon_fwt_cooling_available` (when "Cooling available on this unit" = Yes), and the remaining bits as diagnostic capability `binary_sensor`s, if you want to build on the live signal instead of the mode number.
 

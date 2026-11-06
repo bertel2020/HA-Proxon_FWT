@@ -9,6 +9,7 @@ Versionen folgen dem Feld `version` in
 ## 2.1.0 – 2026-11-02
 
 **Neu**
+- **Dashboard-Karte `custom:proxon-fwt-card`:** Die Integration bringt eine eigene Karte mit (Betriebsart, Luftwege als Kreuzstrom-Wärmetauscher, Lüftung, Wärmepumpe, Kältekreis, Status, Räume). Sie wird automatisch geladen und findet die Entities selbst; Leistungsaufnahme und Außentemperatur sind optional und lassen sich durch eigene Entitäten ersetzen. Details in der README.
 - **Raum → Home-Assistant-Bereich:** Im Namen-Schritt der Optionen lässt sich jedem Raum optional ein Bereich zuordnen. Das Raumgerät wird dann in diesen Bereich gelegt. Räume ohne Bereich bleiben unverändert (von Hand gesetzte Bereiche werden nie überschrieben).
 - **Nicht verbaute Räume überspringen:** Ein leerer Raumname im Namen-Schritt der Optionen lässt diesen Raum aus — kein Gerät, keine Entities. So lassen sich Lücken in der Raumnummerierung abbilden (z. B. Raum 1–3 und 5, aber kein Raum 4); die Register werden weiter mitgelesen, weil die Reihenfolge die Registeradresse bestimmt.
 - **Verwaiste Raumgeräte werden entfernt:** Wird die Raumanzahl in den Optionen verringert, verschwinden die Geräte der nicht mehr konfigurierten Räume beim Neuladen automatisch aus Home Assistant (nur Geräte dieser Integration).
@@ -51,7 +52,7 @@ Versionen folgen dem Feld `version` in
 - Standard-Sensornamen "CO2 1" / "Luftfeuchte 1" heißen jetzt "CO2-Sensor 1" / "Luftfeuchte-Sensor 1".
 - Temperatursensoren des zentralen Geräts einheitlich nach dem Schema "Temperatur *Ort*" benannt (z. B. "Temperatur Zuluft" statt "Zuluft-Temperatur").
 - `binary_sensor`-Entities für Wärmepumpe im Heiz-/Kühl-/Dauerbetrieb zeigen jetzt "An"/"Aus" statt "In Betrieb"/"Außer Betrieb" (gleicher Grund wie der `ptc_active`-Fix in 1.1.1: die Geräteklasse `running` liest sich wie eine Verfügbarkeits- statt eine Ein/Aus-Aussage).
-- Alle bisher standardmäßig deaktivierten Entities sind jetzt von Anfang an aktiviert (Kältemittelkreislauf-Temperaturen, Freischaltungs-Diagnose-Sensoren aus Register 315) — außer der Mittentemperatur je Raum, die weiterhin standardmäßig deaktiviert bleibt.
+- Alle bisher standardmäßig deaktivierten Entities sind jetzt von Anfang an aktiviert (Kältemittelkreislauf-Temperaturen, Freischaltungs-Diagnose-Sensoren aus Register 315).
 
 ## 1.1.1 – 2026-09-05
 

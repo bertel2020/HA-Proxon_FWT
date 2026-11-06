@@ -85,7 +85,7 @@ Es werden zwei Arten von Geräten angelegt: ein **zentrales Gerät** (standardm�
 - **`climate.<raum>`** — aktuelle Temperatur (Register `150+n`), Solltemperatur (gelesen von `180+n`, geschrieben auf das separate, nur schreibbare Register `200+n`). Der einstellbare Bereich folgt dem Gerät: Raum 1 (Wohnen) direkt 18–30 °C, alle anderen Räume ihre Mittentemperatur ±3 °C (ganze Grad, innerhalb 18–30 °C; fehlt die Mittentemperatur, gilt 18–30 °C). Die Betriebsart ist „Heizen“, und nur „Heizen/Kühlen“, wenn Kühlen am Gerät verfügbar (Freischaltung, Register 315) und freigegeben (Register 306) ist.
 - **`binary_sensor.*`** — PTC-Element aktiv (aktueller **Zustand**, Register 300).
 - **`switch.*`** — PTC-Element freigegeben (**Freigabe**, Register 301/302).
-- **`sensor.*`** — Mittentemperatur (Raum 2–N, Rückmeldung vom Bedienteil, standardmäßig deaktiviert).
+- **`sensor.*`** — Mittentemperatur (Raum 2–N, Rückmeldung vom Bedienteil).
 - Optional auch ein oder mehrere **CO₂-/Feuchtesensoren**, wenn ihnen im Options-Flow (Namen-Schritt) dieser Raum zugewiesen wurde.
 
 Eine vollständige Liste aller Entities mit Beschreibung steht weiter unten unter [Alle Entities im Detail](#alle-entities-im-detail).
@@ -183,15 +183,44 @@ Die Tabellen unten gehen vom Standard-Gerätenamen **"Proxon FWT"** (→ `proxon
 | Wohnen (Raumname, `climate`) | `climate.wohnen` | Ist-Temperatur (Register 150+n) und Solltemperatur (gelesen von 180+n, geschrieben auf 200+n), Regler 18–30 °C (Raum 1) bzw. Mittentemperatur ±3 °C |
 | PTC-Element aktiv | `binary_sensor.wohnen_ptc_element_aktiv` | Aktueller **Zustand** der elektrischen Zusatzheizung dieses Raums (Register 300, Bit n) |
 | PTC-Element freigegeben | `switch.wohnen_ptc_element_freigegeben` | **Freigabe** der elektrischen Zusatzheizung dieses Raums (Register 301 schreiben / 302 lesen, Bit n) |
-| Mittentemperatur | `sensor.wohnen_mittentemperatur` | Rückmeldung vom Bedienteil des Raums (Register 220+n, nur Raum 2–N); standardmäßig deaktiviert |
+| Mittentemperatur | `sensor.wohnen_mittentemperatur` | Rückmeldung vom Bedienteil des Raums (Register 220+n, nur Raum 2–N) |
 | *(benutzerdefinierter Name)* | `sensor.wohnen_<name>` | CO₂- bzw. Feuchtesensor, wenn diesem Raum im Options-Flow zugewiesen |
+
+## Dashboard-Karte
+
+Die Integration bringt eine eigene Dashboard-Karte mit: **`custom:proxon-fwt-card`**. Sie wird beim Start von Home Assistant automatisch geladen, es ist keine Lovelace-Ressource nötig. Nach einem Update einmal den Browser-Cache leeren bzw. die Seite hart neu laden.
+
+```yaml
+type: custom:proxon-fwt-card
+```
+
+Die Karte findet alle Entities der Integration selbst (über Plattform und Entity-Schlüssel, nicht über feste Entity-IDs) und zeigt:
+
+- **Betriebsart** (Aus, Eco Sommer, Eco Winter, Komfort, Ofenbetrieb) zum Umschalten; Notbetrieb, Einfrierschutz und Einregulierung werden als gesperrter Zustand angezeigt
+- **Luftwege** als Kreuzstrom-Wärmetauscher mit den vier Temperaturen
+- **Lüftung** (Lüfterstufe, Automatik, Intensivlüftung, Drehzahlen); nicht wählbare Stufen sind ausgegraut
+- **Wärmepumpe** (Kompressor, Leistungsaufnahme, Betriebszustände, Kühlungsfreigabe)
+- **Kältekreis** (Diagnose-Temperaturen) sowie **Status und Wartung** (Fehler, Filter)
+- **Räume** als Kacheln oder Liste mit Detailansicht: Soll/Ist, CO₂, Feuchte, PTC-Zustand und -Freigabe je Raum
+
+Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wird ausgeblendet.
+
+| Option | Standard | Bedeutung |
+|---|---|---|
+| `outdoor_side` | `left` | `left` oder `right`: auf welcher Seite des Wärmetauschers Frischluft/Fortluft liegen |
+| `power_entity` | – | eigene Entität für die Leistungsaufnahme (z. B. Shelly) statt des Gerätesensors |
+| `outdoor_entity` | – | eigene Entität für die Außentemperatur statt des Gerätesensors |
+| `sections` | alle | Liste der anzuzeigenden Bereiche: `mode`, `air`, `fan`, `heatpump`, `refrigerant`, `status`, `rooms` |
+| `max_fan_rpm` | `3000` | Drehzahl, bei der die Lüfter-Balken voll sind |
+| `max_compressor_rpm` | `6000` | Drehzahl, bei der der Kompressor-Ring voll ist |
+| `device_id` | – | nur bei mehreren Anlagen: Geräte-ID des zentralen Geräts |
 
 ## Registerbelegung
 
 Siehe [`custom_components/proxon_modbus/const.py`](custom_components/proxon_modbus/const.py) für die vollständige, kommentierte Adressliste. Wissenswert:
 
 - **PTC-Element: Zustand, Freigabe je Raum und Freigabe-Rücklesung (Register 300/301/302) sind einzelne 16-Bit-Bitfelder**, ein Bit pro Raum (Bit *N* = Raum *N+1*), keine Register pro Raum. Da Register 301 nur schreibbar ist (keine eigene Rücklesung), liest das Umschalten der PTC-Freigabe eines Raums den aktuellen Zustand aus Register 302, kippt nur das Bit dieses Raums und schreibt die gesamte Maske zurück. Diese rekonstruierte Maske ist eine Momentaufnahme des letzten Abfragezyklus: Werden zwei Räume schneller als ein Abfragezyklus hintereinander umgeschaltet, könnten sie sich theoretisch gegenseitig überschreiben — für die manuelle Bedienung im Dashboard unkritisch, aber relevant, wenn mehrere Räume automatisiert gleichzeitig geschaltet werden.
-- **Mittentemperatur (Register `220+n`, nur Raum 2–16)** hat keine dokumentierte Skalierung und wird analog zu allen anderen Temperaturregistern behandelt (vorzeichenbehaftet, ×0,1 °C); standardmäßig deaktiviert, da sie in der Praxis offenbar nicht genutzt wird.
+- **Mittentemperatur (Register `220+n`, nur Raum 2–16)** hat keine dokumentierte Skalierung und wird analog zu allen anderen Temperaturregistern behandelt (vorzeichenbehaftet, ×0,1 °C).
 - **Raum-Sollwerte (`200+n`) nehmen für jeden Raum einen einfachen absoluten Ganzzahl-Gradwert** entgegen, keinen Offset relativ zum physischen Bedienteil-Drehregler.
 - **Vier Bedienelemente sind an Betriebsart bzw. das Kühlfähigkeits-Bit gekoppelt** — siehe Tabelle oben. Register 315 ("Freischaltungen") liefert dieselbe Information live vom Gerät; Bit 8 (Kühlen möglich) steht als `binary_sensor.proxon_fwt_kuhlen_verfugbar` zur Verfügung (sofern "Kühlen am Gerät verfügbar" = Ja), die übrigen Bits als diagnostische Freischaltungs-`binary_sensor`s, falls du lieber auf das Live-Signal statt auf die Modus-Nummer aufbauen willst.
 

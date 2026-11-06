@@ -340,7 +340,6 @@ class ProxonRoomMidTempSensor(ProxonRoomEntity, SensorEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
     _attr_translation_key = "mid_temperature"
-    _attr_entity_registry_enabled_default = False
 
     def __init__(
         self,

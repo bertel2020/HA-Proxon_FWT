@@ -1,11 +1,17 @@
 """The Proxon FWT Modbus integration."""
 from __future__ import annotations
 
+from pathlib import Path
+
+from homeassistant.components.frontend import add_extra_js_url
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.modbus import async_get_unit
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import config_validation as cv, device_registry as dr
+from homeassistant.helpers.typing import ConfigType
+from homeassistant.loader import async_get_integration
 
 from .const import (
     CONF_NUM_CO2_SENSORS,
@@ -33,6 +39,33 @@ PLATFORMS: list[Platform] = [
 ]
 
 ProxonConfigEntry = ConfigEntry[ProxonModbusCoordinator]
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+CARD_FILENAME = "proxon-fwt-card.js"
+CARD_URL = f"/{DOMAIN}/{CARD_FILENAME}"
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Serve the bundled dashboard card and load it in the frontend.
+
+    The card is a single JS file shipped with the integration, so it is
+    available as `custom:proxon-fwt-card` without adding a Lovelace resource.
+    The integration version is appended as a query string so the browser
+    fetches the new file after an update.
+    """
+    integration = await async_get_integration(hass, DOMAIN)
+    await hass.http.async_register_static_paths(
+        [
+            StaticPathConfig(
+                CARD_URL,
+                str(Path(__file__).parent / "www" / CARD_FILENAME),
+                cache_headers=False,
+            )
+        ]
+    )
+    add_extra_js_url(hass, f"{CARD_URL}?v={integration.version}")
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bool:
