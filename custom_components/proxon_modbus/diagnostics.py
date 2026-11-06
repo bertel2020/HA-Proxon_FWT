@@ -24,6 +24,24 @@ async def async_get_config_entry_diagnostics(
         "entry_data": async_redact_data(dict(entry.data), TO_REDACT),
         "options": dict(entry.options),
         "last_update_success": coordinator.last_update_success,
+        "update_interval_s": (
+            coordinator.update_interval.total_seconds() if coordinator.update_interval else None
+        ),
+        "last_write_error": coordinator.last_write_error,
+        "last_write_error_at": (
+            coordinator.last_write_error_at.isoformat() if coordinator.last_write_error_at else None
+        ),
+        "write_error_count": coordinator.write_error_count,
+        "fan_stage_restore": {
+            "enabled": coordinator.fan_tracker.enabled,
+            "preferred_stage": coordinator.fan_tracker.preferred,
+            "last_restore": (
+                coordinator.fan_stage_restored_at.isoformat()
+                if coordinator.fan_stage_restored_at
+                else None
+            ),
+        },
+        "statistics": coordinator.stats.as_dict(),
         "failed_blocks": sorted(data.failed) if data else [],
         "data": (
             {k: v for k, v in asdict(data).items() if k != "failed"} if data else None
