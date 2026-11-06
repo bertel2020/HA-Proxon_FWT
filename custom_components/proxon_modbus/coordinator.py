@@ -14,6 +14,8 @@ from homeassistant.util import dt as dt_util
 from .const import (
     CAPABILITY_FLAGS,
     DOMAIN,
+    ECO_MODE_VALUES,
+    FAN_STAGE_OPTIONS,
     MESSAGE_FLAGS,
     REG_BYPASS_STATE,
     REG_CAPABILITY_FLAGS,
@@ -128,12 +130,79 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
         self.last_write_error: str | None = None
         self.last_write_error_at: datetime | None = None
         self.write_error_count = 0
+        # Fan stage restore: the unit raises the fan stage whenever the heat
+        # pump starts and never lowers it again. We remember the stage the
+        # user picked while the heat pump was idle and write it back once the
+        # heat pump has stopped. See _track_fan_stage.
+        self.fan_restore_enabled = False  # set by the "restore fan stage" switch
+        self.preferred_fan_stage: int | None = None
+        self.fan_stage_restored_at: datetime | None = None
+        self._prev_hp_running: bool | None = None
+        self._restore_guard = 0
 
     async def _async_update_data(self) -> ProxonData:
         try:
-            return await self._async_read_all()
+            data = await self._async_read_all()
         except ProxonModbusError as err:
             raise UpdateFailed(str(err)) from err
+        self._track_fan_stage(data)
+        return data
+
+    def _track_fan_stage(self, data: ProxonData) -> None:
+        """Learn the user's fan stage while the heat pump idles; restore it
+        when the heat pump stops.
+
+        The unit changes the stage in the same poll in which the heat pump
+        flag flips, so the stage is only learned when the heat pump was off in
+        the previous poll *and* in this one - the unit's own raise is never
+        mistaken for a user choice.
+        """
+        if (
+            BLOCK_FUNCTION in data.failed
+            or BLOCK_MESSAGES in data.failed
+            or not data.function_block
+        ):
+            return
+        running = bool(
+            data.messages.get("heat_pump_heating") or data.messages.get("heat_pump_cooling")
+        )
+        prev, self._prev_hp_running = self._prev_hp_running, running
+        func = data.function_block
+        stage = func.get("fan_stage_read")
+        if (
+            func.get("operating_mode_read") not in ECO_MODE_VALUES
+            or func.get("fan_auto_read")
+            or stage not in FAN_STAGE_OPTIONS
+            or running
+        ):
+            return
+        preferred = self.preferred_fan_stage
+        if prev is True:
+            # Heat pump just stopped: put the user's stage back.
+            if self.fan_restore_enabled and preferred is not None and stage != preferred:
+                self._restore_guard = 3
+                assert self.config_entry is not None
+                self.config_entry.async_create_background_task(
+                    self.hass,
+                    self._async_restore_fan_stage(preferred),
+                    "proxon_restore_fan_stage",
+                )
+            return
+        if self._restore_guard:
+            self._restore_guard -= 1
+            if stage == preferred:
+                self._restore_guard = 0
+            else:
+                return  # restore still settling: don't adopt the raised stage
+        self.preferred_fan_stage = stage
+
+    async def _async_restore_fan_stage(self, stage: int) -> None:
+        try:
+            await self.async_write_register(REG_FAN_STAGE_WRITE, stage)
+        except ProxonModbusError:
+            return  # recorded by async_write_register ("Last write error")
+        self.fan_stage_restored_at = dt_util.utcnow()
+        self.async_update_listeners()
 
     async def async_write_register(self, address: int, value: int) -> None:
         """Write a "Soll" register, then refresh once the device has had a

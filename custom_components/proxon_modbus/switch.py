@@ -9,9 +9,11 @@ from homeassistant.components.switch import SwitchEntity, SwitchEntityDescriptio
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.restore_state import RestoreEntity
 
 from . import ProxonConfigEntry
 from .const import (
+    FAN_STAGE_OPTIONS,
     CONF_COOLING_AVAILABLE,
     CONF_ROOM_NAMES,
     DEFAULT_COOLING_AVAILABLE,
@@ -108,6 +110,7 @@ async def async_setup_entry(
         ProxonFunctionSwitch(coordinator, entry.entry_id, device_name, description)
         for description in switch_descriptions
     ]
+    entities.append(ProxonFanRestoreSwitch(coordinator, entry.entry_id, device_name))
 
     room_names = entry.options.get(CONF_ROOM_NAMES, [])
     for i, room_name in enumerate(room_names):
@@ -152,6 +155,59 @@ class ProxonFunctionSwitch(ProxonCentralEntity, SwitchEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         await self.coordinator.async_write_register(self.entity_description.write_register, 0)
+
+
+class ProxonFanRestoreSwitch(ProxonCentralEntity, SwitchEntity, RestoreEntity):
+    """Restore the user's fan stage after the heat pump has stopped.
+
+    Purely a software feature: the unit raises the fan stage when the heat
+    pump starts and keeps it there. With this switch on, the integration
+    remembers the stage chosen while the heat pump idled (Eco summer/winter,
+    fan auto off) and writes it back when the heat pump stops. Off by default.
+    """
+
+    _attr_translation_key = "fan_stage_restore"
+    _attr_icon = "mdi:fan-clock"
+    _blocks = frozenset()
+
+    def __init__(
+        self,
+        coordinator: ProxonModbusCoordinator,
+        entry_id: str,
+        device_name: str,
+    ) -> None:
+        super().__init__(coordinator, entry_id, device_name, "fan_stage_restore")
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        last = await self.async_get_last_state()
+        self.coordinator.fan_restore_enabled = last is not None and last.state == "on"
+        if last is not None:
+            stage = last.attributes.get("preferred_stage_value")
+            if isinstance(stage, int) and stage in FAN_STAGE_OPTIONS:
+                self.coordinator.preferred_fan_stage = stage
+
+    @property
+    def is_on(self) -> bool:
+        return self.coordinator.fan_restore_enabled
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        stage = self.coordinator.preferred_fan_stage
+        restored = self.coordinator.fan_stage_restored_at
+        return {
+            "preferred_stage": FAN_STAGE_OPTIONS.get(stage) if stage is not None else None,
+            "preferred_stage_value": stage,
+            "last_restore": restored.isoformat() if restored else None,
+        }
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        self.coordinator.fan_restore_enabled = True
+        self.async_write_ha_state()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        self.coordinator.fan_restore_enabled = False
+        self.async_write_ha_state()
 
 
 class ProxonRoomPtcEnableSwitch(ProxonRoomEntity, SwitchEntity):

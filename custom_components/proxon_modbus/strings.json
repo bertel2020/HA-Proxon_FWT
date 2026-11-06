@@ -148,6 +148,7 @@
     },
     "switch": {
       "cooling_enable": { "name": "Cooling enabled" },
+      "fan_stage_restore": { "name": "Restore fan stage after heat pump" },
       "fan_auto": { "name": "Fan auto mode" },
       "fan_intensive": { "name": "Intensive ventilation" },
       "ptc_enable": { "name": "PTC element enabled" }

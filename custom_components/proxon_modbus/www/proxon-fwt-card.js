@@ -34,6 +34,7 @@ const TEXT = {
     auto: "Auto", stage: "Stufe", automatic: "automatisch",
     fan_note: "Lüfterstufe nur in Eco Sommer und Eco Winter wählbar.",
     intensive: "Intensivlüftung", fan_auto: "Lüfter-Automatik",
+    fan_restore: "Stufe nach Wärmepumpe wiederherstellen", fan_pref: "Wunschstufe", fan_pref_none: "noch nicht erfasst", fan_restored: "zuletzt zurückgesetzt",
     supply_fan: "Zuluft", extract_fan: "Abluft",
     compressor: "Kompressor", power: "Leistung", power_long: "Leistungsaufnahme",
     hp_heating: "Wärmepumpe heizt", hp_idle: "Wärmepumpe aus", hp_cooling: "Kühlbetrieb", hp_continuous: "Dauerbetrieb",
@@ -77,6 +78,7 @@ const TEXT = {
     auto: "Auto", stage: "Stage", automatic: "automatic",
     fan_note: "Fan stage can only be chosen in Eco summer and Eco winter.",
     intensive: "Intensive ventilation", fan_auto: "Fan automatic",
+    fan_restore: "Restore stage after heat pump", fan_pref: "Preferred stage", fan_pref_none: "not learned yet", fan_restored: "last restored",
     supply_fan: "Supply", extract_fan: "Extract",
     compressor: "Compressor", power: "Power", power_long: "Power consumption",
     hp_heating: "Heat pump heating", hp_idle: "Heat pump off", hp_cooling: "Cooling", hp_continuous: "Continuous",
@@ -301,7 +303,7 @@ class ProxonFwtBase extends HTMLElement {
       : [];
     const sig = ids.filter(Boolean).map((i) => {
       const s = h.states[i];
-      return s ? `${s.state}|${s.attributes.temperature}|${s.attributes.current_temperature}` : "-";
+      return s ? `${s.state}|${s.attributes.temperature}|${s.attributes.current_temperature}|${s.attributes.preferred_stage}|${s.attributes.last_restore}` : "-";
     }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._histStamp || 0}|${this._wb || 0}|${this._settingsStamp || 0}`;
     if (sig === this._sig) return;
     this._sig = sig;
@@ -571,12 +573,22 @@ class ProxonFwtBase extends HTMLElement {
     };
     const sw = (id, label, icon, act) => id ? `<div class="row">${this._icon(icon)}${label}<span class="sp">
       <ha-switch data-act="${act}" ${this._on(id) ? "checked" : ""} ${this._ok(id) ? "" : "disabled"}></ha-switch></span></div>` : "";
+    let restore = "";
+    if (c.fan_stage_restore) {
+      const rs = this._state(c.fan_stage_restore);
+      const pref = rs?.attributes?.preferred_stage;
+      const prefLabel = FAN_STAGES.find(([o]) => o === pref)?.[2];
+      const last = rs?.attributes?.last_restore;
+      const when = last ? new Date(last).toLocaleString(this._hass.language, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+      restore = `${sw(c.fan_stage_restore, this._t("fan_restore"), "mdi:fan-clock", "restoresw")}
+        <div class="note" style="margin-top:2px">${this._t("fan_pref")}: ${prefLabel ? `${this._t("stage")} ${prefLabel}` : this._t("fan_pref_none")}${when ? ` · ${this._t("fan_restored")} ${when}` : ""}</div>`;
+    }
     return `<ha-card>${this._header("mdi:fan", this._t("fan"), current)}
       <div class="seg" style="grid-template-columns:repeat(6,1fr)">${buttons}</div>
       ${stageOk ? "" : `<div class="note">${this._t("fan_note")}</div>`}
       <div style="margin-top:8px">${bar(c.fan_speed_supply, this._t("supply_fan"), "mdi:arrow-top-right")}${bar(c.fan_speed_extract, this._t("extract_fan"), "mdi:arrow-bottom-left")}</div>
       ${sw(c.fan_intensive, this._t("intensive"), "mdi:rocket-launch-outline", "intensive")}
-      ${sw(c.fan_auto, this._t("fan_auto"), "mdi:fan-auto", "autosw")}</ha-card>`;
+      ${sw(c.fan_auto, this._t("fan_auto"), "mdi:fan-auto", "autosw")}${restore}</ha-card>`;
   }
 
   _sec_heatpump(d) {
@@ -752,6 +764,7 @@ class ProxonFwtBase extends HTMLElement {
         if (this._on(c.fan_auto)) call("switch", "turn_off", { entity_id: c.fan_auto }); break;
       case "fanauto": call("switch", this._on(c.fan_auto) ? "turn_off" : "turn_on", { entity_id: c.fan_auto }); break;
       case "autosw": call("switch", "toggle", { entity_id: c.fan_auto }); break;
+      case "restoresw": call("switch", "toggle", { entity_id: c.fan_stage_restore }); break;
       case "intensive": call("switch", "toggle", { entity_id: c.fan_intensive }); break;
       case "coolsw": call("switch", "toggle", { entity_id: c.cooling_enable }); break;
       case "ptc": call("switch", "toggle", { entity_id: this._d.rooms[this._room].ents.ptc_enable }); break;
