@@ -19,6 +19,7 @@ Versionen folgen dem Feld `version` in
 - **Diagnose-Download erweitert:** Enthält jetzt Abfrageintervall, letzten Schreibfehler, Stand der Lüfterstufen-Wiederherstellung und die Statistiken. Host und serielle Schnittstelle bleiben geschwärzt.
 - **Reparatur-Meldungen:** Ist die Anlage länger als 10 Minuten nicht erreichbar oder schlagen drei Schreibbefehle hintereinander fehl, erscheint unter „Reparaturen“ eine Meldung mit Hinweisen. Sie verschwindet von selbst, sobald alles wieder funktioniert.
 - **Karte und Panel auf dem Handy:** Bei schmalen Bildschirmen laufen Schema, Kacheln und Chips im Seitenpanel nicht mehr über den Rand. Die Karte erscheint in der Kartenauswahl mit Link zur Dokumentation.
+- **Verlauf mit Wärmepumpen-Laufzeit:** Im 24-Stunden-Verlauf des Seitenpanels sind die Laufzeiten der Wärmepumpe grün hinterlegt. Eine neue Ansicht „7 Tage“ zeigt Laufzeit und Starts pro Tag (aus dem Recorder-Verlauf, es sind keine neuen Sensoren nötig).
 - **Grafischer Karten-Editor** für `custom:proxon-fwt-card`.
 - **Blueprints:** „CO₂-gesteuerte Intensivlüftung“ und „Wartung und Störung melden“ unter `blueprints/automation/proxon_modbus`.
 - **Raum → Home-Assistant-Bereich:** Im Namen-Schritt der Optionen lässt sich jedem Raum optional ein Bereich zuordnen. Das Raumgerät wird dann in diesen Bereich gelegt. Räume ohne Bereich bleiben unverändert (von Hand gesetzte Bereiche werden nie überschrieben).

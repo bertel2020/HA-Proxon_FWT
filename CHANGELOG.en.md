@@ -18,6 +18,7 @@ All notable changes to this project are documented here. Versions follow the
 - **Extended diagnostics download:** now includes the polling interval, the last write error, the state of the fan stage restore and the statistics. Host and serial port stay redacted.
 - **Repair notices:** If the unit is unreachable for more than 10 minutes or three write commands fail in a row, a notice with hints appears under Repairs. It disappears by itself once everything works again.
 - **Card and panel on phones:** on narrow screens the diagram, tiles and chips in the side panel no longer overflow. The card appears in the card picker with a link to the documentation.
+- **History with heat pump runtime:** the side panel's 24-hour history now shades the periods the heat pump ran. A new "7 days" view shows runtime and starts per day (from the recorder history, no new sensors needed).
 - **Graphical card editor** for `custom:proxon-fwt-card`.
 - **Blueprints:** "CO₂-controlled intensive ventilation" and "Report maintenance and faults" in `blueprints/automation/proxon_modbus`.
 - **Room → Home Assistant area:** the names step of the options lets you optionally assign each room to an area. The room's device is then placed in that area. Rooms without an area stay untouched (areas set by hand are never overwritten).

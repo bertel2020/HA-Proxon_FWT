@@ -16,7 +16,7 @@ const TEXT = {
     mode: "Betriebsart", air: "Luftwege", fan: "Lüftung", heatpump: "Wärmepumpe",
     refrigerant: "Kältekreis", diagnostic: "Diagnose", status: "Status und Wartung",
     rooms: "Räume", tiles: "Kacheln", list: "Liste", schema: "Anlagenschema",
-    kpi: "Kennzahlen", history: "Verlauf 24 h", heatmap: "Farbe = Abweichung vom Soll",
+    kpi: "Kennzahlen", history: "Verlauf", hist_24: "24 h", hist_7: "7 Tage", hp_runs: "Wärmepumpe läuft", hp_per_day: "Wärmepumpen-Laufzeit pro Tag", hp_starts: "Starts", hp_no_data: "Keine Daten zur Wärmepumpe.", heatmap: "Farbe = Abweichung vom Soll",
     off: "Aus", eco_summer: "Eco Sommer", eco_winter: "Eco Winter", comfort: "Komfort",
     furnace: "Ofenbetrieb", emergency: "Notbetrieb", frost_protection: "Einfrierschutz",
     commissioning: "Einregulierung", not_used: "Nicht belegt",
@@ -60,7 +60,7 @@ const TEXT = {
     mode: "Operating mode", air: "Air paths", fan: "Ventilation", heatpump: "Heat pump",
     refrigerant: "Refrigerant circuit", diagnostic: "Diagnostics", status: "Status and maintenance",
     rooms: "Rooms", tiles: "Tiles", list: "List", schema: "System diagram",
-    kpi: "Key figures", history: "History 24 h", heatmap: "Colour = deviation from target",
+    kpi: "Key figures", history: "History", hist_24: "24 h", hist_7: "7 days", hp_runs: "Heat pump running", hp_per_day: "Heat pump runtime per day", hp_starts: "starts", hp_no_data: "No heat pump data.", heatmap: "Colour = deviation from target",
     off: "Off", eco_summer: "Eco summer", eco_winter: "Eco winter", comfort: "Comfort",
     furnace: "Stove mode", emergency: "Emergency", frost_protection: "Frost protection",
     commissioning: "Commissioning", not_used: "Not used",
@@ -304,7 +304,7 @@ class ProxonFwtBase extends HTMLElement {
     const sig = ids.filter(Boolean).map((i) => {
       const s = h.states[i];
       return s ? `${s.state}|${s.attributes.temperature}|${s.attributes.current_temperature}|${s.attributes.preferred_stage}|${s.attributes.last_restore}` : "-";
-    }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._histStamp || 0}|${this._wb || 0}|${this._settingsStamp || 0}`;
+    }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._histStamp || 0}|${this._histRange || "24h"}|${this._wb || 0}|${this._settingsStamp || 0}`;
     if (sig === this._sig) return;
     this._sig = sig;
     this._render();
@@ -696,9 +696,68 @@ class ProxonFwtBase extends HTMLElement {
   }
 
   _sec_history(d) {
+    const range = this._histRange || "24h";
     const series = this._series || [];
-    const body = series.some((s) => s.pts.length > 1) ? this._chart(series) : `<div class="note">${this._t("no_history")}</div>`;
-    return `<ha-card>${this._header("mdi:chart-line", this._t("history"))}${body}</ha-card>`;
+    let body;
+    if (range === "7d") body = this._hpBars();
+    else body = series.some((s) => s.pts.length > 1) ? this._chart(series) : `<div class="note">${this._t("no_history")}</div>`;
+    const btn = (v, label) => `<button class="vbtn ${range === v ? "a" : ""}" data-act="hrange" data-v="${v}">${label}</button>`;
+    return `<ha-card><div class="h">${this._icon("mdi:chart-line")}${this._t("history")}
+      <span class="r">${btn("24h", this._t("hist_24"))}${btn("7d", this._t("hist_7"))}</span></div>${body}</ha-card>`;
+  }
+
+  // Merge the "on" periods of one or more binary sensors into [start, end] intervals (seconds).
+  _intervals(res, ids, t1) {
+    const all = [];
+    for (const id of ids) {
+      let on = null;
+      for (const p of res[id] || []) {
+        const t = p.lu ?? Date.parse(p.last_updated) / 1000, st = p.s ?? p.state;
+        if (isNaN(t)) continue;
+        if (st === "on" && on === null) on = t;
+        else if (st !== "on" && on !== null) { all.push([on, t]); on = null; }
+      }
+      if (on !== null) all.push([on, t1]);
+    }
+    all.sort((a, b) => a[0] - b[0]);
+    const merged = [];
+    for (const iv of all) {
+      const last = merged[merged.length - 1];
+      if (last && iv[0] <= last[1]) last[1] = Math.max(last[1], iv[1]);
+      else merged.push([iv[0], iv[1]]);
+    }
+    return merged;
+  }
+
+  // Heat pump runtime and starts per day for the last 7 days, from the recorder history.
+  _hpBars() {
+    const iv = this._hpIv;
+    if (!iv) return `<div class="note">${this._t("hp_no_data")}</div>`;
+    const lang = this._hass.language, now = Date.now() / 1000;
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d0 = new Date(); d0.setHours(0, 0, 0, 0); d0.setDate(d0.getDate() - i);
+      const a = d0.getTime() / 1000, b = Math.min(now, a + 86400);
+      let sec = 0, starts = 0;
+      for (const [s0, s1] of iv) {
+        sec += Math.max(0, Math.min(s1, b) - Math.max(s0, a));
+        if (s0 >= a && s0 < a + 86400 && s0 > this._hpT0 + 60) starts++;
+      }
+      days.push({ label: d0.toLocaleDateString(lang, { weekday: "short" }), h: sec / 3600, starts });
+    }
+    const W = Math.max(300, (this.clientWidth || 680) - 80), H = 150, pt = 22, pb = 34;
+    const max = Math.max(4, Math.ceil(Math.max(...days.map((d) => d.h))));
+    const slot = (W - 16) / days.length, bw = Math.min(46, slot * 0.6);
+    const bars = days.map((d, i) => {
+      const cx = 8 + slot * (i + 0.5), bh = (d.h / max) * (H - pt - pb), y = H - pb - bh;
+      return `<rect x="${cx - bw / 2}" y="${y}" width="${bw}" height="${Math.max(bh, d.h > 0 ? 2 : 0)}" rx="4" fill="#3fa660" opacity="${i === days.length - 1 ? 1 : 0.7}"/>
+        <text class="st" x="${cx}" y="${y - 5}" text-anchor="middle" style="font-size:11px">${d.h.toLocaleString(lang, { maximumFractionDigits: 1 })} h</text>
+        <text class="st" x="${cx}" y="${H - 18}" text-anchor="middle" style="font-size:11px">${d.label}</text>
+        <text class="st" x="${cx}" y="${H - 5}" text-anchor="middle" style="font-size:10px;opacity:.75">${d.starts}×</text>`;
+    }).join("");
+    return `<svg style="max-width:100%" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("hp_per_day")}">
+      <line x1="8" x2="${W - 8}" y1="${H - pb}" y2="${H - pb}" stroke="var(--divider-color)" stroke-width=".8"/>${bars}</svg>
+      <div class="legend"><span><i style="background:#3fa660"></i>${this._t("hp_per_day")} · ${this._t("hp_starts")}</span></div>`;
   }
 
   _chart(series) {
@@ -713,13 +772,17 @@ class ProxonFwtBase extends HTMLElement {
       const v = lo + ((hi - lo) * i) / 3;
       return `<line x1="${pl}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--divider-color)" stroke-width=".6"/><text class="st" x="${pl - 6}" y="${y(v) + 4}" text-anchor="end" style="font-size:11px">${Math.round(v)}°</text>`;
     }).join("");
+    const bands = (this._hpIv || []).map(([a, b]) => {
+      const s0 = Math.max(a, t0), s1 = Math.min(b, t1);
+      return s1 > s0 ? `<rect x="${x(s0).toFixed(1)}" y="${pt}" width="${Math.max(1, x(s1) - x(s0)).toFixed(1)}" height="${H - pt - pb}" fill="#3fa660" opacity=".14"/>` : "";
+    }).join("");
     const lines = series.map((s) => `<polyline fill="none" stroke="${s.color}" stroke-width="1.8" stroke-linejoin="round" points="${s.pts.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>`).join("");
     const hours = [0, 6, 12, 18, 24].map((h) => {
       const t = t0 + ((t1 - t0) * h) / 24;
       return `<text class="st" x="${x(t)}" y="${H - 3}" text-anchor="middle" style="font-size:11px">${new Date(t * 1000).toLocaleTimeString(this._hass.language, { hour: "2-digit", minute: "2-digit" })}</text>`;
     }).join("");
     const legend = series.map((s) => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join("");
-    return `<svg style="max-width:100%" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("history")}">${grid}${lines}${hours}</svg><div class="legend">${legend}</div>`;
+    return `<svg style="max-width:100%" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("history")}">${bands}${grid}${lines}${hours}</svg><div class="legend">${legend}${this._hpIv && this._hpIv.length ? `<span><i style="background:#3fa660;opacity:.4"></i>${this._t("hp_runs")}</span>` : ""}</div>`;
   }
 
   async _loadHistory() {
@@ -746,6 +809,20 @@ class ProxonFwtBase extends HTMLElement {
     } catch (err) {
       this._series = [];
     }
+    const hpIds = [c.heat_pump_heating, c.heat_pump_cooling].filter(Boolean);
+    if (hpIds.length) {
+      try {
+        const end = new Date(), start = new Date(end.getTime() - 7 * 24 * 3600 * 1000);
+        const res = await this._hass.callWS({
+          type: "history/history_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
+          entity_ids: hpIds, minimal_response: true, no_attributes: true, significant_changes_only: false,
+        });
+        this._hpT0 = start.getTime() / 1000;
+        this._hpIv = this._intervals(res, hpIds, end.getTime() / 1000);
+      } catch (err) {
+        this._hpIv = null;
+      }
+    }
     this._histBusy = false;
     this._histStamp = Date.now();
     this._update();
@@ -764,6 +841,7 @@ class ProxonFwtBase extends HTMLElement {
         if (this._on(c.fan_auto)) call("switch", "turn_off", { entity_id: c.fan_auto }); break;
       case "fanauto": call("switch", this._on(c.fan_auto) ? "turn_off" : "turn_on", { entity_id: c.fan_auto }); break;
       case "autosw": call("switch", "toggle", { entity_id: c.fan_auto }); break;
+      case "hrange": this._histRange = v; this._update(); break;
       case "restoresw": call("switch", "toggle", { entity_id: c.fan_stage_restore }); break;
       case "intensive": call("switch", "toggle", { entity_id: c.fan_intensive }); break;
       case "coolsw": call("switch", "toggle", { entity_id: c.cooling_enable }); break;
