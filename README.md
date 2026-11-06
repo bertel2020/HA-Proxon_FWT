@@ -210,10 +210,19 @@ Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wi
 | `outdoor_side` | `left` | `left` oder `right`: auf welcher Seite des Wärmetauschers Frischluft/Fortluft liegen |
 | `power_entity` | – | eigene Entität für die Leistungsaufnahme (z. B. Shelly) statt des Gerätesensors |
 | `outdoor_entity` | – | eigene Entität für die Außentemperatur statt des Gerätesensors |
-| `sections` | alle | Liste der anzuzeigenden Bereiche: `mode`, `air`, `fan`, `heatpump`, `refrigerant`, `status`, `rooms` |
+| `sections` | alle | Liste der anzuzeigenden Bereiche: `mode`, `air`, `fan`, `heatpump`, `refrigerant`, `status`, `rooms` sowie optional `schema`, `kpi`, `alerts`, `history` |
 | `max_fan_rpm` | `3000` | Drehzahl, bei der die Lüfter-Balken voll sind |
 | `max_compressor_rpm` | `6000` | Drehzahl, bei der der Kompressor-Ring voll ist |
 | `device_id` | – | nur bei mehreren Anlagen: Geräte-ID des zentralen Geräts |
+
+### Seitenpanel
+
+Zusätzlich legt die Integration in der Seitenleiste den Eintrag **Proxon FWT** an: eine ganzseitige Ansicht mit animiertem Anlagenschema (Kreuzstrom-Wärmetauscher, Ventilatoren, Verdampfer, Kondensator, Kompressor-Kreislauf und alle Temperaturmesspunkte), Kennzahlen (u. a. Rückwärmzahl, berechnet aus Frisch-, Ab- und Zulufttemperatur), Raum-Heatmap, Lüftung, Wärmepumpe, Kältekreis, Status und einem 24-Stunden-Verlauf der Temperaturen. Hinweise zu Filterwechsel, Systemfehler, Notbetrieb/Einfrierschutz und Schreibfehlern erscheinen oben als Banner. Die Seite „Außenseite rechts“ lässt sich im Panel umschalten (wird im Browser gemerkt). Der Bypass ist eine reine Statusanzeige, das Gerät schaltet ihn selbst.
+
+![Seitenpanel (hell)](docs/panel-light.png)
+![Seitenpanel (dunkel)](docs/panel-dark.png)
+
+*Die Bilder zeigen das Panel mit Beispieldaten.*
 
 ## Registerbelegung
 

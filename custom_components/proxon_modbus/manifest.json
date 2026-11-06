@@ -3,7 +3,7 @@
   "name": "Proxon FWT (Modbus)",
   "codeowners": ["@bertel2020"],
   "config_flow": true,
-  "dependencies": ["frontend", "http", "modbus"],
+  "dependencies": ["frontend", "http", "modbus", "panel_custom"],
   "documentation": "https://github.com/bertel2020/HA-Proxon_FWT",
   "integration_type": "hub",
   "iot_class": "local_polling",

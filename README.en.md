@@ -208,10 +208,19 @@ Anything the unit does not provide (e.g. power consumption or outdoor temperatur
 | `outdoor_side` | `left` | `left` or `right`: which side of the heat exchanger fresh and exhaust air are on |
 | `power_entity` | – | own entity for the power consumption (e.g. a Shelly) instead of the device sensor |
 | `outdoor_entity` | – | own entity for the outdoor temperature instead of the device sensor |
-| `sections` | all | list of sections to show: `mode`, `air`, `fan`, `heatpump`, `refrigerant`, `status`, `rooms` |
+| `sections` | all | list of sections to show: `mode`, `air`, `fan`, `heatpump`, `refrigerant`, `status`, `rooms`, plus optionally `schema`, `kpi`, `alerts`, `history` |
 | `max_fan_rpm` | `3000` | speed at which the fan bars are full |
 | `max_compressor_rpm` | `6000` | speed at which the compressor ring is full |
 | `device_id` | – | only with several units: device ID of the central device |
+
+### Side panel
+
+The integration also adds a **Proxon FWT** entry to the sidebar: a full-page view with an animated system diagram (cross-flow heat exchanger, fans, evaporator, condenser, compressor circuit and all temperature probes), key figures (including the heat recovery rate, calculated from fresh, extract and supply air temperature), room heat map, ventilation, heat pump, refrigerant circuit, status and a 24-hour temperature history. Notices about filter replacement, system errors, emergency/frost protection and write errors appear at the top as banners. The "outdoor side right" setting can be switched in the panel (remembered in the browser). The bypass is a status display only; the unit switches it by itself.
+
+![Side panel (light)](docs/panel-light.png)
+![Side panel (dark)](docs/panel-dark.png)
+
+*The images show the panel with sample data.*
 
 ## Register map
 

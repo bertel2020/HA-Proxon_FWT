@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from homeassistant.components.frontend import add_extra_js_url
+from homeassistant.components import panel_custom
+from homeassistant.components.frontend import add_extra_js_url, async_remove_panel
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.modbus import async_get_unit
 from homeassistant.config_entries import ConfigEntry
@@ -44,6 +45,8 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 CARD_FILENAME = "proxon-fwt-card.js"
 CARD_URL = f"/{DOMAIN}/{CARD_FILENAME}"
+PANEL_PATH = "proxon-fwt"
+PANEL_ELEMENT = "proxon-fwt-panel"
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -64,8 +67,28 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             )
         ]
     )
-    add_extra_js_url(hass, f"{CARD_URL}?v={integration.version}")
+    module_url = f"{CARD_URL}?v={integration.version}"
+    add_extra_js_url(hass, module_url)
+    hass.data.setdefault(DOMAIN, {})["module_url"] = module_url
     return True
+
+
+async def _async_register_panel(hass: HomeAssistant) -> None:
+    """Add the "Proxon FWT" side panel (once, however many entries exist)."""
+    domain_data = hass.data.setdefault(DOMAIN, {})
+    if domain_data.get("panel_registered"):
+        return
+    await panel_custom.async_register_panel(
+        hass,
+        webcomponent_name=PANEL_ELEMENT,
+        frontend_url_path=PANEL_PATH,
+        module_url=domain_data["module_url"],
+        sidebar_title="Proxon FWT",
+        sidebar_icon="mdi:heat-pump",
+        require_admin=False,
+        embed_iframe=False,
+    )
+    domain_data["panel_registered"] = True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bool:
@@ -99,6 +122,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bo
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await _async_register_panel(hass)
     _remove_stale_room_devices(hass, entry)
     _apply_room_areas(hass, entry)
     return True
@@ -143,4 +167,10 @@ async def _async_update_listener(hass: HomeAssistant, entry: ProxonConfigEntry) 
 async def async_unload_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bool:
     """Unload a config entry."""
     # The shared connection closes itself once the last unit holder unloads.
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unloaded and not [
+        e for e in hass.config_entries.async_loaded_entries(DOMAIN) if e.entry_id != entry.entry_id
+    ]:
+        async_remove_panel(hass, PANEL_PATH)
+        hass.data.get(DOMAIN, {}).pop("panel_registered", None)
+    return unloaded
