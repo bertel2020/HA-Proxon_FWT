@@ -337,7 +337,7 @@ svg .sh { font-size: 13px; font-weight: 500; }
   background: var(--secondary-background-color); color: var(--primary-text-color); }
 .qa ha-icon { --mdc-icon-size: 22px; color: var(--primary-color); flex: none; }
 .qa span { display: grid; gap: 1px; } .qa b { font-weight: 500; font-size: 13px; } .qa small { font-size: 11px; color: var(--secondary-text-color); }
-.qa.bst { cursor: default; grid-column: span 2; } .qa.bst:hover { border-color: transparent; } .bch { display: flex !important; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.qa.bst { cursor: default; grid-column: 1 / -1; } .qa.bst:hover { border-color: transparent; } .bch { display: flex !important; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .qa:hover { border-color: var(--primary-color); } .qa.a { border-color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 14%, transparent); }
 .mchips { display: flex; gap: 6px; flex-wrap: wrap; margin: -2px 0 10px; }
 .chw { position: relative; }
