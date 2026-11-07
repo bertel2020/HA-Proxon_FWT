@@ -189,6 +189,7 @@ const METRIC_META = {
 const BLUE = "#378ADD", CORAL = "#D85A30", AMBER = "#f2a516", GREEN = "#3fa660";
 const SETTINGS_TTL = 60000;
 const UI_ACTS = new Set(["hcmp", "hrange", "metric", "ymetric", "dismiss", "undismiss", "kpi", "tab", "rview", "rfilter", "rtoggle", "rclose", "noop", "view", "room", "menu"]);
+const WRITE_ERROR_SHOWN_MS = 3600000;
 const BAD = ["unavailable", "unknown", undefined, null, ""];
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
 
@@ -785,8 +786,11 @@ class ProxonFwtBase extends HTMLElement {
     if (!this._drawerMode && this._recirc() && this._on(c.filter_recirculation)) out.push(["w", "mdi:air-filter", `${this._t("filter_recirc")}: ${this._t("change_due")}`]);
     const det = this._ok(c.operating_mode_state) ? this._state(c.operating_mode_state).state : null;
     if (det === "emergency" || det === "frost_protection") out.push([det === "emergency" ? "r" : "w", "mdi:alert-outline", this._t(det)]);
-    if (this._ok(c.last_write_error) && this._state(c.last_write_error).state !== "none") {
-      out.push(["w", "mdi:pencil-off", `${this._t("write_error")}: ${this._state(c.last_write_error).state}`]);
+    const we = this._ok(c.last_write_error) ? this._state(c.last_write_error) : null;
+    // The sensor keeps the last error for diagnostics; only a recent one is worth a warning banner.
+    const weAt = we && we.attributes && Date.parse(we.attributes.occurred_at);
+    if (we && we.state !== "none" && weAt && Date.now() - weAt < WRITE_ERROR_SHOWN_MS) {
+      out.push(["w", "mdi:pencil-off", `${this._t("write_error")}: ${esc(we.state)}`]);
     }
     if (!out.length) return "";
     return `<div class="alerts">${out.map(([k, i, t]) => `<div class="banner ${k}">${this._icon(i)}${t}</div>`).join("")}</div>`;
