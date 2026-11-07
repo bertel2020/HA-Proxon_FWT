@@ -63,7 +63,7 @@ const TEXT = {
     ins_filter_now: "{0}: Wechsel fällig", ins_filter_now_d: "Die Anlage meldet einen fälligen Filterwechsel. Beide Filtereinschübe tauschen (Frischluft und Abluft).",
     ins_filter_soon: "{0} bald fällig", ins_filter_soon_d: "Tag {0} von {1}. Zwei neue Filter bereithalten (Frischluft und Abluft).",
     ins_shutdown_d: "Die Anlage schaltet in {0} zwangsweise ab. Nach dem Wechsel „Filter getauscht“ drücken.", d_one: "1 Tag", d_n: "{0} Tagen",
-    f_age: "Tag {0} von {1} · noch {2} Tage", f_unknown: "Tauschdatum unbekannt – nach dem nächsten Wechsel „Filter getauscht“ drücken.",
+    f_age_text: "Tag {0} von {1} · noch {2} Tage", f_unknown: "Tauschdatum unbekannt – nach dem nächsten Wechsel „Filter getauscht“ drücken.",
     f_shutdown: "Zwangsabschaltung in {0}", f_age: "Alter", f_day_of: "Tag {0} von {1}", f_btn: "Filter getauscht", f_confirm: "Gerätefilter als getauscht markieren? Alter und Frist beginnen neu.",
     ins_cycle_t: "Wärmepumpe taktet häufig", ins_cycle_d: "{0} Starts seit 0 Uhr. Häufiges Takten belastet den Kompressor.",
     ins_eff_t: "Rückwärmzahl niedrig", ins_eff_d: "Nur {0} %. Wärmetauscher und Filter prüfen.",
@@ -136,7 +136,7 @@ const TEXT = {
     ins_filter_now: "{0}: replace now", ins_filter_now_d: "The unit reports that a filter change is due. Replace both filter drawers (fresh air and extract).",
     ins_filter_soon: "{0} due soon", ins_filter_soon_d: "Day {0} of {1}. Keep two new filters ready (fresh air and extract).",
     ins_shutdown_d: "The unit shuts down by force in {0}. Press \"Filter changed\" after the replacement.", d_one: "1 day", d_n: "{0} days",
-    f_age: "Day {0} of {1} · {2} days left", f_unknown: "Change date unknown – press \"Filter changed\" after the next replacement.",
+    f_age_text: "Day {0} of {1} · {2} days left", f_unknown: "Change date unknown – press \"Filter changed\" after the next replacement.",
     f_shutdown: "Forced shutdown in {0}", f_age: "Age", f_day_of: "Day {0} of {1}", f_btn: "Filter changed", f_confirm: "Mark the device filter as replaced? Age and deadline start over.",
     ins_cycle_t: "Heat pump cycling often", ins_cycle_d: "{0} starts since midnight. Frequent cycling stresses the compressor.",
     ins_eff_t: "Heat recovery low", ins_eff_d: "Only {0} %. Check the heat exchanger and filters.",
@@ -1813,7 +1813,7 @@ class ProxonFwtBase extends HTMLElement {
       const near = f.due && f.left !== null && f.left <= 7;
       const col = near || (!f.due && pct >= 100) ? "#db4437" : f.due || pct >= 90 ? "#f2a516" : GREEN;
       const sub = f.due && f.left !== null ? this._t("f_shutdown", this._days(f.left))
-        : f.known ? this._t("f_age", String(Math.round(f.age)), String(f.iv), String(Math.max(0, Math.round(f.iv - f.age)))) : this._t("f_unknown");
+        : f.known ? this._t("f_age_text", String(Math.round(f.age)), String(f.iv), String(Math.max(0, Math.round(f.iv - f.age)))) : this._t("f_unknown");
       const btn = c.filter_changed ? `<button class="vbtn" data-act="filterchg">${this._icon("mdi:check")}${this._t("f_btn")}</button>` : "";
       const rc = this._recirc() && this._ok(c.filter_recirculation)
         ? `<div class="s">${this._t("filter_recirc")}: <b style="color:${this._on(c.filter_recirculation) ? "#c98400" : GREEN}">${this._on(c.filter_recirculation) ? this._t("change_due") : this._t("ok")}</b></div>` : "";
@@ -1846,7 +1846,7 @@ class ProxonFwtBase extends HTMLElement {
       const near = f.due && f.left !== null && f.left <= 7;
       const col = near || (!f.due && pct >= 100) ? "#db4437" : f.due || pct >= 90 ? "#f2a516" : GREEN;
       const sub = f.due && f.left !== null ? `<b style="color:${near ? "#db4437" : "#c98400"}">${this._t("f_shutdown", this._days(f.left))}</b>`
-        : f.known ? this._t("f_age", String(Math.round(f.age)), String(f.iv), String(Math.max(0, Math.round(f.iv - f.age)))) : this._t("f_unknown");
+        : f.known ? this._t("f_age_text", String(Math.round(f.age)), String(f.iv), String(Math.max(0, Math.round(f.iv - f.age)))) : this._t("f_unknown");
       const btn = c.filter_changed ? `<button class="vbtn" style="margin-top:8px" data-act="filterchg">${this._icon("mdi:check")}${this._t("f_btn")}</button>` : "";
       return `<div class="mrow"><div class="mh"><span>${this._icon("mdi:air-filter")}${this._t("filter_device")}</span><b style="color:${col}">${f.due ? this._t("change_due") : this._t("ok")}</b></div>
         <div class="pbar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%;background:${col}"></i></div>
