@@ -332,6 +332,7 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .ins .it small { font-size: 12px; color: var(--secondary-text-color); }
 .ins .x { font: inherit; border: 0; background: transparent; color: var(--secondary-text-color); cursor: pointer; border-radius: 50%; width: 30px; height: 30px; display: grid; place-items: center; flex: none; }
 .ins .x:hover { background: color-mix(in srgb, var(--primary-text-color) 10%, transparent); } .ins .x ha-icon { --mdc-icon-size: 18px; }
+.hid.slim { display: flex; align-items: center; gap: 6px; margin: 0 4px; } .hid.slim ha-icon { --mdc-icon-size: 16px; }
 .hid { font-size: 12px; color: var(--secondary-text-color); margin: 8px 2px 0; } .hid .lnk { font: inherit; border: 0; background: none; color: var(--primary-color); cursor: pointer; padding: 0; }
 .ins.r { --ic: #db4437; } .ins.w { --ic: #f2a516; } .ins.i { --ic: #3d8be0; } .ins.o { --ic: #3fa660; }
 .qgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
@@ -1664,6 +1665,7 @@ class ProxonFwtBase extends HTMLElement {
     const more = hidden.length
       ? `<div class="hid"><span title="${this._t("hidden_note")}">${this._t("hidden_n", String(hidden.length))}</span> · <button class="lnk" data-act="undismiss">${this._t("show_again")}</button></div>` : "";
     if (!items && !more) return "";
+    if (!items) return `<div class="hid slim">${this._icon("mdi:lightbulb-outline")} ${more.replace(/^<div class="hid">/, "").replace(/<\/div>$/, "")}</div>`; // only dismissed notices: a slim line instead of an empty card
     return `<ha-card>${this._header("mdi:lightbulb-on-outline", this._t("hints"))}<div class="alerts">${items}</div>${more}</ha-card>`;
   }
 
@@ -1733,8 +1735,13 @@ class ProxonFwtBase extends HTMLElement {
       const rpm = this._num(c.compressor_speed), pw = this._num(this._powerId());
       const sub = [rpm === null ? "" : `${rpm.toLocaleString(lang)} rpm`, pw === null ? "" : `${this._fmt(pw, pw % 1 ? 1 : 0)} W`].filter(Boolean).join(" · ");
       const sw = c.cooling_enable ? `<div class="s sw">${this._t("cooling_enable")}<ha-switch data-act="coolsw" ${this._on(c.cooling_enable) ? "checked" : ""} ${this._ok(c.cooling_enable) ? "" : "disabled"}></ha-switch></div>` : "";
-      tiles.push(tile(cool ? "mdi:snowflake" : "mdi:heat-pump", cool ? BLUE : heat ? GREEN : "var(--secondary-text-color)", this._t("heatpump"),
-        this._t(cool ? "hp_cooling" : heat ? "hp_heating" : "hp_idle"), sub, sw));
+      const col = cool ? BLUE : heat ? GREEN : "var(--secondary-text-color)";
+      const frac = rpm === null ? 0 : Math.min(100, Math.round((rpm / (this._config.max_compressor_rpm || 6000)) * 100));
+      const bar = rpm === null ? "" : `<div class="pbar" style="margin:8px 0 2px"><i style="width:${frac}%;background:${col}"></i></div><div class="s">${this._t("compressor")} ${frac} %</div>`;
+      const chips = [[c.heat_pump_continuous, "mdi:autorenew", this._t("hp_continuous")], [c.cooling_available, "mdi:snowflake-check", this._t("cooling_available")]]
+        .filter(([id]) => id && this._ok(id) && this._on(id)).map(([, ic, l]) => `<span class="chip">${this._icon(ic)}${l}</span>`).join("");
+      tiles.push(tile(cool ? "mdi:snowflake" : "mdi:heat-pump", col, this._t("heatpump"),
+        this._t(cool ? "hp_cooling" : heat ? "hp_heating" : "hp_idle"), sub, `${bar}${chips ? `<div class="chips" style="margin-top:8px">${chips}</div>` : ""}${sw}`));
     }
     // filter
     const f = this._filterInfo(c);
@@ -1754,15 +1761,17 @@ class ProxonFwtBase extends HTMLElement {
     if (this._ok(c.error_system)) {
       const bad = this._on(c.error_system);
       const chg = c.mode_change_possible && this._ok(c.mode_change_possible) ? `${this._t("mode_change")}: ${this._on(c.mode_change_possible) ? this._t("possible") : this._t("not_possible")}` : "";
-      tiles.push(tile(bad ? "mdi:alert-circle-outline" : "mdi:check-circle-outline", bad ? "#db4437" : GREEN, this._t("error"), bad ? this._t("has_error") : this._t("no_error"), chg));
+      const byp = c.bypass_active && this._ok(c.bypass_active) ? `<div class="s">${this._icon("mdi:routes")} ${this._t(this._on(c.bypass_active) ? "bypass_open" : "bypass_closed")}</div>` : "";
+      tiles.push(tile(bad ? "mdi:alert-circle-outline" : "mdi:check-circle-outline", bad ? "#db4437" : GREEN, this._t("error"), bad ? this._t("has_error") : this._t("no_error"), chg, byp));
     }
     // runtime and starts
     const hv = (id) => this._num(id) === null ? null : `${this._fmt(this._num(id), 1)} h`;
     const iv0 = (id) => this._num(id) === null ? null : this._fmt(this._num(id), 0);
-    const stat = [[this._t("rt_today"), hv(c.hp_runtime_today), this._t("starts_today"), iv0(c.hp_starts_today), this._t("today")],
-      [this._t("rt_total"), hv(c.hp_runtime_total), this._t("starts_total"), iv0(c.hp_starts_total), this._t("total")]].filter((x) => x[1] !== null || x[3] !== null);
-    const stats = stat.length ? `<ha-card>${this._header("mdi:counter", this._t("stats"))}<div class="dstat">${stat.map(([l1, v1, l2, v2, h]) => `<div class="dsc"><div class="mg">${h}</div>
-      <div class="dsr">${v1 === null ? "" : `<div><b>${v1}</b><small>${l1}</small></div>`}${v2 === null ? "" : `<div><b>${v2}</b><small>${l2}</small></div>`}</div></div>`).join("")}</div></ha-card>` : "";
+    const st = (icon, color, label, val, unit) => val === null ? "" : `<div class="rs" style="--c:${color}"><span class="ic">${this._icon(icon)}</span><div><small>${label}</small><b>${val}<span>${unit}</span></b></div></div>`;
+    const sv = (id, dg) => this._num(id) === null ? null : this._fmt(this._num(id), dg);
+    const stHtml = st("mdi:clock-outline", GREEN, this._t("rt_today"), sv(c.hp_runtime_today, 1), " h") + st("mdi:counter", BLUE, this._t("starts_today"), sv(c.hp_starts_today, 0), "×") +
+      st("mdi:history", GREEN, this._t("rt_total"), sv(c.hp_runtime_total, 1), " h") + st("mdi:counter", BLUE, this._t("starts_total"), sv(c.hp_starts_total, 0), "×");
+    const stats = stHtml ? `<ha-card>${this._header("mdi:counter", this._t("stats"))}<div class="rsum" style="margin-bottom:0">${stHtml}</div></ha-card>` : "";
     return `${tiles.length ? `<div class="dtiles">${tiles.join("")}</div>` : ""}${this._sec_measure(d)}${stats}`;
   }
 
@@ -2129,7 +2138,7 @@ class ProxonFwtPanel extends ProxonFwtBase {
     } else if (tab === "history") {
       body = `<div class="stack">${this._sec_history(d)}${this._sec_runtime(d)}${this._sec_energy(d)}${this._sec_year(d)}</div>`;
     } else {
-      body = `<div class="stack">${this._diagTab(d)}${this._sec_insights(d)}</div>`;
+      body = `<div class="stack">${this._sec_insights(d)}${this._diagTab(d)}</div>`;
     }
     this.shadowRoot.innerHTML = `<style>${CSS}</style><div class="panel">${head}${body}</div>`;
   }

@@ -46,7 +46,7 @@
 - **Stoßlüften mit Timer:** Neuer Schalter, der auf die höchste Stufe geht und nach der gewählten Dauer (Standard 30 Minuten; 15/30/60 im Panel, beliebig über den Dienst `proxon_modbus.start_boost`) automatisch den vorherigen Zustand wiederherstellt, auch ohne Panel und über Neustarts hinweg.
 - **Rückwärmzahl korrigiert und als Sensor:** Berechnet aus der Abluft nach dem Wärmetauscher, bei offenem Sommerbypass leer. Neuer Sensor „Rückwärmzahl“ mit Langzeitstatistik.
 - **Verlauf erweitert:** 1 Tag / 1 Woche / 1 Monat / 1 Jahr, Min/Max/Mittelwert (Leistung auch kWh), Vorzeitraum-Vergleich, Bypass-Phasen markiert, sofortige Tooltips an allen Diagrammen.
-- **Diagnose neu gestaltet, Hinweise dort:** Status-Kacheln, Messwerte in voller Breite, Laufzeit und Starts; Hinweise stehen jetzt unten im Diagnose-Reiter und lassen sich 24 Stunden ausblenden.
+- **Diagnose neu gestaltet, Hinweise dort:** Status-Kacheln, Messwerte in voller Breite, Laufzeit und Starts; Hinweise stehen jetzt oben im Diagnose-Reiter und lassen sich 24 Stunden ausblenden.
 - **Eigene CO₂-/Feuchtesensoren pro Raum:** im Namen-Schritt der Optionen wählbar, ersetzen die Eingänge der Anlage in Karte und Panel.
 - **Einrichtung:** Fragt die Seite der Außenluft ab und hat einen Namen-Schritt für Räume und Home-Assistant-Bereiche, mit den aktuellen Namen als Vorschlag.
 - **Blueprint „Nachtabsenkung der Lüfterstufe“:** nachts niedrigere Lüfterstufe, morgens wieder die normale.
