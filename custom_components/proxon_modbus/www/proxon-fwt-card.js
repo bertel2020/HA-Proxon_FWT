@@ -69,7 +69,7 @@ const TEXT = {
     ins_eff_t: "Rückwärmzahl niedrig", ins_eff_d: "Nur {0} %. Wärmetauscher und Filter prüfen.",
     ins_co2_t: "CO₂ erhöht", ins_co2_d: "{0}: {1} ppm. Lüften oder Lüfterstufe erhöhen.",
     ins_ok_t: "Alles unauffällig", ins_ok_eff: "Rückwärmzahl {0} %.", ins_ok_d: "Keine Fehler, Filter in Ordnung.",
-    quick: "Schnellaktionen", boost: "Stoßlüften", boost_end: "Stoßlüften beenden", boost_d_i: "Intensivlüftung ein", boost_d_s: "Stufe 4, bis du es beendest", boost_d_t: "Dann automatisch zurück", boost_until: "bis {0} Uhr, dann automatisch zurück", boost_min: "{0} Min.",
+    quick: "Schnellaktionen", boost: "Stoßlüften", boost_end: "Stoßlüften beenden", boost_d_i: "Intensivlüftung ein", boost_d_s: "Stufe 4, bis du es beendest", boost_d_t: "Dann automatisch zurück", boost_until: "bis {0} Uhr, dann automatisch zurück", boost_min: "{0} Min.", boost_std: "Standard",
     all_up: "Alle Räume +1 °C", all_down: "Alle Räume −1 °C",
     measure: "Messwerte", g_air: "Luft", g_circuit: "Kältekreis", g_drive: "Antriebe",
     maint: "Wartung und Statistik", stats: "Laufzeit und Starts", today: "Heute", total: "Gesamt", rt_today: "Laufzeit heute", rt_total: "Laufzeit gesamt", starts_today: "Starts heute", starts_total: "Starts gesamt",
@@ -142,7 +142,7 @@ const TEXT = {
     ins_eff_t: "Heat recovery low", ins_eff_d: "Only {0} %. Check the heat exchanger and filters.",
     ins_co2_t: "CO₂ elevated", ins_co2_d: "{0}: {1} ppm. Ventilate or raise the fan stage.",
     ins_ok_t: "All clear", ins_ok_eff: "Heat recovery {0} %.", ins_ok_d: "No errors, filters fine.",
-    quick: "Quick actions", boost: "Boost ventilation", boost_end: "End boost ventilation", boost_d_i: "Intensive ventilation on", boost_d_s: "Stage 4 until you end it", boost_d_t: "Then back automatically", boost_until: "until {0}, then back automatically", boost_min: "{0} min",
+    quick: "Quick actions", boost: "Boost ventilation", boost_end: "End boost ventilation", boost_d_i: "Intensive ventilation on", boost_d_s: "Stage 4 until you end it", boost_d_t: "Then back automatically", boost_until: "until {0}, then back automatically", boost_min: "{0} min", boost_std: "default",
     all_up: "All rooms +1 °C", all_down: "All rooms −1 °C",
     measure: "Measurements", g_air: "Air", g_circuit: "Refrigerant circuit", g_drive: "Drives",
     maint: "Maintenance and statistics", stats: "Runtime and starts", today: "Today", total: "Total", rt_today: "Runtime today", rt_total: "Runtime total", starts_today: "Starts today", starts_total: "Starts total",
@@ -400,6 +400,7 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .rfil { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
 .fchip { font: inherit; font-size: 13px; cursor: pointer; display: inline-flex; gap: 5px; align-items: center; padding: 5px 12px; border-radius: 99px;
   border: 1px solid var(--pbd); background: var(--card-background-color); color: var(--primary-text-color); }
+.fchip .dtag { font-size: 11px; color: var(--secondary-text-color); margin-left: 6px; }
 .fchip.a { background: color-mix(in srgb, var(--primary-color) 14%, var(--card-background-color)); border-color: var(--primary-color); color: var(--primary-color); }
 .rfil .grow { flex: 1; }
 .rsum { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 14px; }
@@ -1749,7 +1750,7 @@ class ProxonFwtBase extends HTMLElement {
         active = st.state === "on";
         if (!active) {
           const dflt = Number(st.attributes.duration_minutes) || 30;
-          const chips = [15, 30, 60].map((m) => `<button class="fchip ${m === dflt ? "a" : ""}" data-act="boostmin" data-v="${m}">${this._t("boost_min", String(m))}</button>`).join("");
+          const chips = [15, 30, 60].map((m) => `<button class="fchip" data-act="boostmin" data-v="${m}">${this._t("boost_min", String(m))}${m === dflt ? `<small class="dtag">${this._t("boost_std")}</small>` : ""}</button>`).join("");
           btns.push(`<div class="qa bst">${this._icon("mdi:weather-windy")}<span><b>${this._t("boost")}</b><small>${this._t("boost_d_t")}</small><span class="bch">${chips}</span></span></div>`);
           sub = null;
         } else {
