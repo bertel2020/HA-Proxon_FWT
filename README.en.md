@@ -66,7 +66,7 @@ Settings → Devices & Services → Add Integration → **Proxon FWT (Modbus)**.
    - RTU: serial device path, baud rate (default `9600`), data bits (`8`), parity (default `E`/Even), stop bits (`1`), Modbus unit ID.
 2. Choose how many rooms (1–16) and external CO₂/humidity sensors (0–5) to create entities for, whether the unit supports **cooling at all** (see below), and which **side the outdoor air** is on (fresh and exhaust air; this turns the diagram in the card and panel).
 3. **Name the rooms:** the next step shows a name field and an optional Home Assistant **area** for every room. The names that already exist are suggested (for an existing setup the current ones), along with an area of the same name. An empty room name skips a room that is not installed. CO₂/humidity sensors can be assigned to a room here, too.
-4. Later, open the same form again with the integration's **Configure** button (Options) to change the counts, polling interval, cooling availability, outdoor side, filter interval (in days, default 180), an optional recirculation filter, the duration of the boost ventilation (default 15 minutes) and own power and outdoor temperature sensors, without re-adding the integration. Host, port, serial parameters and unit ID can be changed via ⋮ → **Reconfigure**.
+4. Later, open the same form again with the integration's **Configure** button (Options) to change the counts, polling interval, cooling availability, outdoor side, filter interval (in days, default 180), an optional recirculation filter, the default duration of the boost ventilation (30 minutes) and own power and outdoor temperature sensors, without re-adding the integration. Host, port, serial parameters and unit ID can be changed via ⋮ → **Reconfigure**.
 
 ## Entities
 
@@ -215,7 +215,7 @@ The counters run inside the integration and survive restarts. On the first start
 
 ## Boost ventilation
 
-The **Boost ventilation** switch goes to the highest level (intensive ventilation in Comfort mode, otherwise fan stage 4) and **automatically** restores the previous state after the configured duration (options, default 15 minutes), including fan auto mode. The timer runs inside the integration, so it needs neither the panel nor an automation and survives a Home Assistant restart. Switching it on again extends the time. The `until` attribute gives the end. The switch is unavailable when the unit does not allow a highest level in its current operating mode. In the panel it sits under quick actions.
+The **Boost ventilation** switch goes to the highest level (intensive ventilation in Comfort mode, otherwise fan stage 4) and **automatically** restores the previous state after the chosen duration, including fan auto mode. The timer runs inside the integration, so it needs neither the panel nor an automation and survives a Home Assistant restart. The switch itself uses the default duration from the options (30 minutes). The service `proxon_modbus.start_boost` with the field `minutes` (5–120) lets you choose the duration per call; the panel offers 15, 30 and 60 minute buttons for it. Switching it on again extends the time. The `until` attribute gives the end. The switch is unavailable when the unit does not allow a highest level in its current operating mode. In the panel it sits under quick actions.
 
 ## Dashboard card
 
