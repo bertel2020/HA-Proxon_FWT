@@ -1955,14 +1955,14 @@ class ProxonFwtPanel extends ProxonFwtBase {
     if (!d) {
       body = `<ha-card><div class="empty">${this._t("none")}</div></ha-card>`;
     } else if (tab === "overview") {
-      body = `<div class="stack">${this._sec_alerts(d)}${this._sec_insights(d)}
+      body = `<div class="stack">${this._sec_alerts(d)}
         <div class="ov"><div class="col">${this._sec_schema(d)}${this._sec_kpi(d)}</div><div class="col">${this._sec_operation(d)}${this._sec_quick(d)}</div></div></div>`;
     } else if (tab === "rooms") {
       body = `<div class="stack">${this._sec_rooms(d)}</div>`;
     } else if (tab === "history") {
       body = `<div class="stack">${this._sec_history(d)}${this._sec_runtime(d)}${this._sec_energy(d)}${this._sec_year(d)}</div>`;
     } else {
-      body = `<div class="top"><div class="col">${this._sec_heatpump(d)}${this._sec_measure(d)}</div><div class="col">${this._sec_maint(d)}</div></div>`;
+      body = `<div class="stack"><div class="top"><div class="col">${this._sec_heatpump(d)}${this._sec_measure(d)}</div><div class="col">${this._sec_maint(d)}</div></div>${this._sec_insights(d)}</div>`;
     }
     this.shadowRoot.innerHTML = `<style>${CSS}</style><div class="panel">${head}${body}</div>`;
   }
