@@ -1184,6 +1184,9 @@ class ProxonFwtBase extends HTMLElement {
 
   // Cached async loader: returns the cached value, `undefined` while the first load runs, `null` on failure.
   _hget(key, loader) {
+    // History caches belong to one unit and its data sources; a changed scope drops them.
+    const scope = [this._settingsFor || "", this._opt("power_entity") || "", this._opt("outdoor_entity") || "", this._opt("outdoor_side", "left")].join("|");
+    if (this._hscope !== scope) { this._hc = {}; this._hscope = scope; }
     const cache = (this._hc = this._hc || {});
     const e = cache[key];
     if (e && (e.busy || Date.now() - e.t < 300000)) return e.v;
