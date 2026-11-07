@@ -171,3 +171,26 @@ test("history loads wait for the settings and failed loads are retried soon", as
   assert.equal(p._hc.x.v, null);
   assert.ok(Date.now() - p._hc.x.t > 250000); // cached as nearly expired: retried after ~15 s, not 5 min
 });
+
+test("discovery is reused until the registries change", () => {
+  const p = make();
+  let runs = 0;
+  p._discoverNow = () => { runs++; return { central: {}, rooms: [] }; };
+  p._config = {};
+  p._hass.entities = {}; p._hass.devices = {};
+  p._discover(); p._discover();
+  assert.equal(runs, 1);
+  p._hass.entities = {};
+  p._discover();
+  assert.equal(runs, 2);
+  p._dmiss = true; // a state was missing: the result must not be cached
+  p._discoverNow = () => { runs++; p._dmiss = true; return { central: {}, rooms: [] }; };
+  p._hass.devices = {};
+  p._discover(); p._discover();
+  assert.equal(runs, 4);
+});
+
+test("styles fall back to a <style> tag without constructable stylesheets", () => {
+  const p = make();
+  assert.match(p._styleTag(), /^<style>/);
+});

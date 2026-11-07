@@ -191,6 +191,13 @@ const SETTINGS_TTL = 60000;
 const UI_ACTS = new Set(["hcmp", "hrange", "metric", "ymetric", "dismiss", "undismiss", "kpi", "tab", "rview", "rfilter", "rtoggle", "rclose", "noop", "rstep", "up", "down", "view", "room", "menu"]);
 const WRITE_ERROR_SHOWN_MS = 3600000;
 const DISMISS_GRACE_MS = 1800000;
+let SHEET; // one constructable stylesheet shared by every card/panel instead of a <style> per render
+const sharedSheet = () => {
+  if (SHEET === undefined) {
+    try { SHEET = new CSSStyleSheet(); SHEET.replaceSync(CSS); } catch (e) { SHEET = null; }
+  }
+  return SHEET;
+};
 const BAD = ["unavailable", "unknown", undefined, null, ""];
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
 
@@ -536,7 +543,18 @@ class ProxonFwtBase extends HTMLElement {
 
   // ---- entity discovery -------------------------------------------------
 
+  // Discovery walks the whole entity and device registry; HA hands out new registry objects only when
+  // something changed, so the result is reused until then (never while a needed state is still missing).
   _discover() {
+    const h = this._hass, k = this._dk;
+    if (k && k.r !== undefined && k.e === h.entities && k.d === h.devices && k.c === this._config && k.s === this._settings) return k.r;
+    this._dmiss = false;
+    const r = this._discoverNow();
+    this._dk = { e: h.entities, d: h.devices, c: this._config, s: this._settings, r: this._dmiss ? undefined : r };
+    return r;
+  }
+
+  _discoverNow() {
     const h = this._hass;
     const entities = Object.values(h.entities || {}).filter((e) => e.platform === "proxon_modbus");
     let centralId = this._config.device_id;
@@ -561,6 +579,7 @@ class ProxonFwtBase extends HTMLElement {
         if (e.entity_id.startsWith("climate.")) room.climate = e.entity_id;
         else if (e.translation_key) room.ents[e.translation_key] = e.entity_id;
         else {
+          if (!h.states[e.entity_id]) this._dmiss = true;
           const dc = (h.states[e.entity_id] || { attributes: {} }).attributes.device_class;
           if (dc === "carbon_dioxide" || dc === "co2") room.co2 = e.entity_id;
           if (dc === "humidity") room.rf = e.entity_id;
@@ -596,6 +615,15 @@ class ProxonFwtBase extends HTMLElement {
     this._bindChart();
     this._bindTips();
     this._restoreUi(keep);
+  }
+
+  _styleTag() {
+    const sh = sharedSheet(), root = this.shadowRoot;
+    if (sh && "adoptedStyleSheets" in root) {
+      if (!this._adopted) { root.adoptedStyleSheets = [sh]; this._adopted = true; }
+      return "";
+    }
+    return `<style>${CSS}</style>`;
   }
 
   // A full re-render replaces the DOM: keep the dialog's scroll position and the focused control,
@@ -2136,7 +2164,7 @@ class ProxonFwtCard extends ProxonFwtBase {
       flush();
       body = `<div class="stack">${out.join("")}</div>`;
     }
-    this.shadowRoot.innerHTML = `<style>${CSS}</style>${body}`;
+    this.shadowRoot.innerHTML = `${this._styleTag()}${body}`;
   }
 }
 
@@ -2343,7 +2371,7 @@ class ProxonFwtPanel extends ProxonFwtBase {
     } else {
       body = `<div class="stack">${this._sec_insights(d)}${this._diagTab(d)}</div>`;
     }
-    this.shadowRoot.innerHTML = `<style>${CSS}</style><div class="panel">${head}${body}</div>`;
+    this.shadowRoot.innerHTML = `${this._styleTag()}<div class="panel">${head}${body}</div>`;
   }
 }
 
