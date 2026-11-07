@@ -11,7 +11,8 @@ from homeassistant.components.modbus import async_get_unit
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import config_validation as cv, device_registry as dr
+from homeassistant.helpers import config_validation as cv, device_registry as dr, entity_platform, entity_registry as er
+from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
 
@@ -181,8 +182,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bo
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await _async_register_panel(hass)
     _remove_stale_room_devices(hass, entry)
+    _remove_stale_entities(hass, entry)
     _apply_room_areas(hass, entry)
     return True
+
+
+def _remove_stale_entities(hass: HomeAssistant, entry: ProxonConfigEntry) -> None:
+    """Drop registry entries the integration no longer provides (fewer CO2/humidity sensors,
+    cooling or recirculation filter switched off in the options). Skipped unless every
+    platform finished setting up, and entries disabled by the user are left alone."""
+    platforms = [
+        p for p in entity_platform.async_get_platforms(hass, DOMAIN) if p.config_entry is entry
+    ]
+    if len(platforms) < len(PLATFORMS):
+        return
+    live = {e.unique_id for p in platforms for e in p.entities.values()}
+    registry = er.async_get(hass)
+    for ent in er.async_entries_for_config_entry(registry, entry.entry_id):
+        if ent.unique_id not in live and ent.disabled_by is None:
+            registry.async_remove(ent.entity_id)
 
 
 def _remove_stale_room_devices(hass: HomeAssistant, entry: ProxonConfigEntry) -> None:
@@ -219,6 +237,12 @@ def _apply_room_areas(hass: HomeAssistant, entry: ProxonConfigEntry) -> None:
 async def _async_update_listener(hass: HomeAssistant, entry: ProxonConfigEntry) -> None:
     """Reload the entry when its options change."""
     await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> None:
+    """Delete the persisted statistics and boost state of a removed entry."""
+    for suffix in ("stats", "boost"):
+        await Store(hass, 1, f"{DOMAIN}.{entry.entry_id}.{suffix}").async_remove()
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bool:
