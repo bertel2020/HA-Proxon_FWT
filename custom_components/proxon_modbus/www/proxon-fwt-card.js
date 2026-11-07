@@ -79,7 +79,7 @@ const TEXT = {
     year: "Jahresübersicht", year_sub: "12 Monate", y_runtime: "Laufzeit", y_energy: "Energie", y_starts: "Starts", y_note: "Die Monatswerte entstehen aus der Langzeitstatistik und füllen sich mit der Zeit. Energie ist eine Näherung aus der mittleren Leistung.", y_filter: "Filter getauscht", y_month: "Monat",
     legend_cool: "kühler als Soll", legend_ok: "im Soll", legend_warm: "wärmer als Soll", close: "Schließen",
     rv_cards: "Karten", rv_cmp: "Vergleich", rv_list: "Liste", rf_all: "Alle", rf_heat: "PTC aktiv", rf_dev: "Abweichung", rf_co2: "CO₂ hoch",
-    rs_avg: "Ø Raumtemperatur", rs_heat: "PTC aktiv", rs_co2: "CO₂ am höchsten", rs_rf: "Ø Feuchte", rs_none: "Keine Räume für diesen Filter.",
+    rs_avg: "Ø Raumtemperatur", rs_heat: "PTC", rs_active: "aktiv", rs_enabled: "freigegeben", rs_co2: "CO₂ am höchsten", rs_rf: "Ø Feuchte", rs_none: "Keine Räume für diesen Filter.",
     st_cool: "Unter Soll", st_warm: "Über Soll", st_ok: "Im Soll", st_heat: "PTC heizt", r_t24: "Temperatur 24 h", r_ago: "vor 24 h", r_now: "jetzt", r_details: "Details",
     r_tapnote: "Raum antippen für Details", r_noh: "Kein Verlauf verfügbar", r_set: "Soll {0}°",
     tip_hx: "Kreuzgegenstrom-Wärmetauscher: Warme Abluft heizt die kalte Frischluft vor, ohne dass sich beide mischen. Rückwärmzahl {0}.",
@@ -152,7 +152,7 @@ const TEXT = {
     year: "Yearly overview", year_sub: "12 months", y_runtime: "Runtime", y_energy: "Energy", y_starts: "Starts", y_note: "Monthly values come from the long-term statistics and fill up over time. Energy is estimated from the mean power.", y_filter: "Filter changed", y_month: "month",
     legend_cool: "cooler than target", legend_ok: "on target", legend_warm: "warmer than target", close: "Close",
     rv_cards: "Cards", rv_cmp: "Compare", rv_list: "List", rf_all: "All", rf_heat: "PTC on", rf_dev: "Deviation", rf_co2: "High CO₂",
-    rs_avg: "Avg. room temperature", rs_heat: "PTC on", rs_co2: "Highest CO₂", rs_rf: "Avg. humidity", rs_none: "No rooms match this filter.",
+    rs_avg: "Avg. room temperature", rs_heat: "PTC", rs_active: "on", rs_enabled: "enabled", rs_co2: "Highest CO₂", rs_rf: "Avg. humidity", rs_none: "No rooms match this filter.",
     st_cool: "Below target", st_warm: "Above target", st_ok: "On target", st_heat: "PTC heating", r_t24: "Temperature 24 h", r_ago: "24 h ago", r_now: "now", r_details: "Details",
     r_tapnote: "Tap a room for details", r_noh: "No history available", r_set: "Target {0}°",
     tip_hx: "Cross-counterflow heat exchanger: warm extract air preheats the cold fresh air without mixing them. Heat recovery {0}.",
@@ -1920,7 +1920,7 @@ class ProxonFwtPanel extends ProxonFwtBase {
     const arf = rfs.length ? rfs.reduce((a, [, i]) => a + i.rf, 0) / rfs.length : null;
     const sum = (ic, c, label, val, unit) => `<div class="rs" style="--c:${c}"><span class="ic">${this._icon(ic)}</span><div><small>${label}</small><b>${val}<span>${unit}</span></b></div></div>`;
     const summary = `<div class="rsum">${avg === null ? "" : sum("mdi:thermometer", BLUE, this._t("rs_avg"), this._fmt(avg), " °C")}
-      ${sum("mdi:fire", CORAL, this._t("rs_heat"), all.filter(([, i]) => i.heats).length, ` ${this._t("of")} ${all.length}`)}
+      ${sum("mdi:fire", CORAL, this._t("rs_heat"), all.filter(([, i]) => i.heats).length, ` ${this._t("rs_active")} · ${all.filter(([, i]) => i.ptcE && this._on(i.ptcE)).length} ${this._t("rs_enabled")}`)}
       ${top ? sum("mdi:molecule-co2", AMBER, this._t("rs_co2"), Math.round(top[1].co2), ` ppm · ${top[1].r.name}`) : ""}
       ${arf === null ? "" : sum("mdi:water-percent", "var(--primary-color)", this._t("rs_rf"), Math.round(arf), " %")}</div>`;
     let rows = all.filter(([, i]) => filter === "all" || (filter === "heat" && i.heats) || (filter === "dev" && Math.abs(i.dev) > 0.3) || (filter === "co2" && i.co2 != null && i.co2 > 800));
