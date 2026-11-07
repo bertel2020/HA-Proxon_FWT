@@ -19,6 +19,7 @@ Versionen folgen dem Feld `version` in
 - **Verlauf und Bypass:** Phasen mit offenem Sommerbypass sind im Verlauf (1 Tag, 1 Woche) als blaues Band markiert und fließen nicht in die Rückwärmzahl ein.
 - **Verlauf mit Kennwerten:** unter dem Diagramm stehen Min, Max und Mittelwert je Kurve, bei der Leistung zusätzlich die Energie (kWh) im gewählten Zeitraum.
 - **Vorzeitraum vergleichen:** Ein Schalter im Verlauf legt den vorherigen Zeitraum (gestern, letzte Woche, letzter Monat, Vorjahr) als gestrichelte Kurve darüber.
+- **Neuer Sensor „Rückwärmzahl“:** die Rückwärmzahl wird jetzt in der Integration berechnet (bei offenem Bypass leer) und hat echte Langzeitstatistik. Karte und Panel nutzen ihn; Verlauf bei 1 Monat und 1 Jahr aus seiner Statistik, sobald vorhanden.
 - **Diagnose neu gestaltet:** drei Status-Kacheln oben (Wärmepumpe, Gerätefilter, Systemfehler), darunter die Messwerte über die volle Breite und eine Karte „Laufzeit und Starts“ (heute / gesamt).
 - **Eigene CO₂- und Feuchtesensoren pro Raum:** im Schritt „Namen und Bereiche“ lassen sich pro Raum vorhandene Sensoren anderer Geräte wählen. Sie ersetzen in Karte und Panel die Werte der externen Eingänge der Anlage.
 - **Kühlbetrieb im Anlagenschema:** Bei Kühlbetrieb kehrt das Schema den Kältekreis um (Verdampfer und Kondensator tauschen die Seiten).

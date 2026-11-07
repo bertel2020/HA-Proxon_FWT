@@ -14,6 +14,23 @@ VALID_STAGES = frozenset({0, 1, 2, 3, 4})
 FILTER_GRACE_DAYS = 21  # days between the unit's "change filter" message and the forced shutdown
 
 
+def heat_recovery(
+    extract: float | None, fresh: float | None, pre_evaporator: float | None, bypass: bool = False
+) -> int | None:
+    """Heat recovery rate of the cross-counterflow exchanger in percent.
+
+    Uses the exhaust side after the exchanger ("before evaporator"), which the
+    heat pump does not influence: (extract - exhaust) / (extract - fresh).
+    None while the summer bypass is open (the exchanger is bypassed) or when
+    the temperature difference is too small to be meaningful.
+    """
+    if bypass or extract is None or fresh is None or pre_evaporator is None:
+        return None
+    if abs(extract - fresh) < 3:
+        return None
+    return round(max(0.0, min(100.0, (extract - pre_evaporator) / (extract - fresh) * 100)))
+
+
 class FanStageTracker:
     """Remember the fan stage the user chose and say when to write it back.
 

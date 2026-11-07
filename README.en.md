@@ -133,6 +133,7 @@ The tables below assume the default device name **"Proxon FWT"** (→ `proxon_fw
 | Compressor temperature | `sensor.proxon_fwt_compressor_temperature` | Register 109 |
 | Outside temperature | `sensor.proxon_fwt_outside_temperature` | Register 110 |
 | Compressor speed | `sensor.proxon_fwt_compressor_speed` | RPM (register 111) |
+| Heat recovery rate | `sensor.proxon_fwt_heat_recovery_rate` | Efficiency of the heat exchanger in % ((extract − before evaporator) / (extract − fresh)); empty while the summer bypass is open or the temperature difference is too small; with long-term statistics |
 | Power consumption | `sensor.proxon_fwt_power_consumption` | Current power draw of the unit in watts (register 113) |
 | Supply fan speed | `sensor.proxon_fwt_supply_fan_speed` | RPM (register 114) |
 | Extract fan speed | `sensor.proxon_fwt_extract_fan_speed` | RPM (register 115) |

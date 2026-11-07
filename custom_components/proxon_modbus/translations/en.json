@@ -285,6 +285,7 @@
       "temp_extract_air": { "name": "Extract air temperature" },
       "temp_exhaust_air": { "name": "Exhaust air temperature" },
       "temp_fresh_air": { "name": "Fresh air temperature" },
+      "heat_recovery": { "name": "Heat recovery rate" },
       "temp_pre_evaporator": { "name": "Temperature before evaporator" },
       "temp_evaporator": { "name": "Evaporator temperature" },
       "temp_post_preheat": { "name": "Temperature after preheater" },

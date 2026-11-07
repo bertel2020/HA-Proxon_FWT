@@ -669,6 +669,10 @@ class ProxonFwtBase extends HTMLElement {
     // Exhaust side after the exchanger (before the evaporator): not influenced by the heat pump.
     const c = this._d.central;
     if (this._on(c.bypass_active)) return null; // summer bypass: the exchanger is bypassed, the value would be meaningless
+    if (c.heat_recovery && this._state(c.heat_recovery)) { // the integration's own sensor (same formula, long-term statistics)
+      const v = this._num(c.heat_recovery);
+      return v === null ? null : Math.round(v);
+    }
     const f = this._num(c.temp_fresh_air), e = this._num(c.temp_extract_air), x = this._num(c.temp_pre_evaporator);
     if (f === null || e === null || x === null || Math.abs(e - f) < 3) return null;
     return Math.max(0, Math.min(100, Math.round(((e - x) / (e - f)) * 100)));
@@ -1152,6 +1156,19 @@ class ProxonFwtBase extends HTMLElement {
     const ms = RANGE_MS[range];
     const end = new Date(Date.now() - (prev ? ms : 0)), start = new Date(end.getTime() - ms), ids = defs.map(([id]) => id);
     let raw;
+    // Long ranges: the integration's heat recovery sensor has real long-term statistics (once it has collected some).
+    const hrId = this._d && this._d.central.heat_recovery;
+    if (metric === "eff" && hrId && (range === "30d" || range === "1y")) {
+      const res = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
+        statistic_ids: [hrId], period: range === "1y" ? "day" : "hour", types: ["mean"] });
+      const pts = (res[hrId] || []).map((r) => [r.start / 1000, Number(r.mean)]).filter(([t, v]) => !isNaN(t) && !isNaN(v));
+      if (pts.length > 24) {
+        const o = [{ label: this._t("efficiency"), color: GREEN, pts: ProxonFwtBase._down(pts, 360) }];
+        o.bypass = [];
+        if (prev) { for (const x of o) { x.pts = x.pts.map(([t, v]) => [t + ms / 1000, v]); x.prev = true; x.label = `${x.label} · ${this._t("prev_period")}`; } }
+        return o;
+      }
+    }
     if (range === "30d" || range === "1y") {
       const res = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
         statistic_ids: ids, period: range === "1y" ? "day" : "hour", types: ["mean"] });

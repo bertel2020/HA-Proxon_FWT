@@ -135,6 +135,7 @@ Die Tabellen unten gehen vom Standard-Gerätenamen **"Proxon FWT"** (→ `proxon
 | Temperatur Kompressor | `sensor.proxon_fwt_temperatur_kompressor` | Kompressor-Temperatur (Register 109) |
 | Temperatur Außen | `sensor.proxon_fwt_temperatur_aussen` | Außentemperatur (Register 110) |
 | Drehzahl Kompressor | `sensor.proxon_fwt_drehzahl_kompressor` | Kompressor-Drehzahl in U/min (Register 111) |
+| Rückwärmzahl | `sensor.proxon_fwt_ruckwarmzahl` | Wirkungsgrad des Wärmetauschers in % ((Abluft − vor Verdampfer) / (Abluft − Frischluft)); bei offenem Sommerbypass oder zu kleinem Temperaturunterschied leer; mit Langzeitstatistik |
 | Leistungsaufnahme | `sensor.proxon_fwt_leistungsaufnahme` | Aktuelle Leistungsaufnahme der Anlage in Watt (Register 113) |
 | Drehzahl Zuluftventilator | `sensor.proxon_fwt_drehzahl_zuluftventilator` | Drehzahl des Zuluftventilators in U/min (Register 114) |
 | Drehzahl Abluftventilator | `sensor.proxon_fwt_drehzahl_abluftventilator` | Drehzahl des Abluftventilators in U/min (Register 115) |

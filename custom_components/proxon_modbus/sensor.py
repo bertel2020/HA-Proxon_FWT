@@ -47,7 +47,7 @@ from .coordinator import (
     ProxonData,
     ProxonModbusCoordinator,
 )
-from .logic import RunStats
+from .logic import RunStats, heat_recovery
 from .entity import ProxonCentralEntity, ProxonEntity, ProxonRoomEntity, central_device_info, room_device_info
 
 
@@ -153,6 +153,19 @@ DEVICE_SENSORS: tuple[ProxonSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         value_fn=lambda d: d.device.get("temp_outside"),
+    ),
+    ProxonSensorDescription(
+        key="heat_recovery",
+        translation_key="heat_recovery",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        icon="mdi:percent-circle-outline",
+        value_fn=lambda d: heat_recovery(
+            d.device.get("temp_extract_air"),
+            d.device.get("temp_fresh_air"),
+            d.device.get("temp_pre_evaporator"),
+            bool(d.device.get("bypass_active")),
+        ),
     ),
     ProxonSensorDescription(
         key="compressor_speed",

@@ -285,6 +285,7 @@
       "temp_extract_air": { "name": "Temperatur Abluft" },
       "temp_exhaust_air": { "name": "Temperatur Fortluft" },
       "temp_fresh_air": { "name": "Temperatur Frischluft" },
+      "heat_recovery": { "name": "Rückwärmzahl" },
       "temp_pre_evaporator": { "name": "Temperatur vor Verdampfer" },
       "temp_evaporator": { "name": "Temperatur Verdampfer" },
       "temp_post_preheat": { "name": "Temperatur nach Vorwärme" },
