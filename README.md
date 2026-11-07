@@ -229,12 +229,12 @@ type: custom:proxon-fwt-card
 
 Die Karte findet alle Entities der Integration selbst (über Plattform und Entity-Schlüssel, nicht über feste Entity-IDs) und zeigt:
 
-- **Betriebsart** (Aus, Eco Sommer, Eco Winter, Komfort, Ofenbetrieb) zum Umschalten; Notbetrieb, Einfrierschutz und Einregulierung werden als gesperrter Zustand angezeigt
+- **Betrieb** (Bereich `operation`): Betriebsart (Aus, Eco Sommer, Eco Winter, Komfort, Ofenbetrieb) und Lüfterstufe (0–4, Auto) in einer Karte, dazu Drehzahlen und Intensivlüftung; Notbetrieb, Einfrierschutz und Einregulierung werden als gesperrter Zustand angezeigt
 - **Luftwege** als Kreuzstrom-Wärmetauscher mit den vier Temperaturen
-- **Lüftung** (Lüfterstufe, Automatik, Intensivlüftung, Drehzahlen); nicht wählbare Stufen sind ausgegraut
+  Nicht wählbare Stufen sind ausgegraut. Die älteren Bereiche `mode` und `fan` gibt es weiterhin einzeln
 - **Wärmepumpe** (Kompressor, Leistungsaufnahme, Betriebszustände, Kühlungsfreigabe)
-- **Kältekreis** (Diagnose-Temperaturen) sowie **Status und Wartung** (Fehler, Filter)
-- **Räume** als Kacheln oder Liste mit Detailansicht: Soll/Ist, CO₂, Feuchte, PTC-Zustand und -Freigabe je Raum
+- **Kältekreis** (Diagnose-Temperaturen) sowie **Status und Wartung** (Fehler, Filter mit Alter in Tagen, Frist bis zur Zwangsabschaltung und Knopf „Filter getauscht“)
+- **Räume** als Kacheln oder Liste mit Detailansicht: Soll/Ist, CO₂, Feuchte, PTC-Zustand und -Freigabe je Raum. Ein Raum zeigt „heizt“ nur bei aktivem PTC-Element, sonst „unter/über Soll“
 
 Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wird ausgeblendet. Die Karte lässt sich im Karten-Editor grafisch konfigurieren.
 
@@ -245,7 +245,7 @@ Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wi
 | `outdoor_side` | Integration (`left`) | `left` oder `right`: auf welcher Seite des Wärmetauschers Frischluft/Fortluft liegen |
 | `power_entity` | Integration | eigene Entität für die Leistungsaufnahme (z. B. Shelly) statt des Gerätesensors |
 | `outdoor_entity` | Integration | eigene Entität für die Außentemperatur statt des Gerätesensors |
-| `sections` | alle | Liste der anzuzeigenden Bereiche: `mode`, `air`, `fan`, `heatpump`, `refrigerant`, `status`, `rooms` sowie optional `schema`, `kpi`, `alerts`, `history` |
+| `sections` | alle | Liste der anzuzeigenden Bereiche. Standard: `operation`, `air`, `heatpump`, `refrigerant`, `status`, `rooms`. Zusätzlich möglich: `mode`, `fan` (statt `operation`), `quick` (Stoßlüften mit 15/30/60 Minuten, alle Räume ±1 °C), `schema`, `kpi`, `alerts`, `history`, `runtime`, `energy` |
 | `max_fan_rpm` | `3000` | Drehzahl, bei der die Lüfter-Balken voll sind |
 | `max_compressor_rpm` | `6000` | Drehzahl, bei der der Kompressor-Ring voll ist |
 | `device_id` | – | nur bei mehreren Anlagen: Geräte-ID des zentralen Geräts |

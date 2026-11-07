@@ -7,8 +7,9 @@
  *
  * All entities are discovered automatically from the integration.
  */
-const DEFAULT_SECTIONS = ["mode", "air", "fan", "heatpump", "refrigerant", "status", "rooms"];
-const ALL_SECTIONS = [...DEFAULT_SECTIONS, "schema", "kpi", "alerts", "history", "runtime", "energy"];
+// "mode" and "fan" are the older separate sections; "operation" shows both in one card and is the default.
+const DEFAULT_SECTIONS = ["operation", "air", "heatpump", "refrigerant", "status", "rooms"];
+const ALL_SECTIONS = ["operation", "mode", "fan", "air", "heatpump", "refrigerant", "status", "rooms", "quick", "schema", "kpi", "alerts", "history", "runtime", "energy"];
 const GRID_SECTIONS = ["fan", "heatpump", "refrigerant", "status"];
 
 const TEXT = {
@@ -63,7 +64,7 @@ const TEXT = {
     ins_filter_soon: "{0} bald fällig", ins_filter_soon_d: "Tag {0} von {1}. Zwei neue Filter bereithalten (Frischluft und Abluft).",
     ins_shutdown_d: "Die Anlage schaltet in {0} zwangsweise ab. Nach dem Wechsel „Filter getauscht“ drücken.", d_one: "1 Tag", d_n: "{0} Tagen",
     f_age: "Tag {0} von {1} · noch {2} Tage", f_unknown: "Tauschdatum unbekannt – nach dem nächsten Wechsel „Filter getauscht“ drücken.",
-    f_shutdown: "Zwangsabschaltung in {0}", f_btn: "Filter getauscht", f_confirm: "Gerätefilter als getauscht markieren? Alter und Frist beginnen neu.",
+    f_shutdown: "Zwangsabschaltung in {0}", f_age: "Alter", f_day_of: "Tag {0} von {1}", f_btn: "Filter getauscht", f_confirm: "Gerätefilter als getauscht markieren? Alter und Frist beginnen neu.",
     ins_cycle_t: "Wärmepumpe taktet häufig", ins_cycle_d: "{0} Starts seit 0 Uhr. Häufiges Takten belastet den Kompressor.",
     ins_eff_t: "Rückwärmzahl niedrig", ins_eff_d: "Nur {0} %. Wärmetauscher und Filter prüfen.",
     ins_co2_t: "CO₂ erhöht", ins_co2_d: "{0}: {1} ppm. Lüften oder Lüfterstufe erhöhen.",
@@ -136,7 +137,7 @@ const TEXT = {
     ins_filter_soon: "{0} due soon", ins_filter_soon_d: "Day {0} of {1}. Keep two new filters ready (fresh air and extract).",
     ins_shutdown_d: "The unit shuts down by force in {0}. Press \"Filter changed\" after the replacement.", d_one: "1 day", d_n: "{0} days",
     f_age: "Day {0} of {1} · {2} days left", f_unknown: "Change date unknown – press \"Filter changed\" after the next replacement.",
-    f_shutdown: "Forced shutdown in {0}", f_btn: "Filter changed", f_confirm: "Mark the device filter as replaced? Age and deadline start over.",
+    f_shutdown: "Forced shutdown in {0}", f_age: "Age", f_day_of: "Day {0} of {1}", f_btn: "Filter changed", f_confirm: "Mark the device filter as replaced? Age and deadline start over.",
     ins_cycle_t: "Heat pump cycling often", ins_cycle_d: "{0} starts since midnight. Frequent cycling stresses the compressor.",
     ins_eff_t: "Heat recovery low", ins_eff_d: "Only {0} %. Check the heat exchanger and filters.",
     ins_co2_t: "CO₂ elevated", ins_co2_d: "{0}: {1} ppm. Ventilate or raise the fan stage.",
@@ -939,6 +940,16 @@ class ProxonFwtBase extends HTMLElement {
       <div class="kgrid">${tiles}</div><div style="margin-top:10px">${rows}</div></ha-card>`;
   }
 
+  // Filter age and forced-shutdown deadline as extra lines under the filter row of the status section.
+  _filterDetail(c) {
+    const f = this._filterInfo(c);
+    if (!f.known && f.left === null) return "";
+    const age = f.known ? `<div class="row">${this._icon("mdi:calendar-clock")}${this._t("f_age")}<b>${this._t("f_day_of", String(Math.round(f.age)), String(f.iv))}</b></div>` : "";
+    const left = f.left !== null ? `<div class="row">${this._icon("mdi:timer-alert-outline")}${this._t("f_shutdown", this._days(f.left))}</div>` : "";
+    const btn = c.filter_changed && (f.due || f.known) ? `<div class="row"><button class="vbtn" data-act="filterchg">${this._icon("mdi:check")}${this._t("f_btn")}</button></div>` : "";
+    return age + left + btn;
+  }
+
   _sec_status(d) {
     const c = d.central;
     const prob = (id, label, okText, badText, icon) => this._ok(id)
@@ -946,7 +957,7 @@ class ProxonFwtBase extends HTMLElement {
     const change = c.mode_change_possible && this._ok(c.mode_change_possible)
       ? `<div class="row">${this._icon("mdi:shuffle-variant")}${this._t("mode_change")}<b>${this._on(c.mode_change_possible) ? this._t("possible") : this._t("not_possible")}</b></div>` : "";
     const html = prob(c.error_system, this._t("error"), this._t("no_error"), this._t("has_error"), "mdi:check-circle-outline") +
-      prob(c.filter_device, this._t("filter_device"), this._t("ok"), this._t("change_due"), "mdi:air-filter") +
+      prob(c.filter_device, this._t("filter_device"), this._t("ok"), this._t("change_due"), "mdi:air-filter") + this._filterDetail(c) +
       (this._recirc() ? prob(c.filter_recirculation, this._t("filter_recirc"), this._t("ok"), this._t("change_due"), "mdi:air-filter") : "") + change;
     if (!html) return "";
     return `<ha-card>${this._header("mdi:shield-check-outline", this._t("status"))}${html.replace('class="row"', 'class="row first"')}</ha-card>`;

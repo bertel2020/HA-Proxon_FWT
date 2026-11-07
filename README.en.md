@@ -227,12 +227,12 @@ type: custom:proxon-fwt-card
 
 The card discovers all entities of the integration by itself (via platform and entity key, not fixed entity IDs) and shows:
 
-- **Operating mode** (Off, Eco summer, Eco winter, Comfort, Stove mode) for switching; emergency, frost protection and commissioning are shown as a locked state
+- **Operation** (section `operation`): operating mode (Off, Eco summer, Eco winter, Comfort, Stove mode) and fan stage (0–4, Auto) in one card, plus speeds and intensive ventilation; emergency, frost protection and commissioning are shown as a locked state
 - **Air paths** as a cross-flow heat exchanger with the four temperatures
-- **Ventilation** (fan stage, automatic, intensive ventilation, speeds); stages that can't be chosen are greyed out
+  Stages that can't be chosen are greyed out. The older sections `mode` and `fan` are still available separately
 - **Heat pump** (compressor, power consumption, operating states, cooling enable)
-- **Refrigerant circuit** (diagnostic temperatures) and **status and maintenance** (errors, filters)
-- **Rooms** as tiles or list with a detail view: target/actual, CO₂, humidity, PTC state and enable per room
+- **Refrigerant circuit** (diagnostic temperatures) and **status and maintenance** (errors, filter with age in days, deadline to the forced shutdown and a "Filter changed" button)
+- **Rooms** as tiles or list with a detail view: target/actual, CO₂, humidity, PTC state and enable per room. A room shows "heating" only while its PTC element is active, otherwise below/above target
 
 Anything the unit does not provide (e.g. power consumption or outdoor temperature) is hidden. The card can be configured graphically in the card editor.
 
@@ -243,7 +243,7 @@ Anything the unit does not provide (e.g. power consumption or outdoor temperatur
 | `outdoor_side` | integration (`left`) | `left` or `right`: which side of the heat exchanger fresh and exhaust air are on |
 | `power_entity` | integration | own entity for the power consumption (e.g. a Shelly) instead of the device sensor |
 | `outdoor_entity` | integration | own entity for the outdoor temperature instead of the device sensor |
-| `sections` | all | list of sections to show: `mode`, `air`, `fan`, `heatpump`, `refrigerant`, `status`, `rooms`, plus optionally `schema`, `kpi`, `alerts`, `history` |
+| `sections` | all | list of sections to show. Default: `operation`, `air`, `heatpump`, `refrigerant`, `status`, `rooms`. Also possible: `mode`, `fan` (instead of `operation`), `quick` (boost ventilation with 15/30/60 minutes, all rooms ±1 °C), `schema`, `kpi`, `alerts`, `history`, `runtime`, `energy` |
 | `max_fan_rpm` | `3000` | speed at which the fan bars are full |
 | `max_compressor_rpm` | `6000` | speed at which the compressor ring is full |
 | `device_id` | – | only with several units: device ID of the central device |
