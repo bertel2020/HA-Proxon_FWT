@@ -55,7 +55,7 @@
       },
       "names": {
         "title": "Namen und Bereiche",
-        "description": "Die Namen sind Vorschläge, ändere sie nach Belieben. Lass einen Raumnamen leer, wenn der Raum nicht verbaut ist: Er wird dann übersprungen (kein Gerät, keine Entitäten). Optional kannst du jeden Raum einem Home-Assistant-Bereich zuordnen; ohne Bereich bleibt das Raumgerät unverändert. Pro Raum lassen sich unter „eigene Sensoren“ optional eigene CO₂- und Feuchtesensoren wählen.",
+        "description": "Die Namen sind Vorschläge, ändere sie nach Belieben. Lass einen Raumnamen leer, wenn der Raum nicht verbaut ist: Er wird dann übersprungen (kein Gerät, keine Entitäten). Optional kannst du jeden Raum einem Home-Assistant-Bereich zuordnen; ohne Bereich bleibt das Raumgerät unverändert. Pro Raum lassen sich unter „eigene Sensoren“ optional eigene CO₂- und Feuchtesensoren wählen. Raum 1 ist der Hauptraum; die Raumnummer entspricht dem Raumregler der Anlage und bleibt fest, auch wenn du den Raum umbenennst.",
         "sections": {
           "room_1_sensors": { "name": "Raum 1 – eigene Sensoren (optional)", "description": "CO₂- und Feuchtesensor dieses Raums, z. B. von einem anderen Gerät. Ersetzt die Werte der Anlage im Dashboard.", "data": { "co2_entity": "CO₂-Sensor", "rf_entity": "Feuchtesensor" } },
           "room_2_sensors": { "name": "Raum 2 – eigene Sensoren (optional)", "description": "CO₂- und Feuchtesensor dieses Raums, z. B. von einem anderen Gerät. Ersetzt die Werte der Anlage im Dashboard.", "data": { "co2_entity": "CO₂-Sensor", "rf_entity": "Feuchtesensor" } },
@@ -167,7 +167,7 @@
       },
       "names": {
         "title": "Namen und Bereiche",
-        "description": "Die Namen sind Vorschläge, ändere sie nach Belieben. Lass einen Raumnamen leer, wenn der Raum nicht verbaut ist: Er wird dann übersprungen (kein Gerät, keine Entitäten). Optional kannst du jeden Raum einem Home-Assistant-Bereich zuordnen; ohne Bereich bleibt das Raumgerät unverändert. Pro Raum lassen sich unter „eigene Sensoren“ optional eigene CO₂- und Feuchtesensoren wählen.",
+        "description": "Die Namen sind Vorschläge, ändere sie nach Belieben. Lass einen Raumnamen leer, wenn der Raum nicht verbaut ist: Er wird dann übersprungen (kein Gerät, keine Entitäten). Optional kannst du jeden Raum einem Home-Assistant-Bereich zuordnen; ohne Bereich bleibt das Raumgerät unverändert. Pro Raum lassen sich unter „eigene Sensoren“ optional eigene CO₂- und Feuchtesensoren wählen. Raum 1 ist der Hauptraum; die Raumnummer entspricht dem Raumregler der Anlage und bleibt fest, auch wenn du den Raum umbenennst.",
         "sections": {
           "room_1_sensors": { "name": "Raum 1 – eigene Sensoren (optional)", "description": "CO₂- und Feuchtesensor dieses Raums, z. B. von einem anderen Gerät. Ersetzt die Werte der Anlage im Dashboard.", "data": { "co2_entity": "CO₂-Sensor", "rf_entity": "Feuchtesensor" } },
           "room_2_sensors": { "name": "Raum 2 – eigene Sensoren (optional)", "description": "CO₂- und Feuchtesensor dieses Raums, z. B. von einem anderen Gerät. Ersetzt die Werte der Anlage im Dashboard.", "data": { "co2_entity": "CO₂-Sensor", "rf_entity": "Feuchtesensor" } },

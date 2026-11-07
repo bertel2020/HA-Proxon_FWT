@@ -55,7 +55,7 @@
       },
       "names": {
         "title": "Names and areas",
-        "description": "The names are suggestions; change them as you like. Leave a room name empty if that room is not installed: it is then skipped (no device, no entities). Optionally assign each room to a Home Assistant area; rooms without an area are left unchanged. Under \"own sensors\" you can optionally pick your own CO₂ and humidity sensors per room.",
+        "description": "The names are suggestions; change them as you like. Leave a room name empty if that room is not installed: it is then skipped (no device, no entities). Optionally assign each room to a Home Assistant area; rooms without an area are left unchanged. Under \"own sensors\" you can optionally pick your own CO₂ and humidity sensors per room. Room 1 is the main room; the room number matches the unit's room controller and stays fixed, even if you rename the room.",
         "sections": {
           "room_1_sensors": { "name": "Room 1 – own sensors (optional)", "description": "CO₂ and humidity sensor of this room, e.g. from another device. Replaces the unit's values in the dashboard.", "data": { "co2_entity": "CO₂ sensor", "rf_entity": "Humidity sensor" } },
           "room_2_sensors": { "name": "Room 2 – own sensors (optional)", "description": "CO₂ and humidity sensor of this room, e.g. from another device. Replaces the unit's values in the dashboard.", "data": { "co2_entity": "CO₂ sensor", "rf_entity": "Humidity sensor" } },
@@ -167,7 +167,7 @@
       },
       "names": {
         "title": "Names and areas",
-        "description": "The names are suggestions; change them as you like. Leave a room name empty if that room is not installed: it is then skipped (no device, no entities). Optionally assign each room to a Home Assistant area; rooms without an area are left unchanged. Under \"own sensors\" you can optionally pick your own CO₂ and humidity sensors per room.",
+        "description": "The names are suggestions; change them as you like. Leave a room name empty if that room is not installed: it is then skipped (no device, no entities). Optionally assign each room to a Home Assistant area; rooms without an area are left unchanged. Under \"own sensors\" you can optionally pick your own CO₂ and humidity sensors per room. Room 1 is the main room; the room number matches the unit's room controller and stays fixed, even if you rename the room.",
         "sections": {
           "room_1_sensors": { "name": "Room 1 – own sensors (optional)", "description": "CO₂ and humidity sensor of this room, e.g. from another device. Replaces the unit's values in the dashboard.", "data": { "co2_entity": "CO₂ sensor", "rf_entity": "Humidity sensor" } },
           "room_2_sensors": { "name": "Room 2 – own sensors (optional)", "description": "CO₂ and humidity sensor of this room, e.g. from another device. Replaces the unit's values in the dashboard.", "data": { "co2_entity": "CO₂ sensor", "rf_entity": "Humidity sensor" } },
