@@ -106,3 +106,15 @@ test("room details open in a dialog, one at a time, and close again", () => {
   click("rclose");
   assert.equal(p._ropen.size, 0);
 });
+
+test("heat pump runtime bars (7 days) carry hover tooltips", () => {
+  const p = make();
+  const now = Date.now() / 1000;
+  p._hpIv = [[now - 7200, now - 3600]];
+  p._hpT0 = now - 86400 * 8;
+  const html = p._hpBars();
+  assert.equal((html.match(/data-tip="/g) || []).length, 7);
+  assert.match(html, /class="chw"/);
+  assert.match(html, /class="tip"/);
+  assert.match(html, /1 h · 1 /);
+});

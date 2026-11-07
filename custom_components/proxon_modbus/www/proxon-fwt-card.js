@@ -1182,7 +1182,7 @@ class ProxonFwtBase extends HTMLElement {
         sec += Math.max(0, Math.min(s1, b) - Math.max(s0, a));
         if (s0 >= a && s0 < a + 86400 && s0 > this._hpT0 + 60) starts++;
       }
-      days.push({ label: d0.toLocaleDateString(lang, { weekday: "short" }), h: sec / 3600, starts });
+      days.push({ label: d0.toLocaleDateString(lang, { weekday: "short" }), full: d0.toLocaleDateString(lang, { weekday: "short", day: "2-digit", month: "2-digit" }), h: sec / 3600, starts });
     }
     const W = Math.max(300, (this.clientWidth || 680) - 80), H = 150, pt = 22, pb = 34;
     const max = Math.max(4, Math.ceil(Math.max(...days.map((d) => d.h))));
@@ -1192,10 +1192,11 @@ class ProxonFwtBase extends HTMLElement {
       return `<rect x="${cx - bw / 2}" y="${y}" width="${bw}" height="${Math.max(bh, d.h > 0 ? 2 : 0)}" rx="4" fill="#3fa660" opacity="${i === days.length - 1 ? 1 : 0.7}"/>
         <text class="st" x="${cx}" y="${y - 5}" text-anchor="middle" style="font-size:11px">${d.h.toLocaleString(lang, { maximumFractionDigits: 1 })} h</text>
         <text class="st" x="${cx}" y="${H - 18}" text-anchor="middle" style="font-size:11px">${d.label}</text>
-        <text class="st" x="${cx}" y="${H - 5}" text-anchor="middle" style="font-size:10px;opacity:.75">${d.starts}×</text>`;
+        <text class="st" x="${cx}" y="${H - 5}" text-anchor="middle" style="font-size:10px;opacity:.75">${d.starts}×</text>
+        <rect x="${(8 + slot * i).toFixed(1)}" y="0" width="${slot.toFixed(1)}" height="${H - pb}" fill="transparent" data-tip="${d.full}|${d.h.toLocaleString(lang, { maximumFractionDigits: 1 })} h · ${d.starts} ${this._t("hp_starts")}"/>`;
     }).join("");
-    return `<svg style="max-width:100%" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("hp_per_day")}">
-      <line x1="8" x2="${W - 8}" y1="${H - pb}" y2="${H - pb}" stroke="var(--divider-color)" stroke-width=".8"/>${bars}</svg>
+    return `<div class="chw"><svg style="max-width:100%" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("hp_per_day")}">
+      <line x1="8" x2="${W - 8}" y1="${H - pb}" y2="${H - pb}" stroke="var(--divider-color)" stroke-width=".8"/>${bars}</svg><div class="tip" style="display:none"></div></div>
       <div class="legend"><span><i style="background:#3fa660"></i>${this._t("hp_per_day")} · ${this._t("hp_starts")}</span></div>`;
   }
 
