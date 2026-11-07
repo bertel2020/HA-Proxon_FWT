@@ -621,10 +621,11 @@ class ProxonFwtBase extends HTMLElement {
   }
 
   _efficiency() {
+    // Exhaust side after the exchanger (before the evaporator): not influenced by the heat pump.
     const c = this._d.central;
-    const f = this._num(c.temp_fresh_air), e = this._num(c.temp_extract_air), s = this._num(c.temp_pre_condenser ?? c.temp_supply_air);
-    if (f === null || e === null || s === null || Math.abs(e - f) < 3) return null;
-    return Math.max(0, Math.min(100, Math.round(((s - f) / (e - f)) * 100)));
+    const f = this._num(c.temp_fresh_air), e = this._num(c.temp_extract_air), x = this._num(c.temp_pre_evaporator);
+    if (f === null || e === null || x === null || Math.abs(e - f) < 3) return null;
+    return Math.max(0, Math.min(100, Math.round(((e - x) / (e - f)) * 100)));
   }
 
   // ---- sections ---------------------------------------------------------
@@ -1000,8 +1001,8 @@ class ProxonFwtBase extends HTMLElement {
         [c.temp_fresh_air, this._t("fresh"), BLUE], [out, this._t("outside"), "#7e57c2"]]);
       case "power": return keep([[this._powerId(), this._t("power"), AMBER]]);
       case "comp": return keep([[c.compressor_speed, this._t("compressor"), "#3d8be0"]]);
-      case "eff": return (c.temp_pre_condenser || c.temp_supply_air) && c.temp_extract_air && c.temp_fresh_air
-        ? [[c.temp_pre_condenser || c.temp_supply_air, "s", CORAL], [c.temp_extract_air, "e", AMBER], [c.temp_fresh_air, "f", BLUE]] : [];
+      case "eff": return c.temp_pre_evaporator && c.temp_extract_air && c.temp_fresh_air
+        ? [[c.temp_pre_evaporator, "s", CORAL], [c.temp_extract_air, "e", AMBER], [c.temp_fresh_air, "f", BLUE]] : [];
       case "co2": return d.rooms.filter((r) => r.co2).map((r, i) => [r.co2, r.name, pal[i % pal.length]]);
       case "rf": return d.rooms.filter((r) => r.rf).map((r, i) => [r.rf, r.name, pal[i % pal.length]]);
     }
@@ -1047,7 +1048,7 @@ class ProxonFwtBase extends HTMLElement {
       for (const [t, s] of S) {
         const e = ProxonFwtBase._at(E, t), f = ProxonFwtBase._at(F, t);
         if (e === null || f === null || Math.abs(e - f) < 3) continue;
-        const v = ((s - f) / (e - f)) * 100;
+        const v = ((e - s) / (e - f)) * 100;
         if (v >= 0 && v <= 110) pts.push([t, v]);
       }
       return [{ label: this._t("efficiency"), color: GREEN, pts: ProxonFwtBase._down(pts, 360) }];
