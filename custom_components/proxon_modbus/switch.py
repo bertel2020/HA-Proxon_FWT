@@ -12,6 +12,7 @@ import voluptuous as vol
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -135,7 +136,14 @@ async def async_setup_entry(
     )
 
 
-class ProxonFunctionSwitch(ProxonCentralEntity, SwitchEntity):
+class _BoostServiceGuard:
+    """The start_boost entity service is offered for every Proxon switch; only the boost switch implements it."""
+
+    async def async_start_boost_service(self, minutes: int | None = None) -> None:
+        raise ServiceValidationError("start_boost only works on the boost ventilation switch")
+
+
+class ProxonFunctionSwitch(_BoostServiceGuard, ProxonCentralEntity, SwitchEntity):
     """A simple write-register / read-back-register switch."""
 
     _blocks = frozenset({BLOCK_FUNCTION})
@@ -215,7 +223,7 @@ class ProxonBoostSwitch(ProxonCentralEntity, SwitchEntity):
         await self.coordinator.async_end_boost()
 
 
-class ProxonFanRestoreSwitch(ProxonCentralEntity, SwitchEntity, RestoreEntity):
+class ProxonFanRestoreSwitch(_BoostServiceGuard, ProxonCentralEntity, SwitchEntity, RestoreEntity):
     """Restore the user's fan stage after the heat pump has stopped.
 
     Purely a software feature: the unit raises the fan stage when the heat
@@ -268,7 +276,7 @@ class ProxonFanRestoreSwitch(ProxonCentralEntity, SwitchEntity, RestoreEntity):
         self.async_write_ha_state()
 
 
-class ProxonRoomPtcEnableSwitch(ProxonRoomEntity, SwitchEntity):
+class ProxonRoomPtcEnableSwitch(_BoostServiceGuard, ProxonRoomEntity, SwitchEntity):
     """Enable/disable the PTC element for one room.
 
     Registers 301 (write) and 302 (readback) are single 16-bit bitfields
