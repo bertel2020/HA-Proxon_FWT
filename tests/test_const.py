@@ -16,3 +16,8 @@ def test_fan_stage_and_mode_options(const):
 def test_blocks_cover_expected_register_ranges(const):
     assert const.REG_DEVICE_DATA_BASE + const.REG_DEVICE_DATA_COUNT - 1 == const.REG_FAN_SPEED_EXTRACT
     assert const.REG_FUNCTION_BLOCK_BASE + const.REG_FUNCTION_BLOCK_COUNT - 1 == const.REG_CAPABILITY_FLAGS
+
+
+def test_eco_modes_match_between_logic_and_const(const, logic):
+    # logic.py has to stay importable on its own, so the set exists in both modules
+    assert set(logic.ECO_MODES) == set(const.ECO_MODE_VALUES)
