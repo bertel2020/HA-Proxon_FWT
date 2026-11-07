@@ -664,6 +664,7 @@ class ProxonFwtBase extends HTMLElement {
     } catch (err) {
       next = this._settings || {};
     }
+    if (this._settingsFor !== centralId) return; // the unit changed while the request was running
     this._settingsBusy = false;
     // Only re-render (and invalidate dependent history) when the options actually changed.
     if (JSON.stringify(next) !== JSON.stringify(this._settings)) {
@@ -1212,7 +1213,7 @@ class ProxonFwtBase extends HTMLElement {
 
   // Heat pump runtime and starts per day for the last 7 days, from the recorder history.
   _hpBars() {
-    const iv = this._hpIv;
+    const hp = this._hp(), iv = hp && hp.iv;
     if (!iv) return `<div class="note">${this._t("hp_no_data")}</div>`;
     const lang = this._hass.language, now = Date.now() / 1000;
     const days = [];
@@ -1222,7 +1223,7 @@ class ProxonFwtBase extends HTMLElement {
       let sec = 0, starts = 0;
       for (const [s0, s1] of iv) {
         sec += Math.max(0, Math.min(s1, b) - Math.max(s0, a));
-        if (s0 >= a && s0 < a + 86400 && s0 > this._hpT0 + 60) starts++;
+        if (s0 >= a && s0 < a + 86400 && s0 > hp.t0 + 60) starts++;
       }
       days.push({ label: d0.toLocaleDateString(lang, { weekday: "short" }), full: d0.toLocaleDateString(lang, { weekday: "short", day: "2-digit", month: "2-digit" }), h: sec / 3600, starts });
     }
@@ -1251,10 +1252,14 @@ class ProxonFwtBase extends HTMLElement {
     if (this._hscope !== scope) { this._hc = {}; this._hscope = scope; }
     const cache = (this._hc = this._hc || {});
     const e = cache[key];
+    // Statistics/history queries depend on the integration options: wait for them instead of loading twice.
+    if (this._settingsFor && this._settings === undefined) return e ? e.v : undefined;
     if (e && (e.busy || Date.now() - e.t < 300000)) return e.v;
     cache[key] = { t: e ? e.t : 0, v: e ? e.v : undefined, busy: true };
+    const scopeAtStart = scope;
     const done = (v) => {
-      cache[key] = { t: Date.now(), v };
+      if (this._hscope !== scopeAtStart) return; // the data source changed while loading
+      cache[key] = { t: v === null ? Date.now() - 300000 + 15000 : Date.now(), v }; // a failure is retried after 15 s
       this._hver = (this._hver || 0) + 1;
       this._update();
     };
@@ -1360,13 +1365,17 @@ class ProxonFwtBase extends HTMLElement {
 
   async _loadHp(d) {
     const c = d.central, ids = [c.heat_pump_heating, c.heat_pump_cooling].filter(Boolean);
-    if (!ids.length) { this._hpIv = null; return null; }
+    if (!ids.length) return null;
     const end = new Date(), start = new Date(end.getTime() - 7 * 864e5);
     const res = await this._hass.callWS({ type: "history/history_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
       entity_ids: ids, minimal_response: true, no_attributes: true, significant_changes_only: false });
-    this._hpT0 = start.getTime() / 1000;
-    this._hpIv = this._intervals(res, ids, end.getTime() / 1000);
-    return this._hpIv;
+    return { t0: start.getTime() / 1000, iv: this._intervals(res, ids, end.getTime() / 1000) };
+  }
+
+  // Heat pump run intervals of the current scope, straight from the cache (a stale load of another unit never lands here).
+  _hp() {
+    const e = this._hc && this._hc.hp;
+    return e && e.v ? e.v : null;
   }
 
   // Daily runtime, starts, outdoor temperature and mean power for 30 days from the long-term statistics.
@@ -1562,7 +1571,7 @@ class ProxonFwtBase extends HTMLElement {
         : o.range === "1y" ? new Date(t * 1000).toLocaleDateString(lang, { month: "short" })
         : new Date(t * 1000).toLocaleDateString(lang, { day: "2-digit", month: "2-digit" });
     const xt = ticks.map((t) => `<text class="st" x="${x(t).toFixed(1)}" y="${H - 5}" text-anchor="${x(t) > W - 24 ? "end" : "middle"}" style="font-size:11px">${tl(t)}</text>`).join("");
-    const bands = o.bands ? (this._hpIv || []).map(([a, b]) => {
+    const bands = o.bands ? ((this._hp() || {}).iv || []).map(([a, b]) => {
       const s0 = Math.max(a, t0), s1 = Math.min(b, t1);
       return s1 > s0 ? `<rect x="${x(s0).toFixed(1)}" y="${pt}" width="${Math.max(1, x(s1) - x(s0)).toFixed(1)}" height="${H - pt - pb}" fill="#3fa660" opacity=".14"/>` : "";
     }).join("") : "";
@@ -1572,7 +1581,7 @@ class ProxonFwtBase extends HTMLElement {
     }).join("");
     const lines = series.map((s) => `<polyline fill="none" stroke="${s.color}" stroke-width="${s.prev ? 1.4 : 1.8}" ${s.prev ? 'stroke-dasharray="5 4" opacity=".55"' : ""} stroke-linejoin="round" points="${s.pts.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>`).join("");
     const legend = series.map((s) => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join("");
-    const showBands = o.bands && this._hpIv && this._hpIv.length;
+    const showBands = o.bands && this._hp() && this._hp().iv.length;
     // min / max / mean per curve (for power additionally the energy as the integral of the curve)
     const nf = (v) => v.toLocaleString(lang, { maximumFractionDigits: Math.abs(v) < 100 ? 1 : 0 });
     const statRows = series.filter((s) => s.pts.length && !s.prev).map((s) => {

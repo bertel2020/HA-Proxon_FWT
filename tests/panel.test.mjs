@@ -110,8 +110,7 @@ test("room details open in a dialog, one at a time, and close again", () => {
 test("heat pump runtime bars (7 days) carry hover tooltips", () => {
   const p = make();
   const now = Date.now() / 1000;
-  p._hpIv = [[now - 7200, now - 3600]];
-  p._hpT0 = now - 86400 * 8;
+  p._hc = { hp: { t: Date.now(), v: { iv: [[now - 7200, now - 3600]], t0: now - 86400 * 8 } } };
   const html = p._hpBars();
   assert.equal((html.match(/data-tip="/g) || []).length, 7);
   assert.match(html, /class="chw"/);
@@ -157,4 +156,18 @@ test("fast +/- clicks add up and are written once", async () => {
   await new Promise((r) => setTimeout(r, 700));
   assert.equal(calls.length, 1);
   assert.equal(JSON.stringify(calls[0]), JSON.stringify(["climate", "set_temperature", { entity_id: "climate.a", temperature: 23 }]));
+});
+
+test("history loads wait for the settings and failed loads are retried soon", async () => {
+  const p = make();
+  p._settingsFor = "dev1";
+  let loads = 0;
+  p._hget("x", () => { loads++; return Promise.resolve(1); });
+  assert.equal(loads, 0); // settings not loaded yet
+  p._settings = {};
+  p._hget("x", () => { loads++; return Promise.reject(new Error("ws")); });
+  await new Promise((r) => setTimeout(r, 10));
+  assert.equal(loads, 1);
+  assert.equal(p._hc.x.v, null);
+  assert.ok(Date.now() - p._hc.x.t > 250000); // cached as nearly expired: retried after ~15 s, not 5 min
 });
