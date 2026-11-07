@@ -187,6 +187,7 @@ const METRIC_META = {
   rf: { icon: "mdi:water-percent", unit: " %", label: "humidity" },
 };
 const BLUE = "#378ADD", CORAL = "#D85A30", AMBER = "#f2a516", GREEN = "#3fa660";
+const SETTINGS_TTL = 60000;
 const BAD = ["unavailable", "unknown", undefined, null, ""];
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
 
@@ -566,7 +567,7 @@ class ProxonFwtBase extends HTMLElement {
     const d = this._discover();
     this._d = d;
     const centralId = d && this._config.device_id ? this._config.device_id : d && d.central && Object.keys(d.central).length ? (h.entities[d.central.operating_mode] || {}).device_id : null;
-    if (d && centralId && this._settingsFor !== centralId) this._loadSettings(centralId);
+    if (d && centralId && (this._settingsFor !== centralId || (!this._settingsBusy && Date.now() - (this._settingsAt || 0) > SETTINGS_TTL))) this._loadSettings(centralId);
     const ids = d
       ? [...Object.values(d.central), ...d.rooms.flatMap((r) => [r.climate, r.co2, r.rf, ...Object.values(r.ents)]),
         this._opt("power_entity"), this._opt("outdoor_entity")]
@@ -615,14 +616,22 @@ class ProxonFwtBase extends HTMLElement {
   }
 
   async _loadSettings(centralId) {
-    this._settingsFor = centralId;
+    if (this._settingsFor !== centralId) { this._settings = undefined; this._settingsFor = centralId; }
+    this._settingsBusy = true;
+    this._settingsAt = Date.now();
+    let next;
     try {
       const all = await this._hass.callWS({ type: "proxon_modbus/settings" });
-      this._settings = all.find((e) => e.device_id === centralId) || all[0] || {};
+      next = all.find((e) => e.device_id === centralId) || all[0] || {};
     } catch (err) {
-      this._settings = {};
+      next = this._settings || {};
     }
-    this._settingsStamp = Date.now();
+    this._settingsBusy = false;
+    // Only re-render (and invalidate dependent history) when the options actually changed.
+    if (JSON.stringify(next) !== JSON.stringify(this._settings)) {
+      this._settings = next;
+      this._settingsStamp = Date.now();
+    }
     if (!this._dismissedLoaded) this._loadDismissed();
     this._update();
   }
