@@ -515,6 +515,9 @@ class ProxonFwtBase extends HTMLElement {
           if (dc === "humidity") room.rf = e.entity_id;
         }
       }
+      // own sensors chosen per room in the integration options win over the unit's inputs
+      const own = ((this._settings && this._settings.room_sensors) || []).filter((x) => x.device_id === id);
+      for (const x of own) { if (x.co2) room.co2 = x.co2; if (x.rf) room.rf = x.rf; }
       if (room.climate) rooms.push(room);
     }
     return { central, rooms };

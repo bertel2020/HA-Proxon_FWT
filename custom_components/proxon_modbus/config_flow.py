@@ -27,6 +27,8 @@ from .const import (
     CONF_BYTESIZE,
     CONF_CO2_NAMES,
     CONF_CO2_ROOMS,
+    CONF_ROOM_CO2_ENTITIES,
+    CONF_ROOM_RF_ENTITIES,
     CONF_CONNECTION_TYPE,
     CONF_COOLING_AVAILABLE,
     CONF_NUM_CO2_SENSORS,
@@ -124,6 +126,8 @@ def _names_schema(
     existing_rf = options.get(CONF_RF_NAMES, [])
     existing_co2_rooms = options.get(CONF_CO2_ROOMS, [])
     existing_rf_rooms = options.get(CONF_RF_ROOMS, [])
+    existing_co2_ents = options.get(CONF_ROOM_CO2_ENTITIES, [])
+    existing_rf_ents = options.get(CONF_ROOM_RF_ENTITIES, [])
 
     # Empty stored name = this room slot is not installed (skipped).
     room_labels = [
@@ -165,6 +169,22 @@ def _names_schema(
         fields[
             vol.Optional(f"room_{i + 1}_area", description={"suggested_value": area_default})
         ] = selector.AreaSelector()
+        fields[
+            vol.Optional(
+                f"room_{i + 1}_co2_entity",
+                description={"suggested_value": existing_co2_ents[i] if i < len(existing_co2_ents) else None},
+            )
+        ] = selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="sensor", device_class="carbon_dioxide")
+        )
+        fields[
+            vol.Optional(
+                f"room_{i + 1}_rf_entity",
+                description={"suggested_value": existing_rf_ents[i] if i < len(existing_rf_ents) else None},
+            )
+        ] = selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="sensor", device_class="humidity")
+        )
     for i in range(num_co2):
         default = existing_co2[i] if i < len(existing_co2) else f"CO2-Sensor {i + 1}"
         fields[vol.Required(f"co2_{i + 1}", default=default)] = str
@@ -199,6 +219,8 @@ def _names_from_input(
     return {
         CONF_ROOM_NAMES: [(user_input.get(f"room_{i + 1}") or "").strip() for i in range(num_rooms)],
         CONF_ROOM_AREAS: [user_input.get(f"room_{i + 1}_area") or None for i in range(num_rooms)],
+        CONF_ROOM_CO2_ENTITIES: [user_input.get(f"room_{i + 1}_co2_entity") or None for i in range(num_rooms)],
+        CONF_ROOM_RF_ENTITIES: [user_input.get(f"room_{i + 1}_rf_entity") or None for i in range(num_rooms)],
         CONF_CO2_NAMES: [user_input[f"co2_{i + 1}"] for i in range(num_co2)],
         CONF_RF_NAMES: [user_input[f"rf_{i + 1}"] for i in range(num_rf)],
         CONF_CO2_ROOMS: [parse_room(user_input[f"co2_{i + 1}_room"]) for i in range(num_co2)],

@@ -42,6 +42,10 @@ CONF_RF_NAMES = "rf_sensor_names"
 # specific room, or missing/None to keep it on the central device.
 CONF_CO2_ROOMS = "co2_sensor_rooms"
 CONF_RF_ROOMS = "rf_sensor_rooms"
+# Optional own sensors per room (entity ids, one entry per room slot or None): shown in the
+# card/panel instead of the unit's external CO2 / humidity inputs.
+CONF_ROOM_CO2_ENTITIES = "room_co2_entities"
+CONF_ROOM_RF_ENTITIES = "room_rf_entities"
 CONF_SCAN_INTERVAL = "scan_interval"
 # Manual override for whether this unit supports cooling at all. Register
 # 315 bit 8 is meant to report this live, but has proven unreliable in

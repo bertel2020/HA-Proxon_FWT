@@ -17,6 +17,8 @@ from homeassistant.loader import async_get_integration
 
 from .const import (
     CONF_NUM_CO2_SENSORS,
+    CONF_ROOM_CO2_ENTITIES,
+    CONF_ROOM_RF_ENTITIES,
     CONF_NUM_ROOMS,
     CONF_NUM_RF_SENSORS,
     CONF_FILTER_INTERVAL,
@@ -73,9 +75,18 @@ def _ws_settings(
     result = []
     for entry in hass.config_entries.async_loaded_entries(DOMAIN):
         device = registry.async_get_device(identifiers={(DOMAIN, entry.entry_id)})
+        rooms = []
+        for kind, key in (("co2", CONF_ROOM_CO2_ENTITIES), ("rf", CONF_ROOM_RF_ENTITIES)):
+            for i, ent in enumerate(entry.options.get(key, [])):
+                if not ent:
+                    continue
+                room_dev = registry.async_get_device(identifiers={(DOMAIN, f"{entry.entry_id}_room_{i}")})
+                if room_dev:
+                    rooms.append({"device_id": room_dev.id, kind: ent})
         result.append(
             {
                 "device_id": device.id if device else None,
+                "room_sensors": rooms,
                 "outdoor_side": entry.options.get(CONF_OUTDOOR_SIDE, "left"),
                 "power_entity": entry.options.get(CONF_POWER_ENTITY),
                 "outdoor_entity": entry.options.get(CONF_OUTDOOR_ENTITY),
