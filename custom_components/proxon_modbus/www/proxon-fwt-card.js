@@ -188,6 +188,7 @@ const METRIC_META = {
 };
 const BLUE = "#378ADD", CORAL = "#D85A30", AMBER = "#f2a516", GREEN = "#3fa660";
 const BAD = ["unavailable", "unknown", undefined, null, ""];
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
 
 const CSS = `
 :host { display: block; color: var(--primary-text-color); --pbd: color-mix(in srgb, var(--primary-text-color) 24%, transparent); }
@@ -540,7 +541,7 @@ class ProxonFwtBase extends HTMLElement {
     const rooms = [];
     for (const [id, dev] of Object.entries(h.devices || {})) {
       if (!roomIds.has(id)) continue;
-      const room = { name: dev.name_by_user || dev.name, ents: {} };
+      const room = { name: esc(dev.name_by_user || dev.name), ents: {} };
       for (const e of entities) {
         if (e.device_id !== id) continue;
         if (e.entity_id.startsWith("climate.")) room.climate = e.entity_id;
