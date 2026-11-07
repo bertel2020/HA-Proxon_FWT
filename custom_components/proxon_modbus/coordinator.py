@@ -413,6 +413,7 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
             BLOCK_HUMIDITY: self._read_humidity,
         }
         first_error: ProxonModbusError | None = None
+        link_errors = 0  # leading blocks that failed on the link itself (timeout, refused), not with a Modbus exception
         for name, reader in blocks.items():
             try:
                 await reader(data)
@@ -420,6 +421,10 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
                 _LOGGER.debug("Register block %s failed to read: %s", name, err)
                 data.failed.add(name)
                 first_error = first_error or err
+                if len(data.failed) == link_errors + 1 and isinstance(err.__cause__, (OSError, TimeoutError)):
+                    link_errors += 1
+                    if link_errors >= 2:  # the connection is gone: don't wait for a timeout per remaining block
+                        raise first_error from err
         if first_error is not None and len(data.failed) == len(blocks):
             raise first_error
         return data
