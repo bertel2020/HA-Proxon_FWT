@@ -314,10 +314,12 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
                 raise HomeAssistantError("Boost ventilation is not available in the current operating mode")
             minutes = minutes or self.boost_minutes
             func = self.data.function_block
-            was_on = bool(func.get("fan_auto_read"))
+            # "auto" holds what to put back: the fan automatic ("stage" boost) or an intensive ventilation that was already on.
+            was_on = bool(func.get("fan_intensive_read" if kind == "intensive" else "fan_auto_read"))
             if not self.boost.active:
                 if kind == "intensive":
-                    await self.async_write_register(REG_FAN_INTENSIVE_WRITE, 1)
+                    if not was_on:
+                        await self.async_write_register(REG_FAN_INTENSIVE_WRITE, 1)
                 else:
                     auto_off = False
                     if was_on:
@@ -353,7 +355,8 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
                     # The operating mode was changed during the boost: the stored stage no longer fits, don't write it back.
                     _LOGGER.info("Boost ended without restoring the fan: operating mode changed meanwhile")
                 elif self.boost.kind == "intensive":
-                    await self.async_write_register(REG_FAN_INTENSIVE_WRITE, 0)
+                    if not self.boost.auto:  # it was already on before the boost: leave it on
+                        await self.async_write_register(REG_FAN_INTENSIVE_WRITE, 0)
                 else:
                     if self.boost.stage is not None:
                         await self.async_write_register(REG_FAN_STAGE_WRITE, self.boost.stage)
