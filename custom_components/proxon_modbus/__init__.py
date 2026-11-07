@@ -243,6 +243,9 @@ async def async_remove_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> N
     """Delete the persisted statistics and boost state of a removed entry."""
     for suffix in ("stats", "boost"):
         await Store(hass, 1, f"{DOMAIN}.{entry.entry_id}.{suffix}").async_remove()
+    if not [e for e in hass.config_entries.async_entries(DOMAIN) if e.entry_id != entry.entry_id]:
+        async_remove_panel(hass, PANEL_PATH)
+        hass.data.get(DOMAIN, {}).pop("panel_registered", None)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bool:
@@ -252,9 +255,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> b
     if coordinator is not None:
         await coordinator.async_save_stats()
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if unloaded and not [
-        e for e in hass.config_entries.async_loaded_entries(DOMAIN) if e.entry_id != entry.entry_id
-    ]:
-        async_remove_panel(hass, PANEL_PATH)
-        hass.data.get(DOMAIN, {}).pop("panel_registered", None)
+    # The side panel stays registered across reloads (options changes); it goes away in async_remove_entry.
     return unloaded
