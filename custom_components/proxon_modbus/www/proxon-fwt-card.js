@@ -544,6 +544,7 @@ class ProxonFwtBase extends HTMLElement {
     this._sig = sig;
     this._render();
     this._bindChart();
+    this._bindTips();
   }
 
   _wantsHistory() {
@@ -1254,8 +1255,8 @@ class ProxonFwtBase extends HTMLElement {
     const age = this._num(d.central.filter_age_days), chg = age === null ? null : Date.now() / 1000 - age * 86400;
     const bars = months.map((m, i) => {
       const v = m[key] || 0, f = chg !== null && chg >= m.t && (i + 1 >= months.length || chg < months[i + 1].t);
-      return `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, H - pb - Y(v)).toFixed(1)}" rx="3" fill="${color}" opacity=".8">
-        <title>${mfl(m.t)}: ${fmt(v)} ${unit}${m.out !== undefined ? ` · Ø ${m.out.toLocaleString(lang, { maximumFractionDigits: 1 })} °C` : ""}</title></rect>
+      return `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, H - pb - Y(v)).toFixed(1)}" rx="3" fill="${color}" opacity=".8"/>
+        <rect x="${(X(i) - slot / 2).toFixed(1)}" y="${pt}" width="${slot.toFixed(1)}" height="${H - pt - pb}" fill="transparent" data-tip="${mfl(m.t)}|${fmt(v)} ${unit}${m.out !== undefined ? ` · Ø ${m.out.toLocaleString(lang, { maximumFractionDigits: 1 })} °C` : ""}"/>
         ${f ? `<g><title>${this._t("y_filter")}</title><circle cx="${X(i).toFixed(1)}" cy="${H - pb + 0}" r="4.5" fill="var(--card-background-color)" stroke="${CORAL}" stroke-width="1.6"/></g>` : ""}`;
     }).join("");
     const gl = [0, 1, 2, 3].map((i) => `<line x1="${pl}" x2="${W - pr}" y1="${(pt + ((H - pt - pb) * i) / 3).toFixed(1)}" y2="${(pt + ((H - pt - pb) * i) / 3).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
@@ -1264,8 +1265,8 @@ class ProxonFwtBase extends HTMLElement {
     const xt = months.map((m, i) => `<text class="st" x="${X(i).toFixed(1)}" y="${H - 5}" text-anchor="middle" style="font-size:11px">${mf(m.t)}</text>`).join("");
     const pts = months.map((m, i) => m.out === undefined ? null : `${X(i).toFixed(1)},${Yo(m.out).toFixed(1)}`).filter(Boolean).join(" ");
     const sum = vals.reduce((a, b) => a + b, 0);
-    return `<svg style="max-width:100%;height:auto" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("year")}">${gl}${bars}
-      ${pts ? `<polyline fill="none" stroke="#7e57c2" stroke-width="1.8" stroke-linejoin="round" points="${pts}"/>` : ""}${xt}</svg>
+    return `<div class="chw"><svg style="max-width:100%;height:auto" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("year")}">${gl}${bars}
+      ${pts ? `<polyline fill="none" stroke="#7e57c2" stroke-width="1.8" stroke-linejoin="round" points="${pts}"/>` : ""}${xt}</svg><div class="tip" style="display:none"></div></div>
       <div class="legend"><span><i style="background:${color}"></i>${this._t(label)}${unit ? ` (${unit})` : ""}</span>${outs.length ? `<span><i style="background:#7e57c2"></i>${this._t("outside")} (°C)</span>` : ""}
       ${chg !== null && chg >= months[0].t ? `<span><i style="background:none;border:2px solid ${CORAL}"></i>${this._t("y_filter")}</span>` : ""}
       <span>Σ ${fmt(sum)} ${unit}</span></div><div class="note">${this._t("y_note")}</div>`;
@@ -1376,6 +1377,27 @@ class ProxonFwtBase extends HTMLElement {
       <div class="legend">${legend}${showBands ? `<span><i style="background:#3fa660;opacity:.4"></i>${this._t("hp_runs")}</span>` : ""}</div>`;
   }
 
+  // Hover / touch tooltip for bar charts and sparklines: elements with data-tip="title|value".
+  _bindTips() {
+    for (const box of this.shadowRoot.querySelectorAll(".chw")) {
+      if (!box.querySelector("[data-tip]")) continue;
+      const svg = box.querySelector("svg"), tip = box.querySelector(".tip");
+      const hide = () => { tip.style.display = "none"; };
+      const move = (ev) => {
+        const el = ev.target.closest && ev.target.closest("[data-tip]");
+        if (!el) return hide();
+        const [h, v] = el.getAttribute("data-tip").split("|");
+        tip.innerHTML = `<b>${h}</b><div>${v}</div>`;
+        tip.style.display = "block";
+        const r = box.getBoundingClientRect(), px = ev.clientX - r.left;
+        tip.style.left = `${Math.max(0, Math.min(r.width - tip.offsetWidth, px + 12))}px`;
+      };
+      svg.addEventListener("pointermove", move);
+      svg.addEventListener("pointerdown", move);
+      svg.addEventListener("pointerleave", hide);
+    }
+  }
+
   _bindChart() {
     const svg = this.shadowRoot.querySelector("svg.ch"), m = this._cm;
     if (!svg || !m) return;
@@ -1419,16 +1441,16 @@ class ProxonFwtBase extends HTMLElement {
     const slot = (W - pl - pr) / days.length, bw = Math.max(3, slot * 0.62);
     const X = (i) => pl + slot * (i + 0.5), Yh = (v) => pt + (1 - v / maxH) * (H - pt - pb), Yo = (v) => pt + (1 - (v - oLo) / Math.max(1, oHi - oLo)) * (H - pt - pb);
     const df = (t) => new Date(t * 1000).toLocaleDateString(lang, { day: "2-digit", month: "2-digit" });
-    const bars = days.map((x, i) => `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${Yh(x.h || 0).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, H - pb - Yh(x.h || 0)).toFixed(1)}" rx="2" fill="#3fa660" opacity=".75">
-      <title>${df(x.t)}: ${(x.h || 0).toLocaleString(lang, { maximumFractionDigits: 1 })} h${x.starts !== undefined ? ` · ${Math.round(x.starts)} ${this._t("hp_starts")}` : ""}${x.out !== undefined ? ` · Ø ${x.out.toLocaleString(lang, { maximumFractionDigits: 1 })} °C` : ""}</title></rect>`).join("");
+    const bars = days.map((x, i) => `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${Yh(x.h || 0).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, H - pb - Yh(x.h || 0)).toFixed(1)}" rx="2" fill="#3fa660" opacity=".75"/>
+      <rect x="${(X(i) - slot / 2).toFixed(1)}" y="${pt}" width="${slot.toFixed(1)}" height="${H - pt - pb}" fill="transparent" data-tip="${df(x.t)}|${(x.h || 0).toLocaleString(lang, { maximumFractionDigits: 1 })} h${x.starts !== undefined ? ` · ${Math.round(x.starts)} ${this._t("hp_starts")}` : ""}${x.out !== undefined ? ` · Ø ${x.out.toLocaleString(lang, { maximumFractionDigits: 1 })} °C` : ""}"/>`).join("");
     const pts = days.map((x, i) => x.out === undefined ? null : `${X(i).toFixed(1)},${Yo(x.out).toFixed(1)}`).filter(Boolean).join(" ");
     const gl = [0, 1, 2, 3].map((i) => `<line x1="${pl}" x2="${W - pr}" y1="${(pt + ((H - pt - pb) * i) / 3).toFixed(1)}" y2="${(pt + ((H - pt - pb) * i) / 3).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
       <text class="st" x="${pl - 6}" y="${(pt + ((H - pt - pb) * i) / 3 + 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${Math.round(maxH * (1 - i / 3))}</text>
       ${outs.length ? `<text class="st" x="${W - pr + 6}" y="${(pt + ((H - pt - pb) * i) / 3 + 4).toFixed(1)}" style="font-size:11px">${Math.round(oHi - ((oHi - oLo) * i) / 3)}°</text>` : ""}`).join("");
     const xt = days.map((x, i) => i % Math.ceil(days.length / (W < 420 ? 4 : 8)) === 0 ? `<text class="st" x="${X(i).toFixed(1)}" y="${H - 5}" text-anchor="middle" style="font-size:11px">${df(x.t)}</text>` : "").join("");
     const sumH = hs.reduce((a, b) => a + b, 0), avgO = outs.length ? outs.reduce((a, b) => a + b, 0) / outs.length : null;
-    return `<svg style="max-width:100%;height:auto" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("runtime")}">${gl}${bars}
-      ${pts ? `<polyline fill="none" stroke="#7e57c2" stroke-width="1.8" stroke-linejoin="round" points="${pts}"/>` : ""}${xt}</svg>
+    return `<div class="chw"><svg style="max-width:100%;height:auto" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("runtime")}">${gl}${bars}
+      ${pts ? `<polyline fill="none" stroke="#7e57c2" stroke-width="1.8" stroke-linejoin="round" points="${pts}"/>` : ""}${xt}</svg><div class="tip" style="display:none"></div></div>
       <div class="legend"><span><i style="background:#3fa660"></i>${this._t("runtime")} (h)</span>${outs.length ? `<span><i style="background:#7e57c2"></i>${this._t("outside")} (°C)</span>` : ""}
       <span>Σ ${sumH.toLocaleString(lang, { maximumFractionDigits: 0 })} h${avgO === null ? "" : ` · Ø ${this._t("outside")} ${avgO.toLocaleString(lang, { maximumFractionDigits: 1 })} °C`}</span></div>`;
   }
@@ -1441,13 +1463,13 @@ class ProxonFwtBase extends HTMLElement {
     const max = Math.max(1, Math.ceil(Math.max(...data.map((x) => x.kwh)))), slot = (W - pl - pr) / data.length, bw = Math.max(3, slot * 0.62);
     const X = (i) => pl + slot * (i + 0.5), Y = (v) => pt + (1 - v / max) * (H - pt - pb);
     const df = (t) => new Date(t * 1000).toLocaleDateString(lang, { day: "2-digit", month: "2-digit" });
-    const bars = data.map((x, i) => `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${Y(x.kwh).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, H - pb - Y(x.kwh)).toFixed(1)}" rx="2" fill="${AMBER}" opacity=".85">
-      <title>${df(x.t)}: ${x.kwh.toLocaleString(lang, { maximumFractionDigits: 1 })} kWh</title></rect>`).join("");
+    const bars = data.map((x, i) => `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${Y(x.kwh).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, H - pb - Y(x.kwh)).toFixed(1)}" rx="2" fill="${AMBER}" opacity=".85"/>
+      <rect x="${(X(i) - slot / 2).toFixed(1)}" y="${pt}" width="${slot.toFixed(1)}" height="${H - pt - pb}" fill="transparent" data-tip="${df(x.t)}|${x.kwh.toLocaleString(lang, { maximumFractionDigits: 1 })} kWh"/>`).join("");
     const gl = [0, 1, 2].map((i) => `<line x1="${pl}" x2="${W - pr}" y1="${(pt + ((H - pt - pb) * i) / 2).toFixed(1)}" y2="${(pt + ((H - pt - pb) * i) / 2).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
       <text class="st" x="${pl - 6}" y="${(pt + ((H - pt - pb) * i) / 2 + 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${Math.round(max * (1 - i / 2))}</text>`).join("");
     const xt = data.map((x, i) => i % Math.ceil(data.length / (W < 420 ? 4 : 8)) === 0 ? `<text class="st" x="${X(i).toFixed(1)}" y="${H - 5}" text-anchor="middle" style="font-size:11px">${df(x.t)}</text>` : "").join("");
     const sum = data.reduce((a, b) => a + b.kwh, 0);
-    return `<svg style="max-width:100%;height:auto" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("energy")}">${gl}${bars}${xt}</svg>
+    return `<div class="chw"><svg style="max-width:100%;height:auto" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("energy")}">${gl}${bars}${xt}</svg><div class="tip" style="display:none"></div></div>
       <div class="legend"><span><i style="background:${AMBER}"></i>kWh</span><span>Σ ${sum.toLocaleString(lang, { maximumFractionDigits: 0 })} kWh · Ø ${(sum / data.length).toLocaleString(lang, { maximumFractionDigits: 1 })} kWh/${this._t("day")}</span></div>
       <div class="note">${this._t("energy_note")}</div>`;
   }
@@ -1869,11 +1891,13 @@ class ProxonFwtPanel extends ProxonFwtBase {
     const x = (t) => ((t - data.t0) / (data.t1 - data.t0)) * W;
     const line = data.pts.map((p) => `${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join(" ");
     const last = data.pts[data.pts.length - 1];
-    return `<svg viewBox="0 0 ${W} ${H + 14}" style="width:100%;height:auto" role="img" aria-label="${this._t("r_t24")}">
+    const lang = this._hass.language, sw = W / data.pts.length;
+    const hits = data.pts.map((p) => `<rect x="${(x(p[0]) - sw / 2).toFixed(1)}" y="0" width="${sw.toFixed(1)}" height="${H}" fill="transparent" data-tip="${new Date(p[0] * 1000).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })}|${this._fmt(p[1])} °C"/>`).join("");
+    return `<div class="chw"><svg viewBox="0 0 ${W} ${H + 14}" style="width:100%;height:auto" role="img" aria-label="${this._t("r_t24")}">
       ${i.tgt == null ? "" : `<line x1="0" x2="${W}" y1="${y(i.tgt)}" y2="${y(i.tgt)}" stroke="var(--secondary-text-color)" stroke-dasharray="4 4" opacity=".6"/><text x="${W}" y="${Math.max(10, y(i.tgt) - 4)}" text-anchor="end" font-size="10" fill="var(--secondary-text-color)">${this._t("r_set", this._fmt(i.tgt, 0))}</text>`}
       <polyline fill="none" stroke="${i.col}" stroke-width="2.2" stroke-linejoin="round" points="${line}"/>
       <circle cx="${x(last[0])}" cy="${y(last[1])}" r="4" fill="${i.col}"/>
-      <text x="0" y="${H + 12}" font-size="10" fill="var(--secondary-text-color)">${this._t("r_ago")}</text><text x="${W}" y="${H + 12}" text-anchor="end" font-size="10" fill="var(--secondary-text-color)">${this._t("r_now")}</text></svg>`;
+      <text x="0" y="${H + 12}" font-size="10" fill="var(--secondary-text-color)">${this._t("r_ago")}</text><text x="${W}" y="${H + 12}" text-anchor="end" font-size="10" fill="var(--secondary-text-color)">${this._t("r_now")}</text>${hits}</svg><div class="tip" style="display:none"></div></div>`;
   }
 
   _roomFacts(n, i) {
