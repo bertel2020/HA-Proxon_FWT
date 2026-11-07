@@ -27,7 +27,7 @@ const TEXT = {
     d_furnace: "Betrieb bei laufendem Kaminofen.",
     readonly: "Dieser Zustand wird nur gemeldet und lässt sich nicht schreiben.",
     locked: "Betriebsart derzeit nicht wählbar",
-    outdoor_side: "Außenseite", room_side: "Raumseite", exchanger: "Kreuzstrom-Wärmetauscher",
+    outdoor_side: "Außenseite", room_side: "Raumseite", exchanger: "Kreuzgegenstrom-Wärmetauscher",
     fresh: "Frischluft", exhaust: "Fortluft", extract: "Abluft", supply: "Zuluft",
     bypass_open: "Bypass offen (automatisch)", bypass_closed: "Bypass geschlossen (automatisch)",
     probes: "Punkte = Temperaturfühler im Luftstrom",
@@ -58,8 +58,8 @@ const TEXT = {
     tab_overview: "Übersicht", tab_rooms: "Räume", tab_history: "Verlauf", tab_diag: "Diagnose",
     live_lost: "Keine Verbindung zur Anlage", since: "seit", hints: "Hinweise",
     go_maint: "Zur Wartung", go_hist: "Verlauf ansehen", go_diag: "Diagnose",
-    ins_filter_now: "{0}: Wechsel fällig", ins_filter_now_d: "Die Anlage meldet einen fälligen Filterwechsel.",
-    ins_filter_soon: "{0} bald fällig", ins_filter_soon_d: "Tag {0} von {1}. Neuen Filter bereithalten.",
+    ins_filter_now: "{0}: Wechsel fällig", ins_filter_now_d: "Die Anlage meldet einen fälligen Filterwechsel. Beide Filtereinschübe tauschen (Frischluft und Abluft).",
+    ins_filter_soon: "{0} bald fällig", ins_filter_soon_d: "Tag {0} von {1}. Zwei neue Filter bereithalten (Frischluft und Abluft).",
     ins_shutdown_d: "Die Anlage schaltet in {0} zwangsweise ab. Nach dem Wechsel „Filter getauscht“ drücken.", d_one: "1 Tag", d_n: "{0} Tagen",
     f_age: "Tag {0} von {1} · noch {2} Tage", f_unknown: "Tauschdatum unbekannt – nach dem nächsten Wechsel „Filter getauscht“ drücken.",
     f_shutdown: "Zwangsabschaltung in {0}", f_btn: "Filter getauscht", f_confirm: "Gerätefilter als getauscht markieren? Alter und Frist beginnen neu.",
@@ -79,7 +79,7 @@ const TEXT = {
     rs_avg: "Ø Raumtemperatur", rs_heat: "Heizen gerade", rs_co2: "CO₂ am höchsten", rs_rf: "Ø Feuchte", rs_none: "Keine Räume für diesen Filter.",
     st_cool: "Kühl", st_warm: "Warm", st_ok: "Im Soll", st_heat: "Heizt", r_t24: "Temperatur 24 h", r_ago: "vor 24 h", r_now: "jetzt", r_details: "Details",
     r_tapnote: "Raum antippen für Details", r_noh: "Kein Verlauf verfügbar", r_set: "Soll {0}°",
-    tip_hx: "Wärmetauscher: Warme Abluft heizt die kalte Frischluft vor, ohne dass sich beide mischen. Rückwärmzahl {0}.",
+    tip_hx: "Kreuzgegenstrom-Wärmetauscher: Warme Abluft heizt die kalte Frischluft vor, ohne dass sich beide mischen. Rückwärmzahl {0}.",
     tip_comp: "Kompressor – Details unter Diagnose", tip_fan: "Lüfter",
     eff_info: "Anteil der Abluftwärme, der an die Frischluft übertragen wird: (Zuluft − Frischluft) ÷ (Abluft − Frischluft). Über 85 % ist gut.",
   },
@@ -98,7 +98,7 @@ const TEXT = {
     d_furnace: "Operation while a stove is running.",
     readonly: "This state is only reported and cannot be written.",
     locked: "Operating mode cannot be changed right now",
-    outdoor_side: "Outdoor side", room_side: "Indoor side", exchanger: "Cross-flow heat exchanger",
+    outdoor_side: "Outdoor side", room_side: "Indoor side", exchanger: "Cross-counterflow heat exchanger",
     fresh: "Fresh air", exhaust: "Exhaust air", extract: "Extract air", supply: "Supply air",
     bypass_open: "Bypass open (automatic)", bypass_closed: "Bypass closed (automatic)",
     probes: "Dots = temperature sensors in the air stream",
@@ -129,8 +129,8 @@ const TEXT = {
     tab_overview: "Overview", tab_rooms: "Rooms", tab_history: "History", tab_diag: "Diagnostics",
     live_lost: "No connection to the unit", since: "for", hints: "Hints",
     go_maint: "Maintenance", go_hist: "Show history", go_diag: "Diagnostics",
-    ins_filter_now: "{0}: replace now", ins_filter_now_d: "The unit reports that a filter change is due.",
-    ins_filter_soon: "{0} due soon", ins_filter_soon_d: "Day {0} of {1}. Keep a new filter ready.",
+    ins_filter_now: "{0}: replace now", ins_filter_now_d: "The unit reports that a filter change is due. Replace both filter drawers (fresh air and extract).",
+    ins_filter_soon: "{0} due soon", ins_filter_soon_d: "Day {0} of {1}. Keep two new filters ready (fresh air and extract).",
     ins_shutdown_d: "The unit shuts down by force in {0}. Press \"Filter changed\" after the replacement.", d_one: "1 day", d_n: "{0} days",
     f_age: "Day {0} of {1} · {2} days left", f_unknown: "Change date unknown – press \"Filter changed\" after the next replacement.",
     f_shutdown: "Forced shutdown in {0}", f_btn: "Filter changed", f_confirm: "Mark the device filter as replaced? Age and deadline start over.",
@@ -150,7 +150,7 @@ const TEXT = {
     rs_avg: "Avg. room temperature", rs_heat: "Heating now", rs_co2: "Highest CO₂", rs_rf: "Avg. humidity", rs_none: "No rooms match this filter.",
     st_cool: "Cool", st_warm: "Warm", st_ok: "On target", st_heat: "Heating", r_t24: "Temperature 24 h", r_ago: "24 h ago", r_now: "now", r_details: "Details",
     r_tapnote: "Tap a room for details", r_noh: "No history available", r_set: "Target {0}°",
-    tip_hx: "Heat exchanger: warm extract air preheats the cold fresh air without mixing them. Heat recovery {0}.",
+    tip_hx: "Cross-counterflow heat exchanger: warm extract air preheats the cold fresh air without mixing them. Heat recovery {0}.",
     tip_comp: "Compressor – details under Diagnostics", tip_fan: "Fan",
     eff_info: "Share of the extract air heat transferred to the fresh air: (supply − fresh) ÷ (extract − fresh). Above 85 % is good.",
   },
@@ -731,11 +731,12 @@ class ProxonFwtBase extends HTMLElement {
       <text class="st" x="${X(cx)}" y="${cy - 4}" text-anchor="middle">${label}</text><text class="sh" x="${X(cx)}" y="${cy + 13}" text-anchor="middle">${T(id) || "–"}</text>`;
     const coil = (cx, col, label, id) => `<rect x="${X(cx) - 8}" y="123" width="16" height="44" rx="3" fill="${col}" fill-opacity=".3" stroke="${col}"/>
       <text class="st" x="${X(cx)}" y="112" text-anchor="middle">${label}${T(id) ? " " + T(id) : ""}</text>`;
+    // Both fans sit upstream of the exchanger (fresh-air fan after the preheater, extract fan in the extract stream).
     const fan = (cx, id) => {
       const rpm = this._num(id);
-      return `<circle cx="${X(cx)}" cy="145" r="16" fill="var(--card-background-color)" stroke="var(--divider-color)"/>
-        <g class="${run ? "sp-rot" : ""}"><path d="M${X(cx) - 12} 145H${X(cx) + 12}M${X(cx)} 133V157" stroke="var(--secondary-text-color)" stroke-width="2.5" stroke-linecap="round"/></g>
-        <text class="st" x="${X(cx)}" y="180" text-anchor="middle">${rpm === null ? "" : rpm.toLocaleString(this._hass.language) + " rpm"}</text>`;
+      return `<circle cx="${X(cx)}" cy="75" r="15" fill="var(--card-background-color)" stroke="var(--divider-color)"/>
+        <g class="${run ? "sp-rot" : ""}"><path d="M${X(cx) - 11} 75H${X(cx) + 11}M${X(cx)} 64V86" stroke="var(--secondary-text-color)" stroke-width="2.5" stroke-linecap="round"/></g>
+        <text class="st" x="${X(cx)}" y="50" text-anchor="middle">${rpm === null ? "" : rpm.toLocaleString(this._hass.language) + " rpm"}</text>`;
     };
     const probe = (cx, cy, ty, txt, id, col) => T(id) ? `<circle cx="${X(cx)}" cy="${cy}" r="3.5" fill="${col}" stroke="var(--card-background-color)" stroke-width="1.5"/>
       <text class="st" x="${X(cx)}" y="${ty}" text-anchor="middle">${txt} ${T(id)}</text>` : "";
@@ -755,8 +756,8 @@ class ProxonFwtBase extends HTMLElement {
       <text class="st" x="${X(340)}" y="198" text-anchor="middle">${this._t("exchanger")}</text>
       ${cool ? coil(190, CORAL, this._t("cond_s"), c.temp_condenser) + coil(490, BLUE, this._t("evap_s"), c.temp_evaporator)
         : coil(190, BLUE, this._t("evap_s"), c.temp_evaporator) + coil(490, CORAL, this._t("cond_s"), c.temp_condenser)}
-      ${fan(130, c.fan_speed_extract)}${fan(550, c.fan_speed_supply)}
-      ${probe(190, 75, 56, this._t("post_preheat_s"), c.temp_post_preheat, BLUE)}${probe(cool ? 428 : 252, 145, 165, this._t("pre_evap_s"), c.temp_pre_evaporator, BLUE)}${probe(cool ? 252 : 428, 145, 165, this._t("pre_cond_s"), c.temp_pre_condenser, CORAL)}
+      ${fan(215, c.fan_speed_supply)}${fan(500, c.fan_speed_extract)}
+      ${probe(190, 75, 34, this._t("post_preheat_s"), c.temp_post_preheat, BLUE)}${probe(cool ? 428 : 252, 145, 165, this._t("pre_evap_s"), c.temp_pre_evaporator, BLUE)}${probe(cool ? 252 : 428, 145, 165, this._t("pre_cond_s"), c.temp_pre_condenser, CORAL)}
       ${cool
         ? L([[314, 245], [180, 245], [180, 169]], CORAL, 1) + L([[200, 169], [200, 305], [326, 305]], CORAL, 1) + L([[354, 305], [480, 305], [480, 169]], BLUE, 1) + L([[500, 169], [500, 245], [366, 245]], BLUE, 1)
         : L([[366, 245], [500, 245], [500, 169]], CORAL, 1) + L([[480, 169], [480, 305], [354, 305]], CORAL, 1) + L([[326, 305], [200, 305], [200, 169]], BLUE, 1) + L([[180, 169], [180, 245], [314, 245]], BLUE, 1)}
