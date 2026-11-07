@@ -21,6 +21,7 @@ from .const import (
     CONF_BOOST_MINUTES,
     DEFAULT_BOOST_MINUTES,
     DOMAIN,
+    ECO_MODE_VALUES,
     MESSAGE_FLAGS,
     REG_BYPASS_STATE,
     REG_CAPABILITY_FLAGS,
@@ -86,6 +87,7 @@ BLOCK_HUMIDITY = "humidity"
 
 
 STATS_SAVE_INTERVAL = 300  # seconds between statistics writes
+BOOST_END_MAX_RETRIES = 5  # one retry per minute, then the boost is given up
 
 
 @dataclass
@@ -160,6 +162,9 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
         # PTC enable bits share one register: writes are read-modify-write, so they must not interleave.
         self._ptc_lock = asyncio.Lock()
         self._ptc_pending: int | None = None
+        # Start, end and expiry of a boost must not interleave (an extension would otherwise be wiped by a running end).
+        self._boost_lock = asyncio.Lock()
+        self._boost_end_fails = 0
         self._boost_store: Store = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}.boost")
         self._boost_cancel: CALLBACK_TYPE | None = None
         self._scan_interval = scan_interval
@@ -303,49 +308,69 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
 
     async def async_start_boost(self, minutes: float | None = None) -> None:
         """Run the fan at the highest level for a while, then put everything back."""
-        kind = boost_kind(self.data.capabilities, self.data.function_block)
-        if kind is None:
-            raise HomeAssistantError("Boost ventilation is not available in the current operating mode")
-        minutes = minutes or self.boost_minutes
-        func = self.data.function_block
-        if not self.boost.active:
-            if kind == "intensive":
-                await self.async_write_register(REG_FAN_INTENSIVE_WRITE, 1)
-            else:
-                auto_off = False
-                if func.get("fan_auto_read"):
-                    await self.async_write_register(REG_FAN_AUTO_WRITE, 0)
-                    auto_off = True
-                try:
-                    await self.async_write_register(REG_FAN_STAGE_WRITE, 4)
-                except ProxonModbusError:
-                    if auto_off:  # no boost is stored, so nothing would switch the automatic back on
-                        try:
-                            await self.async_write_register(REG_FAN_AUTO_WRITE, 1)
-                        except ProxonModbusError:
-                            _LOGGER.warning("Could not restore the fan automatic after a failed boost start")
-                    raise
-        self.boost.start(time.time(), minutes, kind, func.get("fan_stage_read"), bool(func.get("fan_auto_read")))
-        self._boost_store.async_delay_save(self.boost.as_dict, 1)
-        self._schedule_boost_end(minutes * 60)
-        self.async_update_listeners()
+        async with self._boost_lock:
+            kind = boost_kind(self.data.capabilities, self.data.function_block)
+            if kind is None:
+                raise HomeAssistantError("Boost ventilation is not available in the current operating mode")
+            minutes = minutes or self.boost_minutes
+            func = self.data.function_block
+            was_on = bool(func.get("fan_auto_read"))
+            if not self.boost.active:
+                if kind == "intensive":
+                    await self.async_write_register(REG_FAN_INTENSIVE_WRITE, 1)
+                else:
+                    auto_off = False
+                    if was_on:
+                        await self.async_write_register(REG_FAN_AUTO_WRITE, 0)
+                        auto_off = True
+                    try:
+                        await self.async_write_register(REG_FAN_STAGE_WRITE, 4)
+                    except ProxonModbusError:
+                        if auto_off:  # no boost is stored, so nothing would switch the automatic back on
+                            try:
+                                await self.async_write_register(REG_FAN_AUTO_WRITE, 1)
+                            except ProxonModbusError:
+                                _LOGGER.warning("Could not restore the fan automatic after a failed boost start")
+                        raise
+            self.boost.start(time.time(), minutes, kind, func.get("fan_stage_read"), was_on)
+            self._boost_end_fails = 0
+            self._boost_store.async_delay_save(self.boost.as_dict, 1)
+            self._schedule_boost_end(minutes * 60)
+            self.async_update_listeners()
 
     async def async_end_boost(self) -> None:
-        """Back to the state before the boost. Raises if the unit rejects the write; the boost then stays active."""
-        if not self.boost.active:
-            return
-        self.async_cancel_boost_timer()
-        try:
-            if self.boost.kind == "intensive":
-                await self.async_write_register(REG_FAN_INTENSIVE_WRITE, 0)
-            else:
-                if self.boost.stage is not None:
-                    await self.async_write_register(REG_FAN_STAGE_WRITE, self.boost.stage)
-                if self.boost.auto:
-                    await self.async_write_register(REG_FAN_AUTO_WRITE, 1)
-        except ProxonModbusError:
-            self._schedule_boost_end(60)  # retry
-            raise
+        """Back to the state before the boost. Raises if the unit rejects the write; the boost then stays active
+        and the end is retried for a few minutes."""
+        async with self._boost_lock:
+            if not self.boost.active:
+                return
+            self.async_cancel_boost_timer()
+            # A stage boost only makes sense in Eco mode; the intensive boost is tied to a capability flag instead.
+            mode = self.data.function_block.get("operating_mode_read")
+            still_applies = self.boost.kind == "intensive" or mode in ECO_MODE_VALUES
+            try:
+                if not still_applies:
+                    # The operating mode was changed during the boost: the stored stage no longer fits, don't write it back.
+                    _LOGGER.info("Boost ended without restoring the fan: operating mode changed meanwhile")
+                elif self.boost.kind == "intensive":
+                    await self.async_write_register(REG_FAN_INTENSIVE_WRITE, 0)
+                else:
+                    if self.boost.stage is not None:
+                        await self.async_write_register(REG_FAN_STAGE_WRITE, self.boost.stage)
+                    if self.boost.auto:
+                        await self.async_write_register(REG_FAN_AUTO_WRITE, 1)
+            except ProxonModbusError:
+                self._boost_end_fails += 1
+                if self._boost_end_fails < BOOST_END_MAX_RETRIES:
+                    self._schedule_boost_end(60)  # retry
+                else:
+                    _LOGGER.warning("Giving up restoring the fan after the boost; please check the unit")
+                    self._finish_boost()
+                raise
+            self._finish_boost()
+
+    def _finish_boost(self) -> None:
+        self._boost_end_fails = 0
         self.boost.clear()
         self._boost_store.async_delay_save(self.boost.as_dict, 1)
         self.async_update_listeners()
