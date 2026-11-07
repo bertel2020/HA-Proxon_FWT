@@ -707,7 +707,7 @@ class ProxonFwtBase extends HTMLElement {
 
   _t(key, ...args) {
     const lang = ((this._hass && this._hass.language) || "en").split("-")[0];
-    const txt = (TEXT[lang] || TEXT.en)[key] ?? TEXT.en[key] ?? key;
+    const txt = (TEXT[lang] || TEXT.en)[key] ?? TEXT.en[key] ?? esc(key); // unknown keys are raw entity states or options
     return args.length ? txt.replace(/\{(\d)\}/g, (m, i) => (args[i] !== undefined ? args[i] : m)) : txt;
   }
 
@@ -807,7 +807,7 @@ class ProxonFwtBase extends HTMLElement {
       : "";
     const buttons = opts.map((o) => {
       const meta = MODE_META[o] || { icon: "mdi:cog", color: "#8a8f98" };
-      return this._btn(`data-act="mode" data-v="${o}"`, cur === o && !locked ? "a" : "",
+      return this._btn(`data-act="mode" data-v="${esc(o)}"`, cur === o && !locked ? "a" : "",
         `${this._icon(meta.icon)}${this._t(o)}`, locked, `--mc:${meta.color}`);
     }).join("");
     const desc = readonly ? this._t("readonly") : cur ? this._t(`d_${cur}`) : "";
@@ -1009,7 +1009,7 @@ class ProxonFwtBase extends HTMLElement {
       return !c[k] || !this._ok(c[k]) || this._on(c[k]);
     };
     let buttons = FAN_STAGES.map(([opt, icon, label], i) =>
-      this._btn(`data-act="fan" data-v="${opt}"`, stageOk && !autoOn && sel.state === opt ? "a" : "",
+      this._btn(`data-act="fan" data-v="${esc(opt)}"`, stageOk && !autoOn && sel.state === opt ? "a" : "",
         `${this._icon(icon)}${label}`, !stageOk || !selectable(i), `--mc:${BLUE}`)).join("");
     buttons += this._btn(`data-act="fanauto"`, autoOn ? "a" : "", `${this._icon("mdi:fan-auto")}${this._t("auto")}`, !this._ok(c.fan_auto), `--mc:${GREEN}`);
     const current = autoOn ? this._t("auto") : stageOk ? `${this._t("stage")} ${FAN_STAGES.find(([o]) => o === sel.state)?.[2] ?? ""}` : this._t("automatic");
@@ -1058,7 +1058,7 @@ class ProxonFwtBase extends HTMLElement {
         ? `<div class="banner ${detail === "emergency" ? "r" : "w"}" style="margin-bottom:10px">${this._icon("mdi:alert-outline")}${this._t(detail)} – ${this._t("locked")}</div>` : "";
       const buttons = opts.map((o) => {
         const meta = MODE_META[o] || { icon: "mdi:cog", color: "#8a8f98" };
-        return this._btn(`data-act="mode" data-v="${o}"`, cur === o && !locked ? "a" : "",
+        return this._btn(`data-act="mode" data-v="${esc(o)}"`, cur === o && !locked ? "a" : "",
           `${this._icon(meta.icon)}<span class="lf">${this._t(o)}</span><span class="ls">${this._t(`ms_${o}`)}</span>`, locked, `--mc:${meta.color}`);
       }).join("");
       desc = readonly ? this._t("readonly") : cur ? this._t(`d_${cur}`) : "";
@@ -1075,7 +1075,7 @@ class ProxonFwtBase extends HTMLElement {
         return !c[k] || !this._ok(c[k]) || this._on(c[k]);
       };
       let buttons = FAN_STAGES.map(([opt, , label], i) =>
-        this._btn(`data-act="fan" data-v="${opt}"`, stageOk && !autoOn && fsel.state === opt ? "a" : "", label, !stageOk || !selectable(i), `--mc:${BLUE}`)).join("");
+        this._btn(`data-act="fan" data-v="${esc(opt)}"`, stageOk && !autoOn && fsel.state === opt ? "a" : "", label, !stageOk || !selectable(i), `--mc:${BLUE}`)).join("");
       buttons += this._btn(`data-act="fanauto"`, autoOn ? "a" : "", this._t("auto"), !this._ok(c.fan_auto), `--mc:${GREEN}`);
       current = autoOn ? this._t("auto") : stageOk ? `${this._t("stage")} ${FAN_STAGES.find(([o]) => o === fsel.state)?.[2] ?? ""}` : "";
       fanHtml = `<div class="lbl2">${this._t("fan_stage_l")}${!stageOk && c.fan_stage ? `<span class="tag">${this._t("fan_note")}</span>` : ""}</div>

@@ -194,3 +194,9 @@ test("styles fall back to a <style> tag without constructable stylesheets", () =
   const p = make();
   assert.match(p._styleTag(), /^<style>/);
 });
+
+test("unknown translation keys (raw entity states) are masked", () => {
+  const p = make();
+  assert.equal(p._t('<img src=x onerror="a">'), "&lt;img src=x onerror=&quot;a&quot;&gt;");
+  assert.equal(p._t("f_unknown").includes("<"), false);
+});
