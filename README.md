@@ -68,7 +68,7 @@ Einstellungen → Geräte & Dienste → Integration hinzufügen → **Proxon FWT
    - RTU: serielle Schnittstelle, Baudrate (Standard `9600`), Datenbits (`8`), Parität (Standard `E`/Even), Stopbits (`1`), Modbus-Unit-ID.
 2. Anzahl der Räume (1–16) und externen CO₂-/Feuchtesensoren (0–5) festlegen, für die Entities angelegt werden, ob am Gerät überhaupt **Kühlen verfügbar** ist (siehe unten) und auf welcher **Seite die Außenluft** liegt (Frischluft und Fortluft; das dreht das Schema in Karte und Panel).
 3. **Räume benennen:** Der nächste Schritt zeigt für jeden Raum ein Namensfeld und einen optionalen **Bereich** von Home Assistant. Vorgeschlagen werden die Namen, die schon vorhanden sind (bei einer bestehenden Einrichtung die bisherigen), und ein Bereich mit passendem Namen. Ein leerer Raumname überspringt einen nicht verbauten Raum. Hier lassen sich auch CO₂-/Feuchtesensoren einem Raum zuordnen.
-4. Später über den **Konfigurieren**-Button (Optionen) der Integration dasselbe Formular erneut öffnen, Anzahl, Abfrageintervall, Kühlverfügbarkeit, Außenseite, Filter-Intervall (in Tagen, Standard 180), einen optionalen Umluftfilter, die Dauer des Stoßlüftens (Standard 15 Minuten) sowie eigene Leistungs- und Außentemperatursensoren ändern, ohne die Integration neu einzurichten. Host, Port, serielle Parameter und Unit-ID lassen sich über ⋮ → **Neu konfigurieren** ändern.
+4. Später über den **Konfigurieren**-Button (Optionen) der Integration dasselbe Formular erneut öffnen, Anzahl, Abfrageintervall, Kühlverfügbarkeit, Außenseite, Filter-Intervall (in Tagen, Standard 180), einen optionalen Umluftfilter, die Standarddauer des Stoßlüftens (30 Minuten) sowie eigene Leistungs- und Außentemperatursensoren ändern, ohne die Integration neu einzurichten. Host, Port, serielle Parameter und Unit-ID lassen sich über ⋮ → **Neu konfigurieren** ändern.
 
 ## Entities
 
@@ -217,7 +217,7 @@ Die Zähler laufen in der Integration und überstehen Neustarts. Beim ersten Sta
 
 ## Stoßlüften
 
-Der Schalter **Stoßlüften** schaltet auf die höchste Stufe (Intensivlüftung im Komfort-Betrieb, sonst Lüfterstufe 4) und stellt nach der eingestellten Dauer (Optionen, Standard 15 Minuten) **automatisch** den vorherigen Zustand wieder her, einschließlich Lüfter-Automatik. Der Timer läuft in der Integration, braucht also weder das Panel noch eine Automation und überlebt einen Neustart von Home Assistant. Erneutes Einschalten verlängert die Zeit. Das Attribut `until` nennt das Ende. Der Schalter ist nicht verfügbar, wenn die Anlage in ihrer aktuellen Betriebsart keine höchste Stufe zulässt. Im Panel steht er unter Schnellaktionen.
+Der Schalter **Stoßlüften** schaltet auf die höchste Stufe (Intensivlüftung im Komfort-Betrieb, sonst Lüfterstufe 4) und stellt nach der gewählten Dauer **automatisch** den vorherigen Zustand wieder her, einschließlich Lüfter-Automatik. Der Timer läuft in der Integration, braucht also weder das Panel noch eine Automation und überlebt einen Neustart von Home Assistant. Der Schalter selbst nutzt die Standarddauer aus den Optionen (30 Minuten). Mit dem Dienst `proxon_modbus.start_boost` und dem Feld `minutes` (5–120) lässt sich die Dauer pro Aufruf wählen; das Panel bietet dafür die Knöpfe 15, 30 und 60 Minuten. Erneutes Einschalten verlängert die Zeit. Das Attribut `until` nennt das Ende. Der Schalter ist nicht verfügbar, wenn die Anlage in ihrer aktuellen Betriebsart keine höchste Stufe zulässt. Im Panel steht er unter Schnellaktionen.
 
 ## Dashboard-Karte
 

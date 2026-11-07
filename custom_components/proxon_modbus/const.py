@@ -59,7 +59,7 @@ CONF_OUTDOOR_ENTITY = "outdoor_entity"  # optional own outdoor temperature senso
 CONF_FILTER_INTERVAL = "filter_interval"  # days between device filter changes (maintenance bar)
 DEFAULT_FILTER_INTERVAL = 180
 CONF_BOOST_MINUTES = "boost_minutes"  # duration of the boost ventilation (Stoßlüften)
-DEFAULT_BOOST_MINUTES = 15
+DEFAULT_BOOST_MINUTES = 30
 CONF_RECIRC_FILTER = "recirc_filter"  # an optional recirculation filter is installed
 DEFAULT_RECIRC_FILTER = False
 

@@ -1,0 +1,15 @@
+start_boost:
+  target:
+    entity:
+      integration: proxon_modbus
+      domain: switch
+  fields:
+    minutes:
+      required: false
+      example: 30
+      selector:
+        number:
+          min: 5
+          max: 120
+          unit_of_measurement: min
+          mode: box

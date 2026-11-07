@@ -310,6 +310,15 @@
       }
     }
   },
+  "services": {
+    "start_boost": {
+      "name": "Stoßlüften starten",
+      "description": "Schaltet die Lüftung auf die höchste Stufe und stellt danach den vorherigen Zustand wieder her.",
+      "fields": {
+        "minutes": { "name": "Minuten", "description": "Dauer des Stoßlüftens. Ohne Angabe gilt die Dauer aus den Optionen der Integration." }
+      }
+    }
+  },
   "issues": {
     "filter_due": {
       "title": "Gerätefilter wechseln",

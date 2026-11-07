@@ -310,6 +310,15 @@
       }
     }
   },
+  "services": {
+    "start_boost": {
+      "name": "Start boost ventilation",
+      "description": "Runs the fan at the highest level and restores the previous state afterwards.",
+      "fields": {
+        "minutes": { "name": "Minutes", "description": "How long the boost lasts. Without a value the duration from the integration options is used." }
+      }
+    }
+  },
   "issues": {
     "filter_due": {
       "title": "Change the device filter",

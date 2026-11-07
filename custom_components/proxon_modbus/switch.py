@@ -5,9 +5,15 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+import voluptuous as vol
+
+import voluptuous as vol
+
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv, entity_platform
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import dt as dt_util
@@ -124,6 +130,12 @@ async def async_setup_entry(
 
     async_add_entities(entities)
 
+    entity_platform.async_get_current_platform().async_register_entity_service(
+        "start_boost",
+        {vol.Optional("minutes"): vol.All(vol.Coerce(int), vol.Range(min=5, max=120))},
+        "async_start_boost_service",
+    )
+
 
 class ProxonFunctionSwitch(ProxonCentralEntity, SwitchEntity):
     """A simple write-register / read-back-register switch."""
@@ -196,6 +208,10 @@ class ProxonBoostSwitch(ProxonCentralEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         await self.coordinator.async_start_boost()
+
+    async def async_start_boost_service(self, minutes: int | None = None) -> None:
+        """Service `proxon_modbus.start_boost`: boost for a chosen number of minutes."""
+        await self.coordinator.async_start_boost(minutes)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         await self.coordinator.async_end_boost()

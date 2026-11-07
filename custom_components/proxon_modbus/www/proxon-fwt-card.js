@@ -67,7 +67,7 @@ const TEXT = {
     ins_eff_t: "Rückwärmzahl niedrig", ins_eff_d: "Nur {0} %. Wärmetauscher und Filter prüfen.",
     ins_co2_t: "CO₂ erhöht", ins_co2_d: "{0}: {1} ppm. Lüften oder Lüfterstufe erhöhen.",
     ins_ok_t: "Alles unauffällig", ins_ok_eff: "Rückwärmzahl {0} %.", ins_ok_d: "Keine Fehler, Filter in Ordnung.",
-    quick: "Schnellaktionen", boost: "Stoßlüften", boost_end: "Stoßlüften beenden", boost_d_i: "Intensivlüftung ein", boost_d_s: "Stufe 4, bis du es beendest", boost_d_t: "Höchste Stufe für {0} Min., dann automatisch zurück", boost_until: "läuft bis {0} Uhr, dann automatisch zurück",
+    quick: "Schnellaktionen", boost: "Stoßlüften", boost_end: "Stoßlüften beenden", boost_d_i: "Intensivlüftung ein", boost_d_s: "Stufe 4, bis du es beendest", boost_d_t: "Dann automatisch zurück", boost_until: "bis {0} Uhr, dann automatisch zurück", boost_min: "{0} Min.",
     all_up: "Alle Räume +1 °C", all_down: "Alle Räume −1 °C",
     measure: "Messwerte", g_air: "Luft", g_circuit: "Kältekreis", g_drive: "Antriebe",
     maint: "Wartung und Statistik", rt_today: "Laufzeit heute", rt_total: "Laufzeit gesamt", starts_today: "Starts heute", starts_total: "Starts gesamt",
@@ -139,7 +139,7 @@ const TEXT = {
     ins_eff_t: "Heat recovery low", ins_eff_d: "Only {0} %. Check the heat exchanger and filters.",
     ins_co2_t: "CO₂ elevated", ins_co2_d: "{0}: {1} ppm. Ventilate or raise the fan stage.",
     ins_ok_t: "All clear", ins_ok_eff: "Heat recovery {0} %.", ins_ok_d: "No errors, filters fine.",
-    quick: "Quick actions", boost: "Boost ventilation", boost_end: "End boost ventilation", boost_d_i: "Intensive ventilation on", boost_d_s: "Stage 4 until you end it", boost_d_t: "Highest stage for {0} min, then back automatically", boost_until: "runs until {0}, then back automatically",
+    quick: "Quick actions", boost: "Boost ventilation", boost_end: "End boost ventilation", boost_d_i: "Intensive ventilation on", boost_d_s: "Stage 4 until you end it", boost_d_t: "Then back automatically", boost_until: "until {0}, then back automatically", boost_min: "{0} min",
     all_up: "All rooms +1 °C", all_down: "All rooms −1 °C",
     measure: "Measurements", g_air: "Air", g_circuit: "Refrigerant circuit", g_drive: "Drives",
     maint: "Maintenance and statistics", rt_today: "Runtime today", rt_total: "Runtime total", starts_today: "Starts today", starts_total: "Starts total",
@@ -235,6 +235,7 @@ ha-card { padding: 14px 16px; display: block; }
 .kpiw { container-type: inline-size; }
 .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
 @container (max-width: 640px) { .kpi { grid-template-columns: repeat(2, 1fr); } }
+@container (max-width: 520px) { .kpi .ic { width: 30px; height: 30px; } .kpi .k { gap: 8px; } }
 .kpi .k { display: flex; gap: 10px; align-items: center; min-width: 0; }
 .kpi .k > div:last-child { min-width: 0; }
 .kpi .lb { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -317,6 +318,7 @@ svg .sh { font-size: 13px; font-weight: 500; }
   background: var(--secondary-background-color); color: var(--primary-text-color); }
 .qa ha-icon { --mdc-icon-size: 22px; color: var(--primary-color); flex: none; }
 .qa span { display: grid; gap: 1px; } .qa b { font-weight: 500; font-size: 13px; } .qa small { font-size: 11px; color: var(--secondary-text-color); }
+.qa.bst { cursor: default; grid-column: span 2; } .qa.bst:hover { border-color: transparent; } .bch { display: flex !important; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .qa:hover { border-color: var(--primary-color); } .qa.a { border-color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 14%, transparent); }
 .mchips { display: flex; gap: 6px; flex-wrap: wrap; margin: -2px 0 10px; }
 .chw { position: relative; }
@@ -688,7 +690,7 @@ class ProxonFwtBase extends HTMLElement {
     const bypass = this._on(c.bypass_active);
     const power = this._num(this._powerId());
     const html = tile("mdi:thermometer", CORAL, this._t("supply_t"), this._temp(c.temp_supply_air)) +
-      tile("mdi:percent-circle-outline", GREEN, `${this._t("efficiency")} <span title="${this._t("eff_info")}">${this._icon("mdi:information-outline", 'class="info"')}</span>`, bypass ? this._t("bypass_short") : eff === null ? null : `${eff} %`) +
+      tile("mdi:percent-circle-outline", GREEN, this._t("efficiency"), bypass ? this._t("bypass_short") : eff === null ? null : `${eff} % <span title="${this._t("eff_info")}">${this._icon("mdi:information-outline", 'class="info"')}</span>`) +
       tile("mdi:flash", AMBER, this._t("power"), power === null ? null : this._fmt(power, power % 1 ? 1 : 0),
         (this._state(this._powerId()) || { attributes: {} }).attributes.unit_of_measurement || "W") +
       tile("mdi:weather-partly-cloudy", BLUE, this._t("outside"), this._temp(this._outdoorId()));
@@ -1415,14 +1417,19 @@ class ProxonFwtBase extends HTMLElement {
       if (mode === "timer") {
         const st = this._state(c.boost), until = st.attributes.until ? new Date(st.attributes.until) : null;
         active = st.state === "on";
-        sub = active && until
-          ? this._t("boost_until", until.toLocaleTimeString(this._hass.language, { hour: "2-digit", minute: "2-digit" }))
-          : this._t("boost_d_t", String(st.attributes.duration_minutes || 15));
+        if (!active) {
+          const dflt = Number(st.attributes.duration_minutes) || 30;
+          const chips = [15, 30, 60].map((m) => `<button class="fchip ${m === dflt ? "a" : ""}" data-act="boostmin" data-v="${m}">${this._t("boost_min", String(m))}</button>`).join("");
+          btns.push(`<div class="qa bst">${this._icon("mdi:weather-windy")}<span><b>${this._t("boost")}</b><small>${this._t("boost_d_t")}</small><span class="bch">${chips}</span></span></div>`);
+          sub = null;
+        } else {
+          sub = until ? this._t("boost_until", until.toLocaleTimeString(this._hass.language, { hour: "2-digit", minute: "2-digit" })) : "";
+        }
       } else {
         active = mode === "intensive" ? this._on(c.fan_intensive) : !!this._boost && this._state(c.fan_stage).state === "stage_4";
         sub = this._t(mode === "intensive" ? "boost_d_i" : "boost_d_s");
       }
-      btns.push(`<button class="qa ${active ? "a" : ""}" data-act="boost">${this._icon("mdi:weather-windy")}<span><b>${this._t(active ? "boost_end" : "boost")}</b><small>${sub}</small></span></button>`);
+      if (sub !== null) btns.push(`<button class="qa ${active ? "a" : ""}" data-act="boost">${this._icon("mdi:weather-windy")}<span><b>${this._t(active ? "boost_end" : "boost")}</b><small>${sub}</small></span></button>`);
     }
     if (d.rooms.length) {
       btns.push(`<button class="qa" data-act="allroom" data-v="1">${this._icon("mdi:thermometer-plus")}<span><b>${this._t("all_up")}</b></span></button>`);
@@ -1515,6 +1522,7 @@ class ProxonFwtBase extends HTMLElement {
       }
       case "rptc": call("switch", "toggle", { entity_id: this._d.rooms[Number(v)].ents.ptc_enable }); break;
       case "boost": this._toggleBoost(); break;
+      case "boostmin": { const c = this._d.central; if (c.boost) this._hass.callService("proxon_modbus", "start_boost", { entity_id: c.boost, minutes: Number(v) }); break; }
       case "allroom": for (const r of this._d.rooms) {
         const a = (this._state(r.climate) || {}).attributes || {};
         if (a.temperature == null) continue;
