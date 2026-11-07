@@ -49,7 +49,7 @@ const TEXT = {
     change_due: "Wechsel fällig", ok: "OK",
     mode_change: "Betriebsartwechsel", possible: "möglich", not_possible: "nicht möglich",
     write_error: "Letzter Schreibfehler",
-    heating_n: "heizen", of: "von", heats: "heizt", fine: "ok",
+    heating_n: "PTC aktiv", of: "von", heats: "PTC", fine: "ok",
     actual: "Ist", target: "Soll", adjustable: "Einstellbar",
     ptc: "PTC-Element", ptc_active: "aktiv", ptc_off: "aus", ptc_enabled: "PTC freigegeben",
     yes: "ja", no: "nein", co2: "CO₂", humidity: "Feuchte",
@@ -76,9 +76,9 @@ const TEXT = {
     no_stats: "Für diesen Zeitraum liegen keine Langzeitstatistiken vor.",
     year: "Jahresübersicht", year_sub: "12 Monate", y_runtime: "Laufzeit", y_energy: "Energie", y_starts: "Starts", y_note: "Die Monatswerte entstehen aus der Langzeitstatistik und füllen sich mit der Zeit. Energie ist eine Näherung aus der mittleren Leistung.", y_filter: "Filter getauscht", y_month: "Monat",
     legend_cool: "kühler als Soll", legend_ok: "im Soll", legend_warm: "wärmer als Soll", close: "Schließen",
-    rv_cards: "Karten", rv_cmp: "Vergleich", rv_list: "Liste", rf_all: "Alle", rf_heat: "Heizt", rf_dev: "Abweichung", rf_co2: "CO₂ hoch",
-    rs_avg: "Ø Raumtemperatur", rs_heat: "Heizen gerade", rs_co2: "CO₂ am höchsten", rs_rf: "Ø Feuchte", rs_none: "Keine Räume für diesen Filter.",
-    st_cool: "Kühl", st_warm: "Warm", st_ok: "Im Soll", st_heat: "Heizt", r_t24: "Temperatur 24 h", r_ago: "vor 24 h", r_now: "jetzt", r_details: "Details",
+    rv_cards: "Karten", rv_cmp: "Vergleich", rv_list: "Liste", rf_all: "Alle", rf_heat: "PTC aktiv", rf_dev: "Abweichung", rf_co2: "CO₂ hoch",
+    rs_avg: "Ø Raumtemperatur", rs_heat: "PTC aktiv", rs_co2: "CO₂ am höchsten", rs_rf: "Ø Feuchte", rs_none: "Keine Räume für diesen Filter.",
+    st_cool: "Unter Soll", st_warm: "Über Soll", st_ok: "Im Soll", st_heat: "PTC heizt", r_t24: "Temperatur 24 h", r_ago: "vor 24 h", r_now: "jetzt", r_details: "Details",
     r_tapnote: "Raum antippen für Details", r_noh: "Kein Verlauf verfügbar", r_set: "Soll {0}°",
     tip_hx: "Kreuzgegenstrom-Wärmetauscher: Warme Abluft heizt die kalte Frischluft vor, ohne dass sich beide mischen. Rückwärmzahl {0}.",
     tip_comp: "Kompressor – Details unter Diagnose", tip_fan: "Lüfter",
@@ -121,7 +121,7 @@ const TEXT = {
     change_due: "Replace soon", ok: "OK",
     mode_change: "Mode change", possible: "possible", not_possible: "not possible",
     write_error: "Last write error",
-    heating_n: "heating", of: "of", heats: "heating", fine: "ok",
+    heating_n: "PTC on", of: "of", heats: "PTC", fine: "ok",
     actual: "Actual", target: "Target", adjustable: "Adjustable",
     ptc: "PTC element", ptc_active: "active", ptc_off: "off", ptc_enabled: "PTC enabled",
     yes: "yes", no: "no", co2: "CO₂", humidity: "Humidity",
@@ -148,9 +148,9 @@ const TEXT = {
     no_stats: "No long-term statistics for this period.",
     year: "Yearly overview", year_sub: "12 months", y_runtime: "Runtime", y_energy: "Energy", y_starts: "Starts", y_note: "Monthly values come from the long-term statistics and fill up over time. Energy is estimated from the mean power.", y_filter: "Filter changed", y_month: "month",
     legend_cool: "cooler than target", legend_ok: "on target", legend_warm: "warmer than target", close: "Close",
-    rv_cards: "Cards", rv_cmp: "Compare", rv_list: "List", rf_all: "All", rf_heat: "Heating", rf_dev: "Deviation", rf_co2: "High CO₂",
-    rs_avg: "Avg. room temperature", rs_heat: "Heating now", rs_co2: "Highest CO₂", rs_rf: "Avg. humidity", rs_none: "No rooms match this filter.",
-    st_cool: "Cool", st_warm: "Warm", st_ok: "On target", st_heat: "Heating", r_t24: "Temperature 24 h", r_ago: "24 h ago", r_now: "now", r_details: "Details",
+    rv_cards: "Cards", rv_cmp: "Compare", rv_list: "List", rf_all: "All", rf_heat: "PTC on", rf_dev: "Deviation", rf_co2: "High CO₂",
+    rs_avg: "Avg. room temperature", rs_heat: "PTC on", rs_co2: "Highest CO₂", rs_rf: "Avg. humidity", rs_none: "No rooms match this filter.",
+    st_cool: "Below target", st_warm: "Above target", st_ok: "On target", st_heat: "PTC heating", r_t24: "Temperature 24 h", r_ago: "24 h ago", r_now: "now", r_details: "Details",
     r_tapnote: "Tap a room for details", r_noh: "No history available", r_set: "Target {0}°",
     tip_hx: "Cross-counterflow heat exchanger: warm extract air preheats the cold fresh air without mixing them. Heat recovery {0}.",
     tip_comp: "Compressor – details under Diagnostics", tip_fan: "Fan",
@@ -902,7 +902,7 @@ class ProxonFwtBase extends HTMLElement {
       const s = this._state(r.climate) || { attributes: {}, state: "unavailable" };
       const cur = s.attributes.current_temperature, tgt = s.attributes.temperature;
       const dev = cur != null && tgt != null ? cur - tgt : 0;
-      const heats = s.attributes.hvac_action ? s.attributes.hvac_action === "heating" : (tgt != null && cur != null && tgt - cur > 0.4);
+      const heats = this._on(r.ents.ptc_active); // rooms are not heated or cooled individually, only by the PTC element
       return { r, s, cur, tgt, dev, heats, co2: this._num(r.co2), rf: this._num(r.rf), ptcA: this._on(r.ents.ptc_active), ptcE: r.ents.ptc_enable };
     });
     const heating = info.filter((i) => i.heats).length;
@@ -1654,7 +1654,7 @@ class ProxonFwtPanel extends ProxonFwtBase {
     const s = this._state(r.climate) || { attributes: {}, state: "unavailable" };
     const a = s.attributes, cur = a.current_temperature, tgt = a.temperature;
     const dev = cur != null && tgt != null ? cur - tgt : 0;
-    const heats = a.hvac_action ? a.hvac_action === "heating" : (tgt != null && cur != null && tgt - cur > 0.4);
+    const heats = this._on(r.ents.ptc_active); // rooms are not heated or cooled individually, only by the PTC element
     const col = Math.abs(dev) <= 0.3 ? GREEN : dev < 0 ? BLUE : CORAL;
     const st = heats ? [this._t("st_heat"), "mdi:fire", CORAL] : Math.abs(dev) <= 0.3 ? [this._t("st_ok"), "mdi:check", GREEN]
       : dev < 0 ? [this._t("st_cool"), "mdi:arrow-down", BLUE] : [this._t("st_warm"), "mdi:arrow-up", CORAL];
@@ -1793,9 +1793,10 @@ class ProxonFwtPanel extends ProxonFwtBase {
   _render() {
     const d = this._d;
     const tab = ["overview", "rooms", "history", "diag"].includes(this._tab) ? this._tab : "overview";
-    const warn = d ? this._insights(d).filter((i) => i.lvl === "r" || i.lvl === "w").length : 0;
+    const bad = d ? this._insights(d).filter((i) => i.lvl === "r" || i.lvl === "w") : [];
+    const warn = (k) => bad.filter((i) => i.tab === k).length; // each hint counts on the tab it leads to
     const tabs = [["overview", "mdi:view-dashboard-outline"], ["rooms", "mdi:home-outline"], ["history", "mdi:chart-line"], ["diag", "mdi:stethoscope"]]
-      .map(([k, i]) => `<button class="tabbtn ${k === tab ? "a" : ""}" role="tab" aria-selected="${k === tab}" data-act="tab" data-v="${k}">${this._icon(i)}${this._t(`tab_${k}`)}${k === "diag" && warn ? `<span class="badge">${warn}</span>` : ""}</button>`).join("");
+      .map(([k, i]) => `<button class="tabbtn ${k === tab ? "a" : ""}" role="tab" aria-selected="${k === tab}" data-act="tab" data-v="${k}">${this._icon(i)}${this._t(`tab_${k}`)}${warn(k) ? `<span class="badge">${warn(k)}</span>` : ""}</button>`).join("");
     const head = `<div class="bar-top">
       <button class="round menu" data-act="menu" aria-label="Menu">${this._icon("mdi:menu")}</button>
       <div class="brand"><span class="logo"><img src="/proxon_modbus/icon.png" alt="" width="30" height="30"></span><div class="bt"><h1>Proxon FWT</h1><div class="sub">${this._subline(d)}</div></div></div><div class="grow"></div>
