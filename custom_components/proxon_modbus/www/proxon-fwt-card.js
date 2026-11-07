@@ -8,7 +8,7 @@
  * All entities are discovered automatically from the integration.
  */
 const DEFAULT_SECTIONS = ["mode", "air", "fan", "heatpump", "refrigerant", "status", "rooms"];
-const ALL_SECTIONS = [...DEFAULT_SECTIONS, "schema", "kpi", "alerts", "history"];
+const ALL_SECTIONS = [...DEFAULT_SECTIONS, "schema", "kpi", "alerts", "history", "runtime", "energy"];
 const GRID_SECTIONS = ["fan", "heatpump", "refrigerant", "status"];
 
 const TEXT = {
@@ -55,6 +55,26 @@ const TEXT = {
     yes: "ja", no: "nein", co2: "CO₂", humidity: "Feuchte",
     none: "Keine Anlage gefunden. Ist die Integration „Proxon FWT (Modbus)“ eingerichtet?",
     no_rooms: "Keine Räume konfiguriert.", no_history: "Keine Verlaufsdaten.",
+    tab_overview: "Übersicht", tab_rooms: "Räume", tab_history: "Verlauf", tab_diag: "Diagnose",
+    live_lost: "Keine Verbindung zur Anlage", since: "seit", hints: "Hinweise",
+    go_maint: "Zur Wartung", go_hist: "Verlauf ansehen", go_diag: "Diagnose",
+    ins_filter_now: "{0}: Wechsel fällig", ins_filter_now_d: "Die Anlage meldet einen fälligen Filterwechsel.",
+    ins_filter_soon: "{0} bald fällig", ins_filter_soon_d: "{0} von {1} Betriebsstunden erreicht.",
+    ins_cycle_t: "Wärmepumpe taktet häufig", ins_cycle_d: "{0} Starts seit 0 Uhr. Häufiges Takten belastet den Kompressor.",
+    ins_eff_t: "Rückwärmzahl niedrig", ins_eff_d: "Nur {0} %. Wärmetauscher und Filter prüfen.",
+    ins_co2_t: "CO₂ erhöht", ins_co2_d: "{0}: {1} ppm. Lüften oder Lüfterstufe erhöhen.",
+    ins_ok_t: "Alles unauffällig", ins_ok_eff: "Rückwärmzahl {0} %.", ins_ok_d: "Keine Fehler, Filter in Ordnung.",
+    quick: "Schnellaktionen", boost: "Stoßlüften", boost_end: "Stoßlüften beenden", boost_d_i: "Intensivlüftung ein", boost_d_s: "Stufe 4, bis du es beendest",
+    all_up: "Alle Räume +1 °C", all_down: "Alle Räume −1 °C",
+    measure: "Messwerte", g_air: "Luft", g_circuit: "Kältekreis", g_drive: "Antriebe",
+    maint: "Wartung und Statistik", left: "noch {0} h", rt_today: "Laufzeit heute", rt_total: "Laufzeit gesamt", starts_today: "Starts heute", starts_total: "Starts gesamt",
+    hist_30: "30 Tage", m_temp: "Temperaturen", runtime: "Wärmepumpen-Laufzeit", energy: "Energie pro Tag", day: "Tag",
+    energy_note: "Näherung aus der mittleren Tagesleistung (Ø W × 24 h).",
+    no_stats: "Für diesen Zeitraum liegen keine Langzeitstatistiken vor.",
+    legend_cool: "kühler als Soll", legend_ok: "im Soll", legend_warm: "wärmer als Soll", close: "Schließen",
+    tip_hx: "Wärmetauscher: Warme Abluft heizt die kalte Frischluft vor, ohne dass sich beide mischen. Rückwärmzahl {0}.",
+    tip_comp: "Kompressor – Details unter Diagnose", tip_fan: "Lüfter",
+    eff_info: "Anteil der Abluftwärme, der an die Frischluft übertragen wird: (Zuluft − Frischluft) ÷ (Abluft − Frischluft). Über 85 % ist gut.",
   },
   en: {
     mode: "Operating mode", air: "Air paths", fan: "Ventilation", heatpump: "Heat pump",
@@ -99,6 +119,26 @@ const TEXT = {
     yes: "yes", no: "no", co2: "CO₂", humidity: "Humidity",
     none: "No unit found. Is the \"Proxon FWT (Modbus)\" integration set up?",
     no_rooms: "No rooms configured.", no_history: "No history data.",
+    tab_overview: "Overview", tab_rooms: "Rooms", tab_history: "History", tab_diag: "Diagnostics",
+    live_lost: "No connection to the unit", since: "for", hints: "Hints",
+    go_maint: "Maintenance", go_hist: "Show history", go_diag: "Diagnostics",
+    ins_filter_now: "{0}: replace now", ins_filter_now_d: "The unit reports that a filter change is due.",
+    ins_filter_soon: "{0} due soon", ins_filter_soon_d: "{0} of {1} operating hours reached.",
+    ins_cycle_t: "Heat pump cycling often", ins_cycle_d: "{0} starts since midnight. Frequent cycling stresses the compressor.",
+    ins_eff_t: "Heat recovery low", ins_eff_d: "Only {0} %. Check the heat exchanger and filters.",
+    ins_co2_t: "CO₂ elevated", ins_co2_d: "{0}: {1} ppm. Ventilate or raise the fan stage.",
+    ins_ok_t: "All clear", ins_ok_eff: "Heat recovery {0} %.", ins_ok_d: "No errors, filters fine.",
+    quick: "Quick actions", boost: "Boost ventilation", boost_end: "End boost ventilation", boost_d_i: "Intensive ventilation on", boost_d_s: "Stage 4 until you end it",
+    all_up: "All rooms +1 °C", all_down: "All rooms −1 °C",
+    measure: "Measurements", g_air: "Air", g_circuit: "Refrigerant circuit", g_drive: "Drives",
+    maint: "Maintenance and statistics", left: "{0} h left", rt_today: "Runtime today", rt_total: "Runtime total", starts_today: "Starts today", starts_total: "Starts total",
+    hist_30: "30 days", m_temp: "Temperatures", runtime: "Heat pump runtime", energy: "Energy per day", day: "day",
+    energy_note: "Estimated from the mean daily power (avg W × 24 h).",
+    no_stats: "No long-term statistics for this period.",
+    legend_cool: "cooler than target", legend_ok: "on target", legend_warm: "warmer than target", close: "Close",
+    tip_hx: "Heat exchanger: warm extract air preheats the cold fresh air without mixing them. Heat recovery {0}.",
+    tip_comp: "Compressor – details under Diagnostics", tip_fan: "Fan",
+    eff_info: "Share of the extract air heat transferred to the fresh air: (supply − fresh) ÷ (extract − fresh). Above 85 % is good.",
   },
 };
 
@@ -119,6 +159,14 @@ const ROOM_ICONS = [
   [/büro|buero|office|arbeit/i, "mdi:desk"], [/flur|diele|hall/i, "mdi:door-open"],
   [/keller|cellar/i, "mdi:stairs-down"], [/gäste|gaeste|guest/i, "mdi:bed-double"], [/ess|dining/i, "mdi:table-furniture"],
 ];
+const METRIC_META = {
+  temp: { icon: "mdi:thermometer", unit: "°", label: "m_temp" },
+  power: { icon: "mdi:flash", unit: " W", label: "power" },
+  comp: { icon: "mdi:engine-outline", unit: " rpm", label: "compressor" },
+  eff: { icon: "mdi:percent-circle-outline", unit: " %", label: "efficiency" },
+  co2: { icon: "mdi:molecule-co2", unit: " ppm", label: "co2" },
+  rf: { icon: "mdi:water-percent", unit: " %", label: "humidity" },
+};
 const BLUE = "#378ADD", CORAL = "#D85A30", AMBER = "#f2a516", GREEN = "#3fa660";
 const BAD = ["unavailable", "unknown", undefined, null, ""];
 
@@ -221,6 +269,75 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .bar-top .title ha-icon { --mdc-icon-size: 26px; color: var(--primary-color); }
 .bar-top .grow { flex: 1; }
 .menu { display: none; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--divider-color); margin: 0 0 14px; overflow-x: auto; }
+.tabbtn { font: inherit; font-size: 14px; display: inline-flex; gap: 6px; align-items: center; padding: 10px 14px; border: 0; border-bottom: 2px solid transparent;
+  background: none; color: var(--secondary-text-color); cursor: pointer; white-space: nowrap; }
+.tabbtn ha-icon { --mdc-icon-size: 20px; }
+.tabbtn.a { color: var(--primary-color); border-bottom-color: var(--primary-color); font-weight: 500; }
+.badge { min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: #f2a516; color: #fff; font-size: 11px; display: inline-grid; place-items: center; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.logo { width: 34px; height: 34px; border-radius: 10px; background: var(--primary-color); color: var(--text-primary-color, #fff); display: grid; place-items: center; flex: none; }
+.logo ha-icon { --mdc-icon-size: 20px; }
+.bt h1 { font-size: 20px; font-weight: 500; margin: 0; line-height: 1.2; }
+.sub { font-size: 13px; color: var(--secondary-text-color); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.sub b { font-weight: 500; color: var(--primary-text-color); }
+.sub .sep { opacity: .5; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dc, #8a8f98); flex: none; }
+.ins { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 12px; border-left: 4px solid var(--ic);
+  background: color-mix(in srgb, var(--ic) 12%, transparent); }
+.ins > ha-icon { --mdc-icon-size: 22px; color: var(--ic); flex: none; }
+.ins .it { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.ins .it b { font-size: 14px; font-weight: 500; }
+.ins .it small { font-size: 12px; color: var(--secondary-text-color); }
+.ins.r { --ic: #db4437; } .ins.w { --ic: #f2a516; } .ins.i { --ic: #3d8be0; } .ins.o { --ic: #3fa660; }
+.qgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.qa { font: inherit; text-align: left; display: flex; gap: 10px; align-items: center; padding: 10px 12px; border: 1.5px solid transparent; border-radius: 12px; cursor: pointer;
+  background: var(--secondary-background-color); color: var(--primary-text-color); }
+.qa ha-icon { --mdc-icon-size: 22px; color: var(--primary-color); flex: none; }
+.qa span { display: grid; gap: 1px; } .qa b { font-weight: 500; font-size: 13px; } .qa small { font-size: 11px; color: var(--secondary-text-color); }
+.qa:hover { border-color: var(--primary-color); } .qa.a { border-color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 14%, transparent); }
+.mchips { display: flex; gap: 6px; flex-wrap: wrap; margin: -2px 0 10px; }
+.chw { position: relative; }
+.tip { position: absolute; top: 4px; pointer-events: none; z-index: 2; font-size: 12px; padding: 6px 10px; border-radius: 8px; white-space: nowrap;
+  background: var(--card-background-color); border: 1px solid var(--divider-color); box-shadow: 0 2px 8px rgba(0,0,0,.18); }
+.tip b { font-weight: 600; } .tip > b { display: block; margin-bottom: 2px; }
+.tip i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.sk { border-radius: 10px; background: linear-gradient(90deg, var(--secondary-background-color) 25%, color-mix(in srgb, var(--divider-color) 60%, var(--secondary-background-color)) 50%, var(--secondary-background-color) 75%);
+  background-size: 200% 100%; animation: sk 1.3s linear infinite; }
+@keyframes sk { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+.mtgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 4px 24px; }
+.mg { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; color: var(--secondary-text-color); margin: 4px 0; }
+.mr { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 6px 0; border-top: 1px solid var(--divider-color); }
+.mr b { font-weight: 500; font-variant-numeric: tabular-nums; }
+.mrow { margin-bottom: 14px; } .mh { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; }
+.mh > span { display: flex; align-items: center; gap: 8px; } .mh ha-icon { --mdc-icon-size: 18px; color: var(--secondary-text-color); } .mh b { margin-left: auto; font-weight: 500; }
+.pbar { height: 8px; border-radius: 4px; background: var(--secondary-background-color); overflow: hidden; margin-bottom: 4px; }
+.pbar i { display: block; height: 100%; border-radius: 4px; }
+.msep { border-top: 1px solid var(--divider-color); padding-top: 8px; margin-top: 4px; }
+.scrim { position: fixed; inset: 0; z-index: 19; background: rgba(0,0,0,.35); }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100%); z-index: 20; overflow: auto; padding: 16px;
+  background: var(--card-background-color); box-shadow: -4px 0 24px rgba(0,0,0,.25); }
+.drawer .dh { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 500; margin-bottom: 8px; }
+.drawer .dh .grow { flex: 1; }
+.rlegend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--secondary-text-color); margin: 10px 0 0; align-items: center; }
+.rlegend span { display: inline-flex; gap: 4px; align-items: center; } .rlegend ha-icon { --mdc-icon-size: 14px; }
+.tile .dv { --mdc-icon-size: 14px; }
+.hot { cursor: pointer; }
+.hot:hover polygon, .hot:hover circle { stroke: var(--primary-color); }
+.info { --mdc-icon-size: 14px; vertical-align: -2px; color: var(--secondary-text-color); cursor: help; }
+button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; border-radius: 8px; }
+@media (max-width: 640px) {
+  .panel { padding: 12px 12px 84px; }
+  .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; margin: 0; justify-content: space-around; overflow: visible;
+    background: var(--card-background-color); border-top: 1px solid var(--divider-color); border-bottom: 0; padding-bottom: env(safe-area-inset-bottom, 0); }
+  .tabbtn { flex: 1; flex-direction: column; gap: 2px; font-size: 11px; padding: 8px 2px 6px; border-bottom: 0; border-top: 2px solid transparent; position: relative; }
+  .tabbtn.a { border-top-color: var(--primary-color); }
+  .badge { position: absolute; top: 2px; left: 55%; }
+  .hm { display: none; }
+  .bar-top .vbtn { font-size: 0; padding: 6px 8px; gap: 0; }
+  .bt h1 { font-size: 18px; }
+}
 :host([narrow]) .menu { display: inline-flex; }
 `;
 
@@ -233,6 +350,12 @@ class ProxonFwtBase extends HTMLElement {
     this._sig = "";
     this._config = {};
     this.shadowRoot.addEventListener("click", (ev) => this._click(ev));
+    this.shadowRoot.addEventListener("keydown", (ev) => {
+      if ((ev.key === "Enter" || ev.key === " ") && ev.target && ev.target.getAttribute && ev.target.getAttribute("role") === "button") {
+        ev.preventDefault();
+        this._click(ev);
+      }
+    });
   }
 
   set hass(hass) {
@@ -304,11 +427,11 @@ class ProxonFwtBase extends HTMLElement {
     const sig = ids.filter(Boolean).map((i) => {
       const s = h.states[i];
       return s ? `${s.state}|${s.attributes.temperature}|${s.attributes.current_temperature}|${s.attributes.preferred_stage}|${s.attributes.last_restore}` : "-";
-    }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._histStamp || 0}|${this._histRange || "24h"}|${this._wb || 0}|${this._settingsStamp || 0}`;
+    }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._hver || 0}|${this._histRange || "24h"}|${this._metric || ""}|${this._tab || ""}|${this._drawer ? 1 : 0}|${this._boost ? 1 : 0}|${this._wb || 0}|${this._settingsStamp || 0}`;
     if (sig === this._sig) return;
     this._sig = sig;
     this._render();
-    if (d && this._wantsHistory() && !this._histBusy && Date.now() - (this._histStamp || 0) > 300000) this._loadHistory();
+    this._bindChart();
   }
 
   _wantsHistory() {
@@ -342,9 +465,10 @@ class ProxonFwtBase extends HTMLElement {
 
   // ---- helpers ----------------------------------------------------------
 
-  _t(key) {
+  _t(key, ...args) {
     const lang = ((this._hass && this._hass.language) || "en").split("-")[0];
-    return (TEXT[lang] || TEXT.en)[key] ?? TEXT.en[key] ?? key;
+    const txt = (TEXT[lang] || TEXT.en)[key] ?? TEXT.en[key] ?? key;
+    return args.length ? txt.replace(/\{(\d)\}/g, (m, i) => (args[i] !== undefined ? args[i] : m)) : txt;
   }
 
   _state(id) {
@@ -439,8 +563,8 @@ class ProxonFwtBase extends HTMLElement {
     const c = d.central;
     const out = [];
     if (this._on(c.error_system)) out.push(["r", "mdi:alert-circle-outline", this._t("error")]);
-    if (this._on(c.filter_device)) out.push(["w", "mdi:air-filter", `${this._t("filter_device")}: ${this._t("change_due")}`]);
-    if (this._on(c.filter_recirculation)) out.push(["w", "mdi:air-filter", `${this._t("filter_recirc")}: ${this._t("change_due")}`]);
+    if (!this._drawerMode && this._on(c.filter_device)) out.push(["w", "mdi:air-filter", `${this._t("filter_device")}: ${this._t("change_due")}`]);
+    if (!this._drawerMode && this._on(c.filter_recirculation)) out.push(["w", "mdi:air-filter", `${this._t("filter_recirc")}: ${this._t("change_due")}`]);
     const det = this._ok(c.operating_mode_state) ? this._state(c.operating_mode_state).state : null;
     if (det === "emergency" || det === "frost_protection") out.push([det === "emergency" ? "r" : "w", "mdi:alert-outline", this._t(det)]);
     if (this._ok(c.last_write_error) && this._state(c.last_write_error).state !== "none") {
@@ -458,7 +582,7 @@ class ProxonFwtBase extends HTMLElement {
     const bypass = this._on(c.bypass_active);
     const power = this._num(this._powerId());
     const html = tile("mdi:thermometer", CORAL, this._t("supply_t"), this._temp(c.temp_supply_air)) +
-      tile("mdi:percent-circle-outline", GREEN, this._t("efficiency"), bypass ? this._t("bypass_short") : eff === null ? null : `${eff} %`) +
+      tile("mdi:percent-circle-outline", GREEN, `${this._t("efficiency")} <span title="${this._t("eff_info")}">${this._icon("mdi:information-outline", 'class="info"')}</span>`, bypass ? this._t("bypass_short") : eff === null ? null : `${eff} %`) +
       tile("mdi:flash", AMBER, this._t("power"), power === null ? null : this._fmt(power, power % 1 ? 1 : 0),
         (this._state(this._powerId()) || { attributes: {} }).attributes.unit_of_measurement || "W") +
       tile("mdi:weather-partly-cloudy", BLUE, this._t("outside"), this._temp(this._outdoorId()));
@@ -524,7 +648,7 @@ class ProxonFwtBase extends HTMLElement {
     const svg = `<svg width="100%" viewBox="0 0 680 340" role="img" aria-label="${this._t("schema")}" class="${run ? "" : "off"}">
       <defs><marker id="sa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
       <rect x="100" y="14" width="480" height="312" rx="16" fill="var(--secondary-background-color)" stroke="var(--divider-color)" stroke-dasharray="4 4"/>
-      <polygon points="${[[340, 40], [410, 110], [340, 180], [270, 110]].map(([x, y]) => `${X(x)},${y}`).join(" ")}" fill="var(--card-background-color)" stroke="var(--divider-color)"/>
+      <g><title>${this._t("tip_hx", this._efficiency() === null ? "–" : this._efficiency() + " %")}</title><polygon points="${[[340, 40], [410, 110], [340, 180], [270, 110]].map(([x, y]) => `${X(x)},${y}`).join(" ")}" fill="var(--card-background-color)" stroke="var(--divider-color)"/></g>
       <g ${bypass ? 'opacity=".25"' : ""}>${L([[305, 75], [340, 110]], BLUE, 1)}${L([[340, 110], [375, 145]], CORAL, 1)}${L([[375, 75], [340, 110]], CORAL, 1)}${L([[340, 110], [305, 145]], BLUE, 1)}</g>
       ${L([[92, 75], [303, 75]], BLUE, 0, 1)}${L([[588, 75], [377, 75]], CORAL, 0, 1)}${L([[377, 145], [588, 145]], CORAL, 0, 1)}${L([[303, 145], [92, 145]], BLUE, 0, 1)}
       ${bypass ? L([[250, 75], [250, 48], [430, 48], [430, 143]], BLUE, 1, 1) : ""}
@@ -538,7 +662,7 @@ class ProxonFwtBase extends HTMLElement {
         ? L([[314, 245], [180, 245], [180, 169]], CORAL, 1) + L([[200, 169], [200, 305], [326, 305]], CORAL, 1) + L([[354, 305], [480, 305], [480, 169]], BLUE, 1) + L([[500, 169], [500, 245], [366, 245]], BLUE, 1)
         : L([[366, 245], [500, 245], [500, 169]], CORAL, 1) + L([[480, 169], [480, 305], [354, 305]], CORAL, 1) + L([[326, 305], [200, 305], [200, 169]], BLUE, 1) + L([[180, 169], [180, 245], [314, 245]], BLUE, 1)}
       <polygon points="${[[354, 305], [340, 297], [326, 305], [340, 313]].map(([x, y]) => `${X(x)},${y}`).join(" ")}" fill="var(--card-background-color)" stroke="var(--divider-color)"/>
-      <circle cx="${X(340)}" cy="245" r="26" fill="var(--card-background-color)" stroke="${BLUE}" stroke-width="1.5"/>
+      <g class="hot" data-act="tab" data-v="diag" role="button" tabindex="0" aria-label="${this._t("tip_comp")}"><title>${this._t("tip_comp")}</title><circle cx="${X(340)}" cy="245" r="26" fill="var(--card-background-color)" stroke="${BLUE}" stroke-width="1.5"/></g>
       <text class="sh" x="${X(340)}" y="243" text-anchor="middle">${rpm === null ? "–" : rpm.toLocaleString(this._hass.language)}</text><text class="st" x="${X(340)}" y="258" text-anchor="middle">rpm</text>
       <text class="st" x="${X(340)}" y="281" text-anchor="middle">${this._t("compressor")}${T(c.temp_compressor) ? " " + T(c.temp_compressor) : ""}</text>
       ${pill(48, 75, this._t("fresh"), c.temp_fresh_air, BLUE)}${pill(48, 145, this._t("exhaust"), c.temp_exhaust_air, BLUE)}
@@ -643,6 +767,23 @@ class ProxonFwtBase extends HTMLElement {
     return `<ha-card>${this._header("mdi:shield-check-outline", this._t("status"))}${html.replace('class="row"', 'class="row first"')}</ha-card>`;
   }
 
+  _roomDetail(sel) {
+    const a = sel.s.attributes;
+    const unavailable = sel.s.state === "unavailable";
+    return `<div class="det"><div class="dtop"><div class="cur"><div class="lb" style="font-weight:400">${sel.r.name} · ${this._t("actual")}</div>${sel.cur == null ? "–" : this._fmt(sel.cur) + "°"}</div>
+      <div class="adj">${this._btn('data-act="down"', "round", this._icon("mdi:minus"), unavailable)}
+      <div style="text-align:center"><div class="lb">${this._t("target")}</div><div style="font-size:22px;font-weight:500">${sel.tgt == null ? "–" : this._fmt(sel.tgt, 0) + "°"}</div></div>
+      ${this._btn('data-act="up"', "round", this._icon("mdi:plus"), unavailable)}</div></div>
+      ${a.min_temp != null ? `<div class="note">${this._t("adjustable")} ${this._fmt(a.min_temp, 0)}–${this._fmt(a.max_temp, 0)} °C</div>` : ""}
+      <div class="dgrid">
+        ${sel.co2 != null ? `<div class="k"><div class="lb">${this._t("co2")}</div><div class="v small">${Math.round(sel.co2)} ppm</div></div>` : ""}
+        ${sel.rf != null ? `<div class="k"><div class="lb">${this._t("humidity")}</div><div class="v small">${Math.round(sel.rf)} %</div></div>` : ""}
+        ${sel.r.ents.ptc_active ? `<div class="k"><div class="lb">${this._t("ptc")}</div><div class="v small">${sel.ptcA ? this._t("ptc_active") : this._t("ptc_off")}</div></div>` : ""}
+        ${sel.ptcE ? `<div class="k" style="display:flex;align-items:center;gap:8px"><div><div class="lb">${this._t("ptc_enabled")}</div><div class="v small">${this._on(sel.ptcE) ? this._t("yes") : this._t("no")}</div></div>
+          <span class="sp" style="margin-left:auto"><ha-switch data-act="ptc" ${this._on(sel.ptcE) ? "checked" : ""} ${this._ok(sel.ptcE) ? "" : "disabled"}></ha-switch></span></div>` : ""}
+      </div></div>`;
+  }
+
   _sec_rooms(d) {
     const rooms = d.rooms;
     if (!rooms.length) return `<ha-card>${this._header("mdi:home-outline", this._t("rooms"))}<div class="note">${this._t("no_rooms")}</div></ha-card>`;
@@ -663,47 +804,22 @@ class ProxonFwtBase extends HTMLElement {
     let list;
     if (this._view === "tiles") {
       list = `<div class="tiles">${info.map((i, n) => `<button class="tile ${n === this._room ? "s" : ""}" style="${tint(i)}" data-act="room" data-v="${n}">
-        <div class="n">${this._icon(this._roomIcon(i.r.name))}${i.r.name}</div><div class="t">${i.cur == null ? "–" : this._fmt(i.cur) + "°"}</div>
+        <div class="n">${this._icon(this._roomIcon(i.r.name))}${i.r.name}${Math.abs(i.dev) > 0.3 ? this._icon(i.dev < 0 ? "mdi:arrow-down" : "mdi:arrow-up", 'class="dv"') : ""}</div><div class="t">${i.cur == null ? "–" : this._fmt(i.cur) + "°"}</div>
         <div class="lb">${this._t("target")} ${i.tgt == null ? "–" : this._fmt(i.tgt, 0) + "°"}</div>
         <div class="chips"><span class="chip ${i.heats ? "w" : "g"}">${this._icon(i.heats ? "mdi:fire" : "mdi:check")}${i.heats ? this._t("heats") : this._t("fine")}</span>
         ${i.ptcA ? `<span class="chip w">${this._icon("mdi:lightning-bolt")}PTC</span>` : ""}
         ${i.co2 != null ? `<span class="chip ${co2c(i.co2)}">${this._icon("mdi:molecule-co2")}${Math.round(i.co2)}</span>` : ""}</div></button>`).join("")}</div>`;
     } else {
-      list = info.map((i, n) => `<div class="rw ${n === this._room ? "s" : ""}" style="${tint(i)}" data-act="room" data-v="${n}">
+      list = info.map((i, n) => `<div class="rw ${n === this._room ? "s" : ""}" style="${tint(i)}" role="button" tabindex="0" data-act="room" data-v="${n}">
         <span>${this._icon(this._roomIcon(i.r.name))}${i.r.name}</span><span class="lb">${[i.co2 != null ? `${Math.round(i.co2)} ppm` : "", i.rf != null ? `${Math.round(i.rf)} %` : ""].filter(Boolean).join(" · ")}</span>
         <span class="chip ${i.heats ? "w" : "g"}">${i.heats ? this._t("heats") : this._t("fine")}</span>
         <b>${i.cur == null ? "–" : this._fmt(i.cur) + "°"} <span class="lb">→ ${i.tgt == null ? "–" : this._fmt(i.tgt, 0) + "°"}</span></b></div>`).join("");
     }
-    const sel = info[this._room];
-    const a = sel.s.attributes;
-    const unavailable = sel.s.state === "unavailable";
-    const det = `<div class="det"><div class="dtop"><div class="cur"><div class="lb" style="font-weight:400">${sel.r.name} · ${this._t("actual")}</div>${sel.cur == null ? "–" : this._fmt(sel.cur) + "°"}</div>
-      <div class="adj">${this._btn('data-act="down"', "round", this._icon("mdi:minus"), unavailable)}
-      <div style="text-align:center"><div class="lb">${this._t("target")}</div><div style="font-size:22px;font-weight:500">${sel.tgt == null ? "–" : this._fmt(sel.tgt, 0) + "°"}</div></div>
-      ${this._btn('data-act="up"', "round", this._icon("mdi:plus"), unavailable)}</div></div>
-      ${a.min_temp != null ? `<div class="note">${this._t("adjustable")} ${this._fmt(a.min_temp, 0)}–${this._fmt(a.max_temp, 0)} °C</div>` : ""}
-      <div class="dgrid">
-        ${sel.co2 != null ? `<div class="k"><div class="lb">${this._t("co2")}</div><div class="v small">${Math.round(sel.co2)} ppm</div></div>` : ""}
-        ${sel.rf != null ? `<div class="k"><div class="lb">${this._t("humidity")}</div><div class="v small">${Math.round(sel.rf)} %</div></div>` : ""}
-        ${sel.r.ents.ptc_active ? `<div class="k"><div class="lb">${this._t("ptc")}</div><div class="v small">${sel.ptcA ? this._t("ptc_active") : this._t("ptc_off")}</div></div>` : ""}
-        ${sel.ptcE ? `<div class="k" style="display:flex;align-items:center;gap:8px"><div><div class="lb">${this._t("ptc_enabled")}</div><div class="v small">${this._on(sel.ptcE) ? this._t("yes") : this._t("no")}</div></div>
-          <span class="sp" style="margin-left:auto"><ha-switch data-act="ptc" ${this._on(sel.ptcE) ? "checked" : ""} ${this._ok(sel.ptcE) ? "" : "disabled"}></ha-switch></span></div>` : ""}
-      </div></div>`;
+    const det = this._drawerMode ? "" : this._roomDetail(info[this._room]);
     return `<ha-card><div class="h">${this._icon("mdi:home-outline")}${this._t("rooms")}<span class="lb" style="margin-left:6px">${heating} ${this._t("of")} ${rooms.length} ${this._t("heating_n")}</span>
       <span class="r"><span class="lb">${this._t("heatmap")}</span>
       <button class="vbtn ${this._view === "tiles" ? "a" : ""}" data-act="view" data-v="tiles">${this._icon("mdi:view-grid-outline")}${this._t("tiles")}</button>
-      <button class="vbtn ${this._view === "list" ? "a" : ""}" data-act="view" data-v="list">${this._icon("mdi:format-list-bulleted")}${this._t("list")}</button></span></div>${list}${det}</ha-card>`;
-  }
-
-  _sec_history(d) {
-    const range = this._histRange || "24h";
-    const series = this._series || [];
-    let body;
-    if (range === "7d") body = this._hpBars();
-    else body = series.some((s) => s.pts.length > 1) ? this._chart(series) : `<div class="note">${this._t("no_history")}</div>`;
-    const btn = (v, label) => `<button class="vbtn ${range === v ? "a" : ""}" data-act="hrange" data-v="${v}">${label}</button>`;
-    return `<ha-card><div class="h">${this._icon("mdi:chart-line")}${this._t("history")}
-      <span class="r">${btn("24h", this._t("hist_24"))}${btn("7d", this._t("hist_7"))}</span></div>${body}</ha-card>`;
+      <button class="vbtn ${this._view === "list" ? "a" : ""}" data-act="view" data-v="list">${this._icon("mdi:format-list-bulleted")}${this._t("list")}</button></span></div>${list}<div class="rlegend"><span>${this._icon("mdi:arrow-down")}${this._t("legend_cool")}</span><span>${this._icon("mdi:check")}${this._t("legend_ok")}</span><span>${this._icon("mdi:arrow-up")}${this._t("legend_warm")}</span></div>${det}</ha-card>`;
   }
 
   // Merge the "on" periods of one or more binary sensors into [start, end] intervals (seconds).
@@ -760,72 +876,405 @@ class ProxonFwtBase extends HTMLElement {
       <div class="legend"><span><i style="background:#3fa660"></i>${this._t("hp_per_day")} · ${this._t("hp_starts")}</span></div>`;
   }
 
-  _chart(series) {
-    const W = Math.max(300, (this.clientWidth || 680) - 80), H = 170, pl = 34, pr = 8, pt = 8, pb = 18;
-    const all = series.flatMap((s) => s.pts);
-    const t0 = Math.min(...all.map((p) => p[0])), t1 = Math.max(...all.map((p) => p[0]));
-    let lo = Math.min(...all.map((p) => p[1])), hi = Math.max(...all.map((p) => p[1]));
-    lo = Math.floor(lo - 1); hi = Math.ceil(hi + 1);
-    const x = (t) => pl + ((t - t0) / Math.max(1, t1 - t0)) * (W - pl - pr);
-    const y = (v) => pt + (1 - (v - lo) / Math.max(1, hi - lo)) * (H - pt - pb);
-    const grid = [0, 1, 2, 3].map((i) => {
-      const v = lo + ((hi - lo) * i) / 3;
-      return `<line x1="${pl}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--divider-color)" stroke-width=".6"/><text class="st" x="${pl - 6}" y="${y(v) + 4}" text-anchor="end" style="font-size:11px">${Math.round(v)}°</text>`;
-    }).join("");
-    const bands = (this._hpIv || []).map(([a, b]) => {
-      const s0 = Math.max(a, t0), s1 = Math.min(b, t1);
-      return s1 > s0 ? `<rect x="${x(s0).toFixed(1)}" y="${pt}" width="${Math.max(1, x(s1) - x(s0)).toFixed(1)}" height="${H - pt - pb}" fill="#3fa660" opacity=".14"/>` : "";
-    }).join("");
-    const lines = series.map((s) => `<polyline fill="none" stroke="${s.color}" stroke-width="1.8" stroke-linejoin="round" points="${s.pts.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>`).join("");
-    const hours = [0, 6, 12, 18, 24].map((h) => {
-      const t = t0 + ((t1 - t0) * h) / 24;
-      return `<text class="st" x="${x(t)}" y="${H - 3}" text-anchor="middle" style="font-size:11px">${new Date(t * 1000).toLocaleTimeString(this._hass.language, { hour: "2-digit", minute: "2-digit" })}</text>`;
-    }).join("");
-    const legend = series.map((s) => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join("");
-    return `<svg style="max-width:100%" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("history")}">${bands}${grid}${lines}${hours}</svg><div class="legend">${legend}${this._hpIv && this._hpIv.length ? `<span><i style="background:#3fa660;opacity:.4"></i>${this._t("hp_runs")}</span>` : ""}</div>`;
+  // ---- history: data ----------------------------------------------------
+
+  // Cached async loader: returns the cached value, `undefined` while the first load runs, `null` on failure.
+  _hget(key, loader) {
+    const cache = (this._hc = this._hc || {});
+    const e = cache[key];
+    if (e && (e.busy || Date.now() - e.t < 300000)) return e.v;
+    cache[key] = { t: e ? e.t : 0, v: e ? e.v : undefined, busy: true };
+    const done = (v) => {
+      cache[key] = { t: Date.now(), v };
+      this._hver = (this._hver || 0) + 1;
+      this._update();
+    };
+    loader().then(done, () => done(null));
+    return cache[key].v;
   }
 
-  async _loadHistory() {
-    const c = this._d && this._d.central;
-    if (!c) return;
-    this._histBusy = true;
-    const defs = [
-      [c.temp_supply_air, this._t("supply_t"), CORAL],
-      [c.temp_extract_air, this._t("extract"), AMBER],
-      [c.temp_fresh_air, this._t("fresh"), BLUE],
-    ].filter(([id]) => id);
-    const out = this._outdoorId();
-    if (out && !defs.some(([id]) => id === out)) defs.push([out, this._t("outside"), "#7e57c2"]);
-    try {
-      const end = new Date(), start = new Date(end.getTime() - 24 * 3600 * 1000);
-      const res = await this._hass.callWS({
-        type: "history/history_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
-        entity_ids: defs.map(([id]) => id), minimal_response: true, no_attributes: true, significant_changes_only: false,
-      });
-      this._series = defs.map(([id, label, color]) => ({
-        label, color,
-        pts: (res[id] || []).map((p) => [p.lu ?? Date.parse(p.last_updated) / 1000, Number(p.s ?? p.state)]).filter(([t, v]) => !isNaN(t) && !isNaN(v)),
-      }));
-    } catch (err) {
-      this._series = [];
+  _metricDefs(d, m) {
+    const c = d.central, out = this._outdoorId();
+    const pal = ["#3d8be0", "#e0562b", "#3fa660", "#f2a516", "#7e57c2", "#14998e", "#d6336c", "#8a8f98"];
+    const keep = (arr) => arr.filter(([id], i, a) => id && a.findIndex((x) => x[0] === id) === i);
+    switch (m) {
+      case "temp": return keep([[c.temp_supply_air, this._t("supply_t"), CORAL], [c.temp_extract_air, this._t("extract"), AMBER],
+        [c.temp_fresh_air, this._t("fresh"), BLUE], [out, this._t("outside"), "#7e57c2"]]);
+      case "power": return keep([[this._powerId(), this._t("power"), AMBER]]);
+      case "comp": return keep([[c.compressor_speed, this._t("compressor"), "#3d8be0"]]);
+      case "eff": return c.temp_supply_air && c.temp_extract_air && c.temp_fresh_air
+        ? [[c.temp_supply_air, "s", CORAL], [c.temp_extract_air, "e", AMBER], [c.temp_fresh_air, "f", BLUE]] : [];
+      case "co2": return d.rooms.filter((r) => r.co2).map((r, i) => [r.co2, r.name, pal[i % pal.length]]);
+      case "rf": return d.rooms.filter((r) => r.rf).map((r, i) => [r.rf, r.name, pal[i % pal.length]]);
     }
-    const hpIds = [c.heat_pump_heating, c.heat_pump_cooling].filter(Boolean);
-    if (hpIds.length) {
-      try {
-        const end = new Date(), start = new Date(end.getTime() - 7 * 24 * 3600 * 1000);
-        const res = await this._hass.callWS({
-          type: "history/history_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
-          entity_ids: hpIds, minimal_response: true, no_attributes: true, significant_changes_only: false,
-        });
-        this._hpT0 = start.getTime() / 1000;
-        this._hpIv = this._intervals(res, hpIds, end.getTime() / 1000);
-      } catch (err) {
-        this._hpIv = null;
+    return [];
+  }
+
+  static _down(pts, n) {
+    if (pts.length <= n) return pts;
+    const t0 = pts[0][0], t1 = pts[pts.length - 1][0], w = (t1 - t0) / n || 1;
+    const buckets = new Map();
+    for (const [t, v] of pts) {
+      const k = Math.min(n - 1, Math.floor((t - t0) / w)), b = buckets.get(k) || [0, 0, 0];
+      b[0] += t; b[1] += v; b[2]++; buckets.set(k, b);
+    }
+    return [...buckets.entries()].sort((a, b) => a[0] - b[0]).map(([, b]) => [b[0] / b[2], b[1] / b[2]]);
+  }
+
+  static _at(pts, t) {
+    if (!pts.length) return null;
+    let lo = 0, hi = pts.length - 1;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (pts[mid][0] <= t) lo = mid; else hi = mid; }
+    const a = pts[lo], b = pts[hi];
+    if (t <= a[0]) return a[1];
+    if (t >= b[0]) return b[1];
+    return a[1] + ((b[1] - a[1]) * (t - a[0])) / (b[0] - a[0] || 1);
+  }
+
+  async _loadSeries(range, metric, defs) {
+    const ms = { "24h": 864e5, "7d": 7 * 864e5, "30d": 30 * 864e5 }[range];
+    const end = new Date(), start = new Date(end.getTime() - ms), ids = defs.map(([id]) => id);
+    let raw;
+    if (range === "30d") {
+      const res = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
+        statistic_ids: ids, period: "hour", types: ["mean"] });
+      raw = defs.map(([id]) => (res[id] || []).map((r) => [r.start / 1000, Number(r.mean)]).filter(([t, v]) => !isNaN(t) && !isNaN(v)));
+    } else {
+      const res = await this._hass.callWS({ type: "history/history_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
+        entity_ids: ids, minimal_response: true, no_attributes: true, significant_changes_only: false });
+      raw = defs.map(([id]) => (res[id] || []).map((p) => [p.lu ?? Date.parse(p.last_updated) / 1000, Number(p.s ?? p.state)]).filter(([t, v]) => !isNaN(t) && !isNaN(v)));
+    }
+    if (metric === "eff") {
+      const [S, E, F] = raw, pts = [];
+      for (const [t, s] of S) {
+        const e = ProxonFwtBase._at(E, t), f = ProxonFwtBase._at(F, t);
+        if (e === null || f === null || Math.abs(e - f) < 3) continue;
+        const v = ((s - f) / (e - f)) * 100;
+        if (v >= 0 && v <= 110) pts.push([t, v]);
       }
+      return [{ label: this._t("efficiency"), color: GREEN, pts: ProxonFwtBase._down(pts, 360) }];
     }
-    this._histBusy = false;
-    this._histStamp = Date.now();
-    this._update();
+    return defs.map(([, label, color], i) => ({ label, color, pts: ProxonFwtBase._down(raw[i], 360) }));
+  }
+
+  async _loadHp(d) {
+    const c = d.central, ids = [c.heat_pump_heating, c.heat_pump_cooling].filter(Boolean);
+    if (!ids.length) { this._hpIv = null; return null; }
+    const end = new Date(), start = new Date(end.getTime() - 7 * 864e5);
+    const res = await this._hass.callWS({ type: "history/history_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
+      entity_ids: ids, minimal_response: true, no_attributes: true, significant_changes_only: false });
+    this._hpT0 = start.getTime() / 1000;
+    this._hpIv = this._intervals(res, ids, end.getTime() / 1000);
+    return this._hpIv;
+  }
+
+  // Daily runtime, starts, outdoor temperature and mean power for 30 days from the long-term statistics.
+  async _loadRun(d) {
+    const c = d.central, out = this._outdoorId(), pw = this._powerId();
+    const ids = [c.hp_runtime_total, c.hp_starts_total, out, pw].filter(Boolean);
+    if (!ids.length) return null;
+    const end = new Date(), start = new Date(end.getTime() - 30 * 864e5);
+    const res = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
+      statistic_ids: ids, period: "day", types: ["mean", "change"] });
+    const days = new Map();
+    const put = (id, field, key) => {
+      for (const r of res[id] || []) {
+        const v = Number(r[field]);
+        if (isNaN(v)) continue;
+        const day = days.get(r.start) || { t: r.start / 1000 };
+        day[key] = v; days.set(r.start, day);
+      }
+    };
+    if (c.hp_runtime_total) put(c.hp_runtime_total, "change", "h");
+    if (c.hp_starts_total) put(c.hp_starts_total, "change", "starts");
+    if (out) put(out, "mean", "out");
+    if (pw) put(pw, "mean", "w");
+    return [...days.values()].sort((a, b) => a.t - b.t);
+  }
+
+  _skel(h) {
+    return `<div class="sk" style="height:${h}px"></div>`;
+  }
+
+  // ---- history: sections ------------------------------------------------
+
+  _range() {
+    return this._histRange === "7d" || this._histRange === "30d" ? this._histRange : "24h";
+  }
+
+  _sec_history(d) {
+    const range = this._range();
+    const avail = Object.keys(METRIC_META).filter((m) => this._metricDefs(d, m).length);
+    if (!avail.length) return "";
+    const metric = avail.includes(this._metric) ? this._metric : avail[0];
+    const defs = this._metricDefs(d, metric);
+    this._hget("hp", () => this._loadHp(d));
+    const series = this._hget(`s|${range}|${metric}`, () => this._loadSeries(range, metric, defs));
+    let body;
+    if (series === undefined) body = this._skel(190);
+    else if (!series || !series.some((s) => s.pts.length > 1)) body = `<div class="note">${this._t(range === "30d" ? "no_stats" : "no_history")}</div>`;
+    else body = this._chart(series, { range, unit: METRIC_META[metric].unit, bands: range !== "30d" });
+    const rb = (v, l) => `<button class="vbtn ${range === v ? "a" : ""}" data-act="hrange" data-v="${v}">${l}</button>`;
+    const chips = avail.length > 1 ? `<div class="mchips" role="group">${avail.map((m) => `<button class="vbtn ${m === metric ? "a" : ""}" data-act="metric" data-v="${m}">${this._icon(METRIC_META[m].icon)}${this._t(METRIC_META[m].label)}</button>`).join("")}</div>` : "";
+    return `<ha-card><div class="h">${this._icon("mdi:chart-line")}${this._t("history")}
+      <span class="r">${rb("24h", this._t("hist_24"))}${rb("7d", this._t("hist_7"))}${rb("30d", this._t("hist_30"))}</span></div>${chips}${body}</ha-card>`;
+  }
+
+  _sec_runtime(d) {
+    const c = d.central;
+    if (!c.heat_pump_heating && !c.hp_runtime_total) return "";
+    let body, sub;
+    if (this._range() === "30d") {
+      const days = this._hget("run", () => this._loadRun(d));
+      sub = this._t("hist_30");
+      body = days === undefined ? this._skel(190)
+        : days && days.some((x) => x.h !== undefined) ? this._runChart(days) : `<div class="note">${this._t("no_stats")}</div>`;
+    } else {
+      this._hget("hp", () => this._loadHp(d));
+      sub = this._t("hist_7");
+      body = this._hpBars();
+    }
+    return `<ha-card>${this._header("mdi:heat-pump-outline", this._t("runtime"), sub)}${body}</ha-card>`;
+  }
+
+  _sec_energy(d) {
+    if (!this._powerId()) return "";
+    const days = this._hget("run", () => this._loadRun(d));
+    if (days === null || (days && !days.some((x) => x.w !== undefined))) return "";
+    return `<ha-card>${this._header("mdi:lightning-bolt-outline", this._t("energy"), this._t("hist_30"))}${days === undefined ? this._skel(150) : this._energyChart(days)}</ha-card>`;
+  }
+
+  // ---- history: charts --------------------------------------------------
+
+  _chart(series, o) {
+    const W = Math.max(300, (this.clientWidth || 680) - 80), H = 190, pl = 42, pr = 10, pt = 10, pb = 22;
+    const lang = this._hass.language;
+    const ms = { "24h": 864e5, "7d": 7 * 864e5, "30d": 30 * 864e5 }[o.range] / 1000;
+    const t1 = Date.now() / 1000, t0 = t1 - ms;
+    const vals = series.flatMap((s) => s.pts.map((p) => p[1]));
+    let mn = Math.min(...vals), mx = Math.max(...vals);
+    const raw = Math.max(1e-6, mx - mn) / 3, p10 = 10 ** Math.floor(Math.log10(raw)), f = raw / p10;
+    const step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p10;
+    let lo = Math.floor(mn / step) * step, hi = Math.ceil(mx / step) * step;
+    if (hi - lo < step * 2) hi = lo + step * 2;
+    const x = (t) => pl + ((t - t0) / (t1 - t0)) * (W - pl - pr);
+    const y = (v) => pt + (1 - (v - lo) / (hi - lo)) * (H - pt - pb);
+    const dec = step < 1 ? 1 : 0;
+    let grid = "";
+    for (let v = lo; v <= hi + step / 2; v += step) {
+      grid += `<line x1="${pl}" x2="${W - pr}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
+        <text class="st" x="${pl - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${v.toLocaleString(lang, { minimumFractionDigits: dec, maximumFractionDigits: dec })}</text>`;
+    }
+    const ticks = [];
+    if (o.range === "24h") for (let i = 0; i <= 4; i++) ticks.push(t0 + ((t1 - t0) * i) / 4);
+    else {
+      const every = o.range === "7d" ? 1 : W < 420 ? 10 : 5;
+      const dd = new Date(t0 * 1000); dd.setHours(24, 0, 0, 0);
+      for (; dd.getTime() / 1000 <= t1; dd.setDate(dd.getDate() + every)) ticks.push(dd.getTime() / 1000);
+    }
+    const tl = (t) => o.range === "24h" ? new Date(t * 1000).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })
+      : o.range === "7d" ? new Date(t * 1000).toLocaleDateString(lang, { weekday: "short" })
+        : new Date(t * 1000).toLocaleDateString(lang, { day: "2-digit", month: "2-digit" });
+    const xt = ticks.map((t) => `<text class="st" x="${x(t).toFixed(1)}" y="${H - 5}" text-anchor="${x(t) > W - 24 ? "end" : "middle"}" style="font-size:11px">${tl(t)}</text>`).join("");
+    const bands = o.bands ? (this._hpIv || []).map(([a, b]) => {
+      const s0 = Math.max(a, t0), s1 = Math.min(b, t1);
+      return s1 > s0 ? `<rect x="${x(s0).toFixed(1)}" y="${pt}" width="${Math.max(1, x(s1) - x(s0)).toFixed(1)}" height="${H - pt - pb}" fill="#3fa660" opacity=".14"/>` : "";
+    }).join("") : "";
+    const lines = series.map((s) => `<polyline fill="none" stroke="${s.color}" stroke-width="1.8" stroke-linejoin="round" points="${s.pts.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>`).join("");
+    const legend = series.map((s) => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join("");
+    const showBands = o.bands && this._hpIv && this._hpIv.length;
+    this._cm = { W, H, pl, pr, pt, pb, t0, t1, lo, hi, series, unit: o.unit, range: o.range, x, y };
+    return `<div class="chw"><svg class="ch" style="max-width:100%;height:auto;touch-action:pan-y" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("history")}">
+      ${bands}${grid}${lines}${xt}<line class="xl" y1="${pt}" y2="${H - pb}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/><g class="xd"></g>
+      <rect class="ov" x="${pl}" y="${pt}" width="${W - pl - pr}" height="${H - pt - pb}" fill="transparent"/></svg><div class="tip" style="display:none"></div></div>
+      <div class="legend">${legend}${showBands ? `<span><i style="background:#3fa660;opacity:.4"></i>${this._t("hp_runs")}</span>` : ""}</div>`;
+  }
+
+  _bindChart() {
+    const svg = this.shadowRoot.querySelector("svg.ch"), m = this._cm;
+    if (!svg || !m) return;
+    const tip = svg.parentElement.querySelector(".tip"), xl = svg.querySelector(".xl"), xd = svg.querySelector(".xd");
+    const lang = this._hass.language;
+    const hide = () => { xl.style.display = "none"; xd.innerHTML = ""; tip.style.display = "none"; };
+    const move = (ev) => {
+      const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) * (m.W / r.width);
+      if (px < m.pl || px > m.W - m.pr) return hide();
+      const t = m.t0 + ((px - m.pl) / (m.W - m.pl - m.pr)) * (m.t1 - m.t0);
+      const rows = m.series.map((s) => {
+        let best = null;
+        for (const p of s.pts) if (best === null || Math.abs(p[0] - t) < Math.abs(best[0] - t)) best = p;
+        return best && Math.abs(best[0] - t) < (m.t1 - m.t0) / 8 ? { s, p: best } : null;
+      }).filter(Boolean);
+      if (!rows.length) return hide();
+      const fx = m.x(rows[0].p[0]);
+      xl.setAttribute("x1", fx); xl.setAttribute("x2", fx); xl.style.display = "";
+      xd.innerHTML = rows.map(({ s, p }) => `<circle cx="${fx}" cy="${m.y(p[1])}" r="3.5" fill="${s.color}" stroke="var(--card-background-color)" stroke-width="1.5"/>`).join("");
+      const when = new Date(rows[0].p[0] * 1000);
+      const wl = m.range === "24h" ? when.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })
+        : when.toLocaleString(lang, { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+      tip.innerHTML = `<b>${wl}</b>${rows.map(({ s, p }) => `<div><i style="background:${s.color}"></i>${s.label} <b>${p[1].toLocaleString(lang, { maximumFractionDigits: 1 })}${m.unit}</b></div>`).join("")}`;
+      tip.style.display = "block";
+      const left = (fx / m.W) * r.width;
+      tip.style.left = `${Math.max(0, Math.min(r.width - tip.offsetWidth, left + 12))}px`;
+    };
+    svg.addEventListener("pointermove", move);
+    svg.addEventListener("pointerdown", move);
+    svg.addEventListener("pointerleave", hide);
+  }
+
+  // Bars for daily runtime with the mean outdoor temperature as a line on the right axis.
+  _runChart(days) {
+    const lang = this._hass.language;
+    const W = Math.max(300, (this.clientWidth || 680) - 80), H = 190, pl = 34, pr = 34, pt = 12, pb = 22;
+    const hs = days.map((x) => x.h || 0), maxH = Math.max(4, Math.ceil(Math.max(...hs)));
+    const outs = days.filter((x) => x.out !== undefined).map((x) => x.out);
+    const oLo = outs.length ? Math.floor(Math.min(...outs) - 1) : 0, oHi = outs.length ? Math.ceil(Math.max(...outs) + 1) : 1;
+    const slot = (W - pl - pr) / days.length, bw = Math.max(3, slot * 0.62);
+    const X = (i) => pl + slot * (i + 0.5), Yh = (v) => pt + (1 - v / maxH) * (H - pt - pb), Yo = (v) => pt + (1 - (v - oLo) / Math.max(1, oHi - oLo)) * (H - pt - pb);
+    const df = (t) => new Date(t * 1000).toLocaleDateString(lang, { day: "2-digit", month: "2-digit" });
+    const bars = days.map((x, i) => `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${Yh(x.h || 0).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, H - pb - Yh(x.h || 0)).toFixed(1)}" rx="2" fill="#3fa660" opacity=".75">
+      <title>${df(x.t)}: ${(x.h || 0).toLocaleString(lang, { maximumFractionDigits: 1 })} h${x.starts !== undefined ? ` · ${Math.round(x.starts)} ${this._t("hp_starts")}` : ""}${x.out !== undefined ? ` · Ø ${x.out.toLocaleString(lang, { maximumFractionDigits: 1 })} °C` : ""}</title></rect>`).join("");
+    const pts = days.map((x, i) => x.out === undefined ? null : `${X(i).toFixed(1)},${Yo(x.out).toFixed(1)}`).filter(Boolean).join(" ");
+    const gl = [0, 1, 2, 3].map((i) => `<line x1="${pl}" x2="${W - pr}" y1="${(pt + ((H - pt - pb) * i) / 3).toFixed(1)}" y2="${(pt + ((H - pt - pb) * i) / 3).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
+      <text class="st" x="${pl - 6}" y="${(pt + ((H - pt - pb) * i) / 3 + 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${Math.round(maxH * (1 - i / 3))}</text>
+      ${outs.length ? `<text class="st" x="${W - pr + 6}" y="${(pt + ((H - pt - pb) * i) / 3 + 4).toFixed(1)}" style="font-size:11px">${Math.round(oHi - ((oHi - oLo) * i) / 3)}°</text>` : ""}`).join("");
+    const xt = days.map((x, i) => i % Math.ceil(days.length / (W < 420 ? 4 : 8)) === 0 ? `<text class="st" x="${X(i).toFixed(1)}" y="${H - 5}" text-anchor="middle" style="font-size:11px">${df(x.t)}</text>` : "").join("");
+    const sumH = hs.reduce((a, b) => a + b, 0), avgO = outs.length ? outs.reduce((a, b) => a + b, 0) / outs.length : null;
+    return `<svg style="max-width:100%;height:auto" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("runtime")}">${gl}${bars}
+      ${pts ? `<polyline fill="none" stroke="#7e57c2" stroke-width="1.8" stroke-linejoin="round" points="${pts}"/>` : ""}${xt}</svg>
+      <div class="legend"><span><i style="background:#3fa660"></i>${this._t("runtime")} (h)</span>${outs.length ? `<span><i style="background:#7e57c2"></i>${this._t("outside")} (°C)</span>` : ""}
+      <span>Σ ${sumH.toLocaleString(lang, { maximumFractionDigits: 0 })} h${avgO === null ? "" : ` · Ø ${this._t("outside")} ${avgO.toLocaleString(lang, { maximumFractionDigits: 1 })} °C`}</span></div>`;
+  }
+
+  _energyChart(days) {
+    const lang = this._hass.language;
+    const data = days.filter((x) => x.w !== undefined).map((x) => ({ t: x.t, kwh: (x.w * 24) / 1000 }));
+    if (!data.length) return `<div class="note">${this._t("no_stats")}</div>`;
+    const W = Math.max(300, (this.clientWidth || 680) - 80), H = 150, pl = 34, pr = 10, pt = 12, pb = 22;
+    const max = Math.max(1, Math.ceil(Math.max(...data.map((x) => x.kwh)))), slot = (W - pl - pr) / data.length, bw = Math.max(3, slot * 0.62);
+    const X = (i) => pl + slot * (i + 0.5), Y = (v) => pt + (1 - v / max) * (H - pt - pb);
+    const df = (t) => new Date(t * 1000).toLocaleDateString(lang, { day: "2-digit", month: "2-digit" });
+    const bars = data.map((x, i) => `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${Y(x.kwh).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, H - pb - Y(x.kwh)).toFixed(1)}" rx="2" fill="${AMBER}" opacity=".85">
+      <title>${df(x.t)}: ${x.kwh.toLocaleString(lang, { maximumFractionDigits: 1 })} kWh</title></rect>`).join("");
+    const gl = [0, 1, 2].map((i) => `<line x1="${pl}" x2="${W - pr}" y1="${(pt + ((H - pt - pb) * i) / 2).toFixed(1)}" y2="${(pt + ((H - pt - pb) * i) / 2).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
+      <text class="st" x="${pl - 6}" y="${(pt + ((H - pt - pb) * i) / 2 + 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${Math.round(max * (1 - i / 2))}</text>`).join("");
+    const xt = data.map((x, i) => i % Math.ceil(data.length / (W < 420 ? 4 : 8)) === 0 ? `<text class="st" x="${X(i).toFixed(1)}" y="${H - 5}" text-anchor="middle" style="font-size:11px">${df(x.t)}</text>` : "").join("");
+    const sum = data.reduce((a, b) => a + b.kwh, 0);
+    return `<svg style="max-width:100%;height:auto" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("energy")}">${gl}${bars}${xt}</svg>
+      <div class="legend"><span><i style="background:${AMBER}"></i>kWh</span><span>Σ ${sum.toLocaleString(lang, { maximumFractionDigits: 0 })} kWh · Ø ${(sum / data.length).toLocaleString(lang, { maximumFractionDigits: 1 })} kWh/${this._t("day")}</span></div>
+      <div class="note">${this._t("energy_note")}</div>`;
+  }
+
+  // ---- panel-only sections ---------------------------------------------
+
+  _subline(d) {
+    if (!d) return "";
+    const c = d.central, st = c.heat_pump_heating && this._state(c.heat_pump_heating);
+    const mode = this._state(c.operating_mode);
+    if (mode && mode.state === "unavailable") return `<span class="dot" style="--dc:#db4437"></span><b>${this._t("live_lost")}</b>`;
+    const cool = this._on(c.heat_pump_cooling), heat = this._on(c.heat_pump_heating);
+    const label = cool ? this._t("hp_cooling") : heat ? this._t("hp_heating") : this._t("hp_idle");
+    const modeKey = mode && !BAD.includes(mode.state) ? mode.state : this._ok(c.operating_mode_state) ? this._state(c.operating_mode_state).state : null;
+    let since = "";
+    if ((cool || heat) && st && st.last_changed) {
+      const mins = Math.max(0, Math.round((Date.now() - Date.parse(st.last_changed)) / 60000));
+      since = mins >= 60 ? `${Math.floor(mins / 60)} h ${mins % 60} min` : `${mins} min`;
+    }
+    return `<span class="dot" style="--dc:${cool ? BLUE : heat ? GREEN : "#8a8f98"}"></span><b>${label}</b>${modeKey ? `<span class="sep">·</span>${this._t(modeKey)}` : ""}${since ? `<span class="sep hm">·</span><span class="hm">${this._t("since")} ${since}</span>` : ""}`;
+  }
+
+  _insights(d) {
+    const c = d.central, out = [], iv = Number(this._opt("filter_interval", 2000)) || 2000;
+    const fl = (hid, flag, titleKey) => {
+      const h = this._num(hid), due = this._on(flag);
+      if (due) out.push({ lvl: "w", icon: "mdi:air-filter", title: this._t("ins_filter_now", this._t(titleKey)), text: this._t("ins_filter_now_d"), tab: "diag", go: "go_maint" });
+      else if (h !== null && h / iv >= 0.9) out.push({ lvl: "w", icon: "mdi:air-filter", title: this._t("ins_filter_soon", this._t(titleKey)), text: this._t("ins_filter_soon_d", this._fmt(h, 0), this._fmt(iv, 0)), tab: "diag", go: "go_maint" });
+    };
+    fl(c.filter_hours, c.filter_device, "filter_device");
+    fl(c.recirculation_filter_hours, c.filter_recirculation, "filter_recirc");
+    const starts = this._num(c.hp_starts_today);
+    if (starts !== null && starts >= 8) out.push({ lvl: "i", icon: "mdi:repeat", title: this._t("ins_cycle_t"), text: this._t("ins_cycle_d", String(Math.round(starts))), tab: "history", go: "go_hist" });
+    const eff = this._efficiency();
+    if (eff !== null && eff < 75 && !this._on(c.bypass_active)) out.push({ lvl: "w", icon: "mdi:percent-circle-outline", title: this._t("ins_eff_t"), text: this._t("ins_eff_d", String(eff)), tab: "diag", go: "go_diag" });
+    const hi = d.rooms.map((r) => ({ r, v: this._num(r.co2) })).filter((x) => x.v !== null && x.v > 1000).sort((a, b) => b.v - a.v)[0];
+    if (hi) out.push({ lvl: "w", icon: "mdi:molecule-co2", title: this._t("ins_co2_t"), text: this._t("ins_co2_d", hi.r.name, String(Math.round(hi.v))), tab: "rooms", go: "tab_rooms" });
+    if (!out.length) {
+      const bits = [eff !== null ? this._t("ins_ok_eff", String(eff)) : "", this._t("ins_ok_d")].filter(Boolean).join(" ");
+      out.push({ lvl: "o", icon: "mdi:check-circle-outline", title: this._t("ins_ok_t"), text: bits });
+    }
+    const rank = { r: 0, w: 1, i: 2, o: 3 };
+    return out.sort((a, b) => rank[a.lvl] - rank[b.lvl]);
+  }
+
+  _sec_insights(d) {
+    const ins = this._insights(d).slice(0, 3);
+    const items = ins.map((i) => `<div class="ins ${i.lvl}">${this._icon(i.icon)}<div class="it"><b>${i.title}</b><small>${i.text}</small></div>
+      ${i.tab ? `<button class="vbtn" data-act="tab" data-v="${i.tab}">${this._t(i.go)}</button>` : ""}</div>`).join("");
+    return `<ha-card>${this._header("mdi:lightbulb-on-outline", this._t("hints"))}<div class="alerts">${items}</div></ha-card>`;
+  }
+
+  _boostMode(c) {
+    if (c.fan_intensive && this._on(c.intensive_ventilation_selectable)) return "intensive";
+    const sel = this._state(c.fan_stage);
+    if (c.fan_stage && sel && !BAD.includes(sel.state) && (!c.fan_stage_4_selectable || this._on(c.fan_stage_4_selectable))) return "stage";
+    return null;
+  }
+
+  _sec_quick(d) {
+    const c = d.central, mode = this._boostMode(c);
+    const btns = [];
+    if (mode) {
+      const active = mode === "intensive" ? this._on(c.fan_intensive) : !!this._boost && this._state(c.fan_stage).state === "stage_4";
+      btns.push(`<button class="qa ${active ? "a" : ""}" data-act="boost">${this._icon("mdi:weather-windy")}<span><b>${this._t(active ? "boost_end" : "boost")}</b><small>${this._t(mode === "intensive" ? "boost_d_i" : "boost_d_s")}</small></span></button>`);
+    }
+    if (d.rooms.length) {
+      btns.push(`<button class="qa" data-act="allroom" data-v="1">${this._icon("mdi:thermometer-plus")}<span><b>${this._t("all_up")}</b></span></button>`);
+      btns.push(`<button class="qa" data-act="allroom" data-v="-1">${this._icon("mdi:thermometer-minus")}<span><b>${this._t("all_down")}</b></span></button>`);
+    }
+    if (!btns.length) return "";
+    return `<ha-card>${this._header("mdi:flash-outline", this._t("quick"))}<div class="qgrid">${btns.join("")}</div></ha-card>`;
+  }
+
+  _sec_measure(d) {
+    const c = d.central, lang = this._hass.language;
+    const t = (label, id) => this._ok(id) ? [label, this._temp(id)] : null;
+    const n = (label, id, unit, dg = 0) => this._ok(id) && this._num(id) !== null ? [label, `${this._fmt(this._num(id), dg)} ${unit}`] : null;
+    const groups = [
+      [this._t("g_air"), [t(this._t("fresh"), c.temp_fresh_air), t(this._t("exhaust"), c.temp_exhaust_air), t(this._t("extract"), c.temp_extract_air),
+        t(this._t("supply"), c.temp_supply_air), t(this._t("outside"), this._outdoorId())]],
+      [this._t("g_circuit"), [t(this._t("pre_evaporator"), c.temp_pre_evaporator), t(this._t("evaporator"), c.temp_evaporator), t(this._t("post_preheat"), c.temp_post_preheat),
+        t(this._t("pre_condenser"), c.temp_pre_condenser), t(this._t("condenser"), c.temp_condenser), t(this._t("compressor"), c.temp_compressor)]],
+      [this._t("g_drive"), [n(this._t("compressor"), c.compressor_speed, "rpm"), n(this._t("supply_fan"), c.fan_speed_supply, "rpm"),
+        n(this._t("extract_fan"), c.fan_speed_extract, "rpm"), n(this._t("power_long"), this._powerId(), "W", (this._num(this._powerId()) || 0) % 1 ? 1 : 0)]],
+    ].map(([g, rows]) => [g, rows.filter(Boolean)]).filter(([, rows]) => rows.length);
+    if (!groups.length) return "";
+    return `<ha-card>${this._header("mdi:table", this._t("measure"))}<div class="mtgrid">${groups.map(([g, rows]) => `<div><div class="mg">${g}</div>
+      ${rows.map(([l, v]) => `<div class="mr"><span>${l}</span><b>${v}</b></div>`).join("")}</div>`).join("")}</div></ha-card>`;
+  }
+
+  _sec_maint(d) {
+    const c = d.central, iv = Number(this._opt("filter_interval", 2000)) || 2000;
+    const fbar = (hid, flag, label) => {
+      const h = this._num(hid), due = this._on(flag);
+      if (h === null && !this._ok(flag)) return "";
+      const pct = h === null ? (due ? 100 : 0) : Math.min(100, Math.round((h / iv) * 100));
+      const col = due || pct >= 100 ? "#db4437" : pct >= 85 ? "#f2a516" : GREEN;
+      return `<div class="mrow"><div class="mh"><span>${this._icon("mdi:air-filter")}${label}</span><b style="color:${col}">${due ? this._t("change_due") : this._t("ok")}</b></div>
+        <div class="pbar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%;background:${col}"></i></div>
+        ${h === null ? "" : `<div class="lb">${this._fmt(h, 0)} / ${this._fmt(iv, 0)} h · ${this._t("left", this._fmt(Math.max(0, iv - h), 0))}</div>`}</div>`;
+    };
+    const row = (icon, label, val) => val === null ? "" : `<div class="row">${this._icon(icon)}${label}<b>${val}</b></div>`;
+    const hv = (id) => this._num(id) === null ? null : `${this._fmt(this._num(id), 1)} h`;
+    const iv0 = (id) => this._num(id) === null ? null : this._fmt(this._num(id), 0);
+    const err = this._ok(c.error_system) ? `<div class="row">${this._icon("mdi:check-circle-outline")}${this._t("error")}<b style="color:${this._on(c.error_system) ? "#db4437" : GREEN}">${this._on(c.error_system) ? this._t("has_error") : this._t("no_error")}</b></div>` : "";
+    const chg = c.mode_change_possible && this._ok(c.mode_change_possible)
+      ? `<div class="row">${this._icon("mdi:shuffle-variant")}${this._t("mode_change")}<b>${this._on(c.mode_change_possible) ? this._t("possible") : this._t("not_possible")}</b></div>` : "";
+    const stats = row("mdi:heat-pump", this._t("rt_today"), hv(c.hp_runtime_today)) + row("mdi:counter", this._t("starts_today"), iv0(c.hp_starts_today)) +
+      row("mdi:heat-pump-outline", this._t("rt_total"), hv(c.hp_runtime_total)) + row("mdi:counter", this._t("starts_total"), iv0(c.hp_starts_total));
+    const filters = fbar(c.filter_hours, c.filter_device, this._t("filter_device")) + fbar(c.recirculation_filter_hours, c.filter_recirculation, this._t("filter_recirc"));
+    const html = filters + (err || chg ? `<div class="msep">${(err + chg).replace('class="row"', 'class="row first"')}</div>` : "") + (stats ? `<div class="msep">${stats.replace('class="row"', 'class="row first"')}</div>` : "");
+    if (!html) return "";
+    return `<ha-card>${this._header("mdi:wrench-outline", this._t("maint"))}${html}</ha-card>`;
   }
 
   // ---- interaction ------------------------------------------------------
@@ -842,12 +1291,21 @@ class ProxonFwtBase extends HTMLElement {
       case "fanauto": call("switch", this._on(c.fan_auto) ? "turn_off" : "turn_on", { entity_id: c.fan_auto }); break;
       case "autosw": call("switch", "toggle", { entity_id: c.fan_auto }); break;
       case "hrange": this._histRange = v; this._update(); break;
+      case "metric": this._metric = v; this._update(); break;
+      case "tab": this._tab = v; this._drawer = false; this._sig = ""; this._update(); if (this.scrollIntoView) this.scrollIntoView({ block: "start" }); break;
+      case "drawerclose": this._drawer = false; this._sig = ""; this._update(); break;
+      case "boost": this._toggleBoost(); break;
+      case "allroom": for (const r of this._d.rooms) {
+        const a = (this._state(r.climate) || {}).attributes || {};
+        if (a.temperature == null) continue;
+        call("climate", "set_temperature", { entity_id: r.climate, temperature: Math.min(a.max_temp ?? 30, Math.max(a.min_temp ?? 18, a.temperature + Number(v))) });
+      } break;
       case "restoresw": call("switch", "toggle", { entity_id: c.fan_stage_restore }); break;
       case "intensive": call("switch", "toggle", { entity_id: c.fan_intensive }); break;
       case "coolsw": call("switch", "toggle", { entity_id: c.cooling_enable }); break;
       case "ptc": call("switch", "toggle", { entity_id: this._d.rooms[this._room].ents.ptc_enable }); break;
       case "view": this._view = v; this._sig = ""; this._update(); break;
-      case "room": this._room = Number(v); this._sig = ""; this._update(); break;
+      case "room": this._room = Number(v); if (this._drawerMode) this._drawer = true; this._sig = ""; this._update(); break;
       case "menu": this.dispatchEvent(new Event("hass-toggle-menu", { bubbles: true, composed: true })); break;
       case "flip": this._toggleFlip(); break;
       case "up": case "down": {
@@ -858,6 +1316,26 @@ class ProxonFwtBase extends HTMLElement {
         break;
       }
     }
+  }
+
+  _toggleBoost() {
+    const c = this._d.central, h = this._hass;
+    const mode = this._boostMode(c);
+    if (mode === "intensive") { h.callService("switch", this._on(c.fan_intensive) ? "turn_off" : "turn_on", { entity_id: c.fan_intensive }); return; }
+    if (mode !== "stage") return;
+    if (this._boost) {
+      const b = this._boost;
+      this._boost = null;
+      try { localStorage.removeItem("proxon_fwt_boost"); } catch (e) { /* ignore */ }
+      h.callService("select", "select_option", { entity_id: c.fan_stage, option: b.stage });
+      if (b.auto) h.callService("switch", "turn_on", { entity_id: c.fan_auto });
+    } else {
+      this._boost = { stage: this._state(c.fan_stage).state, auto: this._on(c.fan_auto) };
+      try { localStorage.setItem("proxon_fwt_boost", JSON.stringify(this._boost)); } catch (e) { /* ignore */ }
+      if (this._boost.auto) h.callService("switch", "turn_off", { entity_id: c.fan_auto });
+      h.callService("select", "select_option", { entity_id: c.fan_stage, option: "stage_4" });
+    }
+    this._sig = ""; this._update();
   }
 
   _toggleFlip() {}
@@ -890,7 +1368,7 @@ class ProxonFwtCard extends ProxonFwtBase {
   }
 
   _wantsHistory() {
-    return this._config.sections.includes("history");
+    return this._config.sections.some((x) => ["history", "runtime", "energy"].includes(x));
   }
 
   _render() {
@@ -921,6 +1399,8 @@ class ProxonFwtCard extends ProxonFwtBase {
 class ProxonFwtPanel extends ProxonFwtBase {
   constructor() {
     super();
+    this._drawerMode = true;
+    try { this._boost = JSON.parse(localStorage.getItem("proxon_fwt_boost") || "null"); } catch (e) { this._boost = null; }
     let flip = null;
     try {
       const v = localStorage.getItem("proxon_fwt_outdoor_right");
@@ -954,20 +1434,40 @@ class ProxonFwtPanel extends ProxonFwtBase {
     this._update();
   }
 
+  _roomDrawer(d) {
+    if (!this._drawer || !d.rooms.length) return "";
+    const r = d.rooms[Math.min(this._room, d.rooms.length - 1)];
+    const s = this._state(r.climate) || { attributes: {}, state: "unavailable" };
+    const cur = s.attributes.current_temperature, tgt = s.attributes.temperature;
+    const sel = { r, s, cur, tgt, co2: this._num(r.co2), rf: this._num(r.rf), ptcA: this._on(r.ents.ptc_active), ptcE: r.ents.ptc_enable };
+    return `<div class="scrim" data-act="drawerclose"></div><aside class="drawer" role="dialog" aria-label="${r.name}">
+      <div class="dh">${this._icon(this._roomIcon(r.name))}${r.name}<span class="grow"></span>
+      <button class="round" data-act="drawerclose" aria-label="${this._t("close")}">${this._icon("mdi:close")}</button></div>${this._roomDetail(sel)}</aside>`;
+  }
+
   _render() {
     const d = this._d;
+    const tab = ["overview", "rooms", "history", "diag"].includes(this._tab) ? this._tab : "overview";
+    const warn = d ? this._insights(d).filter((i) => i.lvl === "r" || i.lvl === "w").length : 0;
+    const tabs = [["overview", "mdi:view-dashboard-outline"], ["rooms", "mdi:home-outline"], ["history", "mdi:chart-line"], ["diag", "mdi:stethoscope"]]
+      .map(([k, i]) => `<button class="tabbtn ${k === tab ? "a" : ""}" role="tab" aria-selected="${k === tab}" data-act="tab" data-v="${k}">${this._icon(i)}${this._t(`tab_${k}`)}${k === "diag" && warn ? `<span class="badge">${warn}</span>` : ""}</button>`).join("");
     const head = `<div class="bar-top">
       <button class="round menu" data-act="menu" aria-label="Menu">${this._icon("mdi:menu")}</button>
-      <div class="title">${this._icon("mdi:heat-pump")}Proxon FWT</div><div class="grow"></div>
-      <button class="vbtn ${this._flip() ? "a" : ""}" data-act="flip">${this._icon("mdi:swap-horizontal")}${this._t("flip")}</button></div>`;
+      <div class="brand"><span class="logo">${this._icon("mdi:heat-pump")}</span><div class="bt"><h1>Proxon FWT</h1><div class="sub">${this._subline(d)}</div></div></div><div class="grow"></div>
+      <button class="vbtn ${this._flip() ? "a" : ""}" data-act="flip" aria-label="${this._t("flip")}">${this._icon("mdi:swap-horizontal")}${this._t("flip")}</button></div>
+      <nav class="tabs" role="tablist">${tabs}</nav>`;
     let body;
     if (!d) {
       body = `<ha-card><div class="empty">${this._t("none")}</div></ha-card>`;
+    } else if (tab === "overview") {
+      body = `<div class="stack">${this._sec_alerts(d)}${this._sec_insights(d)}${this._sec_mode(d)}
+        <div class="top"><div class="col">${this._sec_schema(d)}${this._sec_fan(d)}</div><div class="col">${this._sec_kpi(d)}${this._sec_quick(d)}</div></div></div>`;
+    } else if (tab === "rooms") {
+      body = `<div class="stack">${this._sec_rooms(d)}</div>${this._roomDrawer(d)}`;
+    } else if (tab === "history") {
+      body = `<div class="stack">${this._sec_history(d)}${this._sec_runtime(d)}${this._sec_energy(d)}</div>`;
     } else {
-      const grid = ["heatpump", "refrigerant", "status"].map((s) => this[`_sec_${s}`](d)).filter(Boolean).join("");
-      body = `<div class="stack">${this._sec_mode(d)}${this._sec_alerts(d)}
-        <div class="top"><div class="col">${this._sec_schema(d)}${this._sec_fan(d)}</div><div class="col">${this._sec_kpi(d)}${this._sec_rooms(d)}</div></div>
-        <div class="grid">${grid}</div>${this._sec_history(d)}</div>`;
+      body = `<div class="stack"><div class="grid">${this._sec_heatpump(d)}${this._sec_maint(d)}</div>${this._sec_measure(d)}</div>`;
     }
     this.shadowRoot.innerHTML = `<style>${CSS}</style><div class="panel">${head}${body}</div>`;
   }
