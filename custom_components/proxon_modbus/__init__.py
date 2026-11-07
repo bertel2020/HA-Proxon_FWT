@@ -223,6 +223,9 @@ async def _async_update_listener(hass: HomeAssistant, entry: ProxonConfigEntry) 
 async def async_unload_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bool:
     """Unload a config entry."""
     # The shared connection closes itself once the last unit holder unloads.
+    coordinator = getattr(entry, "runtime_data", None)
+    if coordinator is not None:
+        await coordinator.async_save_stats()
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded and not [
         e for e in hass.config_entries.async_loaded_entries(DOMAIN) if e.entry_id != entry.entry_id

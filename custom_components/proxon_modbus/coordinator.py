@@ -84,6 +84,9 @@ BLOCK_CO2 = "co2"
 BLOCK_HUMIDITY = "humidity"
 
 
+STATS_SAVE_INTERVAL = 300  # seconds between statistics writes
+
+
 @dataclass
 class RoomData:
     """Decoded data for a single room."""
@@ -152,6 +155,7 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
         self._store: Store = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}.stats")
         # Boost ventilation (Stoßlüften) with automatic return to the previous state.
         self.boost = Boost()
+        self._stats_saved_at = float("-inf")
         self._boost_store: Store = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}.boost")
         self._boost_cancel: CALLBACK_TYPE | None = None
         self._scan_interval = scan_interval
@@ -249,7 +253,15 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
             ir.IssueSeverity.ERROR if days is not None and days <= 7 else ir.IssueSeverity.WARNING,
             days=str(days),
         )
-        self._store.async_delay_save(self.stats.as_dict, 120)
+        # async_delay_save restarts its timer on every call, so calling it each poll would never write.
+        now = time.monotonic()
+        if now - self._stats_saved_at >= STATS_SAVE_INTERVAL:
+            self._stats_saved_at = now
+            self._store.async_delay_save(self.stats.as_dict, 1)
+
+    async def async_save_stats(self) -> None:
+        """Write the statistics right away (entry unload / reload)."""
+        await self._store.async_save(self.stats.as_dict())
 
     def async_mark_filter_changed(self) -> None:
         """The user replaced the device filter ("Filter changed" button)."""
