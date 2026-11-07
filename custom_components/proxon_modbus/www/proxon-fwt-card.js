@@ -1150,17 +1150,30 @@ class ProxonFwtBase extends HTMLElement {
         entity_ids: ids, minimal_response: true, no_attributes: true, significant_changes_only: false });
       raw = defs.map(([id]) => (res[id] || []).map((p) => [p.lu ?? Date.parse(p.last_updated) / 1000, Number(p.s ?? p.state)]).filter(([t, v]) => !isNaN(t) && !isNaN(v)));
     }
+    // Phases with the summer bypass open (exchanger bypassed): shown as a band and left out of the heat recovery rate.
+    let bypass = [];
+    const byId = this._d && this._d.central.bypass_active;
+    if (byId && range !== "30d" && range !== "1y") {
+      try {
+        const res = await this._hass.callWS({ type: "history/history_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
+          entity_ids: [byId], minimal_response: true, no_attributes: true, significant_changes_only: false });
+        bypass = this._intervals(res, [byId], end.getTime() / 1000);
+      } catch (err) { bypass = []; }
+    }
+    const inBypass = (t) => bypass.some(([a, b]) => t >= a && t <= b);
+    let out;
     if (metric === "eff") {
       const [S, E, F] = raw, pts = [];
       for (const [t, s] of S) {
         const e = ProxonFwtBase._at(E, t), f = ProxonFwtBase._at(F, t);
-        if (e === null || f === null || Math.abs(e - f) < 3) continue;
+        if (e === null || f === null || Math.abs(e - f) < 3 || inBypass(t)) continue;
         const v = ((e - s) / (e - f)) * 100;
         if (v >= 0 && v <= 110) pts.push([t, v]);
       }
-      return [{ label: this._t("efficiency"), color: GREEN, pts: ProxonFwtBase._down(pts, 360) }];
-    }
-    return defs.map(([, label, color], i) => ({ label, color, pts: ProxonFwtBase._down(raw[i], 360) }));
+      out = [{ label: this._t("efficiency"), color: GREEN, pts: ProxonFwtBase._down(pts, 360) }];
+    } else out = defs.map(([, label, color], i) => ({ label, color, pts: ProxonFwtBase._down(raw[i], 360) }));
+    out.bypass = bypass;
+    return out;
   }
 
   async _loadHp(d) {
@@ -1293,7 +1306,7 @@ class ProxonFwtBase extends HTMLElement {
     let body;
     if (series === undefined) body = this._skel(190);
     else if (!series || !series.some((s) => s.pts.length > 1)) body = `<div class="note">${this._t(range === "30d" || range === "1y" ? "no_stats" : "no_history")}</div>`;
-    else body = this._chart(series, { range, unit: METRIC_META[metric].unit, bands: range === "24h" || range === "7d" });
+    else body = this._chart(series, { range, unit: METRIC_META[metric].unit, bands: range === "24h" || range === "7d", bypass: series.bypass });
     const rb = (v, l) => `<button class="vbtn ${range === v ? "a" : ""}" data-act="hrange" data-v="${v}">${l}</button>`;
     const chips = avail.length > 1 ? `<div class="mchips" role="group">${avail.map((m) => `<button class="vbtn ${m === metric ? "a" : ""}" data-act="metric" data-v="${m}">${this._icon(METRIC_META[m].icon)}${this._t(METRIC_META[m].label)}</button>`).join("")}</div>` : "";
     return `<ha-card><div class="h">${this._icon("mdi:chart-line")}${this._t("history")}
@@ -1367,14 +1380,18 @@ class ProxonFwtBase extends HTMLElement {
       const s0 = Math.max(a, t0), s1 = Math.min(b, t1);
       return s1 > s0 ? `<rect x="${x(s0).toFixed(1)}" y="${pt}" width="${Math.max(1, x(s1) - x(s0)).toFixed(1)}" height="${H - pt - pb}" fill="#3fa660" opacity=".14"/>` : "";
     }).join("") : "";
+    const byBands = (o.bypass || []).map(([a, b]) => {
+      const s0 = Math.max(a, t0), s1 = Math.min(b, t1);
+      return s1 > s0 ? `<rect x="${x(s0).toFixed(1)}" y="${pt}" width="${Math.max(1, x(s1) - x(s0)).toFixed(1)}" height="${H - pt - pb}" fill="${BLUE}" opacity=".13"/>` : "";
+    }).join("");
     const lines = series.map((s) => `<polyline fill="none" stroke="${s.color}" stroke-width="1.8" stroke-linejoin="round" points="${s.pts.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>`).join("");
     const legend = series.map((s) => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join("");
     const showBands = o.bands && this._hpIv && this._hpIv.length;
     this._cm = { W, H, pl, pr, pt, pb, t0, t1, lo, hi, series, unit: o.unit, range: o.range, x, y };
     return `<div class="chw"><svg class="ch" style="max-width:100%;height:auto;touch-action:pan-y" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("history")}">
-      ${bands}${grid}${lines}${xt}<line class="xl" y1="${pt}" y2="${H - pb}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/><g class="xd"></g>
+      ${bands}${byBands}${grid}${lines}${xt}<line class="xl" y1="${pt}" y2="${H - pb}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/><g class="xd"></g>
       <rect class="ov" x="${pl}" y="${pt}" width="${W - pl - pr}" height="${H - pt - pb}" fill="transparent"/></svg><div class="tip" style="display:none"></div></div>
-      <div class="legend">${legend}${showBands ? `<span><i style="background:#3fa660;opacity:.4"></i>${this._t("hp_runs")}</span>` : ""}</div>`;
+      <div class="legend">${legend}${showBands ? `<span><i style="background:#3fa660;opacity:.4"></i>${this._t("hp_runs")}</span>` : ""}${o.bypass && o.bypass.length ? `<span><i style="background:${BLUE};opacity:.4"></i>${this._t("bypass_open")}</span>` : ""}</div>`;
   }
 
   // Hover / touch tooltip for bar charts and sparklines: elements with data-tip="title|value".
