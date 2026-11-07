@@ -1,67 +1,80 @@
 # Code-Review: HA-Proxon_FWT
 
-Stand: 7. November 2026  
-Schwerpunkt: Home-Assistant-Integration und Seitenpanel (`custom_components/proxon_modbus/www/proxon-fwt-card.js`)
+Stand: 7. November 2026 (nach Umsetzung der Befunde)  
+Schwerpunkt: Home-Assistant-Integration (`custom_components/proxon_modbus/`) und Seitenpanel (`www/`)
 
-## Kurzfazit
+Der erste Review (Frontend) und ein zweiter Durchgang mit zwei unabhängigen Prüfern (Panel und Backend) haben
+die unten genannten Befunde ergeben. Die meisten sind behoben, jeweils in einem eigenen Commit. Offen ist,
+was in „Offene Punkte“ steht.
 
-Das Python-Backend ist sinnvoll in Modbus-Zugriff, Koordinator, Entitäten und reine Logik getrennt. Das Panel bietet viele nützliche Ansichten und eine erkennbare Gestaltung für helle und dunkle Themes. Die größten Risiken liegen im Frontend: ungefilterte HTML-Ausgaben, veraltete Einstellungen und nicht gerätegebundene Verlaufscaches. Die über 2.200 Zeilen lange JavaScript-Datei erschwert Wartung und Prüfung.
+## Behoben
 
-## Befunde nach Priorität
+### Panel (Frontend)
 
-### Hoch: Variable Texte werden ungefiltert als HTML eingesetzt
+| Befund | Behebung |
+|---|---|
+| Raumnamen aus der Geräteverwaltung landeten ungefiltert in HTML | Maskierung (`esc()`) an der Quelle; unbekannte Übersetzungsschlüssel (rohe Zustände), Select-Optionen in `data-v` und das Schreibfehler-Banner werden ebenfalls maskiert; Balken-Tooltips bauen Textknoten statt Markup |
+| Filteralter-Text überschrieben (`f_age` doppelt) | eigener Schlüssel `f_age_text`; Test auf doppelte und fehlende Übersetzungsschlüssel |
+| Integrationsoptionen erst nach Neuladen wirksam | Neuladen alle 60 s, Neu-Rendern nur bei echter Änderung |
+| Verlaufscache nicht an Gerät und Datenquelle gebunden; Verlauf lud doppelt; Fehler wurden 5 min gecacht | Cache-Scope aus Gerät, Leistungs-/Außensensor und Außenseite; Historie wartet auf die Optionen; Fehler werden nach 15 s erneut versucht; veraltete Antworten werden verworfen |
+| Schreibaktionen ohne Reihenfolge und Rückmeldung | sequenziell, Bedienelemente während der Aktion gesperrt, Fehler als HA-Hinweis |
+| Stepper verlor schnelle Klicks | Klicks summieren sich auf einen Zielwert, der einmal geschrieben wird |
+| Aufklappende Raumkarten verschoben das Raster | Details als Dialog (Bottom-Sheet auf dem Handy) mit Esc, Fokusführung und erhaltener Scrollposition |
+| 7-Tage-Wärmepumpenlaufzeit ohne Tooltip | Hit-Flächen und Tooltip ergänzt |
+| CO₂-Hinweis ließ sich nicht ausblenden; ausgeblendete Hinweise kamen bei kurzen Aussetzern zurück | stabiler Schlüssel, 30 min Karenz |
+| Leistung fest als W angenommen | kW/MW werden normalisiert (Anzeige, Verlauf, Energie) |
+| Schreibfehler-Banner verschwand nie | nur eine Stunde lang sichtbar |
+| Raumreihenfolge folgte der Registry | Sortierung nach Raumnummer aus dem Device-Identifier |
+| Komplett-Rendering und Discovery bei jedem `hass`-Update | Discovery wird bis zur nächsten Registry-Änderung wiederverwendet, CSS als `adoptedStyleSheet` |
+| 2.400-Zeilen-Einzeldatei | ES-Module unter `www/lib/` (Texte, Styles, Konstanten, Basisklasse mit Methodengruppen, Karte, Panel, Editor); `www/` wird unter einem versionierten Pfad ausgeliefert, das erledigt das Cache-Busting aller Module |
 
-Raumnamen aus der Geräteverwaltung gelangen unmittelbar in HTML-Templates, etwa in den Raumansichten (`proxon-fwt-card.js`, Zeilen 2114–2138) und im CO₂-Hinweis (um Zeile 1669). Danach schreibt `_render()` das Ergebnis mit `shadowRoot.innerHTML` (Zeile 2204). Auch Tooltip-Inhalte werden mit `innerHTML` gesetzt (Zeilen 1536 und 1570). Ein entsprechend präparierter Name kann Markup einschleusen. Da das Panel mit `require_admin=False` registriert ist (`__init__.py`, Zeile 143), ist die Ausgabe auch für andere angemeldete Nutzer relevant.
+### Backend
 
-**Empfehlung:** Variable Texte vor der Verwendung im Template kontextgerecht maskieren; für dynamische Tooltip-Texte nach Möglichkeit `textContent` verwenden. Text- und Attributkontexte getrennt behandeln.
+| Befund | Behebung |
+|---|---|
+| Statistik wurde im Betrieb praktisch nie gespeichert (`async_delay_save` setzt den Timer bei jedem Poll zurück) | Speichern höchstens alle 5 min und beim Entladen |
+| PTC-Freigabe: parallele Schaltvorgänge überschrieben sich | Lock und lokal gemerkte Maske |
+| Boost: Timer leckte bei fehlgeschlagenem Setup; Teilfehler ließ die Automatik aus; Start/Ende ohne Lock; Wiederholung unbegrenzt; Intensivlüftung wurde nach dem Boost abgeschaltet | Cancel-Hook vor dem Laden, Rückschalten der Automatik, Lock, höchstens 5 Wiederholungen, kein Zurückschreiben nach Moduswechsel, vorheriger Intensivzustand bleibt |
+| `ProxonModbusError` erbte von `Exception` (Tracebacks statt Meldung) | erbt von `HomeAssistantError` |
+| `start_boost` stürzte auf anderen Switches ab | verständliche `ServiceValidationError` |
+| „Filter gewechselt“ ging nach Neustart verloren | wird gespeichert |
+| Poll bei toter Verbindung dauerte ein Vielfaches des Timeouts | Abbruch nach zwei Verbindungsfehlern, solange kein Block geantwortet hat |
+| Fähigkeits-Flags (Register 315) wurden beim Schreiben ignoriert | Lüfterstufe, Betriebsart, Automatik und Intensivlüftung werden bei eindeutiger Ablehnung durch das Gerät nicht geschrieben |
+| Verwaiste Entities, Storage-Dateien, Panel bei jeder Optionsänderung neu registriert | Bereinigung nach dem Setup, `async_remove_entry`, Panel bleibt registriert |
+| Kleinkram | ungenutzte Konstante und doppelte Imports entfernt, Reconfigure übernimmt den Titel |
 
-### Mittel: Geänderte Integrationsoptionen erscheinen erst nach Neuladen
+## Offene Punkte
 
-`_loadSettings()` lädt die Optionen nur beim ersten Auftreten einer zentralen Geräte-ID (`proxon-fwt-card.js`, Zeilen 566–625). Eine Änderung von `outdoor_side`, `power_entity`, `outdoor_entity`, Raum-Sensorzuordnungen oder Filteroptionen aktualisiert ein bereits geöffnetes Panel nicht zuverlässig.
+- **Echter Test in Home Assistant steht aus.** Alles Backend-Verhalten ist nur gegen Stubs getestet, das Panel
+  nur gegen eine synthetische `hass`-Struktur und einmal in einem lokalen Browser (Module laden, Elemente
+  registriert, Styles greifen, Raumname maskiert). Dialog, Stepper, Flags, Entity-Bereinigung, Statistik-Speicher
+  und die Raumreihenfolge (setzt voraus, dass `hass.devices` die `identifiers` liefert) sollten einmal in der
+  laufenden Instanz geprüft werden.
+- **Aktuelle Screenshots** für Desktop, Mobil, helles und dunkles Theme fehlen; `docs/` zeigt eine ältere Ansicht.
+- **Rendering:** das Panel baut bei jeder relevanten Zustandsänderung die ganze Ansicht neu auf. Eine Signatur
+  pro Tab würde das reduzieren, setzt aber eine genaue Zuordnung von Entities zu Tabs voraus und wurde
+  bewusst nicht umgesetzt.
+- **Integrationstests mit `pytest-homeassistant-custom-component`** fehlen weiterhin (das Paket verlangt eine
+  neuere Python-Version als die lokale Entwicklungsumgebung). Entities, Config-/Options-Flow, Services und die
+  WebSocket-Befehle sind ungetestet.
+- Einzelne ungenutzte lokale Variablen im Frontend (`lang`, `hv`, `iv0`, `powerId`), nur Aufräumarbeit.
 
-**Empfehlung:** Einstellungen bei einem passenden Config-Entry-/Registry-Ereignis erneut laden oder mit einem begrenzten Ablaufdatum versehen. Nach einer Änderung die davon abhängigen Verlaufsdaten invalidieren.
+## Tests und Prüfung
 
-### Mittel: Verlaufscache ist nicht an Gerät und Entity-IDs gebunden
-
-Die Cache-Schlüssel für Messreihen enthalten Zeitraum und Messgröße, aber keine Geräte- oder Entity-ID (`proxon-fwt-card.js`, Zeile 1417); für Laufzeit und Jahreswerte sind sie noch allgemeiner (`run`, `year`). Wenn eine Dashboard-Karte auf eine andere Anlage umgestellt wird, können bis zum Cache-Ablauf Daten der vorherigen Anlage angezeigt werden. Auch geänderte externe Sensoren sind betroffen.
-
-**Empfehlung:** Geräte- und Entity-IDs in die Cache-Schlüssel aufnehmen oder den Cache beim Wechsel der Datenquelle leeren.
-
-### Mittel: Schreibaktionen werden nicht durchgängig geordnet und quittiert
-
-Bei Wahl einer Lüfterstufe werden `select.select_option` und gegebenenfalls `switch.turn_off` für die Automatik direkt nacheinander ausgelöst, ohne die Promises abzuwarten (`proxon-fwt-card.js`, Zeilen 1880–1882). Auch die Sammelaktion für alle Räume sendet mehrere Schreibaufrufe ohne Rückmeldung (Zeilen 1910–1914). Ein Fehler ist für die bedienende Person nicht unmittelbar sichtbar.
-
-**Empfehlung:** Abhängige Aktionen sequenziell ausführen, Fehler abfangen und im Panel anzeigen. Während einer laufenden Aktion betroffene Bedienelemente vorübergehend sperren.
-
-### Mittel: Filteralter-Text ist in beiden Sprachen doppelt definiert
-
-`f_age` kommt in Deutsch und Englisch jeweils zweimal im `TEXT`-Objekt vor (`proxon-fwt-card.js`, Zeilen 66–67 und 139–140). Der spätere Eintrag („Alter“/„Age“) überschreibt den Text mit Platzhaltern. Die Verwendungen in der Diagnose und Wartung (Zeilen 1814 und 1847) zeigen daher nicht „Tag X von Y …“.
-
-**Empfehlung:** Für Beschriftung und Satz unterschiedliche Schlüssel verwenden und Übersetzungsschlüssel auf Duplikate prüfen.
+| Prüfung | Ergebnis |
+|---|---|
+| `python3 -m pytest -q` | 44 Tests bestanden: Logik, Konstanten, Übersetzungen und der Coordinator (Boost, PTC-Maske, Statistik-Speicherung, Verbindungsabbruch, Flags) mit schlanken HA-Stubs |
+| `node --test tests/panel.test.mjs tests/panel-render.test.mjs` | 20 Tests bestanden: Übersetzungsschlüssel, Escaping, Cache-Scope, Schreibaktionen, Stepper, Dialog, Discovery, Raumreihenfolge, Rendering aller Tabs und Ansichten |
+| Render-Snapshot vor und nach der Modulaufteilung | 13 Renderings (alle Tabs, Raumansichten, Historienzeiträume, Dialog, Karte de/en) byte-identisch |
+| Mutationsprüfung der Coordinator-Tests | Lock, Speicher-Drosselung, früher Abbruch und Intensiv-Vorzustand: jeweils ein Test schlägt bei Entfernen der Korrektur fehl |
+| Modulgraph im Browser | lädt ohne Fehler, drei Elemente registriert, `adoptedStyleSheets` aktiv |
 
 ## Gesamtbewertung
 
 | Bereich | Einschätzung |
 |---|---|
-| Codequalität | Solide Python-Struktur und verständliche Kernlogik; das Frontend ist für eine einzelne Datei zu groß und enthält Rendering, CSS, Übersetzungen, Datenabfragen und Aktionen zugleich. |
-| Sicherheit | Kein offensichtlicher Umgang mit Zugangsdaten im Panel; die ungefilterten HTML-Ausgaben sind jedoch ein konkretes Sicherheitsproblem. |
-| Konsistenz | Entitäten werden überwiegend über Registry-Merkmale statt feste IDs gefunden. Doppelte Übersetzungsschlüssel und nicht vollständig aktualisierte Optionen stören die Konsistenz. |
-| Logik | Boost, Statistik und Lüfter-Rückstellung sind als reine Logik testbar. Im Panel brauchen Cache- und Schreibabläufe mehr Absicherung. |
-| Usability | Vier Reiter, Raumfilter, Schnellaktionen und Diagramme decken typische Aufgaben gut ab. Fehlerrückmeldungen und Ladezustände bei Aktionen fehlen. |
-| Look & Feel | Die vorhandenen Bilder zeigen eine klare Hierarchie und gute Hell/Dunkel-Anpassung; `prefers-reduced-motion` wird berücksichtigt. Die Bilder zeigen jedoch eine ältere Panel-Ansicht und belegen nicht das aktuelle Rendering. |
-
-## Prüfung und Grenzen
-
-- `python3 -m pytest -q`: **33 Tests bestanden**. Die Tests decken vor allem reine Python-Logik ab; automatisierte Panel-Tests fehlen.
-- `node --check custom_components/proxon_modbus/www/proxon-fwt-card.js`: **bestanden**.
-- Python-Kompilierung mit `PYTHONPYCACHEPREFIX` außerhalb des Repositorys: **bestanden**.
-- Keine laufende Home-Assistant-Instanz für einen aktuellen Browser- und Mobiltest verfügbar. Die Bilder unter `docs/` zeigen nicht die aktuelle Implementierung mit vier Reitern.
-- Dieser Review hat keine Implementierungsdateien verändert.
-
-## Empfohlene Reihenfolge
-
-1. HTML-Ausgaben absichern und den `f_age`-Fehler beheben.
-2. Einstellungsaktualisierung und Cache-Invalidierung korrigieren.
-3. Schreibaktionen geordnet ausführen und Fehler im Panel sichtbar machen.
-4. Frontend in kleinere Module aufteilen und gezielte Tests für Discovery, Rendering, Interaktion und Cache-Verhalten ergänzen.
-5. Aktuelle Screenshots für Desktop, Mobil, helles und dunkles Theme erstellen und Bedienbarkeit in einer laufenden HA-Instanz prüfen.
+| Codequalität | Python-Struktur sinnvoll getrennt; das Frontend ist jetzt in Module mit klaren Verantwortlichkeiten aufgeteilt, die Basisklasse bleibt aber groß (Methodengruppen teilen sich einen Prototyp). |
+| Sicherheit | Variable Texte werden an den bekannten Stellen maskiert; der Rest hängt daran, dass neue Stellen `esc()` nutzen. Das Panel ist weiterhin für Nicht-Admins sichtbar (`require_admin=False`), die Dienste ohnehin. |
+| Zuverlässigkeit | Schreibpfade (PTC, Boost, Statistik) sind serialisiert und fehlertolerant; Wiederholungen sind begrenzt. |
+| Usability | Ruhiges Raster, Dialog für Details, Rückmeldung bei Fehlern, gesperrte Bedienung während Schreibaktionen. |
+| Testbarkeit | Reine Logik, Coordinator (gestubbt) und Frontend sind getestet; Entities und Flows nicht. |

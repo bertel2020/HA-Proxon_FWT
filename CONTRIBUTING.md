@@ -1,10 +1,12 @@
 # Contributing
 
 This started as a single-installation integration for one Proxon FWT unit.
-There is a small `pytest` suite for the logic that does not need Home Assistant
-(fan stage restore, run statistics, register map, translations); tests that
-exercise the Home Assistant side (`pytest-homeassistant-custom-component`) are
-very welcome.
+There is a `pytest` suite for the logic that does not need Home Assistant
+(fan stage restore, run statistics, register map, translations) and for the
+coordinator (boost, PTC mask, statistics saving, link errors), which runs against
+small stand-ins for the few `homeassistant.*` modules it imports. The side panel
+and card have Node tests. Tests that exercise entities and flows with
+`pytest-homeassistant-custom-component` are very welcome.
 
 ## Local development
 
@@ -12,7 +14,18 @@ very welcome.
 python3 -m py_compile custom_components/proxon_modbus/*.py
 python3 -m pyflakes custom_components/proxon_modbus/*.py
 python3 -m pytest -q tests
+node --test tests/panel.test.mjs tests/panel-render.test.mjs
 ```
+
+## Frontend layout
+
+`custom_components/proxon_modbus/www/proxon-fwt-card.js` only registers the
+elements; the code lives in ES modules under `www/lib/` (`text.js`, `styles.js`,
+`constants.js`, `base.js` plus method groups assembled in `compose.js`, `card.js`,
+`panel.js`, `editor.js`). There is no build step. The integration serves the whole
+`www` folder below a path that contains its version, so the modules can import each
+other by relative path and browsers fetch them anew after an update. Variable text
+that ends up in a template has to go through `esc()`.
 
 For anything beyond a syntax/lint check you need a real Home Assistant
 instance (or `pip install homeassistant` in a throwaway virtualenv) to import
