@@ -45,7 +45,7 @@ const TEXT = {
     efficiency: "Rückwärmzahl", bypass_short: "bypass",
     pre_evaporator: "vor Verdampfer", post_preheat: "nach Vorwärme", pre_condenser: "vor Kondensator",
     pre_evap_s: "vor Verd.", pre_cond_s: "vor Kond.", post_preheat_s: "nach Vorwärme",
-    evap_s: "Verd.", cond_s: "Kond.",
+    evap_s: "Verd.", cond_s: "Kond.", wrg_s: "WRG", open_s: "offen",
     error: "Systemfehler", no_error: "Kein Fehler", has_error: "Fehler",
     filter_device: "Gerätefilter", filter_recirc: "Umluftfilter",
     change_due: "Wechsel fällig", ok: "OK",
@@ -118,7 +118,7 @@ const TEXT = {
     efficiency: "Heat recovery", bypass_short: "bypass",
     pre_evaporator: "before evaporator", post_preheat: "after preheater", pre_condenser: "before condenser",
     pre_evap_s: "bef. evap.", pre_cond_s: "bef. cond.", post_preheat_s: "after preheat",
-    evap_s: "Evap.", cond_s: "Cond.",
+    evap_s: "Evap.", cond_s: "Cond.", wrg_s: "HR", open_s: "open",
     error: "System error", no_error: "No error", has_error: "Error",
     filter_device: "Unit filter", filter_recirc: "Recirculation filter",
     change_due: "Replace soon", ok: "OK",
@@ -295,9 +295,28 @@ ha-card { padding: 14px 16px; display: block; border: 1px solid var(--ha-card-bo
 .fl { stroke-dasharray: 6 5; animation: fl 1s linear infinite; }
 .sp-rot { transform-box: fill-box; transform-origin: center; animation: rot 1.2s linear infinite; }
 .off .fl, .off .sp-rot { animation: none; }
-@keyframes fl { to { stroke-dashoffset: -16; } }
+@keyframes fl { to { stroke-dashoffset: -11; } }
 @keyframes rot { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .fl, .sp-rot { animation: none; } }
+.sch .st { paint-order: stroke; stroke: var(--secondary-background-color); stroke-width: 3px; stroke-linejoin: round; }
+.sch .nh { stroke: none; }
+.sch .duct { fill: none; stroke-width: 13; stroke-linecap: round; stroke-linejoin: round; opacity: .13; }
+.sch .core { fill: none; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; opacity: .4; }
+.sch .dots { fill: none; stroke-width: 3.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: .1 14; }
+.sch .refr { fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 7 5; }
+.sch .dim { opacity: .22; }
+.sch .go { animation: sflow var(--spd, 1.2s) linear infinite; }
+.sch .rgo { animation: smarsh var(--rsp, 1s) linear infinite; }
+.sch .rot { animation: sspin var(--fan, .7s) linear infinite; }
+.sch .ripple { transform-box: fill-box; transform-origin: center; animation: srip 2.4s ease-out infinite; }
+/* Offsets equal one full dash period (.1 + 14 and 7 + 5), so the loop restarts without a jump. */
+@keyframes sflow { to { stroke-dashoffset: -14.1; } }
+@keyframes smarsh { to { stroke-dashoffset: -12; } }
+@keyframes sspin { to { transform: rotate(360deg); } }
+@keyframes srip { 0% { transform: scale(1); opacity: .45; } 100% { transform: scale(1.7); opacity: 0; } }
+.sch.off .go, .sch.off .rgo, .sch.off .rot, .sch.off .ripple { animation-play-state: paused; }
+.sch.off .ripple { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .sch .go, .sch .rgo, .sch .rot, .sch .ripple { animation: none; } }
 svg text { fill: var(--primary-text-color); font-family: inherit; }
 svg .st { font-size: 12px; fill: var(--secondary-text-color); }
 svg .sh { font-size: 13px; font-weight: 500; }
@@ -787,6 +806,18 @@ class ProxonFwtBase extends HTMLElement {
     return `<ha-card>${this._header("mdi:swap-horizontal", this._t("air"), bypass)}${svg}</ha-card>`;
   }
 
+  // Rounded polyline path (corner radius r) through the given points.
+  _rpath(pts, r = 10) {
+    let d = `M${pts[0][0]} ${pts[0][1]}`;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], [x2, y2] = pts[i + 1];
+      const l1 = Math.hypot(x1 - x0, y1 - y0), l2 = Math.hypot(x2 - x1, y2 - y1), a = Math.min(r, l1 / 2, l2 / 2);
+      d += `L${(x1 - ((x1 - x0) / l1) * a).toFixed(1)} ${(y1 - ((y1 - y0) / l1) * a).toFixed(1)}Q${x1} ${y1} ${(x1 + ((x2 - x1) / l2) * a).toFixed(1)} ${(y1 + ((y2 - y1) / l2) * a).toFixed(1)}`;
+    }
+    const e = pts[pts.length - 1];
+    return `${d}L${e[0]} ${e[1]}`;
+  }
+
   _sec_schema(d) {
     const c = d.central;
     const flip = this._flip();
@@ -795,52 +826,82 @@ class ProxonFwtBase extends HTMLElement {
     const bypass = this._on(c.bypass_active);
     const cool = this._on(c.heat_pump_cooling);
     const T = (id) => this._temp(id);
-    const L = (pts, col, anim, arrow) => `<polyline points="${pts.map(([x, y]) => `${X(x)},${y}`).join(" ")}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" ${anim && run ? 'class="fl"' : ""} ${arrow ? 'marker-end="url(#sa)"' : ""}/>`;
-    const pill = (cx, cy, label, id, col) => `<rect x="${X(cx) - 44}" y="${cy - 22}" width="88" height="44" rx="8" fill="${col}" fill-opacity=".14" stroke="${col}" stroke-opacity=".6" stroke-width=".7"/>
-      <text class="st" x="${X(cx)}" y="${cy - 4}" text-anchor="middle">${label}</text><text class="sh" x="${X(cx)}" y="${cy + 13}" text-anchor="middle">${T(id) || "–"}</text>`;
-    const coil = (cx, col, label, id) => `<rect x="${X(cx) - 8}" y="123" width="16" height="44" rx="3" fill="${col}" fill-opacity=".3" stroke="${col}"/>
+    const rpm = this._num(c.compressor_speed);
+    const hp = run && (rpm !== null ? rpm > 0 : this._on(c.heat_pump_heating) || cool);
+    const rpmS = this._num(c.fan_speed_supply), rpmE = this._num(c.fan_speed_extract);
+    const eff = this._efficiency();
+    const MILD = "var(--secondary-text-color)";
+    const tone = (id) => { const v = this._num(id); return v === null ? MILD : v <= 16 ? BLUE : v >= 26 ? CORAL : MILD; };
+    const P = (pts) => pts.map(([x, y]) => [X(x), y]);
+    // Air path: soft duct + thin core + flowing dots. All three share one path, the dots loop by exactly one dash period.
+    const air = (pts, stroke, on, dim) => { const p = this._rpath(P(pts));
+      return `<g ${dim ? 'class="dim"' : ""}><path class="duct" d="${p}" stroke="${stroke}"/><path class="core" d="${p}" stroke="${stroke}"/><path class="dots ${on ? "go" : ""}" d="${p}" stroke="${stroke}"/></g>`; };
+    const refr = (pts, col, on) => { const p = this._rpath(P(pts), 14);
+      return `<path class="duct" d="${p}" stroke="${col}"/><path class="refr ${on ? "rgo" : ""}" d="${p}" stroke="${col}"/>`; };
+    const stops = (a) => a.map(([o, col]) => `<stop offset="${o}" stop-color="${col}"/>`).join("");
+    const pill = (cx, cy, label, id) => { const col = tone(id);
+      return `<rect x="${X(cx) - 42}" y="${cy - 22}" width="84" height="44" rx="11" fill="color-mix(in srgb, ${col} 13%, var(--card-background-color))" stroke="color-mix(in srgb, ${col} 55%, transparent)"/>
+        <text class="st nh" x="${X(cx)}" y="${cy - 5}" text-anchor="middle">${label}</text><text class="sh" x="${X(cx)}" y="${cy + 14}" text-anchor="middle">${T(id) || "–"}</text>`; };
+    const coil = (cx, col, label, id) => `<rect x="${X(cx) - 8}" y="123" width="16" height="44" rx="5" fill="color-mix(in srgb, ${col} 28%, var(--card-background-color))" stroke="${col}" stroke-width="1.3"/>
       <text class="st" x="${X(cx)}" y="112" text-anchor="middle">${label}${T(id) ? " " + T(id) : ""}</text>`;
     // Both fans sit upstream of the exchanger (fresh-air fan after the preheater, extract fan in the extract stream).
-    const fan = (cx, id) => {
-      const rpm = this._num(id);
-      return `<circle cx="${X(cx)}" cy="75" r="15" fill="var(--card-background-color)" stroke="var(--divider-color)"/>
-        <g class="${run ? "sp-rot" : ""}"><path d="M${X(cx) - 11} 75H${X(cx) + 11}M${X(cx)} 64V86" stroke="var(--secondary-text-color)" stroke-width="2.5" stroke-linecap="round"/></g>
-        <text class="st" x="${X(cx)}" y="50" text-anchor="middle">${rpm === null ? "" : rpm.toLocaleString(this._hass.language) + " rpm"}</text>`;
-    };
-    const probe = (cx, cy, ty, txt, id, col) => T(id) ? `<circle cx="${X(cx)}" cy="${cy}" r="3.5" fill="${col}" stroke="var(--card-background-color)" stroke-width="1.5"/>
+    const fan = (cx, rp) => {
+      const sp = rp ? Math.max(0.35, 1.5 - rp / 1600) : 1;
+      const blades = [0, 120, 240].map((a) => `<path transform="rotate(${a})" d="M0 0C5 -2 11 -7 8 -13C3 -13 -2 -7 0 0Z" fill="var(--secondary-text-color)"/>`).join("");
+      return `<circle cx="${X(cx)}" cy="75" r="17" fill="var(--card-background-color)" stroke="var(--pbd)" stroke-width="1.5"/>
+        <g transform="translate(${X(cx)} 75)"><g class="${run && rp ? "rot" : ""}" style="--fan:${sp.toFixed(2)}s">${blades}</g><circle r="2.6" fill="var(--card-background-color)" stroke="var(--secondary-text-color)"/></g>
+        <text class="st" x="${X(cx)}" y="48" text-anchor="middle">${rp === null ? "" : rp.toLocaleString(this._hass.language) + " rpm"}</text>`; };
+    const probe = (cx, cy, ty, txt, id, col) => T(id) ? `<circle cx="${X(cx)}" cy="${cy}" r="4" fill="${col}" stroke="var(--card-background-color)" stroke-width="1.8"/>
       <text class="st" x="${X(cx)}" y="${ty}" text-anchor="middle">${txt} ${T(id)}</text>` : "";
-    const rpm = this._num(c.compressor_speed);
     const preheat = c.temp_post_preheat && this._ok(c.temp_post_preheat)
-      ? `<rect x="${X(150) - 8}" y="61" width="16" height="28" rx="3" fill="${CORAL}" fill-opacity=".25" stroke="${CORAL}"/>
+      ? `<rect x="${X(150) - 8}" y="61" width="16" height="28" rx="5" fill="color-mix(in srgb, ${CORAL} 25%, var(--card-background-color))" stroke="${CORAL}" stroke-width="1.3"/>
          <path d="M${X(150) - 4} 66L${X(150) + 4} 71L${X(150) - 4} 76L${X(150) + 4} 81" fill="none" stroke="${CORAL}" stroke-width="1.2"/>` : "";
-    const outdoor = this._temp(this._outdoorId());
-    const svg = `<svg width="100%" viewBox="0 0 680 340" role="img" aria-label="${this._t("schema")}" class="${run ? "" : "off"}">
-      <defs><marker id="sa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
-      <rect x="100" y="14" width="480" height="312" rx="16" fill="var(--secondary-background-color)" stroke="var(--divider-color)" stroke-dasharray="4 4"/>
-      <g><title>${this._t("tip_hx", this._efficiency() === null ? "–" : this._efficiency() + " %")}</title><polygon points="${[[340, 40], [410, 110], [340, 180], [270, 110]].map(([x, y]) => `${X(x)},${y}`).join(" ")}" fill="var(--card-background-color)" stroke="var(--divider-color)"/></g>
-      <g ${bypass ? 'opacity=".25"' : ""}>${L([[305, 75], [340, 110]], BLUE, 1)}${L([[340, 110], [375, 145]], CORAL, 1)}${L([[375, 75], [340, 110]], CORAL, 1)}${L([[340, 110], [305, 145]], BLUE, 1)}</g>
-      ${bypass ? L([[92, 75], [250, 75]], BLUE, 0) + `<g opacity=".25">${L([[250, 75], [303, 75]], BLUE, 0, 1)}${L([[377, 145], [430, 145]], CORAL, 0)}</g>` + L([[430, 145], [588, 145]], CORAL, 0, 1)
-        : L([[92, 75], [303, 75]], BLUE, 0, 1) + L([[377, 145], [588, 145]], CORAL, 0, 1)}${L([[588, 75], [377, 75]], CORAL, 0, 1)}${L([[303, 145], [92, 145]], BLUE, 0, 1)}
-      ${bypass ? L([[250, 75], [250, 48], [430, 48], [430, 143]], BLUE, 1, 1) : ""}
-      ${preheat}
-      <text class="st" x="${X(340)}" y="198" text-anchor="middle">${this._t("exchanger")}</text>
+    const freshN = [[92, 75], [303, 75], [340, 110], [377, 145], [588, 145]];
+    const fresh = bypass ? [[92, 75], [250, 75], [250, 48], [430, 48], [430, 145], [588, 145]] : freshN;
+    const exh = [[588, 75], [377, 75], [340, 110], [303, 145], [92, 145]];
+    const gF = bypass ? [[0, BLUE], [1, BLUE]] : cool ? [[0, CORAL], [0.4, CORAL], [0.6, BLUE], [1, BLUE]] : [[0, BLUE], [0.4, BLUE], [0.6, CORAL], [1, CORAL]];
+    const gE = bypass ? [[0, CORAL], [1, CORAL]] : cool ? [[0, BLUE], [0.4, BLUE], [0.6, CORAL], [1, CORAL]] : [[0, CORAL], [0.4, CORAL], [0.6, BLUE], [1, BLUE]];
+    const spdA = run && rpmS ? Math.max(0.6, 2.2 - rpmS / 1100) : 1.2;
+    const spdR = hp && rpm ? Math.max(0.5, 1.6 - rpm / 3500) : 1;
+    const IDLE = "var(--pbd)", hc = hp ? CORAL : IDLE, cc = hp ? BLUE : IDLE;
+    const loop = cool
+      ? refr([[314, 245], [180, 245], [180, 169]], hc, hp) + refr([[200, 169], [200, 305], [326, 305]], hc, hp) + refr([[354, 305], [480, 305], [480, 169]], cc, hp) + refr([[500, 169], [500, 245], [366, 245]], cc, hp)
+      : refr([[366, 245], [500, 245], [500, 169]], hc, hp) + refr([[480, 169], [480, 305], [354, 305]], hc, hp) + refr([[326, 305], [200, 305], [200, 169]], cc, hp) + refr([[180, 169], [180, 245], [314, 245]], cc, hp);
+    const ring = hp ? (cool ? BLUE : CORAL) : IDLE, circ = 2 * Math.PI * 31, frac = Math.min(1, (rpm || 0) / (this._config.max_compressor_rpm || 6000));
+    const outdoor = T(this._outdoorId());
+    const hx = [[340, 40], [410, 110], [340, 180], [270, 110]].map(([x, y]) => `${X(x)},${y}`).join(" ");
+    const svg = `<svg width="100%" viewBox="0 0 680 340" role="img" aria-label="${this._t("schema")}" class="sch ${run ? "" : "off"}" style="--spd:${spdA.toFixed(2)}s;--rsp:${spdR.toFixed(2)}s">
+      <defs>
+        <linearGradient id="gF" gradientUnits="userSpaceOnUse" x1="${X(92)}" y1="0" x2="${X(588)}" y2="0">${stops(gF)}</linearGradient>
+        <linearGradient id="gE" gradientUnits="userSpaceOnUse" x1="${X(588)}" y1="0" x2="${X(92)}" y2="0">${stops(gE)}</linearGradient>
+        <linearGradient id="gX" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${BLUE}" stop-opacity=".16"/><stop offset=".5" stop-color="${BLUE}" stop-opacity="0"/><stop offset="1" stop-color="${CORAL}" stop-opacity=".16"/></linearGradient>
+      </defs>
+      <rect x="100" y="14" width="480" height="312" rx="22" fill="var(--secondary-background-color)" stroke="var(--pbd)" stroke-dasharray="3 5" stroke-linecap="round"/>
+      <g><title>${this._t("tip_hx", eff === null ? "–" : eff + " %")}</title>
+        <polygon points="${hx}" fill="var(--card-background-color)" stroke="var(--pbd)" stroke-width="1.5" stroke-linejoin="round"/><polygon points="${hx}" fill="url(#gX)" stroke-linejoin="round"/></g>
+      ${air(freshN, "url(#gF)", run && !bypass, bypass)}${air(exh, "url(#gE)", run)}${bypass ? air(fresh, "url(#gF)", run) : ""}
+      ${loop}
+      <polygon points="${[[354, 305], [340, 296], [326, 305], [340, 314]].map(([x, y]) => `${X(x)},${y}`).join(" ")}" fill="var(--card-background-color)" stroke="${hp ? ring : IDLE}" stroke-width="1.5" stroke-linejoin="round"/>
       ${cool ? coil(190, CORAL, this._t("cond_s"), c.temp_condenser) + coil(490, BLUE, this._t("evap_s"), c.temp_evaporator)
-        : coil(190, BLUE, this._t("evap_s"), c.temp_evaporator) + coil(490, CORAL, this._t("cond_s"), c.temp_condenser)}
-      ${fan(215, c.fan_speed_supply)}${fan(500, c.fan_speed_extract)}
-      ${probe(190, 75, 34, this._t("post_preheat_s"), c.temp_post_preheat, BLUE)}${probe(cool ? 428 : 252, 145, 165, this._t("pre_evap_s"), c.temp_pre_evaporator, BLUE)}${probe(cool ? 252 : 428, 145, 165, this._t("pre_cond_s"), c.temp_pre_condenser, CORAL)}
-      ${cool
-        ? L([[314, 245], [180, 245], [180, 169]], CORAL, 1) + L([[200, 169], [200, 305], [326, 305]], CORAL, 1) + L([[354, 305], [480, 305], [480, 169]], BLUE, 1) + L([[500, 169], [500, 245], [366, 245]], BLUE, 1)
-        : L([[366, 245], [500, 245], [500, 169]], CORAL, 1) + L([[480, 169], [480, 305], [354, 305]], CORAL, 1) + L([[326, 305], [200, 305], [200, 169]], BLUE, 1) + L([[180, 169], [180, 245], [314, 245]], BLUE, 1)}
-      <polygon points="${[[354, 305], [340, 297], [326, 305], [340, 313]].map(([x, y]) => `${X(x)},${y}`).join(" ")}" fill="var(--card-background-color)" stroke="var(--divider-color)"/>
-      <g class="hot" data-act="tab" data-v="diag" role="button" tabindex="0" aria-label="${this._t("tip_comp")}"><title>${this._t("tip_comp")}</title><circle cx="${X(340)}" cy="245" r="26" fill="var(--card-background-color)" stroke="${BLUE}" stroke-width="1.5"/></g>
-      <text class="sh" x="${X(340)}" y="243" text-anchor="middle">${rpm === null ? "–" : rpm.toLocaleString(this._hass.language)}</text><text class="st" x="${X(340)}" y="258" text-anchor="middle">rpm</text>
-      <text class="st" x="${X(340)}" y="281" text-anchor="middle">${this._t("compressor")}${T(c.temp_compressor) ? " " + T(c.temp_compressor) : ""}</text>
-      ${pill(48, 75, this._t("fresh"), c.temp_fresh_air, BLUE)}${pill(48, 145, this._t("exhaust"), c.temp_exhaust_air, BLUE)}
-      ${pill(632, 75, this._t("extract"), c.temp_extract_air, CORAL)}${pill(632, 145, this._t("supply"), c.temp_supply_air, CORAL)}
-      ${outdoor ? `<text class="sh" x="${X(48)}" y="38" text-anchor="middle">${this._t("outside")} ${outdoor}</text>` : ""}</svg>`;
-    const hp = this._on(c.heat_pump_heating) || cool;
+        : coil(190, hp ? BLUE : MILD, this._t("evap_s"), c.temp_evaporator) + coil(490, hp ? CORAL : MILD, this._t("cond_s"), c.temp_condenser)}
+      ${preheat}${fan(215, rpmS)}${fan(500, rpmE)}
+      ${probe(190, 75, 32, this._t("post_preheat_s"), c.temp_post_preheat, BLUE)}${probe(cool ? 428 : 252, 145, 166, this._t("pre_evap_s"), c.temp_pre_evaporator, BLUE)}${probe(cool ? 252 : 428, 145, 166, this._t("pre_cond_s"), c.temp_pre_condenser, CORAL)}
+      <circle cx="${X(340)}" cy="110" r="23" fill="var(--card-background-color)" stroke="var(--pbd)"/>
+      <text class="sh" x="${X(340)}" y="110" text-anchor="middle" style="font-size:14px">${bypass ? this._t("bypass_short") : eff !== null && run ? eff + " %" : "–"}</text>
+      <text class="st nh" x="${X(340)}" y="124" text-anchor="middle" style="font-size:10px">${bypass ? this._t("open_s") : this._t("wrg_s")}</text>
+      <text class="st" x="${X(340)}" y="198" text-anchor="middle">${this._t("exchanger")}</text>
+      <g class="hot" data-act="tab" data-v="diag" role="button" tabindex="0" aria-label="${this._t("tip_comp")}"><title>${this._t("tip_comp")}</title>
+        ${hp ? `<circle class="ripple" cx="${X(340)}" cy="245" r="31" fill="none" stroke="${ring}" stroke-width="2"/>` : ""}
+        <circle cx="${X(340)}" cy="245" r="31" fill="var(--card-background-color)" stroke="var(--pbd)" stroke-width="3.5"/>
+        <circle cx="${X(340)}" cy="245" r="31" fill="none" stroke="${ring}" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="${(circ * frac).toFixed(1)} ${circ.toFixed(1)}" transform="rotate(-90 ${X(340)} 245)"/>
+        <text class="sh" x="${X(340)}" y="243" text-anchor="middle">${rpm === null ? "–" : rpm.toLocaleString(this._hass.language)}</text><text class="st nh" x="${X(340)}" y="258" text-anchor="middle">rpm</text></g>
+      <text class="st" x="${X(340)}" y="284" text-anchor="middle">${this._t("compressor")}${T(c.temp_compressor) ? " " + T(c.temp_compressor) : ""}</text>
+      ${pill(48, 75, this._t("fresh"), c.temp_fresh_air)}${pill(48, 145, this._t("exhaust"), c.temp_exhaust_air)}
+      ${pill(632, 75, this._t("extract"), c.temp_extract_air)}${pill(632, 145, this._t("supply"), c.temp_supply_air)}
+      ${outdoor ? `<text class="sh nh" x="${X(48)}" y="38" text-anchor="middle">${this._t("outside")} ${outdoor}</text>` : ""}</svg>`;
+    const heating = this._on(c.heat_pump_heating) || cool;
     const chips = `${c.bypass_active && this._ok(c.bypass_active) ? `<span class="chip ${bypass ? "a" : ""}">${this._icon("mdi:routes")}${this._t(bypass ? "bypass_open" : "bypass_closed")}</span>` : ""}
-      ${c.heat_pump_heating ? `<span class="chip ${cool ? "a" : hp ? "g" : ""}">${this._icon(cool ? "mdi:snowflake" : hp ? "mdi:fire" : "mdi:pause")}${this._t(cool ? "hp_cooling" : hp ? "hp_heating" : "hp_idle")}</span>` : ""}`;
+      ${c.heat_pump_heating ? `<span class="chip ${cool ? "a" : heating ? "g" : ""}">${this._icon(cool ? "mdi:snowflake" : heating ? "mdi:fire" : "mdi:pause")}${this._t(cool ? "hp_cooling" : heating ? "hp_heating" : "hp_idle")}</span>` : ""}`;
     return `<ha-card>${this._header("mdi:sitemap-outline", this._t("schema"), chips)}${svg}<div class="note">${this._t("probes")}</div></ha-card>`;
   }
 
