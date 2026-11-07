@@ -44,7 +44,10 @@
 - **Seitenpanel neu aufgebaut:** vier Reiter (Übersicht, Räume, Verlauf, Diagnose) mit einem Anlagenschema nach dem Aufbau des Geräts, einer Räume-Seite mit Ringanzeigen, Soll-Stepper, Zusammenfassung und Karten-/Vergleichs-/Listenansicht, einem 30-Tage-Verlauf mit Laufzeit und Energie, einer **Jahresübersicht** pro Monat und dem Projekt-Logo.
 - **Gerätefilter in Tagen mit Zwangsabschaltungs-Countdown:** Alter seit dem letzten Wechsel (Standard-Intervall 180 Tage), die Wechselmeldung der Anlage startet einen 21-Tage-Countdown bis zur Zwangsabschaltung samt Reparaturen-Eintrag, ein **Button „Filter getauscht“** und ein optionaler Umluftfilter, der ohne Aktivierung ausgeblendet bleibt. Neue Sensoren „Alter Gerätefilter“ und „Tage bis Zwangsabschaltung“.
 - **Stoßlüften mit Timer:** Neuer Schalter, der auf die höchste Stufe geht und nach der gewählten Dauer (Standard 30 Minuten; 15/30/60 im Panel, beliebig über den Dienst `proxon_modbus.start_boost`) automatisch den vorherigen Zustand wiederherstellt, auch ohne Panel und über Neustarts hinweg.
-- **Rückwärmzahl korrigiert:** Berechnet aus der Abluft nach dem Wärmetauscher, bei offenem Sommerbypass nicht angezeigt.
+- **Rückwärmzahl korrigiert und als Sensor:** Berechnet aus der Abluft nach dem Wärmetauscher, bei offenem Sommerbypass leer. Neuer Sensor „Rückwärmzahl“ mit Langzeitstatistik.
+- **Verlauf erweitert:** 1 Tag / 1 Woche / 1 Monat / 1 Jahr, Min/Max/Mittelwert (Leistung auch kWh), Vorzeitraum-Vergleich, Bypass-Phasen markiert, sofortige Tooltips an allen Diagrammen.
+- **Diagnose neu gestaltet, Hinweise dort:** Status-Kacheln, Messwerte in voller Breite, Laufzeit und Starts; Hinweise stehen jetzt unten im Diagnose-Reiter und lassen sich 24 Stunden ausblenden.
+- **Eigene CO₂-/Feuchtesensoren pro Raum:** im Namen-Schritt der Optionen wählbar, ersetzen die Eingänge der Anlage in Karte und Panel.
 - **Einrichtung:** Fragt die Seite der Außenluft ab und hat einen Namen-Schritt für Räume und Home-Assistant-Bereiche, mit den aktuellen Namen als Vorschlag.
 - **Blueprint „Nachtabsenkung der Lüfterstufe“:** nachts niedrigere Lüfterstufe, morgens wieder die normale.
 - **Dashboard-Einstellungen in den Integrationsoptionen:** Außenseite des Wärmetauschers, eigener Leistungs- und Außentemperatursensor; gelten für Karte und Panel in jedem Browser.
