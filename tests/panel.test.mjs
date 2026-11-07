@@ -23,6 +23,7 @@ function load() {
     customElements: { get: (n) => registry[n], define: (n, c) => { registry[n] = c; } },
     window: { customCards: [] }, localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
     console, Date, Math, JSON, Object, Array, Set, Map, String, Number, Promise,
+    document: { createElement: (tag) => ({ tag, textContent: "" }) },
     ResizeObserver: class { observe() {} disconnect() {} }, requestAnimationFrame: (f) => f(), setTimeout, clearTimeout,
   };
   ctx.window.window = ctx.window;
@@ -199,4 +200,18 @@ test("unknown translation keys (raw entity states) are masked", () => {
   const p = make();
   assert.equal(p._t('<img src=x onerror="a">'), "&lt;img src=x onerror=&quot;a&quot;&gt;");
   assert.equal(p._t("f_unknown").includes("<"), false);
+});
+
+test("bar chart tooltips are built from text nodes, not parsed as markup", () => {
+  const tip = { style: {}, offsetWidth: 0, replaceChildren(...c) { this.children = c; }, set innerHTML(v) { throw new Error("innerHTML used"); } };
+  const handlers = {};
+  const svg = { addEventListener: (n, f) => { handlers[n] = f; }, closest: () => null };
+  const el = { getAttribute: () => "<img onerror=x>|1 h" };
+  const box = { querySelector: (q) => (q === "[data-tip]" ? {} : q === "svg" ? svg : tip), getBoundingClientRect: () => ({ left: 0, width: 100 }) };
+  const p = make();
+  p.shadowRoot.querySelectorAll = () => [box];
+  p._bindTips();
+  handlers.pointermove({ target: { closest: () => el }, clientX: 5 });
+  assert.equal(tip.children[0].textContent, "<img onerror=x>");
+  assert.equal(tip.children[1].textContent, "1 h");
 });

@@ -1640,7 +1640,10 @@ class ProxonFwtBase extends HTMLElement {
         const el = ev.target.closest && ev.target.closest("[data-tip]");
         if (!el) return hide();
         const [h, v] = el.getAttribute("data-tip").split("|");
-        tip.innerHTML = `<b>${h}</b><div>${v}</div>`;
+        // getAttribute returns decoded text: build nodes instead of re-parsing it as markup
+        const hb = document.createElement("b"), vd = document.createElement("div");
+        hb.textContent = h; vd.textContent = v;
+        tip.replaceChildren(hb, vd);
         tip.style.display = "block";
         const r = box.getBoundingClientRect(), px = ev.clientX - r.left;
         tip.style.left = `${Math.max(0, Math.min(r.width - tip.offsetWidth, px + 12))}px`;
