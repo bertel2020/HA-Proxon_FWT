@@ -72,6 +72,10 @@ const TEXT = {
     energy_note: "Näherung aus der mittleren Tagesleistung (Ø W × 24 h).",
     no_stats: "Für diesen Zeitraum liegen keine Langzeitstatistiken vor.",
     legend_cool: "kühler als Soll", legend_ok: "im Soll", legend_warm: "wärmer als Soll", close: "Schließen",
+    rv_cards: "Karten", rv_cmp: "Vergleich", rv_list: "Liste", rf_all: "Alle", rf_heat: "Heizt", rf_dev: "Abweichung", rf_co2: "CO₂ hoch",
+    rs_avg: "Ø Raumtemperatur", rs_heat: "Heizen gerade", rs_co2: "CO₂ am höchsten", rs_rf: "Ø Feuchte", rs_none: "Keine Räume für diesen Filter.",
+    st_cool: "Kühl", st_warm: "Warm", st_ok: "Im Soll", st_heat: "Heizt", r_t24: "Temperatur 24 h", r_ago: "vor 24 h", r_now: "jetzt", r_details: "Details",
+    r_tapnote: "Raum antippen für Details", r_noh: "Kein Verlauf verfügbar", r_set: "Soll {0}°",
     tip_hx: "Wärmetauscher: Warme Abluft heizt die kalte Frischluft vor, ohne dass sich beide mischen. Rückwärmzahl {0}.",
     tip_comp: "Kompressor – Details unter Diagnose", tip_fan: "Lüfter",
     eff_info: "Anteil der Abluftwärme, der an die Frischluft übertragen wird: (Zuluft − Frischluft) ÷ (Abluft − Frischluft). Über 85 % ist gut.",
@@ -136,6 +140,10 @@ const TEXT = {
     energy_note: "Estimated from the mean daily power (avg W × 24 h).",
     no_stats: "No long-term statistics for this period.",
     legend_cool: "cooler than target", legend_ok: "on target", legend_warm: "warmer than target", close: "Close",
+    rv_cards: "Cards", rv_cmp: "Compare", rv_list: "List", rf_all: "All", rf_heat: "Heating", rf_dev: "Deviation", rf_co2: "High CO₂",
+    rs_avg: "Avg. room temperature", rs_heat: "Heating now", rs_co2: "Highest CO₂", rs_rf: "Avg. humidity", rs_none: "No rooms match this filter.",
+    st_cool: "Cool", st_warm: "Warm", st_ok: "On target", st_heat: "Heating", r_t24: "Temperature 24 h", r_ago: "24 h ago", r_now: "now", r_details: "Details",
+    r_tapnote: "Tap a room for details", r_noh: "No history available", r_set: "Target {0}°",
     tip_hx: "Heat exchanger: warm extract air preheats the cold fresh air without mixing them. Heat recovery {0}.",
     tip_comp: "Compressor – details under Diagnostics", tip_fan: "Fan",
     eff_info: "Share of the extract air heat transferred to the fresh air: (supply − fresh) ÷ (extract − fresh). Above 85 % is good.",
@@ -315,11 +323,74 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .pbar { height: 8px; border-radius: 4px; background: var(--secondary-background-color); overflow: hidden; margin-bottom: 4px; }
 .pbar i { display: block; height: 100%; border-radius: 4px; }
 .msep { border-top: 1px solid var(--divider-color); padding-top: 8px; margin-top: 4px; }
-.scrim { position: fixed; inset: 0; z-index: 19; background: rgba(0,0,0,.35); }
-.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100%); z-index: 20; overflow: auto; padding: 16px;
-  background: var(--card-background-color); box-shadow: -4px 0 24px rgba(0,0,0,.25); }
-.drawer .dh { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 500; margin-bottom: 8px; }
-.drawer .dh .grow { flex: 1; }
+.rtop { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.rtop .grow { flex: 1; }
+.rseg { display: inline-flex; background: var(--secondary-background-color); border-radius: 10px; padding: 3px; gap: 2px; }
+.rseg button { font: inherit; font-size: 13px; border: 0; background: none; color: var(--secondary-text-color); padding: 6px 12px; border-radius: 8px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.rseg button.a { background: var(--card-background-color); color: var(--primary-text-color); font-weight: 500; box-shadow: 0 1px 3px rgba(0,0,0,.18); }
+.rseg ha-icon, .fchip ha-icon { --mdc-icon-size: 16px; }
+.rfil { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+.fchip { font: inherit; font-size: 13px; cursor: pointer; display: inline-flex; gap: 5px; align-items: center; padding: 5px 12px; border-radius: 99px;
+  border: 1px solid var(--divider-color); background: var(--card-background-color); color: var(--primary-text-color); }
+.fchip.a { background: color-mix(in srgb, var(--primary-color) 14%, var(--card-background-color)); border-color: var(--primary-color); color: var(--primary-color); }
+.rfil .grow { flex: 1; }
+.rsum { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.rs { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; background: var(--secondary-background-color); }
+.rs .ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex: none;
+  background: color-mix(in srgb, var(--c) 16%, transparent); color: var(--c); --mdc-icon-size: 22px; }
+.rs small { display: block; color: var(--secondary-text-color); font-size: 12px; }
+.rs b { font-size: 19px; font-weight: 500; } .rs b span { font-size: 12px; font-weight: 400; color: var(--secondary-text-color); }
+.rgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.rc { border-radius: 18px; padding: 14px; background: var(--secondary-background-color); border: 1px solid transparent; min-width: 0; }
+.rc:hover { border-color: color-mix(in srgb, var(--primary-color) 40%, transparent); }
+.rc.open { grid-column: span 2; }
+.rh { display: flex; align-items: center; gap: 8px; cursor: pointer; min-width: 0; }
+.rh .ri { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; flex: none; background: var(--card-background-color); color: var(--secondary-text-color); --mdc-icon-size: 18px; }
+.rh b { font-weight: 500; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rh .st { margin-left: auto; font-size: 12px; display: inline-flex; gap: 3px; align-items: center; padding: 2px 9px; border-radius: 99px; flex: none;
+  background: color-mix(in srgb, var(--c) 16%, transparent); color: var(--c); --mdc-icon-size: 14px; }
+.rh .chev { color: var(--secondary-text-color); --mdc-icon-size: 18px; transition: transform .2s; flex: none; }
+.rc.open .chev { transform: rotate(180deg); }
+.rb { display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 6px; }
+.rc.open .rb { flex-direction: row; justify-content: space-around; flex-wrap: wrap; }
+.ring { position: relative; width: 140px; height: 140px; flex: none; }
+.ring svg { width: 100%; height: 100%; display: block; }
+.ring .c { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.ring .c b { display: block; font-size: 28px; font-weight: 500; line-height: 1.1; }
+.ring .c small { display: block; color: var(--secondary-text-color); font-size: 12px; }
+.rctl { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.stp { display: flex; align-items: center; gap: 6px; justify-content: center; }
+.stp .t { min-width: 70px; text-align: center; } .stp .t small { display: block; color: var(--secondary-text-color); font-size: 11px; } .stp .t b { font-size: 18px; font-weight: 500; }
+.mp { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.mp .chip { margin: 0; }
+.rmore { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--divider-color); }
+.rmore h4 { margin: 0 0 6px; font-size: 12px; font-weight: 500; color: var(--secondary-text-color); text-transform: uppercase; letter-spacing: .04em; }
+.rmore .f { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--divider-color); font-size: 13px; }
+.rmore .f:first-of-type { border-top: 0; } .rmore .f b { font-weight: 500; }
+.rcmp { display: grid; }
+.crow { display: grid; grid-template-columns: 150px minmax(0, 1fr) 110px; gap: 14px; align-items: center; padding: 10px 0; border-top: 1px solid var(--divider-color); cursor: pointer; }
+.crow.first { border-top: 0; }
+.crow .n { display: flex; gap: 8px; align-items: center; font-weight: 500; min-width: 0; --mdc-icon-size: 18px; }
+.crow .n ha-icon { color: var(--secondary-text-color); flex: none; }
+.crow .v { text-align: right; } .crow .v b { font-weight: 500; font-size: 16px; } .crow .v small { color: var(--secondary-text-color); margin-left: 4px; }
+.axis { position: relative; height: 26px; }
+.axis:before { content: ""; position: absolute; left: 0; right: 0; top: 12px; height: 2px; background: var(--divider-color); }
+.axis .zero { position: absolute; left: 50%; top: 2px; bottom: 2px; width: 2px; background: var(--secondary-text-color); opacity: .5; }
+.axis .bar { position: absolute; top: 7px; height: 12px; border-radius: 6px; background: var(--c); }
+.axis .dot { position: absolute; top: 4px; width: 18px; height: 18px; border-radius: 50%; background: var(--c); border: 3px solid var(--card-background-color); transform: translateX(-50%); }
+.cscale { display: grid; grid-template-columns: 150px minmax(0, 1fr) 110px; gap: 14px; font-size: 11px; color: var(--secondary-text-color); padding-bottom: 4px; }
+.cscale div:nth-child(2) { display: flex; justify-content: space-between; }
+.cx { padding: 4px 0 8px; display: flex; gap: 24px; align-items: center; flex-wrap: wrap; border-top: 0; }
+.cx .rspark { flex: 1; min-width: 220px; max-width: 360px; }
+.lrow { display: flex; align-items: center; gap: 10px; }
+.lrow .t2 { margin-left: auto; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.lcard { border-radius: 14px; padding: 8px 14px; background: var(--secondary-background-color); margin-bottom: 8px; }
+@media (max-width: 640px) {
+  .rgrid { grid-template-columns: 1fr; } .rc.open { grid-column: auto; } .rmore { grid-template-columns: 1fr; }
+  .rc .rb { flex-direction: row; justify-content: space-around; } .ring { width: 118px; height: 118px; }
+  .crow, .cscale { grid-template-columns: 96px minmax(0, 1fr) 66px; gap: 8px; } .crow .v small { display: none; }
+  .rsum { grid-template-columns: 1fr 1fr; }
+}
 .rlegend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--secondary-text-color); margin: 10px 0 0; align-items: center; }
 .rlegend span { display: inline-flex; gap: 4px; align-items: center; } .rlegend ha-icon { --mdc-icon-size: 14px; }
 .tile .dv { --mdc-icon-size: 14px; }
@@ -427,7 +498,7 @@ class ProxonFwtBase extends HTMLElement {
     const sig = ids.filter(Boolean).map((i) => {
       const s = h.states[i];
       return s ? `${s.state}|${s.attributes.temperature}|${s.attributes.current_temperature}|${s.attributes.preferred_stage}|${s.attributes.last_restore}` : "-";
-    }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._hver || 0}|${this._histRange || "24h"}|${this._metric || ""}|${this._tab || ""}|${this._drawer ? 1 : 0}|${this._boost ? 1 : 0}|${this._wb || 0}|${this._settingsStamp || 0}`;
+    }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._hver || 0}|${this._histRange || "24h"}|${this._metric || ""}|${this._tab || ""}|${this._rview || ""}|${this._rfilter || ""}|${[...(this._ropen || [])].join("+")}|${this._boost ? 1 : 0}|${this._wb || 0}|${this._settingsStamp || 0}`;
     if (sig === this._sig) return;
     this._sig = sig;
     this._render();
@@ -1292,8 +1363,22 @@ class ProxonFwtBase extends HTMLElement {
       case "autosw": call("switch", "toggle", { entity_id: c.fan_auto }); break;
       case "hrange": this._histRange = v; this._update(); break;
       case "metric": this._metric = v; this._update(); break;
-      case "tab": this._tab = v; this._drawer = false; this._sig = ""; this._update(); if (this.scrollIntoView) this.scrollIntoView({ block: "start" }); break;
-      case "drawerclose": this._drawer = false; this._sig = ""; this._update(); break;
+      case "tab": this._tab = v; this._sig = ""; this._update(); if (this.scrollIntoView) this.scrollIntoView({ block: "start" }); break;
+      case "rview": this._rview = v; this._sig = ""; this._update(); break;
+      case "rfilter": this._rfilter = v; this._sig = ""; this._update(); break;
+      case "rtoggle": {
+        const id = this._d.rooms[Number(v)].climate;
+        this._ropen = this._ropen || new Set();
+        if (this._ropen.has(id)) this._ropen.delete(id); else this._ropen.add(id);
+        this._sig = ""; this._update(); break;
+      }
+      case "rstep": {
+        const [n, dir] = v.split("|"), id = this._d.rooms[Number(n)].climate, a = (this._state(id) || {}).attributes || {};
+        const step = a.target_temp_step || 1;
+        call("climate", "set_temperature", { entity_id: id, temperature: Math.min(a.max_temp ?? 30, Math.max(a.min_temp ?? 18, (a.temperature ?? a.current_temperature ?? 21) + Number(dir) * step)) });
+        break;
+      }
+      case "rptc": call("switch", "toggle", { entity_id: this._d.rooms[Number(v)].ents.ptc_enable }); break;
       case "boost": this._toggleBoost(); break;
       case "allroom": for (const r of this._d.rooms) {
         const a = (this._state(r.climate) || {}).attributes || {};
@@ -1305,7 +1390,7 @@ class ProxonFwtBase extends HTMLElement {
       case "coolsw": call("switch", "toggle", { entity_id: c.cooling_enable }); break;
       case "ptc": call("switch", "toggle", { entity_id: this._d.rooms[this._room].ents.ptc_enable }); break;
       case "view": this._view = v; this._sig = ""; this._update(); break;
-      case "room": this._room = Number(v); if (this._drawerMode) this._drawer = true; this._sig = ""; this._update(); break;
+      case "room": this._room = Number(v); this._sig = ""; this._update(); break;
       case "menu": this.dispatchEvent(new Event("hass-toggle-menu", { bubbles: true, composed: true })); break;
       case "flip": this._toggleFlip(); break;
       case "up": case "down": {
@@ -1434,15 +1519,140 @@ class ProxonFwtPanel extends ProxonFwtBase {
     this._update();
   }
 
-  _roomDrawer(d) {
-    if (!this._drawer || !d.rooms.length) return "";
-    const r = d.rooms[Math.min(this._room, d.rooms.length - 1)];
+  // ---- rooms tab --------------------------------------------------------
+
+  _roomInfo(r) {
     const s = this._state(r.climate) || { attributes: {}, state: "unavailable" };
-    const cur = s.attributes.current_temperature, tgt = s.attributes.temperature;
-    const sel = { r, s, cur, tgt, co2: this._num(r.co2), rf: this._num(r.rf), ptcA: this._on(r.ents.ptc_active), ptcE: r.ents.ptc_enable };
-    return `<div class="scrim" data-act="drawerclose"></div><aside class="drawer" role="dialog" aria-label="${r.name}">
-      <div class="dh">${this._icon(this._roomIcon(r.name))}${r.name}<span class="grow"></span>
-      <button class="round" data-act="drawerclose" aria-label="${this._t("close")}">${this._icon("mdi:close")}</button></div>${this._roomDetail(sel)}</aside>`;
+    const a = s.attributes, cur = a.current_temperature, tgt = a.temperature;
+    const dev = cur != null && tgt != null ? cur - tgt : 0;
+    const heats = a.hvac_action ? a.hvac_action === "heating" : (tgt != null && cur != null && tgt - cur > 0.4);
+    const col = Math.abs(dev) <= 0.3 ? GREEN : dev < 0 ? BLUE : CORAL;
+    const st = heats ? [this._t("st_heat"), "mdi:fire", CORAL] : Math.abs(dev) <= 0.3 ? [this._t("st_ok"), "mdi:check", GREEN]
+      : dev < 0 ? [this._t("st_cool"), "mdi:arrow-down", BLUE] : [this._t("st_warm"), "mdi:arrow-up", CORAL];
+    return { r, s, a, cur, tgt, dev, heats, col, st, down: s.state === "unavailable", co2: this._num(r.co2), rf: this._num(r.rf),
+      ptcA: this._on(r.ents.ptc_active), ptcE: r.ents.ptc_enable };
+  }
+
+  _ring(i) {
+    const R0 = 62, C = 2 * Math.PI * R0, arc = C * 0.75, f = (v) => Math.max(0, Math.min(1, (v - 16) / 12));
+    const rot = "rotate(135 75 75)";
+    const rad = ((i.tgt == null ? 0 : f(i.tgt)) * 270 + 135) * Math.PI / 180;
+    const mark = i.tgt == null ? "" : `<circle cx="${75 + R0 * Math.cos(rad)}" cy="${75 + R0 * Math.sin(rad)}" r="7" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="2.5"/>`;
+    return `<div class="ring"><svg viewBox="0 0 150 150" aria-hidden="true">
+      <circle cx="75" cy="75" r="${R0}" fill="none" stroke="var(--card-background-color)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${arc} ${C}" transform="${rot}"/>
+      ${i.cur == null ? "" : `<circle cx="75" cy="75" r="${R0}" fill="none" stroke="${i.col}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${Math.max(0.1, arc * f(i.cur))} ${C}" transform="${rot}"/>`}${mark}</svg>
+      <div class="c"><div><b>${i.cur == null ? "–" : this._fmt(i.cur) + "°"}</b><small>${this._t("actual")}</small></div></div></div>`;
+  }
+
+  _stepper(n, i) {
+    return `<div class="stp">${this._btn(`data-act="rstep" data-v="${n}|-1" aria-label="−"`, "round", this._icon("mdi:minus"), i.down)}
+      <div class="t"><small>${this._t("target")}</small><b>${i.tgt == null ? "–" : this._fmt(i.tgt, i.tgt % 1 ? 1 : 0) + "°"}</b></div>
+      ${this._btn(`data-act="rstep" data-v="${n}|1" aria-label="+"`, "round", this._icon("mdi:plus"), i.down)}</div>`;
+  }
+
+  _roomChips(i) {
+    const c = (v) => (v > 1000 ? "r" : v > 800 ? "w" : "g");
+    return `${i.co2 != null ? `<span class="chip ${c(i.co2)}">${this._icon("mdi:molecule-co2")}${Math.round(i.co2)}</span>` : ""}${i.rf != null ? `<span class="chip">${this._icon("mdi:water-percent")}${Math.round(i.rf)} %</span>` : ""}${i.ptcA ? `<span class="chip w">${this._icon("mdi:radiator")}PTC</span>` : ""}`;
+  }
+
+  // 24 h room temperature with target line, loaded on demand from the recorder history of the climate entity.
+  _roomSpark(i) {
+    const id = i.r.climate;
+    const data = this._hget(`rt|${id}`, async () => {
+      const end = new Date(), start = new Date(end.getTime() - 864e5);
+      const res = await this._hass.callWS({ type: "history/history_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
+        entity_ids: [id], include_start_time_state: true, significant_changes_only: false });
+      const pts = [], tg = [];
+      for (const p of res[id] || []) {
+        const t = p.lu ?? Date.parse(p.last_updated) / 1000, at = p.a || p.attributes || {};
+        if (isNaN(t)) continue;
+        if (at.current_temperature != null) pts.push([t, Number(at.current_temperature)]);
+        if (at.temperature != null) tg.push([t, Number(at.temperature)]);
+      }
+      return { pts: ProxonFwtBase._down(pts, 120), tg, t0: start.getTime() / 1000, t1: end.getTime() / 1000 };
+    });
+    if (data === undefined) return this._skel(84);
+    if (!data || data.pts.length < 2) return `<div class="note">${this._t("r_noh")}</div>`;
+    const W = 300, H = 70, vals = data.pts.map((p) => p[1]).concat(i.tgt == null ? [] : [i.tgt]);
+    const lo = Math.min(...vals) - 0.4, hi = Math.max(...vals) + 0.4, y = (v) => H - ((v - lo) / (hi - lo)) * H;
+    const x = (t) => ((t - data.t0) / (data.t1 - data.t0)) * W;
+    const line = data.pts.map((p) => `${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join(" ");
+    const last = data.pts[data.pts.length - 1];
+    return `<svg viewBox="0 0 ${W} ${H + 14}" style="width:100%;height:auto" role="img" aria-label="${this._t("r_t24")}">
+      ${i.tgt == null ? "" : `<line x1="0" x2="${W}" y1="${y(i.tgt)}" y2="${y(i.tgt)}" stroke="var(--secondary-text-color)" stroke-dasharray="4 4" opacity=".6"/><text x="${W}" y="${Math.max(10, y(i.tgt) - 4)}" text-anchor="end" font-size="10" fill="var(--secondary-text-color)">${this._t("r_set", this._fmt(i.tgt, 0))}</text>`}
+      <polyline fill="none" stroke="${i.col}" stroke-width="2.2" stroke-linejoin="round" points="${line}"/>
+      <circle cx="${x(last[0])}" cy="${y(last[1])}" r="4" fill="${i.col}"/>
+      <text x="0" y="${H + 12}" font-size="10" fill="var(--secondary-text-color)">${this._t("r_ago")}</text><text x="${W}" y="${H + 12}" text-anchor="end" font-size="10" fill="var(--secondary-text-color)">${this._t("r_now")}</text></svg>`;
+  }
+
+  _roomFacts(n, i) {
+    const a = i.a;
+    return `<div><h4>${this._t("r_details")}</h4>
+      ${a.min_temp != null ? `<div class="f"><span>${this._t("adjustable")}</span><b>${this._fmt(a.min_temp, 0)}–${this._fmt(a.max_temp, 0)} °C</b></div>` : ""}
+      ${i.co2 != null ? `<div class="f"><span>${this._t("co2")}</span><b>${Math.round(i.co2)} ppm</b></div>` : ""}
+      ${i.rf != null ? `<div class="f"><span>${this._t("humidity")}</span><b>${Math.round(i.rf)} %</b></div>` : ""}
+      ${i.r.ents.ptc_active ? `<div class="f"><span>${this._t("ptc")}</span><b>${i.ptcA ? this._t("ptc_active") : this._t("ptc_off")}</b></div>` : ""}
+      ${i.ptcE ? `<div class="f"><span>${this._t("ptc_enabled")}</span><ha-switch data-act="rptc" data-v="${n}" ${this._on(i.ptcE) ? "checked" : ""} ${this._ok(i.ptcE) ? "" : "disabled"}></ha-switch></div>` : ""}</div>`;
+  }
+
+  _roomCard(n, i) {
+    const o = this._ropen.has(i.r.climate);
+    return `<div class="rc ${o ? "open" : ""}"><div class="rh" role="button" tabindex="0" aria-expanded="${o}" data-act="rtoggle" data-v="${n}">
+      <span class="ri">${this._icon(this._roomIcon(i.r.name))}</span><b>${i.r.name}</b>
+      <span class="st" style="--c:${i.st[2]}">${this._icon(i.st[1])}${i.st[0]}</span><span class="chev">${this._icon("mdi:chevron-down")}</span></div>
+      <div class="rb">${this._ring(i)}<div class="rctl">${this._stepper(n, i)}<div class="mp">${this._roomChips(i)}</div></div></div>
+      ${o ? `<div class="rmore"><div><h4>${this._t("r_t24")}</h4>${this._roomSpark(i)}</div>${this._roomFacts(n, i)}</div>` : ""}</div>`;
+  }
+
+  _roomCmp(rows) {
+    return `<div class="rcmp"><div class="cscale"><div></div><div><span>−2 °C</span><span>${this._t("target")}</span><span>+2 °C</span></div><div></div></div>
+      ${rows.map(([n, i], k) => {
+        const pct = Math.max(-1, Math.min(1, i.dev / 2)) * 50, o = this._ropen.has(i.r.climate);
+        return `<div class="crow ${k === 0 ? "first" : ""}" style="--c:${i.col}" role="button" tabindex="0" aria-expanded="${o}" data-act="rtoggle" data-v="${n}">
+          <div class="n">${this._icon(this._roomIcon(i.r.name))}${i.r.name}</div>
+          <div class="axis"><div class="zero"></div><div class="bar" style="left:${pct < 0 ? 50 + pct : 50}%;width:${Math.abs(pct)}%"></div><div class="dot" style="left:${50 + pct}%"></div></div>
+          <div class="v"><b>${i.cur == null ? "–" : this._fmt(i.cur) + "°"}</b><small>→ ${i.tgt == null ? "–" : this._fmt(i.tgt, 0) + "°"}</small></div></div>
+          ${o ? `<div class="cx">${this._stepper(n, i)}<div class="rspark">${this._roomSpark(i)}</div><div class="mp">${this._roomChips(i)}</div></div>` : ""}`;
+      }).join("")}</div>`;
+  }
+
+  _roomList(rows) {
+    return rows.map(([n, i]) => {
+      if (this._ropen.has(i.r.climate)) return `<div style="margin-bottom:8px" class="rgrid">${this._roomCard(n, i).replace('class="rc open"', 'class="rc open" style="grid-column:1/-1"')}</div>`;
+      return `<div class="lcard"><div class="rh lrow" role="button" tabindex="0" aria-expanded="false" data-act="rtoggle" data-v="${n}"><span class="ri">${this._icon(this._roomIcon(i.r.name))}</span><b>${i.r.name}</b>
+        <span class="t2">${this._roomChips(i)}<b style="color:${i.col}">${i.cur == null ? "–" : this._fmt(i.cur) + "°"}</b><span class="lb">→ ${i.tgt == null ? "–" : this._fmt(i.tgt, 0) + "°"}</span></span></div></div>`;
+    }).join("");
+  }
+
+  _sec_rooms(d) {
+    if (!d.rooms.length) return `<ha-card>${this._header("mdi:home-outline", this._t("rooms"))}<div class="note">${this._t("no_rooms")}</div></ha-card>`;
+    this._ropen = this._ropen || new Set();
+    const view = ["cards", "cmp", "list"].includes(this._rview) ? this._rview : "cards";
+    const filter = ["all", "heat", "dev", "co2"].includes(this._rfilter) ? this._rfilter : "all";
+    const all = d.rooms.map((r, n) => [n, this._roomInfo(r)]);
+    const temps = all.filter(([, i]) => i.cur != null), rfs = all.filter(([, i]) => i.rf != null), cos = all.filter(([, i]) => i.co2 != null);
+    const avg = temps.length ? temps.reduce((a, [, i]) => a + i.cur, 0) / temps.length : null;
+    const top = cos.sort((a, b) => b[1].co2 - a[1].co2)[0];
+    const arf = rfs.length ? rfs.reduce((a, [, i]) => a + i.rf, 0) / rfs.length : null;
+    const sum = (ic, c, label, val, unit) => `<div class="rs" style="--c:${c}"><span class="ic">${this._icon(ic)}</span><div><small>${label}</small><b>${val}<span>${unit}</span></b></div></div>`;
+    const summary = `<div class="rsum">${avg === null ? "" : sum("mdi:thermometer", BLUE, this._t("rs_avg"), this._fmt(avg), " °C")}
+      ${sum("mdi:fire", CORAL, this._t("rs_heat"), all.filter(([, i]) => i.heats).length, ` ${this._t("of")} ${all.length}`)}
+      ${top ? sum("mdi:molecule-co2", AMBER, this._t("rs_co2"), Math.round(top[1].co2), ` ppm · ${top[1].r.name}`) : ""}
+      ${arf === null ? "" : sum("mdi:water-percent", "var(--primary-color)", this._t("rs_rf"), Math.round(arf), " %")}</div>`;
+    let rows = all.filter(([, i]) => filter === "all" || (filter === "heat" && i.heats) || (filter === "dev" && Math.abs(i.dev) > 0.3) || (filter === "co2" && i.co2 != null && i.co2 > 800));
+    if (filter === "dev") rows = rows.sort((a, b) => Math.abs(b[1].dev) - Math.abs(a[1].dev));
+    const seg = [["cards", "mdi:view-grid-outline"], ["cmp", "mdi:chart-bar"], ["list", "mdi:format-list-bulleted"]]
+      .map(([k, ic]) => `<button class="${k === view ? "a" : ""}" data-act="rview" data-v="${k}" aria-pressed="${k === view}">${this._icon(ic)}${this._t(`rv_${k}`)}</button>`).join("");
+    const chips = [["all", ""], ["heat", "mdi:fire"], ["dev", "mdi:swap-vertical"], ["co2", "mdi:molecule-co2"]]
+      .map(([k, ic]) => `<button class="fchip ${k === filter ? "a" : ""}" data-act="rfilter" data-v="${k}" aria-pressed="${k === filter}">${ic ? this._icon(ic) : ""}${this._t(`rf_${k}`)}</button>`).join("");
+    const body = !rows.length ? `<div class="note" style="text-align:center;padding:18px">${this._t("rs_none")}</div>`
+      : view === "cards" ? `<div class="rgrid">${rows.map(([n, i]) => this._roomCard(n, i)).join("")}</div>`
+      : view === "cmp" ? this._roomCmp(rows) : this._roomList(rows);
+    return `<ha-card><div class="rtop"><div class="h" style="margin:0">${this._icon("mdi:home-outline")}${this._t("rooms")}</div><span class="grow"></span><div class="rseg" role="group">${seg}</div></div>
+      ${summary}<div class="rfil">${chips}<span class="grow"></span>
+      <button class="fchip" data-act="allroom" data-v="-1">${this._icon("mdi:thermometer-minus")}${this._t("all_down")}</button>
+      <button class="fchip" data-act="allroom" data-v="1">${this._icon("mdi:thermometer-plus")}${this._t("all_up")}</button></div>
+      ${body}<div class="rlegend"><span style="color:${BLUE}">${this._icon("mdi:arrow-down")}${this._t("legend_cool")}</span><span style="color:${GREEN}">${this._icon("mdi:check")}${this._t("legend_ok")}</span><span style="color:${CORAL}">${this._icon("mdi:arrow-up")}${this._t("legend_warm")}</span><span>${this._icon("mdi:gesture-tap")}${this._t("r_tapnote")}</span></div></ha-card>`;
   }
 
   _render() {
@@ -1463,7 +1673,7 @@ class ProxonFwtPanel extends ProxonFwtBase {
       body = `<div class="stack">${this._sec_alerts(d)}${this._sec_insights(d)}${this._sec_mode(d)}
         <div class="top"><div class="col">${this._sec_schema(d)}${this._sec_fan(d)}</div><div class="col">${this._sec_kpi(d)}${this._sec_quick(d)}</div></div></div>`;
     } else if (tab === "rooms") {
-      body = `<div class="stack">${this._sec_rooms(d)}</div>${this._roomDrawer(d)}`;
+      body = `<div class="stack">${this._sec_rooms(d)}</div>`;
     } else if (tab === "history") {
       body = `<div class="stack">${this._sec_history(d)}${this._sec_runtime(d)}${this._sec_energy(d)}</div>`;
     } else {
