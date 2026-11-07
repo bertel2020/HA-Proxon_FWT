@@ -190,6 +190,7 @@ const BLUE = "#378ADD", CORAL = "#D85A30", AMBER = "#f2a516", GREEN = "#3fa660";
 const SETTINGS_TTL = 60000;
 const UI_ACTS = new Set(["hcmp", "hrange", "metric", "ymetric", "dismiss", "undismiss", "kpi", "tab", "rview", "rfilter", "rtoggle", "rclose", "noop", "view", "room", "menu"]);
 const WRITE_ERROR_SHOWN_MS = 3600000;
+const DISMISS_GRACE_MS = 1800000;
 const BAD = ["unavailable", "unknown", undefined, null, ""];
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
 
@@ -1725,7 +1726,7 @@ class ProxonFwtBase extends HTMLElement {
     const eff = this._efficiency();
     if (eff !== null && eff < 75 && !this._on(c.bypass_active)) out.push({ key: "eff", lvl: "w", icon: "mdi:percent-circle-outline", title: this._t("ins_eff_t"), text: this._t("ins_eff_d", String(eff)), tab: "diag", go: "go_diag" });
     const hi = d.rooms.map((r) => ({ r, v: this._num(r.co2) })).filter((x) => x.v !== null && x.v > 1000).sort((a, b) => b.v - a.v)[0];
-    if (hi) out.push({ key: `co2|${hi.r.climate}`, lvl: "w", icon: "mdi:molecule-co2", title: this._t("ins_co2_t"), text: this._t("ins_co2_d", hi.r.name, String(Math.round(hi.v))), tab: "rooms", go: "tab_rooms" });
+    if (hi) out.push({ key: "co2", lvl: "w", icon: "mdi:molecule-co2", title: this._t("ins_co2_t"), text: this._t("ins_co2_d", hi.r.name, String(Math.round(hi.v))), tab: "rooms", go: "tab_rooms" });
     if (!out.length) {
       const bits = [eff !== null ? this._t("ins_ok_eff", String(eff)) : "", this._t("ins_ok_d")].filter(Boolean).join(" ");
       out.push({ lvl: "o", icon: "mdi:check-circle-outline", title: this._t("ins_ok_t"), text: bits });
@@ -1736,7 +1737,7 @@ class ProxonFwtBase extends HTMLElement {
 
   // ---- dismissing hints --------------------------------------------------
   // Warnings and infos can be hidden for 24 hours (kept in the Home Assistant user profile, so it
-  // follows the user across devices); errors cannot. A hint whose cause went away is forgotten.
+  // follows the user across devices); errors cannot. A hint whose cause has been gone for 30 minutes is forgotten.
 
   _dismissable(i) {
     return !!i.key && i.lvl !== "r" && i.lvl !== "o";
@@ -1762,9 +1763,13 @@ class ProxonFwtBase extends HTMLElement {
   _pruneDismissed(all) {
     if (!this._dismissed || !this._dismissedLoaded) return;
     const live = new Set(all.map((i) => i.key).filter(Boolean));
+    const now = Date.now(), seen = (this._seen = this._seen || {});
+    for (const k of live) seen[k] = now;
     let changed = false;
     for (const k of Object.keys(this._dismissed)) {
-      if (!live.has(k) || Date.now() - this._dismissed[k] >= 864e5) { delete this._dismissed[k]; changed = true; }
+      // A cause that vanishes only briefly (unavailable sensor, value wobbling around a limit) must not undo the dismissal.
+      const gone = !live.has(k) && now - (seen[k] ?? (seen[k] = now)) >= DISMISS_GRACE_MS;
+      if (gone || now - this._dismissed[k] >= 864e5) { delete this._dismissed[k]; changed = true; }
     }
     if (changed) this._saveDismissed();
   }

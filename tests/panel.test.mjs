@@ -131,3 +131,16 @@ test("power entities reporting kW or MW are normalised to W", () => {
   set("0.45", "kW"); assert.equal(p._pnum(), 450);
   set("0.0005", "MW"); assert.equal(p._pnum(), 500);
 });
+
+test("a dismissed hint survives a short gap of its cause but not a long one", () => {
+  const p = make();
+  p._dismissedLoaded = true;
+  p._saveDismissed = () => {};
+  p._dismissed = { co2: Date.now() };
+  p._pruneDismissed([{ key: "co2" }]);
+  p._pruneDismissed([]);
+  assert.ok("co2" in p._dismissed);
+  p._seen.co2 = Date.now() - 31 * 60000;
+  p._pruneDismissed([]);
+  assert.ok(!("co2" in p._dismissed));
+});
