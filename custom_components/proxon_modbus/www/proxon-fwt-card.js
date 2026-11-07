@@ -63,7 +63,7 @@ const TEXT = {
     ins_filter_now: "{0}: Wechsel fällig", ins_filter_now_d: "Die Anlage meldet einen fälligen Filterwechsel. Beide Filtereinschübe tauschen (Frischluft und Abluft).",
     ins_filter_soon: "{0} bald fällig", ins_filter_soon_d: "Tag {0} von {1}. Zwei neue Filter bereithalten (Frischluft und Abluft).",
     ins_shutdown_d: "Die Anlage schaltet in {0} zwangsweise ab. Nach dem Wechsel „Filter getauscht“ drücken.", d_one: "1 Tag", d_n: "{0} Tagen",
-    f_age_text: "Tag {0} von {1} · noch {2} Tage", f_unknown: "Tauschdatum unbekannt – nach dem nächsten Wechsel „Filter getauscht“ drücken.",
+    write_err: "Aktion fehlgeschlagen", f_age_text: "Tag {0} von {1} · noch {2} Tage", f_unknown: "Tauschdatum unbekannt – nach dem nächsten Wechsel „Filter getauscht“ drücken.",
     f_shutdown: "Zwangsabschaltung in {0}", f_age: "Alter", f_day_of: "Tag {0} von {1}", f_btn: "Filter getauscht", f_confirm: "Gerätefilter als getauscht markieren? Alter und Frist beginnen neu.",
     ins_cycle_t: "Wärmepumpe taktet häufig", ins_cycle_d: "{0} Starts seit 0 Uhr. Häufiges Takten belastet den Kompressor.",
     ins_eff_t: "Rückwärmzahl niedrig", ins_eff_d: "Nur {0} %. Wärmetauscher und Filter prüfen.",
@@ -136,7 +136,7 @@ const TEXT = {
     ins_filter_now: "{0}: replace now", ins_filter_now_d: "The unit reports that a filter change is due. Replace both filter drawers (fresh air and extract).",
     ins_filter_soon: "{0} due soon", ins_filter_soon_d: "Day {0} of {1}. Keep two new filters ready (fresh air and extract).",
     ins_shutdown_d: "The unit shuts down by force in {0}. Press \"Filter changed\" after the replacement.", d_one: "1 day", d_n: "{0} days",
-    f_age_text: "Day {0} of {1} · {2} days left", f_unknown: "Change date unknown – press \"Filter changed\" after the next replacement.",
+    write_err: "Action failed", f_age_text: "Day {0} of {1} · {2} days left", f_unknown: "Change date unknown – press \"Filter changed\" after the next replacement.",
     f_shutdown: "Forced shutdown in {0}", f_age: "Age", f_day_of: "Day {0} of {1}", f_btn: "Filter changed", f_confirm: "Mark the device filter as replaced? Age and deadline start over.",
     ins_cycle_t: "Heat pump cycling often", ins_cycle_d: "{0} starts since midnight. Frequent cycling stresses the compressor.",
     ins_eff_t: "Heat recovery low", ins_eff_d: "Only {0} %. Check the heat exchanger and filters.",
@@ -188,10 +188,12 @@ const METRIC_META = {
 };
 const BLUE = "#378ADD", CORAL = "#D85A30", AMBER = "#f2a516", GREEN = "#3fa660";
 const SETTINGS_TTL = 60000;
+const UI_ACTS = new Set(["hcmp", "hrange", "metric", "ymetric", "dismiss", "undismiss", "kpi", "tab", "rview", "rfilter", "rtoggle", "view", "room", "menu"]);
 const BAD = ["unavailable", "unknown", undefined, null, ""];
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
 
 const CSS = `
+  :host([busy]) [data-act]:not([data-act="tab"]):not([data-act="view"]):not([data-act="room"]) { opacity: .6; pointer-events: none; }
 :host { display: block; color: var(--primary-text-color); --pbd: color-mix(in srgb, var(--primary-text-color) 24%, transparent); }
 * { box-sizing: border-box; }
 .ov { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 12px; align-items: start; }
@@ -1886,15 +1888,34 @@ class ProxonFwtBase extends HTMLElement {
 
   // ---- interaction ------------------------------------------------------
 
+  // Runs service calls one after another; while they run, controls are locked and a failure is shown as a toast.
+  async _write(fn) {
+    if (this._wbusy) return;
+    this._wbusy = true;
+    this.toggleAttribute("busy", true);
+    try {
+      await fn();
+    } catch (err) {
+      const message = `${this._t("write_err")}: ${(err && err.message) || err}`;
+      this.dispatchEvent(new CustomEvent("hass-notification", { detail: { message }, bubbles: true, composed: true }));
+    } finally {
+      this._wbusy = false;
+      this.toggleAttribute("busy", false);
+    }
+  }
+
   _click(ev) {
     const el = ev.composedPath().find((n) => n.dataset && n.dataset.act);
     if (!el || !this._d || el.disabled) return;
     const act = el.dataset.act, v = el.dataset.v, c = this._d.central, h = this._hass;
-    const call = (domain, service, data) => h.callService(domain, service, data);
+    if (this._wbusy && !UI_ACTS.has(act)) return;
+    const call = (domain, service, data) => this._write(() => h.callService(domain, service, data));
     switch (act) {
       case "mode": call("select", "select_option", { entity_id: c.operating_mode, option: v }); break;
-      case "fan": call("select", "select_option", { entity_id: c.fan_stage, option: v });
-        if (this._on(c.fan_auto)) call("switch", "turn_off", { entity_id: c.fan_auto }); break;
+      case "fan": this._write(async () => {
+        await h.callService("select", "select_option", { entity_id: c.fan_stage, option: v });
+        if (this._on(c.fan_auto)) await h.callService("switch", "turn_off", { entity_id: c.fan_auto });
+      }); break;
       case "fanauto": call("switch", this._on(c.fan_auto) ? "turn_off" : "turn_on", { entity_id: c.fan_auto }); break;
       case "autosw": call("switch", "toggle", { entity_id: c.fan_auto }); break;
       case "hcmp": this._hcmp = !this._hcmp; this._update(); break;
@@ -1921,12 +1942,14 @@ class ProxonFwtBase extends HTMLElement {
       }
       case "rptc": call("switch", "toggle", { entity_id: this._d.rooms[Number(v)].ents.ptc_enable }); break;
       case "boost": this._toggleBoost(); break;
-      case "boostmin": { const c = this._d.central; if (c.boost) this._hass.callService("proxon_modbus", "start_boost", { entity_id: c.boost, minutes: Number(v) }); break; }
-      case "allroom": for (const r of this._d.rooms) {
-        const a = (this._state(r.climate) || {}).attributes || {};
-        if (a.temperature == null) continue;
-        call("climate", "set_temperature", { entity_id: r.climate, temperature: Math.min(a.max_temp ?? 30, Math.max(a.min_temp ?? 18, a.temperature + Number(v))) });
-      } break;
+      case "boostmin": { const c = this._d.central; if (c.boost) call("proxon_modbus", "start_boost", { entity_id: c.boost, minutes: Number(v) }); break; }
+      case "allroom": this._write(async () => {
+        for (const r of this._d.rooms) {
+          const a = (this._state(r.climate) || {}).attributes || {};
+          if (a.temperature == null) continue;
+          await h.callService("climate", "set_temperature", { entity_id: r.climate, temperature: Math.min(a.max_temp ?? 30, Math.max(a.min_temp ?? 18, a.temperature + Number(v))) });
+        }
+      }); break;
       case "filterchg": if (c.filter_changed && window.confirm(this._t("f_confirm"))) call("button", "press", { entity_id: c.filter_changed }); break;
       case "restoresw": call("switch", "toggle", { entity_id: c.fan_stage_restore }); break;
       case "intensive": call("switch", "toggle", { entity_id: c.fan_intensive }); break;
@@ -1948,20 +1971,26 @@ class ProxonFwtBase extends HTMLElement {
   _toggleBoost() {
     const c = this._d.central, h = this._hass;
     const mode = this._boostMode(c);
-    if (mode === "timer") { h.callService("switch", this._on(c.boost) ? "turn_off" : "turn_on", { entity_id: c.boost }); return; }
-    if (mode === "intensive") { h.callService("switch", this._on(c.fan_intensive) ? "turn_off" : "turn_on", { entity_id: c.fan_intensive }); return; }
+    if (mode === "timer") { this._write(() => h.callService("switch", this._on(c.boost) ? "turn_off" : "turn_on", { entity_id: c.boost })); return; }
+    if (mode === "intensive") { this._write(() => h.callService("switch", this._on(c.fan_intensive) ? "turn_off" : "turn_on", { entity_id: c.fan_intensive })); return; }
     if (mode !== "stage") return;
+    if (this._wbusy) return;
     if (this._boost) {
       const b = this._boost;
       this._boost = null;
       try { localStorage.removeItem("proxon_fwt_boost"); } catch (e) { /* ignore */ }
-      h.callService("select", "select_option", { entity_id: c.fan_stage, option: b.stage });
-      if (b.auto) h.callService("switch", "turn_on", { entity_id: c.fan_auto });
+      this._write(async () => {
+        await h.callService("select", "select_option", { entity_id: c.fan_stage, option: b.stage });
+        if (b.auto) await h.callService("switch", "turn_on", { entity_id: c.fan_auto });
+      });
     } else {
       this._boost = { stage: this._state(c.fan_stage).state, auto: this._on(c.fan_auto) };
       try { localStorage.setItem("proxon_fwt_boost", JSON.stringify(this._boost)); } catch (e) { /* ignore */ }
-      if (this._boost.auto) h.callService("switch", "turn_off", { entity_id: c.fan_auto });
-      h.callService("select", "select_option", { entity_id: c.fan_stage, option: "stage_4" });
+      const auto = this._boost.auto;
+      this._write(async () => {
+        if (auto) await h.callService("switch", "turn_off", { entity_id: c.fan_auto });
+        await h.callService("select", "select_option", { entity_id: c.fan_stage, option: "stage_4" });
+      });
     }
     this._sig = ""; this._update();
   }
