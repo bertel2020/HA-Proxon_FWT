@@ -33,7 +33,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-class ProxonModbusError(Exception):
+class ProxonModbusError(HomeAssistantError):
     """Raised when a Modbus read or write to the Proxon FWT fails."""
 
 
