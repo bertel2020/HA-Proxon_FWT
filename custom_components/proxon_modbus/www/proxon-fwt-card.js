@@ -751,7 +751,8 @@ class ProxonFwtBase extends HTMLElement {
       <rect x="100" y="14" width="480" height="312" rx="16" fill="var(--secondary-background-color)" stroke="var(--divider-color)" stroke-dasharray="4 4"/>
       <g><title>${this._t("tip_hx", this._efficiency() === null ? "–" : this._efficiency() + " %")}</title><polygon points="${[[340, 40], [410, 110], [340, 180], [270, 110]].map(([x, y]) => `${X(x)},${y}`).join(" ")}" fill="var(--card-background-color)" stroke="var(--divider-color)"/></g>
       <g ${bypass ? 'opacity=".25"' : ""}>${L([[305, 75], [340, 110]], BLUE, 1)}${L([[340, 110], [375, 145]], CORAL, 1)}${L([[375, 75], [340, 110]], CORAL, 1)}${L([[340, 110], [305, 145]], BLUE, 1)}</g>
-      ${L([[92, 75], [303, 75]], BLUE, 0, 1)}${L([[588, 75], [377, 75]], CORAL, 0, 1)}${L([[377, 145], [588, 145]], CORAL, 0, 1)}${L([[303, 145], [92, 145]], BLUE, 0, 1)}
+      ${bypass ? L([[92, 75], [250, 75]], BLUE, 0) + `<g opacity=".25">${L([[250, 75], [303, 75]], BLUE, 0, 1)}${L([[377, 145], [430, 145]], CORAL, 0)}</g>` + L([[430, 145], [588, 145]], CORAL, 0, 1)
+        : L([[92, 75], [303, 75]], BLUE, 0, 1) + L([[377, 145], [588, 145]], CORAL, 0, 1)}${L([[588, 75], [377, 75]], CORAL, 0, 1)}${L([[303, 145], [92, 145]], BLUE, 0, 1)}
       ${bypass ? L([[250, 75], [250, 48], [430, 48], [430, 143]], BLUE, 1, 1) : ""}
       ${preheat}
       <text class="st" x="${X(340)}" y="198" text-anchor="middle">${this._t("exchanger")}</text>
