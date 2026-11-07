@@ -17,7 +17,7 @@ const TEXT = {
     mode: "Betriebsart", air: "Luftwege", fan: "Lüftung", heatpump: "Wärmepumpe",
     refrigerant: "Kältekreis", diagnostic: "Diagnose", status: "Status und Wartung",
     rooms: "Räume", tiles: "Kacheln", list: "Liste", schema: "Anlagenschema",
-    kpi: "Kennzahlen", history: "Verlauf", hist_24: "1 Tag", hist_7: "1 Woche", hp_runs: "Wärmepumpe läuft", hp_per_day: "Wärmepumpen-Laufzeit pro Tag", hp_starts: "Starts", hp_no_data: "Keine Daten zur Wärmepumpe.", heatmap: "Farbe = Abweichung vom Soll",
+    kpi: "Kennzahlen", history: "Verlauf", hist_24: "1 Tag", st_min: "Min", st_max: "Max", hist_7: "1 Woche", hp_runs: "Wärmepumpe läuft", hp_per_day: "Wärmepumpen-Laufzeit pro Tag", hp_starts: "Starts", hp_no_data: "Keine Daten zur Wärmepumpe.", heatmap: "Farbe = Abweichung vom Soll",
     off: "Aus", eco_summer: "Eco Sommer", eco_winter: "Eco Winter", comfort: "Komfort",
     furnace: "Ofenbetrieb", emergency: "Notbetrieb", frost_protection: "Einfrierschutz",
     commissioning: "Einregulierung", not_used: "Nicht belegt",
@@ -90,7 +90,7 @@ const TEXT = {
     mode: "Operating mode", air: "Air paths", fan: "Ventilation", heatpump: "Heat pump",
     refrigerant: "Refrigerant circuit", diagnostic: "Diagnostics", status: "Status and maintenance",
     rooms: "Rooms", tiles: "Tiles", list: "List", schema: "System diagram",
-    kpi: "Key figures", history: "History", hist_24: "1 day", hist_7: "1 week", hp_runs: "Heat pump running", hp_per_day: "Heat pump runtime per day", hp_starts: "starts", hp_no_data: "No heat pump data.", heatmap: "Colour = deviation from target",
+    kpi: "Key figures", history: "History", hist_24: "1 day", st_min: "Min", st_max: "Max", hist_7: "1 week", hp_runs: "Heat pump running", hp_per_day: "Heat pump runtime per day", hp_starts: "starts", hp_no_data: "No heat pump data.", heatmap: "Colour = deviation from target",
     off: "Off", eco_summer: "Eco summer", eco_winter: "Eco winter", comfort: "Comfort",
     furnace: "Stove mode", emergency: "Emergency", frost_protection: "Frost protection",
     commissioning: "Commissioning", not_used: "Not used",
@@ -341,6 +341,9 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .qa:hover { border-color: var(--primary-color); } .qa.a { border-color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 14%, transparent); }
 .mchips { display: flex; gap: 6px; flex-wrap: wrap; margin: -2px 0 10px; }
 .chw { position: relative; }
+.hsts { margin-top: 8px; display: grid; gap: 4px; font-size: 12.5px; color: var(--secondary-text-color); }
+.hst { display: flex; flex-wrap: wrap; gap: 4px 14px; } .hst .n { min-width: 120px; color: var(--primary-text-color); } .hst b { font-weight: 600; color: var(--primary-text-color); }
+.hst i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
 .tip { position: absolute; top: 4px; pointer-events: none; z-index: 2; font-size: 12px; padding: 6px 10px; border-radius: 8px; white-space: nowrap;
   background: var(--card-background-color); border: 1px solid var(--divider-color); box-shadow: 0 2px 8px rgba(0,0,0,.18); }
 .tip b { font-weight: 600; } .tip > b { display: block; margin-bottom: 2px; }
@@ -1306,7 +1309,7 @@ class ProxonFwtBase extends HTMLElement {
     let body;
     if (series === undefined) body = this._skel(190);
     else if (!series || !series.some((s) => s.pts.length > 1)) body = `<div class="note">${this._t(range === "30d" || range === "1y" ? "no_stats" : "no_history")}</div>`;
-    else body = this._chart(series, { range, unit: METRIC_META[metric].unit, bands: range === "24h" || range === "7d", bypass: series.bypass });
+    else body = this._chart(series, { range, unit: METRIC_META[metric].unit, bands: range === "24h" || range === "7d", bypass: series.bypass, energy: metric === "power" });
     const rb = (v, l) => `<button class="vbtn ${range === v ? "a" : ""}" data-act="hrange" data-v="${v}">${l}</button>`;
     const chips = avail.length > 1 ? `<div class="mchips" role="group">${avail.map((m) => `<button class="vbtn ${m === metric ? "a" : ""}" data-act="metric" data-v="${m}">${this._icon(METRIC_META[m].icon)}${this._t(METRIC_META[m].label)}</button>`).join("")}</div>` : "";
     return `<ha-card><div class="h">${this._icon("mdi:chart-line")}${this._t("history")}
@@ -1387,11 +1390,24 @@ class ProxonFwtBase extends HTMLElement {
     const lines = series.map((s) => `<polyline fill="none" stroke="${s.color}" stroke-width="1.8" stroke-linejoin="round" points="${s.pts.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>`).join("");
     const legend = series.map((s) => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join("");
     const showBands = o.bands && this._hpIv && this._hpIv.length;
+    // min / max / mean per curve (for power additionally the energy as the integral of the curve)
+    const nf = (v) => v.toLocaleString(lang, { maximumFractionDigits: Math.abs(v) < 100 ? 1 : 0 });
+    const statRows = series.filter((s) => s.pts.length).map((s) => {
+      const v = s.pts.map((p) => p[1]);
+      let kwh = "";
+      if (o.energy) {
+        let wh = 0;
+        for (let i = 1; i < s.pts.length; i++) wh += ((s.pts[i][1] + s.pts[i - 1][1]) / 2) * ((s.pts[i][0] - s.pts[i - 1][0]) / 3600);
+        kwh = `<span>Σ <b>${nf(wh / 1000)} kWh</b></span>`;
+      }
+      return `<div class="hst"><span class="n"><i style="background:${s.color}"></i>${s.label}</span><span>${this._t("st_min")} <b>${nf(Math.min(...v))}${o.unit}</b></span><span>${this._t("st_max")} <b>${nf(Math.max(...v))}${o.unit}</b></span><span>Ø <b>${nf(v.reduce((a, b) => a + b, 0) / v.length)}${o.unit}</b></span>${kwh}</div>`;
+    }).join("");
     this._cm = { W, H, pl, pr, pt, pb, t0, t1, lo, hi, series, unit: o.unit, range: o.range, x, y };
     return `<div class="chw"><svg class="ch" style="max-width:100%;height:auto;touch-action:pan-y" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("history")}">
       ${bands}${byBands}${grid}${lines}${xt}<line class="xl" y1="${pt}" y2="${H - pb}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/><g class="xd"></g>
       <rect class="ov" x="${pl}" y="${pt}" width="${W - pl - pr}" height="${H - pt - pb}" fill="transparent"/></svg><div class="tip" style="display:none"></div></div>
-      <div class="legend">${legend}${showBands ? `<span><i style="background:#3fa660;opacity:.4"></i>${this._t("hp_runs")}</span>` : ""}${o.bypass && o.bypass.length ? `<span><i style="background:${BLUE};opacity:.4"></i>${this._t("bypass_open")}</span>` : ""}</div>`;
+      <div class="legend">${legend}${showBands ? `<span><i style="background:#3fa660;opacity:.4"></i>${this._t("hp_runs")}</span>` : ""}${o.bypass && o.bypass.length ? `<span><i style="background:${BLUE};opacity:.4"></i>${this._t("bypass_open")}</span>` : ""}</div>
+      <div class="hsts">${statRows}</div>`;
   }
 
   // Hover / touch tooltip for bar charts and sparklines: elements with data-tip="title|value".
