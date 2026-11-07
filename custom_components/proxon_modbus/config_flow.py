@@ -324,6 +324,7 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
                 ],
                 CONF_SCAN_INTERVAL: int(user_input[CONF_SCAN_INTERVAL]),
                 CONF_COOLING_AVAILABLE: bool(user_input[CONF_COOLING_AVAILABLE]),
+                CONF_OUTDOOR_SIDE: user_input.get(CONF_OUTDOOR_SIDE, "left"),
             }
             return self.async_create_entry(
                 title=self._data[CONF_NAME], data=self._data, options=options
@@ -360,6 +361,13 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
                 vol.Required(
                     CONF_COOLING_AVAILABLE, default=DEFAULT_COOLING_AVAILABLE
                 ): selector.BooleanSelector(),
+                vol.Required(CONF_OUTDOOR_SIDE, default="left"): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=["left", "right"],
+                        translation_key="outdoor_side",
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
             }
         )
         return self.async_show_form(step_id="rooms", data_schema=schema)

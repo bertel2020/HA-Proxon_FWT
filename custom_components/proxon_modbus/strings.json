@@ -46,7 +46,11 @@
           "num_co2_sensors": "Number of CO₂ sensors",
           "num_rf_sensors": "Number of humidity sensors",
           "scan_interval": "Polling interval",
-          "cooling_available": "Cooling available on this unit"
+          "cooling_available": "Cooling available on this unit",
+          "outdoor_side": "Side of the outdoor air (fresh and exhaust air)"
+        },
+        "data_description": {
+          "outdoor_side": "Which side of the unit are fresh air and exhaust air connected to, seen from the front? This turns the diagram in the card and side panel."
         }
       }
     },
@@ -69,7 +73,7 @@
           "num_rf_sensors": "Number of humidity sensors",
           "scan_interval": "Polling interval",
           "cooling_available": "Cooling available on this unit",
-          "outdoor_side": "Outdoor side of the heat exchanger (dashboard)",
+          "outdoor_side": "Side of the outdoor air (fresh and exhaust air)",
           "filter_interval": "Device filter change interval (days)",
           "recirc_filter": "Recirculation filter installed (optional)",
           "power_entity": "Own power sensor (optional)",
@@ -78,7 +82,7 @@
         "data_description": {
           "filter_interval": "Basis of the maintenance bar in the side panel. The unit asks for a change after 180 days and shuts down by force 21 days after that message.",
           "recirc_filter": "Only enable if you have an extra recirculation filter. Otherwise it is hidden in the card and side panel.",
-          "outdoor_side": "Which side of the heat exchanger are fresh and exhaust air on? Controls the layout in the card and side panel.",
+          "outdoor_side": "Which side of the unit are fresh air and exhaust air connected to, seen from the front? This turns the diagram in the card and side panel. The supply and extract air are on the opposite side.",
           "power_entity": "Replaces the unit's power consumption in the card and side panel, e.g. a Shelly on the unit. Leave empty to use the unit's sensor.",
           "outdoor_entity": "Replaces the unit's outdoor temperature in the card and side panel. Leave empty to use the unit's sensor."
         }
@@ -92,8 +96,8 @@
   "selector": {
     "outdoor_side": {
       "options": {
-        "left": "Left (fresh/exhaust air on the left)",
-        "right": "Right (fresh/exhaust air on the right)"
+        "left": "Left (fresh and exhaust air on the left)",
+        "right": "Right (fresh and exhaust air on the right)"
       }
     }
   },

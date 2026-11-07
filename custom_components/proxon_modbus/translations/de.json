@@ -46,7 +46,11 @@
           "num_co2_sensors": "Anzahl CO₂-Sensoren",
           "num_rf_sensors": "Anzahl Feuchtesensoren",
           "scan_interval": "Abfrageintervall",
-          "cooling_available": "Kühlen am Gerät verfügbar"
+          "cooling_available": "Kühlen am Gerät verfügbar",
+          "outdoor_side": "Seite der Außenluft (Frischluft und Fortluft)"
+        },
+        "data_description": {
+          "outdoor_side": "Auf welcher Seite der Anlage sind Frischluft und Fortluft angeschlossen, von vorn gesehen? Das dreht das Schema in Karte und Seitenpanel."
         }
       }
     },
@@ -78,7 +82,7 @@
         "data_description": {
           "filter_interval": "Grundlage für den Wartungsbalken im Seitenpanel. Die Anlage meldet den Wechsel nach 180 Tagen und schaltet 21 Tage nach der Meldung zwangsweise ab.",
           "recirc_filter": "Nur aktivieren, wenn ein zusätzlicher Umluftfilter eingebaut ist. Sonst wird er in Karte und Seitenpanel ausgeblendet.",
-          "outdoor_side": "Auf welcher Seite des Wärmetauschers liegen Frischluft und Fortluft? Bestimmt die Darstellung in Karte und Seitenpanel.",
+          "outdoor_side": "Auf welcher Seite der Anlage sind Frischluft und Fortluft angeschlossen, von vorn gesehen? Das dreht das Schema in Karte und Seitenpanel. Zuluft und Abluft liegen auf der Gegenseite.",
           "power_entity": "Ersetzt die Leistungsaufnahme des Geräts in Karte und Seitenpanel, z. B. ein Shelly an der Anlage. Leer lassen, um den Gerätesensor zu verwenden.",
           "outdoor_entity": "Ersetzt die Außentemperatur des Geräts in Karte und Seitenpanel. Leer lassen, um den Gerätesensor zu verwenden."
         }
@@ -92,8 +96,8 @@
   "selector": {
     "outdoor_side": {
       "options": {
-        "left": "Links (Frischluft/Fortluft links)",
-        "right": "Rechts (Frischluft/Fortluft rechts)"
+        "left": "Links (Frischluft und Fortluft links)",
+        "right": "Rechts (Frischluft und Fortluft rechts)"
       }
     }
   },
