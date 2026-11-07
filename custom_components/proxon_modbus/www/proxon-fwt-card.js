@@ -188,14 +188,14 @@ const METRIC_META = {
 };
 const BLUE = "#378ADD", CORAL = "#D85A30", AMBER = "#f2a516", GREEN = "#3fa660";
 const SETTINGS_TTL = 60000;
-const UI_ACTS = new Set(["hcmp", "hrange", "metric", "ymetric", "dismiss", "undismiss", "kpi", "tab", "rview", "rfilter", "rtoggle", "rclose", "noop", "view", "room", "menu"]);
+const UI_ACTS = new Set(["hcmp", "hrange", "metric", "ymetric", "dismiss", "undismiss", "kpi", "tab", "rview", "rfilter", "rtoggle", "rclose", "noop", "rstep", "up", "down", "view", "room", "menu"]);
 const WRITE_ERROR_SHOWN_MS = 3600000;
 const DISMISS_GRACE_MS = 1800000;
 const BAD = ["unavailable", "unknown", undefined, null, ""];
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
 
 const CSS = `
-  :host([busy]) [data-act]:not([data-act="tab"]):not([data-act="view"]):not([data-act="room"]):not([data-act="rclose"]):not([data-act="noop"]) { opacity: .6; pointer-events: none; }
+  :host([busy]) [data-act]:not([data-act="tab"]):not([data-act="view"]):not([data-act="room"]):not([data-act="rclose"]):not([data-act="noop"]):not([data-act="rstep"]):not([data-act="up"]):not([data-act="down"]) { opacity: .6; pointer-events: none; }
 :host { display: block; color: var(--primary-text-color); --pbd: color-mix(in srgb, var(--primary-text-color) 24%, transparent); }
 * { box-sizing: border-box; }
 .ov { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 12px; align-items: start; }
@@ -1155,7 +1155,7 @@ class ProxonFwtBase extends HTMLElement {
     if (this._room >= rooms.length) this._room = 0;
     const info = rooms.map((r) => {
       const s = this._state(r.climate) || { attributes: {}, state: "unavailable" };
-      const cur = s.attributes.current_temperature, tgt = s.attributes.temperature;
+      const cur = s.attributes.current_temperature, tgt = this._tgt(r.climate, s.attributes);
       const dev = cur != null && tgt != null ? cur - tgt : 0;
       const heats = this._on(r.ents.ptc_active); // rooms are not heated or cooled individually, only by the PTC element
       return { r, s, cur, tgt, dev, heats, co2: this._num(r.co2), rf: this._num(r.rf), ptcA: this._on(r.ents.ptc_active), ptcE: r.ents.ptc_enable };
@@ -1945,6 +1945,27 @@ class ProxonFwtBase extends HTMLElement {
 
   // ---- interaction ------------------------------------------------------
 
+  // Target temperature: a not yet written step wins over the value the unit last reported.
+  _tgt(id, a) {
+    const p = this._pend && this._pend[id];
+    return p ? p.t : a.temperature;
+  }
+
+  // Steps of the +/- buttons add up on a pending target and are written once, shortly after the last click.
+  _bump(id, dir) {
+    const a = (this._state(id) || {}).attributes || {}, step = a.target_temp_step || 1;
+    const pend = (this._pend = this._pend || {}), e = pend[id] || {};
+    const t = Math.min(a.max_temp ?? 30, Math.max(a.min_temp ?? 18, (e.t ?? a.temperature ?? a.current_temperature ?? 21) + dir * step));
+    clearTimeout(e.timer);
+    const fire = () => {
+      if (this._wbusy) { pend[id].timer = setTimeout(fire, 200); return; }
+      this._write(() => this._hass.callService("climate", "set_temperature", { entity_id: id, temperature: t }))
+        .finally(() => { if (pend[id] && pend[id].t === t) delete pend[id]; this._sig = ""; this._update(); });
+    };
+    pend[id] = { t, timer: setTimeout(fire, 500) };
+    this._sig = ""; this._update();
+  }
+
   // Runs service calls one after another; while they run, controls are locked and a failure is shown as a toast.
   async _write(fn) {
     if (this._wbusy) return;
@@ -2000,9 +2021,8 @@ class ProxonFwtBase extends HTMLElement {
         this._sig = ""; this._update(); break;
       case "noop": break;
       case "rstep": {
-        const [n, dir] = v.split("|"), id = this._d.rooms[Number(n)].climate, a = (this._state(id) || {}).attributes || {};
-        const step = a.target_temp_step || 1;
-        call("climate", "set_temperature", { entity_id: id, temperature: Math.min(a.max_temp ?? 30, Math.max(a.min_temp ?? 18, (a.temperature ?? a.current_temperature ?? 21) + Number(dir) * step)) });
+        const [n, dir] = v.split("|"), id = this._d.rooms[Number(n)].climate;
+        this._bump(id, Number(dir));
         break;
       }
       case "rptc": call("switch", "toggle", { entity_id: this._d.rooms[Number(v)].ents.ptc_enable }); break;
@@ -2023,13 +2043,7 @@ class ProxonFwtBase extends HTMLElement {
       case "view": this._view = v; this._sig = ""; this._update(); break;
       case "room": this._room = Number(v); this._sig = ""; this._update(); break;
       case "menu": this.dispatchEvent(new Event("hass-toggle-menu", { bubbles: true, composed: true })); break;
-      case "up": case "down": {
-        const id = this._d.rooms[this._room].climate, a = this._state(id).attributes;
-        const step = a.target_temp_step || 1;
-        const next = Math.min(a.max_temp ?? 30, Math.max(a.min_temp ?? 18, (a.temperature ?? a.current_temperature ?? 21) + (act === "up" ? step : -step)));
-        call("climate", "set_temperature", { entity_id: id, temperature: next });
-        break;
-      }
+      case "up": case "down": this._bump(this._d.rooms[this._room].climate, act === "up" ? 1 : -1); break;
     }
   }
 
@@ -2145,7 +2159,7 @@ class ProxonFwtPanel extends ProxonFwtBase {
 
   _roomInfo(r) {
     const s = this._state(r.climate) || { attributes: {}, state: "unavailable" };
-    const a = s.attributes, cur = a.current_temperature, tgt = a.temperature;
+    const a = s.attributes, cur = a.current_temperature, tgt = this._tgt(r.climate, a);
     const dev = cur != null && tgt != null ? cur - tgt : 0;
     const heats = this._on(r.ents.ptc_active); // rooms are not heated or cooled individually, only by the PTC element
     const col = Math.abs(dev) <= 0.3 ? GREEN : dev < 0 ? BLUE : CORAL;

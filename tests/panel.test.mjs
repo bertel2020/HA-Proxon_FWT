@@ -144,3 +144,17 @@ test("a dismissed hint survives a short gap of its cause but not a long one", ()
   p._pruneDismissed([]);
   assert.ok(!("co2" in p._dismissed));
 });
+
+test("fast +/- clicks add up and are written once", async () => {
+  const p = make();
+  const calls = [];
+  p._hass.callService = async (...a) => { calls.push(a); };
+  p._hass.states["climate.a"] = { state: "heat", attributes: { temperature: 20, min_temp: 18, max_temp: 30, target_temp_step: 1 } };
+  p._state = (id) => p._hass.states[id];
+  p._d = { central: {}, rooms: [{ climate: "climate.a" }] };
+  for (let i = 0; i < 3; i++) p._bump("climate.a", 1);
+  assert.equal(p._tgt("climate.a", p._hass.states["climate.a"].attributes), 23);
+  await new Promise((r) => setTimeout(r, 700));
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0], ["climate", "set_temperature", { entity_id: "climate.a", temperature: 23 }]);
+});
