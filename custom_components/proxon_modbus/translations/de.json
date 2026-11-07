@@ -70,10 +70,12 @@
           "scan_interval": "Abfrageintervall",
           "cooling_available": "Kühlen am Gerät verfügbar",
           "outdoor_side": "Außenseite des Wärmetauschers (Dashboard)",
+          "filter_interval": "Filterwechsel-Intervall (Betriebsstunden)",
           "power_entity": "Eigener Leistungssensor (optional)",
           "outdoor_entity": "Eigener Außentemperatursensor (optional)"
         },
         "data_description": {
+          "filter_interval": "Grundlage für die Wartungsbalken im Seitenpanel. Üblich: 2000 Stunden.",
           "outdoor_side": "Auf welcher Seite des Wärmetauschers liegen Frischluft und Fortluft? Bestimmt die Darstellung in Karte und Seitenpanel.",
           "power_entity": "Ersetzt die Leistungsaufnahme des Geräts in Karte und Seitenpanel, z. B. ein Shelly an der Anlage. Leer lassen, um den Gerätesensor zu verwenden.",
           "outdoor_entity": "Ersetzt die Außentemperatur des Geräts in Karte und Seitenpanel. Leer lassen, um den Gerätesensor zu verwenden."

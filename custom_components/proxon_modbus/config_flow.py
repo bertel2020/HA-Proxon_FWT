@@ -28,7 +28,9 @@ from .const import (
     CONF_CONNECTION_TYPE,
     CONF_COOLING_AVAILABLE,
     CONF_NUM_CO2_SENSORS,
+    CONF_FILTER_INTERVAL,
     CONF_OUTDOOR_ENTITY,
+    DEFAULT_FILTER_INTERVAL,
     CONF_OUTDOOR_SIDE,
     CONF_POWER_ENTITY,
     CONF_NUM_ROOMS,
@@ -387,6 +389,7 @@ class ProxonModbusOptionsFlow(OptionsFlow):
                 CONF_OUTDOOR_SIDE: user_input.get(CONF_OUTDOOR_SIDE, "left"),
                 CONF_POWER_ENTITY: user_input.get(CONF_POWER_ENTITY) or None,
                 CONF_OUTDOOR_ENTITY: user_input.get(CONF_OUTDOOR_ENTITY) or None,
+                CONF_FILTER_INTERVAL: int(user_input.get(CONF_FILTER_INTERVAL, DEFAULT_FILTER_INTERVAL)),
             }
             return await self.async_step_names()
 
@@ -434,6 +437,14 @@ class ProxonModbusOptionsFlow(OptionsFlow):
                         options=["left", "right"],
                         translation_key="outdoor_side",
                         mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+                vol.Required(
+                    CONF_FILTER_INTERVAL,
+                    default=options.get(CONF_FILTER_INTERVAL, DEFAULT_FILTER_INTERVAL),
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        min=100, max=20000, unit_of_measurement="h", mode="box"
                     )
                 ),
                 vol.Optional(

@@ -70,10 +70,12 @@
           "scan_interval": "Polling interval",
           "cooling_available": "Cooling available on this unit",
           "outdoor_side": "Outdoor side of the heat exchanger (dashboard)",
+          "filter_interval": "Filter change interval (operating hours)",
           "power_entity": "Own power sensor (optional)",
           "outdoor_entity": "Own outdoor temperature sensor (optional)"
         },
         "data_description": {
+          "filter_interval": "Used for the maintenance progress bars in the side panel. Typical: 2000 hours.",
           "outdoor_side": "Which side of the heat exchanger are fresh and exhaust air on? Controls the layout in the card and side panel.",
           "power_entity": "Replaces the unit's power consumption in the card and side panel, e.g. a Shelly on the unit. Leave empty to use the unit's sensor.",
           "outdoor_entity": "Replaces the unit's outdoor temperature in the card and side panel. Leave empty to use the unit's sensor."

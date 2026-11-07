@@ -19,7 +19,9 @@ from .const import (
     CONF_NUM_CO2_SENSORS,
     CONF_NUM_ROOMS,
     CONF_NUM_RF_SENSORS,
+    CONF_FILTER_INTERVAL,
     CONF_OUTDOOR_ENTITY,
+    DEFAULT_FILTER_INTERVAL,
     CONF_OUTDOOR_SIDE,
     CONF_POWER_ENTITY,
     CONF_ROOM_AREAS,
@@ -74,6 +76,7 @@ def _ws_settings(
                 "outdoor_side": entry.options.get(CONF_OUTDOOR_SIDE, "left"),
                 "power_entity": entry.options.get(CONF_POWER_ENTITY),
                 "outdoor_entity": entry.options.get(CONF_OUTDOOR_ENTITY),
+                "filter_interval": entry.options.get(CONF_FILTER_INTERVAL, DEFAULT_FILTER_INTERVAL),
             }
         )
     connection.send_result(msg["id"], result)
