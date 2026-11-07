@@ -623,6 +623,7 @@ class ProxonFwtBase extends HTMLElement {
   _efficiency() {
     // Exhaust side after the exchanger (before the evaporator): not influenced by the heat pump.
     const c = this._d.central;
+    if (this._on(c.bypass_active)) return null; // summer bypass: the exchanger is bypassed, the value would be meaningless
     const f = this._num(c.temp_fresh_air), e = this._num(c.temp_extract_air), x = this._num(c.temp_pre_evaporator);
     if (f === null || e === null || x === null || Math.abs(e - f) < 3) return null;
     return Math.max(0, Math.min(100, Math.round(((e - x) / (e - f)) * 100)));
