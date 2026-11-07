@@ -17,7 +17,7 @@ const TEXT = {
     mode: "Betriebsart", air: "Luftwege", fan: "Lüftung", heatpump: "Wärmepumpe",
     refrigerant: "Kältekreis", diagnostic: "Diagnose", status: "Status und Wartung",
     rooms: "Räume", tiles: "Kacheln", list: "Liste", schema: "Anlagenschema",
-    kpi: "Kennzahlen", history: "Verlauf", hist_24: "1 Tag", st_min: "Min", st_max: "Max", hist_7: "1 Woche", hp_runs: "Wärmepumpe läuft", hp_per_day: "Wärmepumpen-Laufzeit pro Tag", hp_starts: "Starts", hp_no_data: "Keine Daten zur Wärmepumpe.", heatmap: "Farbe = Abweichung vom Soll",
+    kpi: "Kennzahlen", history: "Verlauf", hist_24: "1 Tag", prev_period: "Vorzeitraum", st_min: "Min", st_max: "Max", hist_7: "1 Woche", hp_runs: "Wärmepumpe läuft", hp_per_day: "Wärmepumpen-Laufzeit pro Tag", hp_starts: "Starts", hp_no_data: "Keine Daten zur Wärmepumpe.", heatmap: "Farbe = Abweichung vom Soll",
     off: "Aus", eco_summer: "Eco Sommer", eco_winter: "Eco Winter", comfort: "Komfort",
     furnace: "Ofenbetrieb", emergency: "Notbetrieb", frost_protection: "Einfrierschutz",
     commissioning: "Einregulierung", not_used: "Nicht belegt",
@@ -90,7 +90,7 @@ const TEXT = {
     mode: "Operating mode", air: "Air paths", fan: "Ventilation", heatpump: "Heat pump",
     refrigerant: "Refrigerant circuit", diagnostic: "Diagnostics", status: "Status and maintenance",
     rooms: "Rooms", tiles: "Tiles", list: "List", schema: "System diagram",
-    kpi: "Key figures", history: "History", hist_24: "1 day", st_min: "Min", st_max: "Max", hist_7: "1 week", hp_runs: "Heat pump running", hp_per_day: "Heat pump runtime per day", hp_starts: "starts", hp_no_data: "No heat pump data.", heatmap: "Colour = deviation from target",
+    kpi: "Key figures", history: "History", hist_24: "1 day", prev_period: "Previous period", st_min: "Min", st_max: "Max", hist_7: "1 week", hp_runs: "Heat pump running", hp_per_day: "Heat pump runtime per day", hp_starts: "starts", hp_no_data: "No heat pump data.", heatmap: "Colour = deviation from target",
     off: "Off", eco_summer: "Eco summer", eco_winter: "Eco winter", comfort: "Comfort",
     furnace: "Stove mode", emergency: "Emergency", frost_protection: "Frost protection",
     commissioning: "Commissioning", not_used: "Not used",
@@ -542,7 +542,7 @@ class ProxonFwtBase extends HTMLElement {
     const sig = ids.filter(Boolean).map((i) => {
       const s = h.states[i];
       return s ? `${s.state}|${s.attributes.temperature}|${s.attributes.current_temperature}|${s.attributes.preferred_stage}|${s.attributes.last_restore}` : "-";
-    }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._hver || 0}|${this._histRange || "24h"}|${this._metric || ""}|${this._ymetric || ""}|${this._tab || ""}|${this._rview || ""}|${this._rfilter || ""}|${[...(this._ropen || [])].join("+")}|${this._boost ? 1 : 0}|${this._wb || 0}|${this._settingsStamp || 0}|${Object.keys(this._dismissed || {}).join("+")}`;
+    }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._hver || 0}|${this._histRange || "24h"}|${this._hcmp ? 1 : 0}|${this._metric || ""}|${this._ymetric || ""}|${this._tab || ""}|${this._rview || ""}|${this._rfilter || ""}|${[...(this._ropen || [])].join("+")}|${this._boost ? 1 : 0}|${this._wb || 0}|${this._settingsStamp || 0}|${Object.keys(this._dismissed || {}).join("+")}`;
     if (sig === this._sig) return;
     this._sig = sig;
     this._render();
@@ -1140,9 +1140,9 @@ class ProxonFwtBase extends HTMLElement {
     return a[1] + ((b[1] - a[1]) * (t - a[0])) / (b[0] - a[0] || 1);
   }
 
-  async _loadSeries(range, metric, defs) {
+  async _loadSeries(range, metric, defs, prev) {
     const ms = RANGE_MS[range];
-    const end = new Date(), start = new Date(end.getTime() - ms), ids = defs.map(([id]) => id);
+    const end = new Date(Date.now() - (prev ? ms : 0)), start = new Date(end.getTime() - ms), ids = defs.map(([id]) => id);
     let raw;
     if (range === "30d" || range === "1y") {
       const res = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
@@ -1176,6 +1176,10 @@ class ProxonFwtBase extends HTMLElement {
       out = [{ label: this._t("efficiency"), color: GREEN, pts: ProxonFwtBase._down(pts, 360) }];
     } else out = defs.map(([, label, color], i) => ({ label, color, pts: ProxonFwtBase._down(raw[i], 360) }));
     out.bypass = bypass;
+    if (prev) { // previous period: shifted onto the current time axis, drawn dashed
+      for (const o of out) { o.pts = o.pts.map(([t, v]) => [t + ms / 1000, v]); o.prev = true; o.label = `${o.label} · ${this._t("prev_period")}`; }
+      out.bypass = [];
+    }
     return out;
   }
 
@@ -1305,7 +1309,11 @@ class ProxonFwtBase extends HTMLElement {
     const metric = avail.includes(this._metric) ? this._metric : avail[0];
     const defs = this._metricDefs(d, metric);
     this._hget("hp", () => this._loadHp(d));
-    const series = this._hget(`s|${range}|${metric}`, () => this._loadSeries(range, metric, defs));
+    let series = this._hget(`s|${range}|${metric}`, () => this._loadSeries(range, metric, defs));
+    if (this._hcmp && series) {
+      const prev = this._hget(`s|${range}|${metric}|prev`, () => this._loadSeries(range, metric, defs, true));
+      if (prev) { const b = series.bypass; series = [...series, ...prev]; series.bypass = b; }
+    }
     let body;
     if (series === undefined) body = this._skel(190);
     else if (!series || !series.some((s) => s.pts.length > 1)) body = `<div class="note">${this._t(range === "30d" || range === "1y" ? "no_stats" : "no_history")}</div>`;
@@ -1313,7 +1321,7 @@ class ProxonFwtBase extends HTMLElement {
     const rb = (v, l) => `<button class="vbtn ${range === v ? "a" : ""}" data-act="hrange" data-v="${v}">${l}</button>`;
     const chips = avail.length > 1 ? `<div class="mchips" role="group">${avail.map((m) => `<button class="vbtn ${m === metric ? "a" : ""}" data-act="metric" data-v="${m}">${this._icon(METRIC_META[m].icon)}${this._t(METRIC_META[m].label)}</button>`).join("")}</div>` : "";
     return `<ha-card><div class="h">${this._icon("mdi:chart-line")}${this._t("history")}
-      <span class="r">${rb("24h", this._t("hist_24"))}${rb("7d", this._t("hist_7"))}${rb("30d", this._t("hist_30"))}${rb("1y", this._t("hist_365"))}</span></div>${chips}${body}</ha-card>`;
+      <span class="r"><button class="vbtn ${this._hcmp ? "a" : ""}" data-act="hcmp" aria-pressed="${!!this._hcmp}">${this._icon("mdi:compare-horizontal")}${this._t("prev_period")}</button>${rb("24h", this._t("hist_24"))}${rb("7d", this._t("hist_7"))}${rb("30d", this._t("hist_30"))}${rb("1y", this._t("hist_365"))}</span></div>${chips}${body}</ha-card>`;
   }
 
   _sec_runtime(d) {
@@ -1387,12 +1395,12 @@ class ProxonFwtBase extends HTMLElement {
       const s0 = Math.max(a, t0), s1 = Math.min(b, t1);
       return s1 > s0 ? `<rect x="${x(s0).toFixed(1)}" y="${pt}" width="${Math.max(1, x(s1) - x(s0)).toFixed(1)}" height="${H - pt - pb}" fill="${BLUE}" opacity=".13"/>` : "";
     }).join("");
-    const lines = series.map((s) => `<polyline fill="none" stroke="${s.color}" stroke-width="1.8" stroke-linejoin="round" points="${s.pts.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>`).join("");
+    const lines = series.map((s) => `<polyline fill="none" stroke="${s.color}" stroke-width="${s.prev ? 1.4 : 1.8}" ${s.prev ? 'stroke-dasharray="5 4" opacity=".55"' : ""} stroke-linejoin="round" points="${s.pts.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>`).join("");
     const legend = series.map((s) => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join("");
     const showBands = o.bands && this._hpIv && this._hpIv.length;
     // min / max / mean per curve (for power additionally the energy as the integral of the curve)
     const nf = (v) => v.toLocaleString(lang, { maximumFractionDigits: Math.abs(v) < 100 ? 1 : 0 });
-    const statRows = series.filter((s) => s.pts.length).map((s) => {
+    const statRows = series.filter((s) => s.pts.length && !s.prev).map((s) => {
       const v = s.pts.map((p) => p[1]);
       let kwh = "";
       if (o.energy) {
@@ -1717,6 +1725,7 @@ class ProxonFwtBase extends HTMLElement {
         if (this._on(c.fan_auto)) call("switch", "turn_off", { entity_id: c.fan_auto }); break;
       case "fanauto": call("switch", this._on(c.fan_auto) ? "turn_off" : "turn_on", { entity_id: c.fan_auto }); break;
       case "autosw": call("switch", "toggle", { entity_id: c.fan_auto }); break;
+      case "hcmp": this._hcmp = !this._hcmp; this._update(); break;
       case "hrange": this._histRange = v; this._update(); break;
       case "metric": this._metric = v; this._update(); break;
       case "ymetric": this._ymetric = v; this._sig = ""; this._update(); break;
