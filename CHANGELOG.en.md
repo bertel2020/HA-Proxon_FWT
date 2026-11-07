@@ -18,6 +18,7 @@ All notable changes to this project are documented here. Versions follow the
 - **History and bypass:** phases with the summer bypass open are marked as a blue band in the history (1 day, 1 week) and are left out of the heat recovery rate.
 - **History with key values:** below the chart, min, max and mean per curve are shown, for power also the energy (kWh) over the chosen period.
 - **Compare with the previous period:** a switch in the history overlays the previous period (yesterday, last week, last month, last year) as a dashed curve.
+- **Diagnosis redesigned:** three status tiles on top (heat pump, device filter, system error), the measurements across the full width below, and a "Runtime and starts" card (today / total).
 - **Own CO₂ and humidity sensors per room:** in the "Names and areas" step you can pick existing sensors from other devices for each room. They replace the unit's external inputs in the card and panel.
 - **Cooling mode in the system diagram:** in cooling mode the diagram reverses the refrigerant circuit (evaporator and condenser swap sides).
 - **Restore fan stage after the heat pump has run:** The unit raises the fan stage when the heat pump starts and never lowers it again. The new switch "Restore fan stage after heat pump" (off by default) remembers the stage you chose while the heat pump was idle (Eco summer/winter only, fan auto off) and sets it back after the run. The card and side panel show the preferred stage.

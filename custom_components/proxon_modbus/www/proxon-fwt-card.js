@@ -72,7 +72,7 @@ const TEXT = {
     quick: "Schnellaktionen", boost: "Stoßlüften", boost_end: "Stoßlüften beenden", boost_d_i: "Intensivlüftung ein", boost_d_s: "Stufe 4, bis du es beendest", boost_d_t: "Dann automatisch zurück", boost_until: "bis {0} Uhr, dann automatisch zurück", boost_min: "{0} Min.",
     all_up: "Alle Räume +1 °C", all_down: "Alle Räume −1 °C",
     measure: "Messwerte", g_air: "Luft", g_circuit: "Kältekreis", g_drive: "Antriebe",
-    maint: "Wartung und Statistik", rt_today: "Laufzeit heute", rt_total: "Laufzeit gesamt", starts_today: "Starts heute", starts_total: "Starts gesamt",
+    maint: "Wartung und Statistik", stats: "Laufzeit und Starts", today: "Heute", total: "Gesamt", rt_today: "Laufzeit heute", rt_total: "Laufzeit gesamt", starts_today: "Starts heute", starts_total: "Starts gesamt",
     hist_30: "1 Monat", hist_365: "1 Jahr", m_temp: "Temperaturen", runtime: "Wärmepumpen-Laufzeit", energy: "Energie pro Tag", day: "Tag",
     energy_note: "Näherung aus der mittleren Tagesleistung (Ø W × 24 h).",
     no_stats: "Für diesen Zeitraum liegen keine Langzeitstatistiken vor.",
@@ -145,7 +145,7 @@ const TEXT = {
     quick: "Quick actions", boost: "Boost ventilation", boost_end: "End boost ventilation", boost_d_i: "Intensive ventilation on", boost_d_s: "Stage 4 until you end it", boost_d_t: "Then back automatically", boost_until: "until {0}, then back automatically", boost_min: "{0} min",
     all_up: "All rooms +1 °C", all_down: "All rooms −1 °C",
     measure: "Measurements", g_air: "Air", g_circuit: "Refrigerant circuit", g_drive: "Drives",
-    maint: "Maintenance and statistics", rt_today: "Runtime today", rt_total: "Runtime total", starts_today: "Starts today", starts_total: "Starts total",
+    maint: "Maintenance and statistics", stats: "Runtime and starts", today: "Today", total: "Total", rt_today: "Runtime today", rt_total: "Runtime total", starts_today: "Starts today", starts_total: "Starts total",
     hist_30: "1 month", hist_365: "1 year", m_temp: "Temperatures", runtime: "Heat pump runtime", energy: "Energy per day", day: "day",
     energy_note: "Estimated from the mean daily power (avg W × 24 h).",
     no_stats: "No long-term statistics for this period.",
@@ -352,6 +352,14 @@ svg .sh { font-size: 13px; font-weight: 500; }
   background-size: 200% 100%; animation: sk 1.3s linear infinite; }
 @keyframes sk { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+.dtiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; align-items: stretch; }
+.dt { display: flex; gap: 14px; align-items: flex-start; background: var(--ha-card-background, var(--card-background-color)); border-radius: var(--ha-card-border-radius, 18px); padding: 16px; box-shadow: var(--ha-card-box-shadow, none); }
+.dt .ic { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; flex: none; color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); }
+.dt .b { min-width: 0; flex: 1; } .dt small { display: block; color: var(--secondary-text-color); font-size: 12.5px; }
+.dt .b > b { display: block; font-size: 20px; font-weight: 500; margin: 1px 0 2px; } .dt .s { font-size: 13px; color: var(--secondary-text-color); }
+.dt .s.sw { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; } .dt .vbtn { margin-top: 8px; }
+.dstat { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 32px; }
+.dsr { display: flex; gap: 32px; } .dsr b { display: block; font-size: 22px; font-weight: 500; } .dsr small { color: var(--secondary-text-color); font-size: 12.5px; }
 .mtgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 4px 24px; }
 .mg { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; color: var(--secondary-text-color); margin: 4px 0; }
 .mr { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 6px 0; border-top: 1px solid var(--divider-color); }
@@ -1679,6 +1687,50 @@ class ProxonFwtBase extends HTMLElement {
       ${rows.map(([l, v]) => `<div class="mr"><span>${l}</span><b>${v}</b></div>`).join("")}</div>`).join("")}</div></ha-card>`;
   }
 
+  // Diagnosis tab: status tiles on top, measurements across the full width, then runtime / starts.
+  _diagTab(d) {
+    const c = d.central, lang = this._hass.language;
+    const tile = (icon, col, title, value, sub, extra = "") => `<div class="dt" style="--c:${col}"><span class="ic">${this._icon(icon)}</span><div class="b"><small>${title}</small><b>${value}</b>${sub ? `<div class="s">${sub}</div>` : ""}${extra}</div></div>`;
+    const tiles = [];
+    // heat pump
+    if (c.heat_pump_heating || c.compressor_speed) {
+      const cool = this._on(c.heat_pump_cooling), heat = this._on(c.heat_pump_heating);
+      const rpm = this._num(c.compressor_speed), pw = this._num(this._powerId());
+      const sub = [rpm === null ? "" : `${rpm.toLocaleString(lang)} rpm`, pw === null ? "" : `${this._fmt(pw, pw % 1 ? 1 : 0)} W`].filter(Boolean).join(" · ");
+      const sw = c.cooling_enable ? `<div class="s sw">${this._t("cooling_enable")}<ha-switch data-act="coolsw" ${this._on(c.cooling_enable) ? "checked" : ""} ${this._ok(c.cooling_enable) ? "" : "disabled"}></ha-switch></div>` : "";
+      tiles.push(tile(cool ? "mdi:snowflake" : "mdi:heat-pump", cool ? BLUE : heat ? GREEN : "var(--secondary-text-color)", this._t("heatpump"),
+        this._t(cool ? "hp_cooling" : heat ? "hp_heating" : "hp_idle"), sub, sw));
+    }
+    // filter
+    const f = this._filterInfo(c);
+    if (this._ok(c.filter_device) || f.known) {
+      const pct = f.known ? Math.min(100, Math.round((f.age / f.iv) * 100)) : (f.due ? 100 : 0);
+      const near = f.due && f.left !== null && f.left <= 7;
+      const col = near || (!f.due && pct >= 100) ? "#db4437" : f.due || pct >= 90 ? "#f2a516" : GREEN;
+      const sub = f.due && f.left !== null ? this._t("f_shutdown", this._days(f.left))
+        : f.known ? this._t("f_age", String(Math.round(f.age)), String(f.iv), String(Math.max(0, Math.round(f.iv - f.age)))) : this._t("f_unknown");
+      const btn = c.filter_changed ? `<button class="vbtn" data-act="filterchg">${this._icon("mdi:check")}${this._t("f_btn")}</button>` : "";
+      const rc = this._recirc() && this._ok(c.filter_recirculation)
+        ? `<div class="s">${this._t("filter_recirc")}: <b style="color:${this._on(c.filter_recirculation) ? "#c98400" : GREEN}">${this._on(c.filter_recirculation) ? this._t("change_due") : this._t("ok")}</b></div>` : "";
+      tiles.push(tile("mdi:air-filter", col, this._t("filter_device"), f.due ? this._t("change_due") : this._t("ok"), sub,
+        `<div class="pbar" style="margin:8px 0 6px"><i style="width:${pct}%;background:${col}"></i></div>${rc}${btn}`));
+    }
+    // system
+    if (this._ok(c.error_system)) {
+      const bad = this._on(c.error_system);
+      const chg = c.mode_change_possible && this._ok(c.mode_change_possible) ? `${this._t("mode_change")}: ${this._on(c.mode_change_possible) ? this._t("possible") : this._t("not_possible")}` : "";
+      tiles.push(tile(bad ? "mdi:alert-circle-outline" : "mdi:check-circle-outline", bad ? "#db4437" : GREEN, this._t("error"), bad ? this._t("has_error") : this._t("no_error"), chg));
+    }
+    // runtime and starts
+    const hv = (id) => this._num(id) === null ? null : `${this._fmt(this._num(id), 1)} h`;
+    const iv0 = (id) => this._num(id) === null ? null : this._fmt(this._num(id), 0);
+    const stat = [[this._t("rt_today"), hv(c.hp_runtime_today), this._t("starts_today"), iv0(c.hp_starts_today), this._t("today")],
+      [this._t("rt_total"), hv(c.hp_runtime_total), this._t("starts_total"), iv0(c.hp_starts_total), this._t("total")]].filter((x) => x[1] !== null || x[3] !== null);
+    const stats = stat.length ? `<ha-card>${this._header("mdi:counter", this._t("stats"))}<div class="dstat">${stat.map(([l1, v1, l2, v2, h]) => `<div class="dsc"><div class="mg">${h}</div>
+      <div class="dsr">${v1 === null ? "" : `<div><b>${v1}</b><small>${l1}</small></div>`}${v2 === null ? "" : `<div><b>${v2}</b><small>${l2}</small></div>`}</div></div>`).join("")}</div></ha-card>` : "";
+    return `${tiles.length ? `<div class="dtiles">${tiles.join("")}</div>` : ""}${this._sec_measure(d)}${stats}`;
+  }
+
   _sec_maint(d) {
     const c = d.central, f = this._filterInfo(c);
     const fbar = () => {
@@ -2041,7 +2093,7 @@ class ProxonFwtPanel extends ProxonFwtBase {
     } else if (tab === "history") {
       body = `<div class="stack">${this._sec_history(d)}${this._sec_runtime(d)}${this._sec_energy(d)}${this._sec_year(d)}</div>`;
     } else {
-      body = `<div class="stack"><div class="top"><div class="col">${this._sec_heatpump(d)}${this._sec_measure(d)}</div><div class="col">${this._sec_maint(d)}</div></div>${this._sec_insights(d)}</div>`;
+      body = `<div class="stack">${this._diagTab(d)}${this._sec_insights(d)}</div>`;
     }
     this.shadowRoot.innerHTML = `<style>${CSS}</style><div class="panel">${head}${body}</div>`;
   }
