@@ -170,11 +170,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bo
         num_rf_sensors=options.get(CONF_NUM_RF_SENSORS, DEFAULT_NUM_RF_SENSORS),
         scan_interval=options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
     )
+    # Registered before anything can schedule the boost timer, so a failed setup never leaves it behind.
+    entry.async_on_unload(coordinator.async_cancel_boost_timer)
     await coordinator.async_load_stats()
     await coordinator.async_config_entry_first_refresh()
 
     entry.runtime_data = coordinator
-    entry.async_on_unload(coordinator.async_cancel_boost_timer)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

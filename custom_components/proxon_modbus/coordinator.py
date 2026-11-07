@@ -307,9 +307,19 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
             if kind == "intensive":
                 await self.async_write_register(REG_FAN_INTENSIVE_WRITE, 1)
             else:
+                auto_off = False
                 if func.get("fan_auto_read"):
                     await self.async_write_register(REG_FAN_AUTO_WRITE, 0)
-                await self.async_write_register(REG_FAN_STAGE_WRITE, 4)
+                    auto_off = True
+                try:
+                    await self.async_write_register(REG_FAN_STAGE_WRITE, 4)
+                except ProxonModbusError:
+                    if auto_off:  # no boost is stored, so nothing would switch the automatic back on
+                        try:
+                            await self.async_write_register(REG_FAN_AUTO_WRITE, 1)
+                        except ProxonModbusError:
+                            _LOGGER.warning("Could not restore the fan automatic after a failed boost start")
+                    raise
         self.boost.start(time.time(), minutes, kind, func.get("fan_stage_read"), bool(func.get("fan_auto_read")))
         self._boost_store.async_delay_save(self.boost.as_dict, 1)
         self._schedule_boost_end(minutes * 60)
