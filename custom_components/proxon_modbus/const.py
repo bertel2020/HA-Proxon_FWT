@@ -77,7 +77,6 @@ DEFAULT_BYTESIZE = 8
 DEFAULT_PARITY = "E"
 DEFAULT_STOPBITS = 1
 DEFAULT_SCAN_INTERVAL = 30
-DEFAULT_TIMEOUT = 5
 DEFAULT_COOLING_AVAILABLE = True
 
 # How long to wait after writing a "Soll" register before polling for
