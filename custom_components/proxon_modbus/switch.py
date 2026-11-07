@@ -29,11 +29,9 @@ from .const import (
     REG_COOLING_ENABLE_WRITE,
     REG_FAN_AUTO_WRITE,
     REG_FAN_INTENSIVE_WRITE,
-    REG_PTC_ENABLE_WRITE,
 )
 from .coordinator import BLOCK_FUNCTION, BLOCK_PTC, ProxonData, ProxonModbusCoordinator
 from .entity import ProxonCentralEntity, ProxonRoomEntity
-from .hub import set_bit
 
 
 def _always_available(data: ProxonData) -> bool:
@@ -297,9 +295,7 @@ class ProxonRoomPtcEnableSwitch(ProxonRoomEntity, SwitchEntity):
         return room.ptc_enabled if room else None
 
     async def _async_set(self, on: bool) -> None:
-        current_mask = self.coordinator.data.ptc_enable_mask
-        new_mask = set_bit(current_mask, self._room_index, on)
-        await self.coordinator.async_write_register(REG_PTC_ENABLE_WRITE, new_mask)
+        await self.coordinator.async_set_ptc_enable(self._room_index, on)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         await self._async_set(True)

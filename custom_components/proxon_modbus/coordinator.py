@@ -38,6 +38,7 @@ from .const import (
     REG_FAN_SPEED_SUPPLY,
     REG_FAN_STAGE_READ,
     REG_FAN_STAGE_WRITE,
+    REG_PTC_ENABLE_WRITE,
     REG_FUNCTION_BLOCK_BASE,
     REG_FUNCTION_BLOCK_COUNT,
     REG_MESSAGES,
@@ -64,7 +65,7 @@ from .const import (
     WRITE_SETTLE_DELAY,
 )
 from .logic import Boost, FanStageTracker, RunStats, boost_kind
-from .hub import ProxonModbusError, ProxonModbusHub, bit, decode_int16
+from .hub import ProxonModbusError, ProxonModbusHub, bit, decode_int16, set_bit
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -156,6 +157,9 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
         # Boost ventilation (Stoßlüften) with automatic return to the previous state.
         self.boost = Boost()
         self._stats_saved_at = float("-inf")
+        # PTC enable bits share one register: writes are read-modify-write, so they must not interleave.
+        self._ptc_lock = asyncio.Lock()
+        self._ptc_pending: int | None = None
         self._boost_store: Store = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}.boost")
         self._boost_cancel: CALLBACK_TYPE | None = None
         self._scan_interval = scan_interval
@@ -174,6 +178,7 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
                 self._set_issue("connection_lost", True, ir.IssueSeverity.ERROR)
             raise UpdateFailed(str(err)) from err
         self._fail_since = None
+        self._ptc_pending = None  # fresh data from the unit replaces any locally assumed mask
         self._set_issue("connection_lost", False)
         if not self.boost.active:  # the unit's fan stage is deliberately changed during a boost
             self._track_fan_stage(data)
@@ -359,6 +364,14 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
             return  # recorded by async_write_register ("Last write error")
         self.fan_stage_restored_at = dt_util.utcnow()
         self.async_update_listeners()
+
+    async def async_set_ptc_enable(self, room_index: int, on: bool) -> None:
+        """Set one room's PTC enable bit without losing the bits of other rooms written at the same time."""
+        async with self._ptc_lock:
+            base = self._ptc_pending if self._ptc_pending is not None else self.data.ptc_enable_mask
+            new_mask = set_bit(base, room_index, on)
+            await self.async_write_register(REG_PTC_ENABLE_WRITE, new_mask)
+            self._ptc_pending = new_mask
 
     async def async_write_register(self, address: int, value: int) -> None:
         """Write a "Soll" register, then refresh once the device has had a
