@@ -215,3 +215,18 @@ test("bar chart tooltips are built from text nodes, not parsed as markup", () =>
   assert.equal(tip.children[0].textContent, "<img onerror=x>");
   assert.equal(tip.children[1].textContent, "1 h");
 });
+
+test("rooms follow the configured room number, not the registry order", () => {
+  const p = make();
+  const climate = (id, dev) => ({ entity_id: `climate.${id}`, platform: "proxon_modbus", device_id: dev });
+  p._hass.entities = {
+    mode: { entity_id: "select.mode", platform: "proxon_modbus", device_id: "central", translation_key: "operating_mode" },
+    c1: climate("b", "r1"), c0: climate("a", "r0"),
+  };
+  const dev = (id, name, n) => ({ id, name, via_device_id: "central", identifiers: n === undefined ? [] : [["proxon_modbus", `entry_room_${n}`]] });
+  p._hass.devices = { r1: dev("r1", "Zweites", 1), r0: dev("r0", "Erstes", 0), central: { id: "central", name: "Proxon" } };
+  p._config = {};
+  assert.equal(JSON.stringify(p._discoverNow().rooms.map((r) => r.name)), '["Erstes","Zweites"]');
+  p._hass.devices = { r1: dev("r1", "Zweites"), r0: dev("r0", "Erstes"), central: { id: "central", name: "Proxon" } };
+  assert.equal(JSON.stringify(p._discoverNow().rooms.map((r) => r.name)), '["Zweites","Erstes"]'); // no identifiers: registry order
+});

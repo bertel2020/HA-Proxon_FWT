@@ -574,6 +574,11 @@ class ProxonFwtBase extends HTMLElement {
     for (const [id, dev] of Object.entries(h.devices || {})) {
       if (!roomIds.has(id)) continue;
       const room = { name: esc(dev.name_by_user || dev.name), ents: {} };
+      // room number from the device identifier "<entry>_room_<n>": the configured order, not the registry's
+      for (const ident of dev.identifiers || []) {
+        const m = ident && ident[0] === "proxon_modbus" && /_room_(\d+)$/.exec(String(ident[1]));
+        if (m) room.idx = Number(m[1]);
+      }
       for (const e of entities) {
         if (e.device_id !== id) continue;
         if (e.entity_id.startsWith("climate.")) room.climate = e.entity_id;
@@ -590,6 +595,7 @@ class ProxonFwtBase extends HTMLElement {
       for (const x of own) { if (x.co2) room.co2 = x.co2; if (x.rf) room.rf = x.rf; }
       if (room.climate) rooms.push(room);
     }
+    if (rooms.length && rooms.every((r) => r.idx !== undefined)) rooms.sort((a, b) => a.idx - b.idx);
     return { central, rooms };
   }
 
