@@ -16,7 +16,7 @@ from homeassistant.config_entries import (
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
 from homeassistant.components.modbus import async_get_temporary_unit
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.data_entry_flow import AbortFlow
+from homeassistant.data_entry_flow import AbortFlow, section
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import selector
@@ -169,21 +169,25 @@ def _names_schema(
         fields[
             vol.Optional(f"room_{i + 1}_area", description={"suggested_value": area_default})
         ] = selector.AreaSelector()
-        fields[
-            vol.Optional(
-                f"room_{i + 1}_co2_entity",
-                description={"suggested_value": existing_co2_ents[i] if i < len(existing_co2_ents) else None},
-            )
-        ] = selector.EntitySelector(
-            selector.EntitySelectorConfig(domain="sensor", device_class="carbon_dioxide")
-        )
-        fields[
-            vol.Optional(
-                f"room_{i + 1}_rf_entity",
-                description={"suggested_value": existing_rf_ents[i] if i < len(existing_rf_ents) else None},
-            )
-        ] = selector.EntitySelector(
-            selector.EntitySelectorConfig(domain="sensor", device_class="humidity")
+        # Own sensors per room live in a collapsed section so the form stays short.
+        fields[vol.Required(f"room_{i + 1}_sensors")] = section(
+            vol.Schema(
+                {
+                    vol.Optional(
+                        "co2_entity",
+                        description={"suggested_value": existing_co2_ents[i] if i < len(existing_co2_ents) else None},
+                    ): selector.EntitySelector(
+                        selector.EntitySelectorConfig(domain="sensor", device_class="carbon_dioxide")
+                    ),
+                    vol.Optional(
+                        "rf_entity",
+                        description={"suggested_value": existing_rf_ents[i] if i < len(existing_rf_ents) else None},
+                    ): selector.EntitySelector(
+                        selector.EntitySelectorConfig(domain="sensor", device_class="humidity")
+                    ),
+                }
+            ),
+            {"collapsed": True},
         )
     for i in range(num_co2):
         default = existing_co2[i] if i < len(existing_co2) else f"CO2-Sensor {i + 1}"
@@ -219,8 +223,8 @@ def _names_from_input(
     return {
         CONF_ROOM_NAMES: [(user_input.get(f"room_{i + 1}") or "").strip() for i in range(num_rooms)],
         CONF_ROOM_AREAS: [user_input.get(f"room_{i + 1}_area") or None for i in range(num_rooms)],
-        CONF_ROOM_CO2_ENTITIES: [user_input.get(f"room_{i + 1}_co2_entity") or None for i in range(num_rooms)],
-        CONF_ROOM_RF_ENTITIES: [user_input.get(f"room_{i + 1}_rf_entity") or None for i in range(num_rooms)],
+        CONF_ROOM_CO2_ENTITIES: [(user_input.get(f"room_{i + 1}_sensors") or {}).get("co2_entity") or None for i in range(num_rooms)],
+        CONF_ROOM_RF_ENTITIES: [(user_input.get(f"room_{i + 1}_sensors") or {}).get("rf_entity") or None for i in range(num_rooms)],
         CONF_CO2_NAMES: [user_input[f"co2_{i + 1}"] for i in range(num_co2)],
         CONF_RF_NAMES: [user_input[f"rf_{i + 1}"] for i in range(num_rf)],
         CONF_CO2_ROOMS: [parse_room(user_input[f"co2_{i + 1}_room"]) for i in range(num_co2)],
