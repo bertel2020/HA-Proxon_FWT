@@ -8,6 +8,7 @@ All notable changes to this project are documented here. Versions follow the
 ## 2.1.0 – 2026-11-02
 
 **New**
+- **Boost ventilation with timer:** New "Boost ventilation" switch in the integration. It switches to the highest level (intensive ventilation or stage 4) and automatically restores the previous state after the configured duration (default 15 minutes), even without the panel open and across Home Assistant restarts. The panel uses it and shows the end time.
 - **Dashboard card `custom:proxon-fwt-card`:** the integration ships its own card (operating mode, air paths as a cross-flow heat exchanger, ventilation, heat pump, refrigerant circuit, status, rooms). It is loaded automatically and finds the entities by itself; power consumption and outdoor temperature are optional and can be replaced by your own entities. See the README for details.
 - **Side panel "Proxon FWT":** its own sidebar entry with an animated system diagram (including all temperature probes), key figures with a calculated heat recovery rate, room heat map, notice banners and a 24-hour history. The card `custom:proxon-fwt-card` gained the optional sections `schema`, `kpi`, `alerts` and `history`; operating-mode, fan and room controls now have icons and colours.
 - **Dashboard settings in the integration options:** outdoor side of the heat exchanger, own power sensor and own outdoor temperature sensor can be set centrally and apply to the card and side panel in every browser (read through the new websocket command `proxon_modbus/settings`). Values in the card take precedence.

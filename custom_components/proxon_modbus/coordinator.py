@@ -8,14 +8,18 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import CALLBACK_TYPE, HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
 from .const import (
     CAPABILITY_FLAGS,
+    CONF_BOOST_MINUTES,
+    DEFAULT_BOOST_MINUTES,
     DOMAIN,
     MESSAGE_FLAGS,
     REG_BYPASS_STATE,
@@ -59,7 +63,7 @@ from .const import (
     REG_TEMP_SUPPLY_AIR,
     WRITE_SETTLE_DELAY,
 )
-from .logic import FanStageTracker, RunStats
+from .logic import Boost, FanStageTracker, RunStats, boost_kind
 from .hub import ProxonModbusError, ProxonModbusHub, bit, decode_int16
 
 _LOGGER = logging.getLogger(__name__)
@@ -146,6 +150,10 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
         # Persisted heat pump / filter statistics.
         self.stats = RunStats()
         self._store: Store = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}.stats")
+        # Boost ventilation (Stoßlüften) with automatic return to the previous state.
+        self.boost = Boost()
+        self._boost_store: Store = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}.boost")
+        self._boost_cancel: CALLBACK_TYPE | None = None
         self._scan_interval = scan_interval
         self._last_poll: float | None = None
         self._fail_since: float | None = None
@@ -163,7 +171,8 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
             raise UpdateFailed(str(err)) from err
         self._fail_since = None
         self._set_issue("connection_lost", False)
-        self._track_fan_stage(data)
+        if not self.boost.active:  # the unit's fan stage is deliberately changed during a boost
+            self._track_fan_stage(data)
         self._track_stats(data)
         return data
 
@@ -251,6 +260,75 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
 
     async def async_load_stats(self) -> None:
         self.stats.load(await self._store.async_load())
+        self.boost.load(await self._boost_store.async_load())
+        if self.boost.active:  # HA restarted during a boost: finish it on time (or right away)
+            self._schedule_boost_end(max(5.0, self.boost.remaining(time.time()) or 0.0))
+
+    # ---- boost ventilation ------------------------------------------------
+
+    @property
+    def boost_possible(self) -> bool:
+        return boost_kind(self.data.capabilities, self.data.function_block) is not None
+
+    @property
+    def boost_minutes(self) -> int:
+        assert self.config_entry is not None
+        return int(self.config_entry.options.get(CONF_BOOST_MINUTES, DEFAULT_BOOST_MINUTES))
+
+    def _schedule_boost_end(self, seconds: float) -> None:
+        self.async_cancel_boost_timer()
+        self._boost_cancel = async_call_later(self.hass, seconds, self._async_boost_expired)
+
+    def async_cancel_boost_timer(self) -> None:
+        if self._boost_cancel is not None:
+            self._boost_cancel()
+            self._boost_cancel = None
+
+    async def async_start_boost(self, minutes: float | None = None) -> None:
+        """Run the fan at the highest level for a while, then put everything back."""
+        kind = boost_kind(self.data.capabilities, self.data.function_block)
+        if kind is None:
+            raise HomeAssistantError("Boost ventilation is not available in the current operating mode")
+        minutes = minutes or self.boost_minutes
+        func = self.data.function_block
+        if not self.boost.active:
+            if kind == "intensive":
+                await self.async_write_register(REG_FAN_INTENSIVE_WRITE, 1)
+            else:
+                if func.get("fan_auto_read"):
+                    await self.async_write_register(REG_FAN_AUTO_WRITE, 0)
+                await self.async_write_register(REG_FAN_STAGE_WRITE, 4)
+        self.boost.start(time.time(), minutes, kind, func.get("fan_stage_read"), bool(func.get("fan_auto_read")))
+        self._boost_store.async_delay_save(self.boost.as_dict, 1)
+        self._schedule_boost_end(minutes * 60)
+        self.async_update_listeners()
+
+    async def async_end_boost(self) -> None:
+        """Back to the state before the boost. Raises if the unit rejects the write; the boost then stays active."""
+        if not self.boost.active:
+            return
+        self.async_cancel_boost_timer()
+        try:
+            if self.boost.kind == "intensive":
+                await self.async_write_register(REG_FAN_INTENSIVE_WRITE, 0)
+            else:
+                if self.boost.stage is not None:
+                    await self.async_write_register(REG_FAN_STAGE_WRITE, self.boost.stage)
+                if self.boost.auto:
+                    await self.async_write_register(REG_FAN_AUTO_WRITE, 1)
+        except ProxonModbusError:
+            self._schedule_boost_end(60)  # retry
+            raise
+        self.boost.clear()
+        self._boost_store.async_delay_save(self.boost.as_dict, 1)
+        self.async_update_listeners()
+
+    async def _async_boost_expired(self, _now: datetime) -> None:
+        self._boost_cancel = None
+        try:
+            await self.async_end_boost()
+        except ProxonModbusError:
+            _LOGGER.warning("Could not end the boost ventilation, retrying in a minute")
 
     async def _async_restore_fan_stage(self, stage: int) -> None:
         try:

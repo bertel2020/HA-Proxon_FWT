@@ -50,6 +50,56 @@ class FanStageTracker:
         return None
 
 
+def boost_kind(capabilities: dict[str, bool], function_block: dict[str, Any]) -> str | None:
+    """How a boost (Stoßlüften) can be done right now: "intensive", "stage" (stage 4) or None."""
+    if capabilities.get("intensive_ventilation_selectable"):
+        return "intensive"
+    if (
+        function_block.get("operating_mode_read") in ECO_MODES
+        and function_block.get("fan_stage_read") in VALID_STAGES
+        and capabilities.get("fan_stage_4_selectable", True)
+    ):
+        return "stage"
+    return None
+
+
+class Boost:
+    """A running boost: what to put back and when. Persisted so a restart cannot leave the unit boosted."""
+
+    def __init__(self) -> None:
+        self.until: float | None = None  # epoch seconds
+        self.kind: str | None = None
+        self.stage: int | None = None  # fan stage to restore ("stage" kind)
+        self.auto = False  # fan auto to restore ("stage" kind)
+
+    @property
+    def active(self) -> bool:
+        return self.until is not None
+
+    def start(self, now: float, minutes: float, kind: str, stage: int | None, auto: bool) -> None:
+        if not self.active:  # extending a running boost keeps the original stage to restore
+            self.kind, self.stage, self.auto = kind, stage, auto
+        self.until = now + minutes * 60
+
+    def remaining(self, now: float) -> float | None:
+        return None if self.until is None else max(0.0, self.until - now)
+
+    def clear(self) -> None:
+        self.until = self.kind = self.stage = None
+        self.auto = False
+
+    def as_dict(self) -> dict[str, Any]:
+        return {"until": self.until, "kind": self.kind, "stage": self.stage, "auto": self.auto}
+
+    def load(self, data: dict[str, Any] | None) -> None:
+        self.clear()
+        if not data or not isinstance(data.get("until"), (int, float)) or data.get("kind") not in ("intensive", "stage"):
+            return
+        self.until, self.kind = float(data["until"]), data["kind"]
+        self.stage = data["stage"] if data.get("stage") in VALID_STAGES else None
+        self.auto = bool(data.get("auto"))
+
+
 class RunStats:
     """Heat pump runtime/starts and filter operating hours, persisted by the coordinator."""
 

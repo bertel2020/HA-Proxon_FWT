@@ -30,10 +30,12 @@ from .const import (
     CONF_CONNECTION_TYPE,
     CONF_COOLING_AVAILABLE,
     CONF_NUM_CO2_SENSORS,
+    CONF_BOOST_MINUTES,
     CONF_FILTER_INTERVAL,
     CONF_RECIRC_FILTER,
     DEFAULT_RECIRC_FILTER,
     CONF_OUTDOOR_ENTITY,
+    DEFAULT_BOOST_MINUTES,
     DEFAULT_FILTER_INTERVAL,
     CONF_OUTDOOR_SIDE,
     CONF_POWER_ENTITY,
@@ -537,6 +539,7 @@ class ProxonModbusOptionsFlow(OptionsFlow):
                 CONF_OUTDOOR_ENTITY: user_input.get(CONF_OUTDOOR_ENTITY) or None,
                 CONF_FILTER_INTERVAL: int(user_input.get(CONF_FILTER_INTERVAL, DEFAULT_FILTER_INTERVAL)),
                 CONF_RECIRC_FILTER: bool(user_input.get(CONF_RECIRC_FILTER, DEFAULT_RECIRC_FILTER)),
+                CONF_BOOST_MINUTES: int(user_input.get(CONF_BOOST_MINUTES, DEFAULT_BOOST_MINUTES)),
             }
             return await self.async_step_names()
 
@@ -598,6 +601,14 @@ class ProxonModbusOptionsFlow(OptionsFlow):
                     CONF_RECIRC_FILTER,
                     default=options.get(CONF_RECIRC_FILTER, DEFAULT_RECIRC_FILTER),
                 ): selector.BooleanSelector(),
+                vol.Required(
+                    CONF_BOOST_MINUTES,
+                    default=options.get(CONF_BOOST_MINUTES, DEFAULT_BOOST_MINUTES),
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        min=5, max=120, unit_of_measurement="min", mode="box"
+                    )
+                ),
                 vol.Optional(
                     CONF_POWER_ENTITY,
                     description={"suggested_value": options.get(CONF_POWER_ENTITY)},

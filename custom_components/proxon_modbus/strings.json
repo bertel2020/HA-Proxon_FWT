@@ -134,12 +134,14 @@
           "outdoor_side": "Side of the outdoor air (fresh and exhaust air)",
           "filter_interval": "Device filter change interval (days)",
           "recirc_filter": "Recirculation filter installed (optional)",
+          "boost_minutes": "Boost ventilation duration (minutes)",
           "power_entity": "Own power sensor (optional)",
           "outdoor_entity": "Own outdoor temperature sensor (optional)"
         },
         "data_description": {
           "filter_interval": "Basis of the maintenance bar in the side panel. The unit asks for a change after 180 days and shuts down by force 21 days after that message.",
           "recirc_filter": "Only enable if you have an extra recirculation filter. Otherwise it is hidden in the card and side panel.",
+          "boost_minutes": "After this time the previous fan stage is restored automatically.",
           "outdoor_side": "Which side of the unit are fresh air and exhaust air connected to, seen from the front? This turns the diagram in the card and side panel. The supply and extract air are on the opposite side.",
           "power_entity": "Replaces the unit's power consumption in the card and side panel, e.g. a Shelly on the unit. Leave empty to use the unit's sensor.",
           "outdoor_entity": "Replaces the unit's outdoor temperature in the card and side panel. Leave empty to use the unit's sensor."
@@ -276,6 +278,7 @@
     },
     "switch": {
       "cooling_enable": { "name": "Cooling enabled" },
+      "boost": { "name": "Boost ventilation" },
       "fan_stage_restore": { "name": "Restore fan stage after heat pump" },
       "fan_auto": { "name": "Fan auto mode" },
       "fan_intensive": { "name": "Intensive ventilation" },

@@ -58,6 +58,8 @@ CONF_POWER_ENTITY = "power_entity"  # optional own power sensor instead of the u
 CONF_OUTDOOR_ENTITY = "outdoor_entity"  # optional own outdoor temperature sensor
 CONF_FILTER_INTERVAL = "filter_interval"  # days between device filter changes (maintenance bar)
 DEFAULT_FILTER_INTERVAL = 180
+CONF_BOOST_MINUTES = "boost_minutes"  # duration of the boost ventilation (Stoßlüften)
+DEFAULT_BOOST_MINUTES = 15
 CONF_RECIRC_FILTER = "recirc_filter"  # an optional recirculation filter is installed
 DEFAULT_RECIRC_FILTER = False
 

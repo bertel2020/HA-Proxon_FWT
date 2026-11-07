@@ -134,12 +134,14 @@
           "outdoor_side": "Außenseite des Wärmetauschers (Dashboard)",
           "filter_interval": "Gerätefilter-Wechselintervall (Tage)",
           "recirc_filter": "Umluftfilter vorhanden (optional)",
+          "boost_minutes": "Dauer des Stoßlüftens (Minuten)",
           "power_entity": "Eigener Leistungssensor (optional)",
           "outdoor_entity": "Eigener Außentemperatursensor (optional)"
         },
         "data_description": {
           "filter_interval": "Grundlage für den Wartungsbalken im Seitenpanel. Die Anlage meldet den Wechsel nach 180 Tagen und schaltet 21 Tage nach der Meldung zwangsweise ab.",
           "recirc_filter": "Nur aktivieren, wenn ein zusätzlicher Umluftfilter eingebaut ist. Sonst wird er in Karte und Seitenpanel ausgeblendet.",
+          "boost_minutes": "Nach dieser Zeit wird die vorherige Lüfterstufe automatisch wiederhergestellt.",
           "outdoor_side": "Auf welcher Seite der Anlage sind Frischluft und Fortluft angeschlossen, von vorn gesehen? Das dreht das Schema in Karte und Seitenpanel. Zuluft und Abluft liegen auf der Gegenseite.",
           "power_entity": "Ersetzt die Leistungsaufnahme des Geräts in Karte und Seitenpanel, z. B. ein Shelly an der Anlage. Leer lassen, um den Gerätesensor zu verwenden.",
           "outdoor_entity": "Ersetzt die Außentemperatur des Geräts in Karte und Seitenpanel. Leer lassen, um den Gerätesensor zu verwenden."
@@ -276,6 +278,7 @@
     },
     "switch": {
       "cooling_enable": { "name": "Kühlung freigegeben" },
+      "boost": { "name": "Stoßlüften" },
       "fan_stage_restore": { "name": "Lüfterstufe nach Wärmepumpe wiederherstellen" },
       "fan_auto": { "name": "Lüfter-Automatik" },
       "fan_intensive": { "name": "Intensivlüftung" },

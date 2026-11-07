@@ -10,6 +10,7 @@ from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.util import dt as dt_util
 
 from . import ProxonConfigEntry
 from .const import (
@@ -111,6 +112,7 @@ async def async_setup_entry(
         for description in switch_descriptions
     ]
     entities.append(ProxonFanRestoreSwitch(coordinator, entry.entry_id, device_name))
+    entities.append(ProxonBoostSwitch(coordinator, entry.entry_id, device_name))
 
     room_names = entry.options.get(CONF_ROOM_NAMES, [])
     for i, room_name in enumerate(room_names):
@@ -155,6 +157,48 @@ class ProxonFunctionSwitch(ProxonCentralEntity, SwitchEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         await self.coordinator.async_write_register(self.entity_description.write_register, 0)
+
+
+class ProxonBoostSwitch(ProxonCentralEntity, SwitchEntity):
+    """Boost ventilation (Stoßlüften): highest fan level for the duration set in the options.
+
+    Turning it on starts the timer inside the integration, so it also ends
+    without the side panel open. The previous fan stage (and fan auto) is put
+    back afterwards, also after a Home Assistant restart.
+    """
+
+    _attr_translation_key = "boost"
+    _attr_icon = "mdi:weather-windy"
+    _blocks = frozenset({BLOCK_FUNCTION})
+
+    def __init__(
+        self, coordinator: ProxonModbusCoordinator, entry_id: str, device_name: str
+    ) -> None:
+        super().__init__(coordinator, entry_id, device_name, "boost")
+
+    @property
+    def available(self) -> bool:
+        if not super().available:
+            return False
+        return self.coordinator.boost.active or self.coordinator.boost_possible
+
+    @property
+    def is_on(self) -> bool:
+        return self.coordinator.boost.active
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        until = self.coordinator.boost.until
+        return {
+            "until": dt_util.utc_from_timestamp(until).isoformat() if until else None,
+            "duration_minutes": self.coordinator.boost_minutes,
+        }
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        await self.coordinator.async_start_boost()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        await self.coordinator.async_end_boost()
 
 
 class ProxonFanRestoreSwitch(ProxonCentralEntity, SwitchEntity, RestoreEntity):
