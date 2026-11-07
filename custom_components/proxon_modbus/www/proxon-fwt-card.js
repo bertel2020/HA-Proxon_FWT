@@ -17,7 +17,7 @@ const TEXT = {
     mode: "Betriebsart", air: "Luftwege", fan: "Lüftung", heatpump: "Wärmepumpe",
     refrigerant: "Kältekreis", diagnostic: "Diagnose", status: "Status und Wartung",
     rooms: "Räume", tiles: "Kacheln", list: "Liste", schema: "Anlagenschema",
-    kpi: "Kennzahlen", history: "Verlauf", hist_24: "24 h", hist_7: "7 Tage", hp_runs: "Wärmepumpe läuft", hp_per_day: "Wärmepumpen-Laufzeit pro Tag", hp_starts: "Starts", hp_no_data: "Keine Daten zur Wärmepumpe.", heatmap: "Farbe = Abweichung vom Soll",
+    kpi: "Kennzahlen", history: "Verlauf", hist_24: "1 Tag", hist_7: "1 Woche", hp_runs: "Wärmepumpe läuft", hp_per_day: "Wärmepumpen-Laufzeit pro Tag", hp_starts: "Starts", hp_no_data: "Keine Daten zur Wärmepumpe.", heatmap: "Farbe = Abweichung vom Soll",
     off: "Aus", eco_summer: "Eco Sommer", eco_winter: "Eco Winter", comfort: "Komfort",
     furnace: "Ofenbetrieb", emergency: "Notbetrieb", frost_protection: "Einfrierschutz",
     commissioning: "Einregulierung", not_used: "Nicht belegt",
@@ -73,7 +73,7 @@ const TEXT = {
     all_up: "Alle Räume +1 °C", all_down: "Alle Räume −1 °C",
     measure: "Messwerte", g_air: "Luft", g_circuit: "Kältekreis", g_drive: "Antriebe",
     maint: "Wartung und Statistik", rt_today: "Laufzeit heute", rt_total: "Laufzeit gesamt", starts_today: "Starts heute", starts_total: "Starts gesamt",
-    hist_30: "30 Tage", m_temp: "Temperaturen", runtime: "Wärmepumpen-Laufzeit", energy: "Energie pro Tag", day: "Tag",
+    hist_30: "1 Monat", hist_365: "1 Jahr", m_temp: "Temperaturen", runtime: "Wärmepumpen-Laufzeit", energy: "Energie pro Tag", day: "Tag",
     energy_note: "Näherung aus der mittleren Tagesleistung (Ø W × 24 h).",
     no_stats: "Für diesen Zeitraum liegen keine Langzeitstatistiken vor.",
     year: "Jahresübersicht", year_sub: "12 Monate", y_runtime: "Laufzeit", y_energy: "Energie", y_starts: "Starts", y_note: "Die Monatswerte entstehen aus der Langzeitstatistik und füllen sich mit der Zeit. Energie ist eine Näherung aus der mittleren Leistung.", y_filter: "Filter getauscht", y_month: "Monat",
@@ -90,7 +90,7 @@ const TEXT = {
     mode: "Operating mode", air: "Air paths", fan: "Ventilation", heatpump: "Heat pump",
     refrigerant: "Refrigerant circuit", diagnostic: "Diagnostics", status: "Status and maintenance",
     rooms: "Rooms", tiles: "Tiles", list: "List", schema: "System diagram",
-    kpi: "Key figures", history: "History", hist_24: "24 h", hist_7: "7 days", hp_runs: "Heat pump running", hp_per_day: "Heat pump runtime per day", hp_starts: "starts", hp_no_data: "No heat pump data.", heatmap: "Colour = deviation from target",
+    kpi: "Key figures", history: "History", hist_24: "1 day", hist_7: "1 week", hp_runs: "Heat pump running", hp_per_day: "Heat pump runtime per day", hp_starts: "starts", hp_no_data: "No heat pump data.", heatmap: "Colour = deviation from target",
     off: "Off", eco_summer: "Eco summer", eco_winter: "Eco winter", comfort: "Comfort",
     furnace: "Stove mode", emergency: "Emergency", frost_protection: "Frost protection",
     commissioning: "Commissioning", not_used: "Not used",
@@ -146,7 +146,7 @@ const TEXT = {
     all_up: "All rooms +1 °C", all_down: "All rooms −1 °C",
     measure: "Measurements", g_air: "Air", g_circuit: "Refrigerant circuit", g_drive: "Drives",
     maint: "Maintenance and statistics", rt_today: "Runtime today", rt_total: "Runtime total", starts_today: "Starts today", starts_total: "Starts total",
-    hist_30: "30 days", m_temp: "Temperatures", runtime: "Heat pump runtime", energy: "Energy per day", day: "day",
+    hist_30: "1 month", hist_365: "1 year", m_temp: "Temperatures", runtime: "Heat pump runtime", energy: "Energy per day", day: "day",
     energy_note: "Estimated from the mean daily power (avg W × 24 h).",
     no_stats: "No long-term statistics for this period.",
     year: "Yearly overview", year_sub: "12 months", y_runtime: "Runtime", y_energy: "Energy", y_starts: "Starts", y_note: "Monthly values come from the long-term statistics and fill up over time. Energy is estimated from the mean power.", y_filter: "Filter changed", y_month: "month",
@@ -447,6 +447,8 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 }
 :host([narrow]) .menu { display: inline-flex; }
 `;
+
+const RANGE_MS = { "24h": 864e5, "7d": 7 * 864e5, "30d": 30 * 864e5, "1y": 365 * 864e5 };
 
 class ProxonFwtBase extends HTMLElement {
   constructor() {
@@ -1135,12 +1137,12 @@ class ProxonFwtBase extends HTMLElement {
   }
 
   async _loadSeries(range, metric, defs) {
-    const ms = { "24h": 864e5, "7d": 7 * 864e5, "30d": 30 * 864e5 }[range];
+    const ms = RANGE_MS[range];
     const end = new Date(), start = new Date(end.getTime() - ms), ids = defs.map(([id]) => id);
     let raw;
-    if (range === "30d") {
+    if (range === "30d" || range === "1y") {
       const res = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
-        statistic_ids: ids, period: "hour", types: ["mean"] });
+        statistic_ids: ids, period: range === "1y" ? "day" : "hour", types: ["mean"] });
       raw = defs.map(([id]) => (res[id] || []).map((r) => [r.start / 1000, Number(r.mean)]).filter(([t, v]) => !isNaN(t) && !isNaN(v)));
     } else {
       const res = await this._hass.callWS({ type: "history/history_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
@@ -1276,7 +1278,7 @@ class ProxonFwtBase extends HTMLElement {
   // ---- history: sections ------------------------------------------------
 
   _range() {
-    return this._histRange === "7d" || this._histRange === "30d" ? this._histRange : "24h";
+    return ["7d", "30d", "1y"].includes(this._histRange) ? this._histRange : "24h";
   }
 
   _sec_history(d) {
@@ -1289,12 +1291,12 @@ class ProxonFwtBase extends HTMLElement {
     const series = this._hget(`s|${range}|${metric}`, () => this._loadSeries(range, metric, defs));
     let body;
     if (series === undefined) body = this._skel(190);
-    else if (!series || !series.some((s) => s.pts.length > 1)) body = `<div class="note">${this._t(range === "30d" ? "no_stats" : "no_history")}</div>`;
-    else body = this._chart(series, { range, unit: METRIC_META[metric].unit, bands: range !== "30d" });
+    else if (!series || !series.some((s) => s.pts.length > 1)) body = `<div class="note">${this._t(range === "30d" || range === "1y" ? "no_stats" : "no_history")}</div>`;
+    else body = this._chart(series, { range, unit: METRIC_META[metric].unit, bands: range === "24h" || range === "7d" });
     const rb = (v, l) => `<button class="vbtn ${range === v ? "a" : ""}" data-act="hrange" data-v="${v}">${l}</button>`;
     const chips = avail.length > 1 ? `<div class="mchips" role="group">${avail.map((m) => `<button class="vbtn ${m === metric ? "a" : ""}" data-act="metric" data-v="${m}">${this._icon(METRIC_META[m].icon)}${this._t(METRIC_META[m].label)}</button>`).join("")}</div>` : "";
     return `<ha-card><div class="h">${this._icon("mdi:chart-line")}${this._t("history")}
-      <span class="r">${rb("24h", this._t("hist_24"))}${rb("7d", this._t("hist_7"))}${rb("30d", this._t("hist_30"))}</span></div>${chips}${body}</ha-card>`;
+      <span class="r">${rb("24h", this._t("hist_24"))}${rb("7d", this._t("hist_7"))}${rb("30d", this._t("hist_30"))}${rb("1y", this._t("hist_365"))}</span></div>${chips}${body}</ha-card>`;
   }
 
   _sec_runtime(d) {
@@ -1326,7 +1328,7 @@ class ProxonFwtBase extends HTMLElement {
   _chart(series, o) {
     const W = Math.max(300, (this.clientWidth || 680) - 80), H = 190, pl = 42, pr = 10, pt = 10, pb = 22;
     const lang = this._hass.language;
-    const ms = { "24h": 864e5, "7d": 7 * 864e5, "30d": 30 * 864e5 }[o.range] / 1000;
+    const ms = RANGE_MS[o.range] / 1000;
     const t1 = Date.now() / 1000, t0 = t1 - ms;
     const vals = series.flatMap((s) => s.pts.map((p) => p[1]));
     let mn = Math.min(...vals), mx = Math.max(...vals);
@@ -1345,12 +1347,19 @@ class ProxonFwtBase extends HTMLElement {
     const ticks = [];
     if (o.range === "24h") for (let i = 0; i <= 4; i++) ticks.push(t0 + ((t1 - t0) * i) / 4);
     else {
-      const every = o.range === "7d" ? 1 : W < 420 ? 10 : 5;
-      const dd = new Date(t0 * 1000); dd.setHours(24, 0, 0, 0);
-      for (; dd.getTime() / 1000 <= t1; dd.setDate(dd.getDate() + every)) ticks.push(dd.getTime() / 1000);
+      if (o.range === "1y") {
+        const every = W < 420 ? 2 : 1;
+        const dd = new Date(t0 * 1000); dd.setDate(1); dd.setHours(0, 0, 0, 0); dd.setMonth(dd.getMonth() + 1);
+        for (; dd.getTime() / 1000 <= t1; dd.setMonth(dd.getMonth() + every)) ticks.push(dd.getTime() / 1000);
+      } else {
+        const every = o.range === "7d" ? 1 : W < 420 ? 10 : 5;
+        const dd = new Date(t0 * 1000); dd.setHours(24, 0, 0, 0);
+        for (; dd.getTime() / 1000 <= t1; dd.setDate(dd.getDate() + every)) ticks.push(dd.getTime() / 1000);
+      }
     }
     const tl = (t) => o.range === "24h" ? new Date(t * 1000).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })
       : o.range === "7d" ? new Date(t * 1000).toLocaleDateString(lang, { weekday: "short" })
+        : o.range === "1y" ? new Date(t * 1000).toLocaleDateString(lang, { month: "short" })
         : new Date(t * 1000).toLocaleDateString(lang, { day: "2-digit", month: "2-digit" });
     const xt = ticks.map((t) => `<text class="st" x="${x(t).toFixed(1)}" y="${H - 5}" text-anchor="${x(t) > W - 24 ? "end" : "middle"}" style="font-size:11px">${tl(t)}</text>`).join("");
     const bands = o.bands ? (this._hpIv || []).map(([a, b]) => {
@@ -1388,7 +1397,8 @@ class ProxonFwtBase extends HTMLElement {
       xd.innerHTML = rows.map(({ s, p }) => `<circle cx="${fx}" cy="${m.y(p[1])}" r="3.5" fill="${s.color}" stroke="var(--card-background-color)" stroke-width="1.5"/>`).join("");
       const when = new Date(rows[0].p[0] * 1000);
       const wl = m.range === "24h" ? when.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })
-        : when.toLocaleString(lang, { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+        : m.range === "1y" ? when.toLocaleDateString(lang, { day: "2-digit", month: "2-digit", year: "numeric" })
+          : when.toLocaleString(lang, { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
       tip.innerHTML = `<b>${wl}</b>${rows.map(({ s, p }) => `<div><i style="background:${s.color}"></i>${s.label} <b>${p[1].toLocaleString(lang, { maximumFractionDigits: 1 })}${m.unit}</b></div>`).join("")}`;
       tip.style.display = "block";
       const left = (fx / m.W) * r.width;
