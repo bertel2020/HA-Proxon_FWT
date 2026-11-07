@@ -168,6 +168,9 @@ class ProxonFunctionSwitch(_BoostServiceGuard, ProxonCentralEntity, SwitchEntity
         return self.entity_description.is_on_fn(self.coordinator.data)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
+        flag = {"fan_auto": "fan_auto_selectable", "fan_intensive": "intensive_ventilation_selectable"}.get(self.entity_description.key)
+        if flag:
+            self.coordinator.ensure_selectable(flag)
         await self.coordinator.async_write_register(self.entity_description.write_register, 1)
 
     async def async_turn_off(self, **kwargs: Any) -> None:

@@ -67,6 +67,7 @@ class ProxonFanStageSelect(ProxonCentralEntity, SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         value = next(k for k, v in FAN_STAGE_OPTIONS.items() if v == option)
+        self.coordinator.ensure_selectable("fan_off_selectable" if value == 0 else f"fan_stage_{value}_selectable")
         await self.coordinator.async_write_register(REG_FAN_STAGE_WRITE, value)
 
 
@@ -96,4 +97,5 @@ class ProxonOperatingModeSelect(ProxonCentralEntity, SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         value = next(k for k, v in OPERATING_MODE_WRITE_OPTIONS.items() if v == option)
+        self.coordinator.ensure_selectable("mode_change_possible")
         await self.coordinator.async_write_register(REG_OPERATING_MODE_WRITE, value)

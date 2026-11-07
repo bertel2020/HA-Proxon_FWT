@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.storage import Store
@@ -364,6 +364,14 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
             return  # recorded by async_write_register ("Last write error")
         self.fan_stage_restored_at = dt_util.utcnow()
         self.async_update_listeners()
+
+    def ensure_selectable(self, flag: str) -> None:
+        """Refuse a write the unit itself reports as not possible (capability flags, register 315).
+
+        Only an explicit "not possible" blocks; unknown flags (block not read) let the write through.
+        """
+        if self.data.capabilities.get(flag) is False:
+            raise ServiceValidationError(f"The unit currently does not allow this change ({flag})")
 
     async def async_set_ptc_enable(self, room_index: int, on: bool) -> None:
         """Set one room's PTC enable bit without losing the bits of other rooms written at the same time."""
