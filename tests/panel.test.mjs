@@ -156,5 +156,5 @@ test("fast +/- clicks add up and are written once", async () => {
   assert.equal(p._tgt("climate.a", p._hass.states["climate.a"].attributes), 23);
   await new Promise((r) => setTimeout(r, 700));
   assert.equal(calls.length, 1);
-  assert.deepEqual(calls[0], ["climate", "set_temperature", { entity_id: "climate.a", temperature: 23 }]);
+  assert.equal(JSON.stringify(calls[0]), JSON.stringify(["climate", "set_temperature", { entity_id: "climate.a", temperature: 23 }]));
 });
