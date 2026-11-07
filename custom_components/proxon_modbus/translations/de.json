@@ -70,12 +70,14 @@
           "scan_interval": "Abfrageintervall",
           "cooling_available": "Kühlen am Gerät verfügbar",
           "outdoor_side": "Außenseite des Wärmetauschers (Dashboard)",
-          "filter_interval": "Filterwechsel-Intervall (Betriebsstunden)",
+          "filter_interval": "Gerätefilter-Wechselintervall (Tage)",
+          "recirc_filter": "Umluftfilter vorhanden (optional)",
           "power_entity": "Eigener Leistungssensor (optional)",
           "outdoor_entity": "Eigener Außentemperatursensor (optional)"
         },
         "data_description": {
-          "filter_interval": "Grundlage für die Wartungsbalken im Seitenpanel. Üblich: 2000 Stunden.",
+          "filter_interval": "Grundlage für den Wartungsbalken im Seitenpanel. Die Anlage meldet den Wechsel nach 180 Tagen und schaltet 21 Tage nach der Meldung zwangsweise ab.",
+          "recirc_filter": "Nur aktivieren, wenn ein zusätzlicher Umluftfilter eingebaut ist. Sonst wird er in Karte und Seitenpanel ausgeblendet.",
           "outdoor_side": "Auf welcher Seite des Wärmetauschers liegen Frischluft und Fortluft? Bestimmt die Darstellung in Karte und Seitenpanel.",
           "power_entity": "Ersetzt die Leistungsaufnahme des Geräts in Karte und Seitenpanel, z. B. ein Shelly an der Anlage. Leer lassen, um den Gerätesensor zu verwenden.",
           "outdoor_entity": "Ersetzt die Außentemperatur des Geräts in Karte und Seitenpanel. Leer lassen, um den Gerätesensor zu verwenden."
@@ -118,6 +120,8 @@
       "hp_runtime_total": { "name": "Wärmepumpe Laufzeit gesamt" },
       "hp_starts_total": { "name": "Wärmepumpe Starts gesamt" },
       "filter_hours": { "name": "Betriebsstunden Gerätefilter" },
+      "filter_age_days": { "name": "Alter Gerätefilter" },
+      "filter_shutdown_days": { "name": "Tage bis Zwangsabschaltung" },
       "recirculation_filter_hours": { "name": "Betriebsstunden Umluftfilter" },
       "mid_temperature": { "name": "Mittentemperatur" },
       "operating_mode_state": {
@@ -161,6 +165,9 @@
       "fan_intensive": { "name": "Intensivlüftung" },
       "ptc_enable": { "name": "PTC-Element freigegeben" }
     },
+    "button": {
+      "filter_changed": { "name": "Filter getauscht" }
+    },
     "select": {
       "fan_stage": {
         "name": "Lüfterstufe",
@@ -185,6 +192,10 @@
     }
   },
   "issues": {
+    "filter_due": {
+      "title": "Gerätefilter wechseln",
+      "description": "Die Anlage „{name}“ verlangt einen neuen Gerätefilter. Wird er nicht getauscht, schaltet sie in {days} Tag(en) zwangsweise ab. Drücke nach dem Wechsel „Filter getauscht“ (oder warte, bis die Anlage die Meldung zurücknimmt)."
+    },
     "connection_lost": {
       "title": "Proxon FWT nicht erreichbar",
       "description": "Die Anlage „{name}“ liefert seit mehr als 10 Minuten keine Daten. Prüfe Stromversorgung, Netzwerk- oder USB-Verbindung und die Einstellungen des Modbus-Gateways. Die Meldung verschwindet von selbst, sobald die Verbindung wieder funktioniert."

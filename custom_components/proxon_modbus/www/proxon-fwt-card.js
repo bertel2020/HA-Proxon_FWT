@@ -59,7 +59,10 @@ const TEXT = {
     live_lost: "Keine Verbindung zur Anlage", since: "seit", hints: "Hinweise",
     go_maint: "Zur Wartung", go_hist: "Verlauf ansehen", go_diag: "Diagnose",
     ins_filter_now: "{0}: Wechsel fällig", ins_filter_now_d: "Die Anlage meldet einen fälligen Filterwechsel.",
-    ins_filter_soon: "{0} bald fällig", ins_filter_soon_d: "{0} von {1} Betriebsstunden erreicht.",
+    ins_filter_soon: "{0} bald fällig", ins_filter_soon_d: "Tag {0} von {1}. Neuen Filter bereithalten.",
+    ins_shutdown_d: "Die Anlage schaltet in {0} zwangsweise ab. Nach dem Wechsel „Filter getauscht“ drücken.", d_one: "1 Tag", d_n: "{0} Tagen",
+    f_age: "Tag {0} von {1} · noch {2} Tage", f_unknown: "Tauschdatum unbekannt – nach dem nächsten Wechsel „Filter getauscht“ drücken.",
+    f_shutdown: "Zwangsabschaltung in {0}", f_btn: "Filter getauscht", f_confirm: "Gerätefilter als getauscht markieren? Alter und Frist beginnen neu.",
     ins_cycle_t: "Wärmepumpe taktet häufig", ins_cycle_d: "{0} Starts seit 0 Uhr. Häufiges Takten belastet den Kompressor.",
     ins_eff_t: "Rückwärmzahl niedrig", ins_eff_d: "Nur {0} %. Wärmetauscher und Filter prüfen.",
     ins_co2_t: "CO₂ erhöht", ins_co2_d: "{0}: {1} ppm. Lüften oder Lüfterstufe erhöhen.",
@@ -67,7 +70,7 @@ const TEXT = {
     quick: "Schnellaktionen", boost: "Stoßlüften", boost_end: "Stoßlüften beenden", boost_d_i: "Intensivlüftung ein", boost_d_s: "Stufe 4, bis du es beendest",
     all_up: "Alle Räume +1 °C", all_down: "Alle Räume −1 °C",
     measure: "Messwerte", g_air: "Luft", g_circuit: "Kältekreis", g_drive: "Antriebe",
-    maint: "Wartung und Statistik", left: "noch {0} h", rt_today: "Laufzeit heute", rt_total: "Laufzeit gesamt", starts_today: "Starts heute", starts_total: "Starts gesamt",
+    maint: "Wartung und Statistik", rt_today: "Laufzeit heute", rt_total: "Laufzeit gesamt", starts_today: "Starts heute", starts_total: "Starts gesamt",
     hist_30: "30 Tage", m_temp: "Temperaturen", runtime: "Wärmepumpen-Laufzeit", energy: "Energie pro Tag", day: "Tag",
     energy_note: "Näherung aus der mittleren Tagesleistung (Ø W × 24 h).",
     no_stats: "Für diesen Zeitraum liegen keine Langzeitstatistiken vor.",
@@ -127,7 +130,10 @@ const TEXT = {
     live_lost: "No connection to the unit", since: "for", hints: "Hints",
     go_maint: "Maintenance", go_hist: "Show history", go_diag: "Diagnostics",
     ins_filter_now: "{0}: replace now", ins_filter_now_d: "The unit reports that a filter change is due.",
-    ins_filter_soon: "{0} due soon", ins_filter_soon_d: "{0} of {1} operating hours reached.",
+    ins_filter_soon: "{0} due soon", ins_filter_soon_d: "Day {0} of {1}. Keep a new filter ready.",
+    ins_shutdown_d: "The unit shuts down by force in {0}. Press \"Filter changed\" after the replacement.", d_one: "1 day", d_n: "{0} days",
+    f_age: "Day {0} of {1} · {2} days left", f_unknown: "Change date unknown – press \"Filter changed\" after the next replacement.",
+    f_shutdown: "Forced shutdown in {0}", f_btn: "Filter changed", f_confirm: "Mark the device filter as replaced? Age and deadline start over.",
     ins_cycle_t: "Heat pump cycling often", ins_cycle_d: "{0} starts since midnight. Frequent cycling stresses the compressor.",
     ins_eff_t: "Heat recovery low", ins_eff_d: "Only {0} %. Check the heat exchanger and filters.",
     ins_co2_t: "CO₂ elevated", ins_co2_d: "{0}: {1} ppm. Ventilate or raise the fan stage.",
@@ -135,7 +141,7 @@ const TEXT = {
     quick: "Quick actions", boost: "Boost ventilation", boost_end: "End boost ventilation", boost_d_i: "Intensive ventilation on", boost_d_s: "Stage 4 until you end it",
     all_up: "All rooms +1 °C", all_down: "All rooms −1 °C",
     measure: "Measurements", g_air: "Air", g_circuit: "Refrigerant circuit", g_drive: "Drives",
-    maint: "Maintenance and statistics", left: "{0} h left", rt_today: "Runtime today", rt_total: "Runtime total", starts_today: "Starts today", starts_total: "Starts total",
+    maint: "Maintenance and statistics", rt_today: "Runtime today", rt_total: "Runtime total", starts_today: "Starts today", starts_total: "Starts total",
     hist_30: "30 days", m_temp: "Temperatures", runtime: "Heat pump runtime", energy: "Energy per day", day: "day",
     energy_note: "Estimated from the mean daily power (avg W × 24 h).",
     no_stats: "No long-term statistics for this period.",
@@ -181,6 +187,8 @@ const BAD = ["unavailable", "unknown", undefined, null, ""];
 const CSS = `
 :host { display: block; color: var(--primary-text-color); }
 * { box-sizing: border-box; }
+.ov { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+@media (max-width: 1180px) { .ov { grid-template-columns: minmax(0, 1fr); } }
 .stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
 .top { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 12px; align-items: start; }
@@ -284,8 +292,8 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .tabbtn.a { color: var(--primary-color); border-bottom-color: var(--primary-color); font-weight: 500; }
 .badge { min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: #f2a516; color: #fff; font-size: 11px; display: inline-grid; place-items: center; }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.logo { width: 34px; height: 34px; border-radius: 10px; background: var(--primary-color); color: var(--text-primary-color, #fff); display: grid; place-items: center; flex: none; }
-.logo ha-icon { --mdc-icon-size: 20px; }
+.logo { width: 38px; height: 38px; border-radius: 11px; background: #fff; display: grid; place-items: center; flex: none; border: 1px solid var(--divider-color); overflow: hidden; }
+.logo img { width: 30px; height: 30px; display: block; }
 .bt h1 { font-size: 20px; font-weight: 500; margin: 0; line-height: 1.2; }
 .sub { font-size: 13px; color: var(--secondary-text-color); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .sub b { font-weight: 500; color: var(--primary-text-color); }
@@ -340,8 +348,9 @@ svg .sh { font-size: 13px; font-weight: 500; }
   background: color-mix(in srgb, var(--c) 16%, transparent); color: var(--c); --mdc-icon-size: 22px; }
 .rs small { display: block; color: var(--secondary-text-color); font-size: 12px; }
 .rs b { font-size: 19px; font-weight: 500; } .rs b span { font-size: 12px; font-weight: 400; color: var(--secondary-text-color); }
-.rgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
-.rc { border-radius: 18px; padding: 14px; background: var(--secondary-background-color); border: 1px solid transparent; min-width: 0; }
+.rgrid { display: grid; grid-template-columns: repeat(var(--rc, 3), minmax(0, 1fr)); gap: 12px; }
+.rc { border-radius: 18px; padding: 14px; background: var(--secondary-background-color); border: 1px solid transparent; min-width: 0; container-type: inline-size; }
+@container (min-width: 330px) { .rc .rb { flex-direction: row; justify-content: space-around; } }
 .rc:hover { border-color: color-mix(in srgb, var(--primary-color) 40%, transparent); }
 .rc.open { grid-column: span 2; }
 .rh { display: flex; align-items: center; gap: 8px; cursor: pointer; min-width: 0; }
@@ -386,7 +395,7 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .lrow .t2 { margin-left: auto; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 .lcard { border-radius: 14px; padding: 8px 14px; background: var(--secondary-background-color); margin-bottom: 8px; }
 @media (max-width: 640px) {
-  .rgrid { grid-template-columns: 1fr; } .rc.open { grid-column: auto; } .rmore { grid-template-columns: 1fr; }
+  .rgrid { grid-template-columns: minmax(0, 1fr); } .rc.open { grid-column: auto; } .rmore { grid-template-columns: 1fr; }
   .rc .rb { flex-direction: row; justify-content: space-around; } .ring { width: 118px; height: 118px; }
   .crow, .cscale { grid-template-columns: 96px minmax(0, 1fr) 66px; gap: 8px; } .crow .v small { display: none; }
   .rsum { grid-template-columns: 1fr 1fr; }
@@ -509,6 +518,21 @@ class ProxonFwtBase extends HTMLElement {
     return false;
   }
 
+  _days(n) {
+    return n === 1 ? this._t("d_one") : this._t("d_n", String(n));
+  }
+
+  // Device filter: age in days (since the last change), message and forced-shutdown countdown.
+  _filterInfo(c) {
+    const iv = Number(this._opt("filter_interval", 180)) || 180;
+    const age = this._num(c.filter_age_days), left = this._num(c.filter_shutdown_days);
+    return { iv, age, left, due: this._on(c.filter_device), known: age !== null };
+  }
+
+  _recirc() {
+    return !!this._opt("recirc_filter", false);
+  }
+
   _flip() {
     return this._opt("outdoor_side", "left") === "right";
   }
@@ -598,7 +622,7 @@ class ProxonFwtBase extends HTMLElement {
 
   _efficiency() {
     const c = this._d.central;
-    const f = this._num(c.temp_fresh_air), e = this._num(c.temp_extract_air), s = this._num(c.temp_supply_air);
+    const f = this._num(c.temp_fresh_air), e = this._num(c.temp_extract_air), s = this._num(c.temp_pre_condenser ?? c.temp_supply_air);
     if (f === null || e === null || s === null || Math.abs(e - f) < 3) return null;
     return Math.max(0, Math.min(100, Math.round(((s - f) / (e - f)) * 100)));
   }
@@ -634,8 +658,11 @@ class ProxonFwtBase extends HTMLElement {
     const c = d.central;
     const out = [];
     if (this._on(c.error_system)) out.push(["r", "mdi:alert-circle-outline", this._t("error")]);
-    if (!this._drawerMode && this._on(c.filter_device)) out.push(["w", "mdi:air-filter", `${this._t("filter_device")}: ${this._t("change_due")}`]);
-    if (!this._drawerMode && this._on(c.filter_recirculation)) out.push(["w", "mdi:air-filter", `${this._t("filter_recirc")}: ${this._t("change_due")}`]);
+    if (!this._drawerMode && this._on(c.filter_device)) {
+      const f = this._filterInfo(c);
+      out.push([f.left !== null && f.left <= 7 ? "r" : "w", "mdi:air-filter", `${this._t("filter_device")}: ${this._t("change_due")}${f.left !== null ? ` · ${this._t("f_shutdown", this._days(f.left))}` : ""}`]);
+    }
+    if (!this._drawerMode && this._recirc() && this._on(c.filter_recirculation)) out.push(["w", "mdi:air-filter", `${this._t("filter_recirc")}: ${this._t("change_due")}`]);
     const det = this._ok(c.operating_mode_state) ? this._state(c.operating_mode_state).state : null;
     if (det === "emergency" || det === "frost_protection") out.push([det === "emergency" ? "r" : "w", "mdi:alert-outline", this._t(det)]);
     if (this._ok(c.last_write_error) && this._state(c.last_write_error).state !== "none") {
@@ -833,7 +860,7 @@ class ProxonFwtBase extends HTMLElement {
       ? `<div class="row">${this._icon("mdi:shuffle-variant")}${this._t("mode_change")}<b>${this._on(c.mode_change_possible) ? this._t("possible") : this._t("not_possible")}</b></div>` : "";
     const html = prob(c.error_system, this._t("error"), this._t("no_error"), this._t("has_error"), "mdi:check-circle-outline") +
       prob(c.filter_device, this._t("filter_device"), this._t("ok"), this._t("change_due"), "mdi:air-filter") +
-      prob(c.filter_recirculation, this._t("filter_recirc"), this._t("ok"), this._t("change_due"), "mdi:air-filter") + change;
+      (this._recirc() ? prob(c.filter_recirculation, this._t("filter_recirc"), this._t("ok"), this._t("change_due"), "mdi:air-filter") : "") + change;
     if (!html) return "";
     return `<ha-card>${this._header("mdi:shield-check-outline", this._t("status"))}${html.replace('class="row"', 'class="row first"')}</ha-card>`;
   }
@@ -973,8 +1000,8 @@ class ProxonFwtBase extends HTMLElement {
         [c.temp_fresh_air, this._t("fresh"), BLUE], [out, this._t("outside"), "#7e57c2"]]);
       case "power": return keep([[this._powerId(), this._t("power"), AMBER]]);
       case "comp": return keep([[c.compressor_speed, this._t("compressor"), "#3d8be0"]]);
-      case "eff": return c.temp_supply_air && c.temp_extract_air && c.temp_fresh_air
-        ? [[c.temp_supply_air, "s", CORAL], [c.temp_extract_air, "e", AMBER], [c.temp_fresh_air, "f", BLUE]] : [];
+      case "eff": return (c.temp_pre_condenser || c.temp_supply_air) && c.temp_extract_air && c.temp_fresh_air
+        ? [[c.temp_pre_condenser || c.temp_supply_air, "s", CORAL], [c.temp_extract_air, "e", AMBER], [c.temp_fresh_air, "f", BLUE]] : [];
       case "co2": return d.rooms.filter((r) => r.co2).map((r, i) => [r.co2, r.name, pal[i % pal.length]]);
       case "rf": return d.rooms.filter((r) => r.rf).map((r, i) => [r.rf, r.name, pal[i % pal.length]]);
     }
@@ -1255,14 +1282,18 @@ class ProxonFwtBase extends HTMLElement {
   }
 
   _insights(d) {
-    const c = d.central, out = [], iv = Number(this._opt("filter_interval", 2000)) || 2000;
-    const fl = (hid, flag, titleKey) => {
-      const h = this._num(hid), due = this._on(flag);
-      if (due) out.push({ lvl: "w", icon: "mdi:air-filter", title: this._t("ins_filter_now", this._t(titleKey)), text: this._t("ins_filter_now_d"), tab: "diag", go: "go_maint" });
-      else if (h !== null && h / iv >= 0.9) out.push({ lvl: "w", icon: "mdi:air-filter", title: this._t("ins_filter_soon", this._t(titleKey)), text: this._t("ins_filter_soon_d", this._fmt(h, 0), this._fmt(iv, 0)), tab: "diag", go: "go_maint" });
-    };
-    fl(c.filter_hours, c.filter_device, "filter_device");
-    fl(c.recirculation_filter_hours, c.filter_recirculation, "filter_recirc");
+    const c = d.central, out = [], f = this._filterInfo(c);
+    if (f.due) {
+      const near = f.left !== null && f.left <= 7;
+      out.push({ lvl: near ? "r" : "w", icon: "mdi:air-filter", title: this._t("ins_filter_now", this._t("filter_device")),
+        text: f.left !== null ? this._t("ins_shutdown_d", this._days(f.left)) : this._t("ins_filter_now_d"), tab: "diag", go: "go_maint" });
+    } else if (f.known && f.age >= f.iv - 14) {
+      out.push({ lvl: "w", icon: "mdi:air-filter", title: this._t("ins_filter_soon", this._t("filter_device")),
+        text: this._t("ins_filter_soon_d", String(Math.round(f.age)), String(f.iv)), tab: "diag", go: "go_maint" });
+    }
+    if (this._recirc() && this._on(c.filter_recirculation)) {
+      out.push({ lvl: "w", icon: "mdi:air-filter", title: this._t("ins_filter_now", this._t("filter_recirc")), text: this._t("ins_filter_now_d"), tab: "diag", go: "go_maint" });
+    }
     const starts = this._num(c.hp_starts_today);
     if (starts !== null && starts >= 8) out.push({ lvl: "i", icon: "mdi:repeat", title: this._t("ins_cycle_t"), text: this._t("ins_cycle_d", String(Math.round(starts))), tab: "history", go: "go_hist" });
     const eff = this._efficiency();
@@ -1324,15 +1355,23 @@ class ProxonFwtBase extends HTMLElement {
   }
 
   _sec_maint(d) {
-    const c = d.central, iv = Number(this._opt("filter_interval", 2000)) || 2000;
-    const fbar = (hid, flag, label) => {
-      const h = this._num(hid), due = this._on(flag);
-      if (h === null && !this._ok(flag)) return "";
-      const pct = h === null ? (due ? 100 : 0) : Math.min(100, Math.round((h / iv) * 100));
-      const col = due || pct >= 100 ? "#db4437" : pct >= 85 ? "#f2a516" : GREEN;
-      return `<div class="mrow"><div class="mh"><span>${this._icon("mdi:air-filter")}${label}</span><b style="color:${col}">${due ? this._t("change_due") : this._t("ok")}</b></div>
+    const c = d.central, f = this._filterInfo(c);
+    const fbar = () => {
+      if (!this._ok(c.filter_device) && !f.known) return "";
+      const pct = f.known ? Math.min(100, Math.round((f.age / f.iv) * 100)) : (f.due ? 100 : 0);
+      const near = f.due && f.left !== null && f.left <= 7;
+      const col = near || (!f.due && pct >= 100) ? "#db4437" : f.due || pct >= 90 ? "#f2a516" : GREEN;
+      const sub = f.due && f.left !== null ? `<b style="color:${near ? "#db4437" : "#c98400"}">${this._t("f_shutdown", this._days(f.left))}</b>`
+        : f.known ? this._t("f_age", String(Math.round(f.age)), String(f.iv), String(Math.max(0, Math.round(f.iv - f.age)))) : this._t("f_unknown");
+      const btn = c.filter_changed ? `<button class="vbtn" style="margin-top:8px" data-act="filterchg">${this._icon("mdi:check")}${this._t("f_btn")}</button>` : "";
+      return `<div class="mrow"><div class="mh"><span>${this._icon("mdi:air-filter")}${this._t("filter_device")}</span><b style="color:${col}">${f.due ? this._t("change_due") : this._t("ok")}</b></div>
         <div class="pbar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%;background:${col}"></i></div>
-        ${h === null ? "" : `<div class="lb">${this._fmt(h, 0)} / ${this._fmt(iv, 0)} h · ${this._t("left", this._fmt(Math.max(0, iv - h), 0))}</div>`}</div>`;
+        <div class="lb">${sub}</div>${btn}</div>`;
+    };
+    const rbar = () => {
+      if (!this._recirc() || !this._ok(c.filter_recirculation)) return "";
+      const due = this._on(c.filter_recirculation);
+      return `<div class="mrow"><div class="mh"><span>${this._icon("mdi:air-filter")}${this._t("filter_recirc")}</span><b style="color:${due ? "#c98400" : GREEN}">${due ? this._t("change_due") : this._t("ok")}</b></div></div>`;
     };
     const row = (icon, label, val) => val === null ? "" : `<div class="row">${this._icon(icon)}${label}<b>${val}</b></div>`;
     const hv = (id) => this._num(id) === null ? null : `${this._fmt(this._num(id), 1)} h`;
@@ -1342,7 +1381,7 @@ class ProxonFwtBase extends HTMLElement {
       ? `<div class="row">${this._icon("mdi:shuffle-variant")}${this._t("mode_change")}<b>${this._on(c.mode_change_possible) ? this._t("possible") : this._t("not_possible")}</b></div>` : "";
     const stats = row("mdi:heat-pump", this._t("rt_today"), hv(c.hp_runtime_today)) + row("mdi:counter", this._t("starts_today"), iv0(c.hp_starts_today)) +
       row("mdi:heat-pump-outline", this._t("rt_total"), hv(c.hp_runtime_total)) + row("mdi:counter", this._t("starts_total"), iv0(c.hp_starts_total));
-    const filters = fbar(c.filter_hours, c.filter_device, this._t("filter_device")) + fbar(c.recirculation_filter_hours, c.filter_recirculation, this._t("filter_recirc"));
+    const filters = fbar() + rbar();
     const html = filters + (err || chg ? `<div class="msep">${(err + chg).replace('class="row"', 'class="row first"')}</div>` : "") + (stats ? `<div class="msep">${stats.replace('class="row"', 'class="row first"')}</div>` : "");
     if (!html) return "";
     return `<ha-card>${this._header("mdi:wrench-outline", this._t("maint"))}${html}</ha-card>`;
@@ -1385,6 +1424,7 @@ class ProxonFwtBase extends HTMLElement {
         if (a.temperature == null) continue;
         call("climate", "set_temperature", { entity_id: r.climate, temperature: Math.min(a.max_temp ?? 30, Math.max(a.min_temp ?? 18, a.temperature + Number(v))) });
       } break;
+      case "filterchg": if (c.filter_changed && window.confirm(this._t("f_confirm"))) call("button", "press", { entity_id: c.filter_changed }); break;
       case "restoresw": call("switch", "toggle", { entity_id: c.fan_stage_restore }); break;
       case "intensive": call("switch", "toggle", { entity_id: c.fan_intensive }); break;
       case "coolsw": call("switch", "toggle", { entity_id: c.cooling_enable }); break;
@@ -1618,10 +1658,16 @@ class ProxonFwtPanel extends ProxonFwtBase {
 
   _roomList(rows) {
     return rows.map(([n, i]) => {
-      if (this._ropen.has(i.r.climate)) return `<div style="margin-bottom:8px" class="rgrid">${this._roomCard(n, i).replace('class="rc open"', 'class="rc open" style="grid-column:1/-1"')}</div>`;
+      if (this._ropen.has(i.r.climate)) return `<div style="margin-bottom:8px;--rc:1" class="rgrid">${this._roomCard(n, i).replace('class="rc open"', 'class="rc open" style="grid-column:1/-1"')}</div>`;
       return `<div class="lcard"><div class="rh lrow" role="button" tabindex="0" aria-expanded="false" data-act="rtoggle" data-v="${n}"><span class="ri">${this._icon(this._roomIcon(i.r.name))}</span><b>${i.r.name}</b>
         <span class="t2">${this._roomChips(i)}<b style="color:${i.col}">${i.cur == null ? "–" : this._fmt(i.cur) + "°"}</b><span class="lb">→ ${i.tgt == null ? "–" : this._fmt(i.tgt, 0) + "°"}</span></span></div></div>`;
     }).join("");
+  }
+
+  // Even rows: as many columns as fit, but never a short last row if fewer columns spread the cards better.
+  _roomCols(n) {
+    const w = (this.clientWidth || 900) - 32, max = Math.max(1, Math.min(6, Math.floor((w + 12) / 262)));
+    return Math.ceil(n / Math.ceil(n / max)) || 1;
   }
 
   _sec_rooms(d) {
@@ -1646,7 +1692,7 @@ class ProxonFwtPanel extends ProxonFwtBase {
     const chips = [["all", ""], ["heat", "mdi:fire"], ["dev", "mdi:swap-vertical"], ["co2", "mdi:molecule-co2"]]
       .map(([k, ic]) => `<button class="fchip ${k === filter ? "a" : ""}" data-act="rfilter" data-v="${k}" aria-pressed="${k === filter}">${ic ? this._icon(ic) : ""}${this._t(`rf_${k}`)}</button>`).join("");
     const body = !rows.length ? `<div class="note" style="text-align:center;padding:18px">${this._t("rs_none")}</div>`
-      : view === "cards" ? `<div class="rgrid">${rows.map(([n, i]) => this._roomCard(n, i)).join("")}</div>`
+      : view === "cards" ? `<div class="rgrid" style="--rc:${this._roomCols(rows.length)}">${rows.map(([n, i]) => this._roomCard(n, i)).join("")}</div>`
       : view === "cmp" ? this._roomCmp(rows) : this._roomList(rows);
     return `<ha-card><div class="rtop"><div class="h" style="margin:0">${this._icon("mdi:home-outline")}${this._t("rooms")}</div><span class="grow"></span><div class="rseg" role="group">${seg}</div></div>
       ${summary}<div class="rfil">${chips}<span class="grow"></span>
@@ -1663,7 +1709,7 @@ class ProxonFwtPanel extends ProxonFwtBase {
       .map(([k, i]) => `<button class="tabbtn ${k === tab ? "a" : ""}" role="tab" aria-selected="${k === tab}" data-act="tab" data-v="${k}">${this._icon(i)}${this._t(`tab_${k}`)}${k === "diag" && warn ? `<span class="badge">${warn}</span>` : ""}</button>`).join("");
     const head = `<div class="bar-top">
       <button class="round menu" data-act="menu" aria-label="Menu">${this._icon("mdi:menu")}</button>
-      <div class="brand"><span class="logo">${this._icon("mdi:heat-pump")}</span><div class="bt"><h1>Proxon FWT</h1><div class="sub">${this._subline(d)}</div></div></div><div class="grow"></div>
+      <div class="brand"><span class="logo"><img src="/proxon_modbus/icon.png" alt="" width="30" height="30"></span><div class="bt"><h1>Proxon FWT</h1><div class="sub">${this._subline(d)}</div></div></div><div class="grow"></div>
       <button class="vbtn ${this._flip() ? "a" : ""}" data-act="flip" aria-label="${this._t("flip")}">${this._icon("mdi:swap-horizontal")}${this._t("flip")}</button></div>
       <nav class="tabs" role="tablist">${tabs}</nav>`;
     let body;
@@ -1671,13 +1717,13 @@ class ProxonFwtPanel extends ProxonFwtBase {
       body = `<ha-card><div class="empty">${this._t("none")}</div></ha-card>`;
     } else if (tab === "overview") {
       body = `<div class="stack">${this._sec_alerts(d)}${this._sec_insights(d)}${this._sec_mode(d)}
-        <div class="top"><div class="col">${this._sec_schema(d)}${this._sec_fan(d)}</div><div class="col">${this._sec_kpi(d)}${this._sec_quick(d)}</div></div></div>`;
+        <div class="ov"><div class="col">${this._sec_schema(d)}</div><div class="col">${this._sec_kpi(d)}${this._sec_fan(d)}${this._sec_quick(d)}</div></div></div>`;
     } else if (tab === "rooms") {
       body = `<div class="stack">${this._sec_rooms(d)}</div>`;
     } else if (tab === "history") {
       body = `<div class="stack">${this._sec_history(d)}${this._sec_runtime(d)}${this._sec_energy(d)}</div>`;
     } else {
-      body = `<div class="stack"><div class="grid">${this._sec_heatpump(d)}${this._sec_maint(d)}</div>${this._sec_measure(d)}</div>`;
+      body = `<div class="top"><div class="col">${this._sec_heatpump(d)}${this._sec_measure(d)}</div><div class="col">${this._sec_maint(d)}</div></div>`;
     }
     this.shadowRoot.innerHTML = `<style>${CSS}</style><div class="panel">${head}${body}</div>`;
   }

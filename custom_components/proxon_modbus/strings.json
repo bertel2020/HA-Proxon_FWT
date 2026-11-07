@@ -70,12 +70,14 @@
           "scan_interval": "Polling interval",
           "cooling_available": "Cooling available on this unit",
           "outdoor_side": "Outdoor side of the heat exchanger (dashboard)",
-          "filter_interval": "Filter change interval (operating hours)",
+          "filter_interval": "Device filter change interval (days)",
+          "recirc_filter": "Recirculation filter installed (optional)",
           "power_entity": "Own power sensor (optional)",
           "outdoor_entity": "Own outdoor temperature sensor (optional)"
         },
         "data_description": {
-          "filter_interval": "Used for the maintenance progress bars in the side panel. Typical: 2000 hours.",
+          "filter_interval": "Basis of the maintenance bar in the side panel. The unit asks for a change after 180 days and shuts down by force 21 days after that message.",
+          "recirc_filter": "Only enable if you have an extra recirculation filter. Otherwise it is hidden in the card and side panel.",
           "outdoor_side": "Which side of the heat exchanger are fresh and exhaust air on? Controls the layout in the card and side panel.",
           "power_entity": "Replaces the unit's power consumption in the card and side panel, e.g. a Shelly on the unit. Leave empty to use the unit's sensor.",
           "outdoor_entity": "Replaces the unit's outdoor temperature in the card and side panel. Leave empty to use the unit's sensor."
@@ -118,6 +120,8 @@
       "hp_runtime_total": { "name": "Heat pump runtime total" },
       "hp_starts_total": { "name": "Heat pump starts total" },
       "filter_hours": { "name": "Device filter operating hours" },
+      "filter_age_days": { "name": "Device filter age" },
+      "filter_shutdown_days": { "name": "Days until forced shutdown" },
       "recirculation_filter_hours": { "name": "Recirculation filter operating hours" },
       "mid_temperature": { "name": "Mid-room temperature" },
       "operating_mode_state": {
@@ -161,6 +165,9 @@
       "fan_intensive": { "name": "Intensive ventilation" },
       "ptc_enable": { "name": "PTC element enabled" }
     },
+    "button": {
+      "filter_changed": { "name": "Filter changed" }
+    },
     "select": {
       "fan_stage": {
         "name": "Fan stage",
@@ -185,6 +192,10 @@
     }
   },
   "issues": {
+    "filter_due": {
+      "title": "Change the device filter",
+      "description": "The unit \"{name}\" asks for a new device filter. It shuts down by force in {days} day(s) if the filter is not replaced. After the change, press the \"Filter changed\" button (or wait until the unit clears the message)."
+    },
     "connection_lost": {
       "title": "Proxon FWT unreachable",
       "description": "The unit \"{name}\" has not delivered data for more than 10 minutes. Check power, the network or USB connection and the Modbus gateway settings. This notice disappears by itself once the connection works again."

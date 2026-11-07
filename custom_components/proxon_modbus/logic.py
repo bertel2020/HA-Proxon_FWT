@@ -4,11 +4,14 @@ Kept free of Home Assistant imports so it can be unit tested with plain pytest.
 """
 from __future__ import annotations
 
+import math
+import time
 from datetime import date, datetime
 from typing import Any
 
 ECO_MODES = frozenset({1, 2})
 VALID_STAGES = frozenset({0, 1, 2, 3, 4})
+FILTER_GRACE_DAYS = 21  # days between the unit's "change filter" message and the forced shutdown
 
 
 class FanStageTracker:
@@ -58,6 +61,9 @@ class RunStats:
         self.hp_starts_today = 0
         self.filter_seconds = 0.0
         self.recirc_seconds = 0.0
+        self.filter_changed: float | None = None  # epoch seconds of the last device filter change
+        self.filter_due_since: float | None = None  # epoch seconds the unit first reported "change filter"
+        self._ack = False  # change confirmed by hand while the unit still reports "change due"
         self._prev_running: bool | None = None
         self._prev_filter: bool | None = None
         self._prev_recirc: bool | None = None
@@ -71,8 +77,10 @@ class RunStats:
         unit_on: bool | None,
         filter_due: bool | None,
         recirc_due: bool | None,
+        ts: float | None = None,
     ) -> None:
         """Account for one poll. `elapsed` is the (capped) time since the last poll."""
+        ts = time.time() if ts is None else ts
         iso = today.isoformat()
         if self.day != iso:
             self.day = iso
@@ -89,18 +97,45 @@ class RunStats:
         if unit_on:
             self.filter_seconds += elapsed
             self.recirc_seconds += elapsed
-        # A filter flag falling from "change due" to "ok" means the filter was replaced.
+        # "Change due" message of the device filter: remember when it appeared (the
+        # forced shutdown follows FILTER_GRACE_DAYS later); falling back to "ok" means replaced.
         if filter_due is not None:
-            if self._prev_filter and not filter_due:
-                self.filter_seconds = 0.0
+            if filter_due:
+                if self.filter_due_since is None and not self._ack:
+                    self.filter_due_since = ts
+            else:
+                if self._prev_filter or self.filter_due_since is not None:
+                    self.mark_filter_changed(ts)
+                self._ack = False
             self._prev_filter = filter_due
         if recirc_due is not None:
             if self._prev_recirc and not recirc_due:
                 self.recirc_seconds = 0.0
             self._prev_recirc = recirc_due
 
+    def mark_filter_changed(self, ts: float | None = None, *, manual: bool = False) -> None:
+        self.filter_seconds = 0.0
+        self.filter_changed = time.time() if ts is None else ts
+        self.filter_due_since = None
+        if manual and self._prev_filter:
+            self._ack = True  # the unit still shows the message: don't restart the countdown
+
+    def filter_age_days(self, ts: float | None = None) -> float | None:
+        if self.filter_changed is None:
+            return None
+        return max(0.0, ((time.time() if ts is None else ts) - self.filter_changed) / 86400)
+
+    def filter_shutdown_days(self, ts: float | None = None) -> int | None:
+        """Whole days left until the forced shutdown, None while no message is active."""
+        if self.filter_due_since is None:
+            return None
+        left = FILTER_GRACE_DAYS - ((time.time() if ts is None else ts) - self.filter_due_since) / 86400
+        return max(0, math.ceil(left))
+
     def as_dict(self) -> dict[str, Any]:
         return {
+            "filter_changed": self.filter_changed,
+            "filter_due_since": self.filter_due_since,
             "hp_seconds": self.hp_seconds,
             "hp_starts": self.hp_starts,
             "day": self.day,
@@ -120,3 +155,5 @@ class RunStats:
         self.hp_starts_today = int(data.get("hp_starts_today", 0))
         self.filter_seconds = float(data.get("filter_seconds", 0))
         self.recirc_seconds = float(data.get("recirc_seconds", 0))
+        self.filter_changed = data.get("filter_changed")
+        self.filter_due_since = data.get("filter_due_since")

@@ -168,7 +168,11 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
         return data
 
     def _set_issue(
-        self, key: str, active: bool, severity: ir.IssueSeverity = ir.IssueSeverity.WARNING
+        self,
+        key: str,
+        active: bool,
+        severity: ir.IssueSeverity = ir.IssueSeverity.WARNING,
+        **placeholders: str,
     ) -> None:
         assert self.config_entry is not None
         issue_id = f"{key}_{self.config_entry.entry_id}"
@@ -180,7 +184,7 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
                 is_fixable=False,
                 severity=severity,
                 translation_key=key,
-                translation_placeholders={"name": self.config_entry.title},
+                translation_placeholders={"name": self.config_entry.title, **placeholders},
             )
         else:
             ir.async_delete_issue(self.hass, DOMAIN, issue_id)
@@ -229,7 +233,21 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
             filter_due=data.messages.get("filter_device"),
             recirc_due=data.messages.get("filter_recirculation"),
         )
+        days = self.stats.filter_shutdown_days()
+        self._set_issue(
+            "filter_due",
+            days is not None,
+            ir.IssueSeverity.ERROR if days is not None and days <= 7 else ir.IssueSeverity.WARNING,
+            days=str(days),
+        )
         self._store.async_delay_save(self.stats.as_dict, 120)
+
+    def async_mark_filter_changed(self) -> None:
+        """The user replaced the device filter ("Filter changed" button)."""
+        self.stats.mark_filter_changed(manual=True)
+        self._set_issue("filter_due", False)
+        self._store.async_delay_save(self.stats.as_dict, 5)
+        self.async_update_listeners()
 
     async def async_load_stats(self) -> None:
         self.stats.load(await self._store.async_load())

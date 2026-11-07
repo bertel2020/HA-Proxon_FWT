@@ -56,8 +56,10 @@ CONF_COOLING_AVAILABLE = "cooling_available"
 CONF_OUTDOOR_SIDE = "outdoor_side"  # "left" | "right": side of the heat exchanger the outdoor air is on
 CONF_POWER_ENTITY = "power_entity"  # optional own power sensor instead of the unit's register 113
 CONF_OUTDOOR_ENTITY = "outdoor_entity"  # optional own outdoor temperature sensor
-CONF_FILTER_INTERVAL = "filter_interval"  # operating hours between filter changes (maintenance bars)
-DEFAULT_FILTER_INTERVAL = 2000
+CONF_FILTER_INTERVAL = "filter_interval"  # days between device filter changes (maintenance bar)
+DEFAULT_FILTER_INTERVAL = 180
+CONF_RECIRC_FILTER = "recirc_filter"  # an optional recirculation filter is installed
+DEFAULT_RECIRC_FILTER = False
 
 # --- Defaults ----------------------------------------------------------------
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -25,6 +26,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import ProxonConfigEntry
 from .const import (
+    CONF_RECIRC_FILTER,
+    DEFAULT_RECIRC_FILTER,
     CONF_CO2_NAMES,
     CONF_CO2_ROOMS,
     CONF_NUM_CO2_SENSORS,
@@ -224,7 +227,9 @@ async def async_setup_entry(
     )
     entities.append(ProxonLastWriteErrorSensor(coordinator, entry.entry_id, device_name))
     entities.extend(
-        ProxonStatSensor(coordinator, entry.entry_id, device_name, d) for d in STAT_SENSORS
+        ProxonStatSensor(coordinator, entry.entry_id, device_name, d)
+        for d in STAT_SENSORS
+        if d.key != "recirculation_filter_hours" or entry.options.get(CONF_RECIRC_FILTER, DEFAULT_RECIRC_FILTER)
     )
 
     room_names = entry.options.get(CONF_ROOM_NAMES, [])
@@ -289,7 +294,8 @@ async def async_setup_entry(
 
 @dataclass(frozen=True, kw_only=True)
 class ProxonStatDescription(SensorEntityDescription):
-    value_fn: Callable[[RunStats], float | int]
+    value_fn: Callable[[RunStats], float | int | None]
+    attr_fn: Callable[[RunStats], dict[str, object]] | None = None
 
 
 _HOURS = dict(
@@ -297,6 +303,17 @@ _HOURS = dict(
     native_unit_of_measurement=UnitOfTime.HOURS,
     suggested_display_precision=1,
 )
+
+_DAYS = dict(
+    device_class=SensorDeviceClass.DURATION,
+    native_unit_of_measurement=UnitOfTime.DAYS,
+    suggested_display_precision=0,
+)
+
+
+def _iso(ts: float | None) -> str | None:
+    return datetime.fromtimestamp(ts, timezone.utc).isoformat() if ts else None
+
 
 # Statistics kept by the integration itself (persisted, see logic.RunStats).
 STAT_SENSORS: tuple[ProxonStatDescription, ...] = (
@@ -326,6 +343,18 @@ STAT_SENSORS: tuple[ProxonStatDescription, ...] = (
         **_HOURS, value_fn=lambda s: round(s.filter_seconds / 3600, 1),
     ),
     ProxonStatDescription(
+        key="filter_age_days", translation_key="filter_age_days", icon="mdi:calendar-clock",
+        state_class=SensorStateClass.MEASUREMENT, entity_category=EntityCategory.DIAGNOSTIC,
+        **_DAYS,
+        value_fn=lambda s: None if s.filter_age_days() is None else round(s.filter_age_days()),
+        attr_fn=lambda s: {"changed": _iso(s.filter_changed), "due_since": _iso(s.filter_due_since)},
+    ),
+    ProxonStatDescription(
+        key="filter_shutdown_days", translation_key="filter_shutdown_days", icon="mdi:timer-alert-outline",
+        state_class=SensorStateClass.MEASUREMENT, entity_category=EntityCategory.DIAGNOSTIC,
+        **_DAYS, value_fn=lambda s: s.filter_shutdown_days(),
+    ),
+    ProxonStatDescription(
         key="recirculation_filter_hours", translation_key="recirculation_filter_hours", icon="mdi:air-filter",
         state_class=SensorStateClass.MEASUREMENT, entity_category=EntityCategory.DIAGNOSTIC,
         **_HOURS, value_fn=lambda s: round(s.recirc_seconds / 3600, 1),
@@ -345,6 +374,11 @@ class ProxonStatSensor(ProxonCentralEntity, SensorEntity):
     @property
     def native_value(self):
         return self.entity_description.value_fn(self.coordinator.stats)
+
+    @property
+    def extra_state_attributes(self):
+        fn = self.entity_description.attr_fn
+        return fn(self.coordinator.stats) if fn else None
 
 
 class ProxonSensor(ProxonCentralEntity, SensorEntity):

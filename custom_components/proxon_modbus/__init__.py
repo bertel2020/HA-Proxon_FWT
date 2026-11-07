@@ -20,6 +20,8 @@ from .const import (
     CONF_NUM_ROOMS,
     CONF_NUM_RF_SENSORS,
     CONF_FILTER_INTERVAL,
+    CONF_RECIRC_FILTER,
+    DEFAULT_RECIRC_FILTER,
     CONF_OUTDOOR_ENTITY,
     DEFAULT_FILTER_INTERVAL,
     CONF_OUTDOOR_SIDE,
@@ -43,6 +45,7 @@ PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
     Platform.SWITCH,
     Platform.SELECT,
+    Platform.BUTTON,
 ]
 
 ProxonConfigEntry = ConfigEntry[ProxonModbusCoordinator]
@@ -77,6 +80,7 @@ def _ws_settings(
                 "power_entity": entry.options.get(CONF_POWER_ENTITY),
                 "outdoor_entity": entry.options.get(CONF_OUTDOOR_ENTITY),
                 "filter_interval": entry.options.get(CONF_FILTER_INTERVAL, DEFAULT_FILTER_INTERVAL),
+                "recirc_filter": entry.options.get(CONF_RECIRC_FILTER, DEFAULT_RECIRC_FILTER),
             }
         )
     connection.send_result(msg["id"], result)
@@ -98,7 +102,12 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 CARD_URL,
                 str(Path(__file__).parent / "www" / CARD_FILENAME),
                 cache_headers=False,
-            )
+            ),
+            StaticPathConfig(
+                f"/{DOMAIN}/icon.png",
+                str(Path(__file__).parent / "brand" / "icon@2x.png"),
+                cache_headers=True,
+            ),
         ]
     )
     module_url = f"{CARD_URL}?v={integration.version}"
