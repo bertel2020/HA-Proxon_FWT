@@ -199,7 +199,7 @@ const CSS = `
 .top { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 12px; align-items: start; }
 .col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0; }
 .stack > *, .grid > *, .top > * { min-width: 0; }
-ha-card { padding: 14px 16px; display: block; }
+ha-card { padding: 14px 16px; display: block; border: 1px solid var(--ha-card-border-color, var(--divider-color, #e0e0e0)); box-sizing: border-box; }
 .h { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; margin-bottom: 12px; flex-wrap: wrap; }
 .h > ha-icon { --mdc-icon-size: 18px; color: var(--secondary-text-color); }
 .h .r { margin-left: auto; font-size: 12px; font-weight: 400; color: var(--secondary-text-color); display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; align-items: center; min-width: 0; }
@@ -356,7 +356,7 @@ svg .sh { font-size: 13px; font-weight: 500; }
 @keyframes sk { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
 .dtiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; align-items: stretch; }
-.dt { display: flex; gap: 14px; align-items: flex-start; background: var(--ha-card-background, var(--card-background-color)); border-radius: var(--ha-card-border-radius, 18px); padding: 16px; box-shadow: var(--ha-card-box-shadow, none); }
+.dt { display: flex; gap: 14px; align-items: flex-start; background: var(--ha-card-background, var(--card-background-color)); border-radius: var(--ha-card-border-radius, 18px); padding: 16px; box-shadow: var(--ha-card-box-shadow, none); border: 1px solid var(--ha-card-border-color, var(--divider-color, #e0e0e0)); }
 .dt .ic { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; flex: none; color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); }
 .dt .b { min-width: 0; flex: 1; } .dt small { display: block; color: var(--secondary-text-color); font-size: 12.5px; }
 .dt .b > b { display: block; font-size: 20px; font-weight: 500; margin: 1px 0 2px; } .dt .s { font-size: 13px; color: var(--secondary-text-color); }
