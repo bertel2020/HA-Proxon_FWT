@@ -295,7 +295,10 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
 
     def _async_finish_reconfigure(self, unique_id: str) -> ConfigFlowResult:
         return self.async_update_reload_and_abort(
-            self._get_reconfigure_entry(), unique_id=unique_id, data=self._data
+            self._get_reconfigure_entry(),
+            unique_id=unique_id,
+            data=self._data,
+            title=self._data[CONF_NAME],
         )
 
     async def async_step_tcp(
