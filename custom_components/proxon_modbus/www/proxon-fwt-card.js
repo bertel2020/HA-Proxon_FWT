@@ -232,8 +232,12 @@ ha-card { padding: 14px 16px; display: block; }
 .k .v { font-size: 18px; font-weight: 500; }
 .k .v.small { font-size: 15px; }
 .kgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.kpiw { container-type: inline-size; }
 .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
-.kpi .k { display: flex; gap: 10px; align-items: center; }
+@container (max-width: 640px) { .kpi { grid-template-columns: repeat(2, 1fr); } }
+.kpi .k { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.kpi .k > div:last-child { min-width: 0; }
+.kpi .lb { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kpi .ic { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none;
   background: color-mix(in srgb, var(--kc) 18%, transparent); color: var(--kc); }
 .kpi .ic ha-icon { --mdc-icon-size: 20px; }
@@ -689,7 +693,7 @@ class ProxonFwtBase extends HTMLElement {
         (this._state(this._powerId()) || { attributes: {} }).attributes.unit_of_measurement || "W") +
       tile("mdi:weather-partly-cloudy", BLUE, this._t("outside"), this._temp(this._outdoorId()));
     if (!html) return "";
-    return `<ha-card>${this._header("mdi:gauge", this._t("kpi"))}<div class="kpi">${html}</div></ha-card>`;
+    return `<ha-card>${this._header("mdi:gauge", this._t("kpi"))}<div class="kpiw"><div class="kpi">${html}</div></div></ha-card>`;
   }
 
   _sec_air(d) {
