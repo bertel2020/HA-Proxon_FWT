@@ -91,3 +91,18 @@ test("_write runs calls in order, locks while busy and reports failures", async 
   assert.match(p.events[0].detail.message, /boom/);
   assert.ok(!p.attrs.has("busy"));
 });
+
+test("room details open in a dialog, one at a time, and close again", () => {
+  const p = make();
+  p._d = { central: {}, rooms: [{ climate: "climate.a" }, { climate: "climate.b" }] };
+  const click = (act, v) => p._click({ composedPath: () => [{ dataset: { act, v } }] });
+  click("rtoggle", "0");
+  assert.deepEqual([...p._ropen], ["climate.a"]);
+  click("rtoggle", "1");
+  assert.deepEqual([...p._ropen], ["climate.b"]);
+  click("rtoggle", "1");
+  assert.equal(p._ropen.size, 0);
+  click("rtoggle", "0");
+  click("rclose");
+  assert.equal(p._ropen.size, 0);
+});

@@ -188,12 +188,12 @@ const METRIC_META = {
 };
 const BLUE = "#378ADD", CORAL = "#D85A30", AMBER = "#f2a516", GREEN = "#3fa660";
 const SETTINGS_TTL = 60000;
-const UI_ACTS = new Set(["hcmp", "hrange", "metric", "ymetric", "dismiss", "undismiss", "kpi", "tab", "rview", "rfilter", "rtoggle", "view", "room", "menu"]);
+const UI_ACTS = new Set(["hcmp", "hrange", "metric", "ymetric", "dismiss", "undismiss", "kpi", "tab", "rview", "rfilter", "rtoggle", "rclose", "noop", "view", "room", "menu"]);
 const BAD = ["unavailable", "unknown", undefined, null, ""];
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
 
 const CSS = `
-  :host([busy]) [data-act]:not([data-act="tab"]):not([data-act="view"]):not([data-act="room"]) { opacity: .6; pointer-events: none; }
+  :host([busy]) [data-act]:not([data-act="tab"]):not([data-act="view"]):not([data-act="room"]):not([data-act="rclose"]):not([data-act="noop"]) { opacity: .6; pointer-events: none; }
 :host { display: block; color: var(--primary-text-color); --pbd: color-mix(in srgb, var(--primary-text-color) 24%, transparent); }
 * { box-sizing: border-box; }
 .ov { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 12px; align-items: start; }
@@ -417,14 +417,16 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .rc { border-radius: 18px; padding: 14px; background: var(--secondary-background-color); border: 1px solid var(--pbd); min-width: 0; container-type: inline-size; }
 @container (min-width: 330px) { .rc .rb { flex-direction: row; justify-content: space-around; } }
 .rc:hover { border-color: color-mix(in srgb, var(--primary-color) 40%, transparent); }
-.rc.open { grid-column: span 2; }
 .rh { display: flex; align-items: center; gap: 8px; cursor: pointer; min-width: 0; }
 .rh .ri { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; flex: none; background: var(--card-background-color); color: var(--secondary-text-color); --mdc-icon-size: 18px; }
 .rh b { font-weight: 500; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rh .st { margin-left: auto; font-size: 12px; display: inline-flex; gap: 3px; align-items: center; padding: 2px 9px; border-radius: 99px; flex: none;
   background: color-mix(in srgb, var(--c) 16%, transparent); color: var(--c); --mdc-icon-size: 14px; }
 .rh .chev { color: var(--secondary-text-color); --mdc-icon-size: 18px; transition: transform .2s; flex: none; }
-.rc.open .chev { transform: rotate(180deg); }
+.rdlg { position: fixed; inset: 0; z-index: 10; background: rgba(0, 0, 0, .45); display: grid; place-items: center; padding: 16px; }
+.rsheet { width: min(640px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--card-background-color); border-radius: 22px; padding: 16px; box-shadow: 0 12px 40px rgba(0, 0, 0, .35); cursor: default; }
+.rsheet .rh { cursor: default; }
+.rsheet .x { margin-left: 8px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--pbd); background: var(--secondary-background-color); color: var(--primary-text-color); display: grid; place-items: center; cursor: pointer; padding: 0; flex: none; }
 .rb { display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 6px; }
 .rc.open .rb { flex-direction: row; justify-content: space-around; flex-wrap: wrap; }
 .ring { position: relative; width: 140px; height: 140px; flex: none; }
@@ -460,7 +462,8 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .lrow .t2 { margin-left: auto; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 .lcard { border-radius: 14px; padding: 8px 14px; background: var(--secondary-background-color); margin-bottom: 8px; }
 @media (max-width: 640px) {
-  .rgrid { grid-template-columns: minmax(0, 1fr); } .rc.open { grid-column: auto; } .rmore { grid-template-columns: 1fr; }
+  .rgrid { grid-template-columns: minmax(0, 1fr); } .rmore { grid-template-columns: 1fr; }
+  .rdlg { place-items: end center; padding: 0; } .rsheet { width: 100%; max-height: 90vh; border-radius: 22px 22px 0 0; }
   .rc .rb { flex-direction: row; justify-content: space-around; } .ring { width: 118px; height: 118px; }
   .crow, .cscale { grid-template-columns: 96px minmax(0, 1fr) 66px; gap: 8px; } .crow .v small { display: none; }
   .rsum { grid-template-columns: 1fr 1fr; }
@@ -517,10 +520,15 @@ class ProxonFwtBase extends HTMLElement {
       if (b !== this._wb) { this._wb = b; this._update(); }
     });
     this._ro.observe(this);
+    if (typeof document !== "undefined") {
+      this._esc = (ev) => { if (ev.key === "Escape" && this._ropen && this._ropen.size) this._click({ composedPath: () => [{ dataset: { act: "rclose" } }] }); };
+      document.addEventListener("keydown", this._esc);
+    }
   }
 
   disconnectedCallback() {
     if (this._ro) { this._ro.disconnect(); this._ro = null; }
+    if (this._esc && typeof document !== "undefined") { document.removeEventListener("keydown", this._esc); this._esc = null; }
   }
 
   // ---- entity discovery -------------------------------------------------
@@ -1931,9 +1939,13 @@ class ProxonFwtBase extends HTMLElement {
       case "rtoggle": {
         const id = this._d.rooms[Number(v)].climate;
         this._ropen = this._ropen || new Set();
-        if (this._ropen.has(id)) this._ropen.delete(id); else this._ropen.add(id);
+        const was = this._ropen.has(id);
+        this._ropen.clear();
+        if (!was) this._ropen.add(id);
         this._sig = ""; this._update(); break;
       }
+      case "rclose": if (this._ropen) this._ropen.clear(); this._sig = ""; this._update(); break;
+      case "noop": break;
       case "rstep": {
         const [n, dir] = v.split("|"), id = this._d.rooms[Number(n)].climate, a = (this._state(id) || {}).attributes || {};
         const step = a.target_temp_step || 1;
@@ -2155,30 +2167,40 @@ class ProxonFwtPanel extends ProxonFwtBase {
   }
 
   _roomCard(n, i) {
-    const o = this._ropen.has(i.r.climate);
-    return `<div class="rc ${o ? "open" : ""}"><div class="rh" role="button" tabindex="0" aria-expanded="${o}" data-act="rtoggle" data-v="${n}">
+    return `<div class="rc"><div class="rh" role="button" tabindex="0" aria-haspopup="dialog" data-act="rtoggle" data-v="${n}">
       <span class="ri">${this._icon(this._roomIcon(i.r.name))}</span><b>${i.r.name}</b>
-      <span class="st" style="--c:${i.st[2]}">${this._icon(i.st[1])}${i.st[0]}</span><span class="chev">${this._icon("mdi:chevron-down")}</span></div>
+      <span class="st" style="--c:${i.st[2]}">${this._icon(i.st[1])}${i.st[0]}</span><span class="chev">${this._icon("mdi:arrow-expand-all")}</span></div>
+      <div class="rb">${this._ring(i)}<div class="rctl">${this._stepper(n, i)}<div class="mp">${this._roomChips(i)}</div></div></div></div>`;
+  }
+
+  // Details open in a dialog (bottom sheet on phones), so the room grid never reflows.
+  _roomDialog(all) {
+    const id = this._ropen && [...this._ropen][0];
+    const hit = id && all.find(([, i]) => i.r.climate === id);
+    if (!hit) return "";
+    const [n, i] = hit;
+    return `<div class="rdlg" data-act="rclose"><div class="rsheet rc open" role="dialog" aria-modal="true" aria-label="${i.r.name}" data-act="noop">
+      <div class="rh"><span class="ri">${this._icon(this._roomIcon(i.r.name))}</span><b>${i.r.name}</b>
+      <span class="st" style="--c:${i.st[2]}">${this._icon(i.st[1])}${i.st[0]}</span><button class="x" data-act="rclose" aria-label="${this._t("close")}">${this._icon("mdi:close")}</button></div>
       <div class="rb">${this._ring(i)}<div class="rctl">${this._stepper(n, i)}<div class="mp">${this._roomChips(i)}</div></div></div>
-      ${o ? `<div class="rmore"><div><h4>${this._t("r_t24")}</h4>${this._roomSpark(i)}</div>${this._roomFacts(n, i)}</div>` : ""}</div>`;
+      <div class="rmore"><div><h4>${this._t("r_t24")}</h4>${this._roomSpark(i)}</div>${this._roomFacts(n, i)}</div></div></div>`;
   }
 
   _roomCmp(rows) {
     return `<div class="rcmp"><div class="cscale"><div></div><div><span>−2 °C</span><span>${this._t("target")}</span><span>+2 °C</span></div><div></div></div>
       ${rows.map(([n, i], k) => {
-        const pct = Math.max(-1, Math.min(1, i.dev / 2)) * 50, o = this._ropen.has(i.r.climate);
-        return `<div class="crow ${k === 0 ? "first" : ""}" style="--c:${i.col}" role="button" tabindex="0" aria-expanded="${o}" data-act="rtoggle" data-v="${n}">
+        const pct = Math.max(-1, Math.min(1, i.dev / 2)) * 50;
+        return `<div class="crow ${k === 0 ? "first" : ""}" style="--c:${i.col}" role="button" tabindex="0" aria-haspopup="dialog" data-act="rtoggle" data-v="${n}">
           <div class="n">${this._icon(this._roomIcon(i.r.name))}${i.r.name}</div>
           <div class="axis"><div class="zero"></div><div class="bar" style="left:${pct < 0 ? 50 + pct : 50}%;width:${Math.abs(pct)}%"></div><div class="dot" style="left:${50 + pct}%"></div></div>
           <div class="v"><b>${i.cur == null ? "–" : this._fmt(i.cur) + "°"}</b><small>→ ${i.tgt == null ? "–" : this._fmt(i.tgt, 0) + "°"}</small></div></div>
-          ${o ? `<div class="cx">${this._stepper(n, i)}<div class="rspark">${this._roomSpark(i)}</div><div class="mp">${this._roomChips(i)}</div></div>` : ""}`;
+`;
       }).join("")}</div>`;
   }
 
   _roomList(rows) {
     return rows.map(([n, i]) => {
-      if (this._ropen.has(i.r.climate)) return `<div style="margin-bottom:8px;--rc:1" class="rgrid">${this._roomCard(n, i).replace('class="rc open"', 'class="rc open" style="grid-column:1/-1"')}</div>`;
-      return `<div class="lcard"><div class="rh lrow" role="button" tabindex="0" aria-expanded="false" data-act="rtoggle" data-v="${n}"><span class="ri">${this._icon(this._roomIcon(i.r.name))}</span><b>${i.r.name}</b>
+      return `<div class="lcard"><div class="rh lrow" role="button" tabindex="0" aria-haspopup="dialog" data-act="rtoggle" data-v="${n}"><span class="ri">${this._icon(this._roomIcon(i.r.name))}</span><b>${i.r.name}</b>
         <span class="t2">${this._roomChips(i)}<b style="color:${i.col}">${i.cur == null ? "–" : this._fmt(i.cur) + "°"}</b><span class="lb">→ ${i.tgt == null ? "–" : this._fmt(i.tgt, 0) + "°"}</span></span></div></div>`;
     }).join("");
   }
@@ -2217,7 +2239,7 @@ class ProxonFwtPanel extends ProxonFwtBase {
       ${summary}<div class="rfil">${chips}<span class="grow"></span>
       <button class="fchip" data-act="allroom" data-v="-1">${this._icon("mdi:thermometer-minus")}${this._t("all_down")}</button>
       <button class="fchip" data-act="allroom" data-v="1">${this._icon("mdi:thermometer-plus")}${this._t("all_up")}</button></div>
-      ${body}<div class="rlegend"><span style="color:${BLUE}">${this._icon("mdi:arrow-down")}${this._t("legend_cool")}</span><span style="color:${GREEN}">${this._icon("mdi:check")}${this._t("legend_ok")}</span><span style="color:${CORAL}">${this._icon("mdi:arrow-up")}${this._t("legend_warm")}</span><span>${this._icon("mdi:gesture-tap")}${this._t("r_tapnote")}</span></div></ha-card>`;
+      ${body}<div class="rlegend"><span style="color:${BLUE}">${this._icon("mdi:arrow-down")}${this._t("legend_cool")}</span><span style="color:${GREEN}">${this._icon("mdi:check")}${this._t("legend_ok")}</span><span style="color:${CORAL}">${this._icon("mdi:arrow-up")}${this._t("legend_warm")}</span><span>${this._icon("mdi:gesture-tap")}${this._t("r_tapnote")}</span></div>${this._roomDialog(all)}</ha-card>`;
   }
 
   _render() {
