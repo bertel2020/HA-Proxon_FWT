@@ -126,3 +126,13 @@ def test_filter_dates_survive_save_and_load(logic):
     t.load(s.as_dict())
     assert (t.filter_changed, t.filter_due_since) == (1234.0, 99.0)
     assert t.filter_age_days(1234.0) == 0
+
+
+def test_manual_filter_confirmation_survives_restart(logic):
+    s = logic.RunStats()
+    s.update(D1, 30, running=False, unit_on=True, filter_due=True, recirc_due=False, ts=0)
+    s.mark_filter_changed(2 * DAY, manual=True)
+    t = logic.RunStats()  # Home Assistant restarts while the unit still shows the message
+    t.load(s.as_dict())
+    t.update(D1, 30, running=False, unit_on=True, filter_due=True, recirc_due=False, ts=3 * DAY)
+    assert t.filter_shutdown_days(3 * DAY) is None

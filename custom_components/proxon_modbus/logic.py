@@ -210,6 +210,7 @@ class RunStats:
             "hp_starts_today": self.hp_starts_today,
             "filter_seconds": self.filter_seconds,
             "recirc_seconds": self.recirc_seconds,
+            "filter_ack": self._ack,
         }
 
     def load(self, data: dict[str, Any] | None) -> None:
@@ -224,3 +225,4 @@ class RunStats:
         self.recirc_seconds = float(data.get("recirc_seconds", 0))
         self.filter_changed = data.get("filter_changed")
         self.filter_due_since = data.get("filter_due_since")
+        self._ack = bool(data.get("filter_ack", False))
