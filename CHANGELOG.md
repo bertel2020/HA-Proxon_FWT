@@ -9,6 +9,7 @@ Versionen folgen dem Feld `version` in
 ## 2.1.0 – 2026-11-02
 
 **Neu**
+- **Hinweise im Panel ausblenden:** Warnungen und Infos lassen sich mit ✕ für 24 Stunden ausblenden (Fehler nicht), gespeichert im Home-Assistant-Benutzerprofil; die Zähler an den Reitern ignorieren ausgeblendete Hinweise. Die Kennzahlen stehen jetzt unter dem Anlagenschema.
 - **Dashboard-Karte angeglichen:** Neuer Bereich `operation` (Betriebsart und Lüfterstufen in einer Karte, jetzt Standard; `mode` und `fan` bleiben einzeln möglich), neuer Bereich `quick` (Stoßlüften mit 15/30/60 Minuten), Räume zeigen „heizt“ nur bei aktivem PTC-Element, und „Status und Wartung“ zeigt das Filteralter, die Frist bis zur Zwangsabschaltung und den Knopf „Filter getauscht“.
 - **Jahresübersicht im Verlauf-Tab:** Laufzeit, Energie und Starts der Wärmepumpe pro Monat über 12 Monate, mit mittlerer Außentemperatur und Markierung des letzten Filterwechsels. Die Werte stammen aus der Langzeitstatistik und füllen sich mit der Zeit; die Energie ist eine Näherung aus der mittleren Leistung.
 - **Stoßlüften mit Timer:** Neuer Schalter „Stoßlüften" in der Integration. Er schaltet auf die höchste Stufe (Intensivlüftung bzw. Stufe 4) und stellt nach der gewählten Dauer (Standard 30 Minuten, im Panel 15/30/60 Minuten, per Dienst `proxon_modbus.start_boost` frei wählbar) automatisch den vorherigen Zustand wieder her, auch ohne offenes Panel und nach einem Neustart von Home Assistant. Das Panel nutzt ihn und zeigt die Endzeit an.

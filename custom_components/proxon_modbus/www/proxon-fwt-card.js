@@ -58,7 +58,7 @@ const TEXT = {
     none: "Keine Anlage gefunden. Ist die Integration „Proxon FWT (Modbus)“ eingerichtet?",
     no_rooms: "Keine Räume konfiguriert.", no_history: "Keine Verlaufsdaten.",
     tab_overview: "Übersicht", tab_rooms: "Räume", tab_history: "Verlauf", tab_diag: "Diagnose",
-    live_lost: "Keine Verbindung zur Anlage", since: "seit", hints: "Hinweise",
+    live_lost: "Keine Verbindung zur Anlage", since: "seit", hints: "Hinweise", dismiss: "Ausblenden", hidden_n: "{0} ausgeblendet", show_again: "anzeigen", hidden_note: "Ausgeblendete Hinweise kommen nach 24 Stunden oder bei neuer Ursache wieder.",
     go_maint: "Zur Wartung", go_hist: "Verlauf ansehen", go_diag: "Diagnose",
     ins_filter_now: "{0}: Wechsel fällig", ins_filter_now_d: "Die Anlage meldet einen fälligen Filterwechsel. Beide Filtereinschübe tauschen (Frischluft und Abluft).",
     ins_filter_soon: "{0} bald fällig", ins_filter_soon_d: "Tag {0} von {1}. Zwei neue Filter bereithalten (Frischluft und Abluft).",
@@ -131,7 +131,7 @@ const TEXT = {
     none: "No unit found. Is the \"Proxon FWT (Modbus)\" integration set up?",
     no_rooms: "No rooms configured.", no_history: "No history data.",
     tab_overview: "Overview", tab_rooms: "Rooms", tab_history: "History", tab_diag: "Diagnostics",
-    live_lost: "No connection to the unit", since: "for", hints: "Hints",
+    live_lost: "No connection to the unit", since: "for", hints: "Hints", dismiss: "Dismiss", hidden_n: "{0} hidden", show_again: "show", hidden_note: "Hidden hints return after 24 hours or when the cause is new.",
     go_maint: "Maintenance", go_hist: "Show history", go_diag: "Diagnostics",
     ins_filter_now: "{0}: replace now", ins_filter_now_d: "The unit reports that a filter change is due. Replace both filter drawers (fresh air and extract).",
     ins_filter_soon: "{0} due soon", ins_filter_soon_d: "Day {0} of {1}. Keep two new filters ready (fresh air and extract).",
@@ -328,6 +328,9 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .ins .it { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .ins .it b { font-size: 14px; font-weight: 500; }
 .ins .it small { font-size: 12px; color: var(--secondary-text-color); }
+.ins .x { font: inherit; border: 0; background: transparent; color: var(--secondary-text-color); cursor: pointer; border-radius: 50%; width: 30px; height: 30px; display: grid; place-items: center; flex: none; }
+.ins .x:hover { background: color-mix(in srgb, var(--primary-text-color) 10%, transparent); } .ins .x ha-icon { --mdc-icon-size: 18px; }
+.hid { font-size: 12px; color: var(--secondary-text-color); margin: 8px 2px 0; } .hid .lnk { font: inherit; border: 0; background: none; color: var(--primary-color); cursor: pointer; padding: 0; }
 .ins.r { --ic: #db4437; } .ins.w { --ic: #f2a516; } .ins.i { --ic: #3d8be0; } .ins.o { --ic: #3fa660; }
 .qgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
 .qa { font: inherit; text-align: left; display: flex; gap: 10px; align-items: center; padding: 10px 12px; border: 1.5px solid transparent; border-radius: 12px; cursor: pointer;
@@ -531,7 +534,7 @@ class ProxonFwtBase extends HTMLElement {
     const sig = ids.filter(Boolean).map((i) => {
       const s = h.states[i];
       return s ? `${s.state}|${s.attributes.temperature}|${s.attributes.current_temperature}|${s.attributes.preferred_stage}|${s.attributes.last_restore}` : "-";
-    }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._hver || 0}|${this._histRange || "24h"}|${this._metric || ""}|${this._ymetric || ""}|${this._tab || ""}|${this._rview || ""}|${this._rfilter || ""}|${[...(this._ropen || [])].join("+")}|${this._boost ? 1 : 0}|${this._wb || 0}|${this._settingsStamp || 0}`;
+    }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._hver || 0}|${this._histRange || "24h"}|${this._metric || ""}|${this._ymetric || ""}|${this._tab || ""}|${this._rview || ""}|${this._rfilter || ""}|${[...(this._ropen || [])].join("+")}|${this._boost ? 1 : 0}|${this._wb || 0}|${this._settingsStamp || 0}|${Object.keys(this._dismissed || {}).join("+")}`;
     if (sig === this._sig) return;
     this._sig = sig;
     this._render();
@@ -579,6 +582,7 @@ class ProxonFwtBase extends HTMLElement {
       this._settings = {};
     }
     this._settingsStamp = Date.now();
+    if (!this._dismissedLoaded) this._loadDismissed();
     this._update();
   }
 
@@ -1453,25 +1457,25 @@ class ProxonFwtBase extends HTMLElement {
     return `<span class="dot" style="--dc:${cool ? BLUE : heat ? GREEN : "#8a8f98"}"></span><b>${label}</b>${modeKey ? `<span class="sep">·</span>${this._t(modeKey)}` : ""}${since ? `<span class="sep hm">·</span><span class="hm">${this._t("since")} ${since}</span>` : ""}`;
   }
 
-  _insights(d) {
+  _insightsAll(d) {
     const c = d.central, out = [], f = this._filterInfo(c);
     if (f.due) {
       const near = f.left !== null && f.left <= 7;
-      out.push({ lvl: near ? "r" : "w", icon: "mdi:air-filter", title: this._t("ins_filter_now", this._t("filter_device")),
+      out.push({ key: "filter_now", lvl: near ? "r" : "w", icon: "mdi:air-filter", title: this._t("ins_filter_now", this._t("filter_device")),
         text: f.left !== null ? this._t("ins_shutdown_d", this._days(f.left)) : this._t("ins_filter_now_d"), tab: "diag", go: "go_maint" });
     } else if (f.known && f.age >= f.iv - 14) {
-      out.push({ lvl: "w", icon: "mdi:air-filter", title: this._t("ins_filter_soon", this._t("filter_device")),
+      out.push({ key: "filter_soon", lvl: "w", icon: "mdi:air-filter", title: this._t("ins_filter_soon", this._t("filter_device")),
         text: this._t("ins_filter_soon_d", String(Math.round(f.age)), String(f.iv)), tab: "diag", go: "go_maint" });
     }
     if (this._recirc() && this._on(c.filter_recirculation)) {
-      out.push({ lvl: "w", icon: "mdi:air-filter", title: this._t("ins_filter_now", this._t("filter_recirc")), text: this._t("ins_filter_now_d"), tab: "diag", go: "go_maint" });
+      out.push({ key: "filter_recirc", lvl: "w", icon: "mdi:air-filter", title: this._t("ins_filter_now", this._t("filter_recirc")), text: this._t("ins_filter_now_d"), tab: "diag", go: "go_maint" });
     }
     const starts = this._num(c.hp_starts_today);
-    if (starts !== null && starts >= 8) out.push({ lvl: "i", icon: "mdi:repeat", title: this._t("ins_cycle_t"), text: this._t("ins_cycle_d", String(Math.round(starts))), tab: "history", go: "go_hist" });
+    if (starts !== null && starts >= 8) out.push({ key: "cycle", lvl: "i", icon: "mdi:repeat", title: this._t("ins_cycle_t"), text: this._t("ins_cycle_d", String(Math.round(starts))), tab: "history", go: "go_hist" });
     const eff = this._efficiency();
-    if (eff !== null && eff < 75 && !this._on(c.bypass_active)) out.push({ lvl: "w", icon: "mdi:percent-circle-outline", title: this._t("ins_eff_t"), text: this._t("ins_eff_d", String(eff)), tab: "diag", go: "go_diag" });
+    if (eff !== null && eff < 75 && !this._on(c.bypass_active)) out.push({ key: "eff", lvl: "w", icon: "mdi:percent-circle-outline", title: this._t("ins_eff_t"), text: this._t("ins_eff_d", String(eff)), tab: "diag", go: "go_diag" });
     const hi = d.rooms.map((r) => ({ r, v: this._num(r.co2) })).filter((x) => x.v !== null && x.v > 1000).sort((a, b) => b.v - a.v)[0];
-    if (hi) out.push({ lvl: "w", icon: "mdi:molecule-co2", title: this._t("ins_co2_t"), text: this._t("ins_co2_d", hi.r.name, String(Math.round(hi.v))), tab: "rooms", go: "tab_rooms" });
+    if (hi) out.push({ key: `co2|${hi.r.name}`, lvl: "w", icon: "mdi:molecule-co2", title: this._t("ins_co2_t"), text: this._t("ins_co2_d", hi.r.name, String(Math.round(hi.v))), tab: "rooms", go: "tab_rooms" });
     if (!out.length) {
       const bits = [eff !== null ? this._t("ins_ok_eff", String(eff)) : "", this._t("ins_ok_d")].filter(Boolean).join(" ");
       out.push({ lvl: "o", icon: "mdi:check-circle-outline", title: this._t("ins_ok_t"), text: bits });
@@ -1480,11 +1484,68 @@ class ProxonFwtBase extends HTMLElement {
     return out.sort((a, b) => rank[a.lvl] - rank[b.lvl]);
   }
 
+  // ---- dismissing hints --------------------------------------------------
+  // Warnings and infos can be hidden for 24 hours (kept in the Home Assistant user profile, so it
+  // follows the user across devices); errors cannot. A hint whose cause went away is forgotten.
+
+  _dismissable(i) {
+    return !!i.key && i.lvl !== "r" && i.lvl !== "o";
+  }
+
+  _isHidden(i) {
+    const ts = this._dismissed && this._dismissed[i.key];
+    return this._dismissable(i) && ts !== undefined && Date.now() - ts < 864e5;
+  }
+
+  _insights(d) {
+    const all = this._insightsAll(d);
+    this._pruneDismissed(all);
+    const vis = all.filter((i) => !this._isHidden(i));
+    if (all.length !== vis.length && !vis.length) return [];
+    return vis;
+  }
+
+  _hiddenInsights(d) {
+    return this._insightsAll(d).filter((i) => this._isHidden(i));
+  }
+
+  _pruneDismissed(all) {
+    if (!this._dismissed || !this._dismissedLoaded) return;
+    const live = new Set(all.map((i) => i.key).filter(Boolean));
+    let changed = false;
+    for (const k of Object.keys(this._dismissed)) {
+      if (!live.has(k) || Date.now() - this._dismissed[k] >= 864e5) { delete this._dismissed[k]; changed = true; }
+    }
+    if (changed) this._saveDismissed();
+  }
+
+  async _loadDismissed() {
+    this._dismissed = {};
+    try {
+      const r = await this._hass.callWS({ type: "frontend/get_user_data", key: "proxon_fwt_dismissed" });
+      if (r && r.value && typeof r.value === "object") this._dismissed = { ...r.value };
+    } catch (e) {
+      try { this._dismissed = JSON.parse(localStorage.getItem("proxon_fwt_dismissed") || "{}"); } catch (e2) { /* ignore */ }
+    }
+    this._dismissedLoaded = true;
+    this._sig = "";
+    this._update();
+  }
+
+  _saveDismissed() {
+    try { localStorage.setItem("proxon_fwt_dismissed", JSON.stringify(this._dismissed)); } catch (e) { /* ignore */ }
+    this._hass.callWS({ type: "frontend/set_user_data", key: "proxon_fwt_dismissed", value: this._dismissed }).catch(() => {});
+  }
+
   _sec_insights(d) {
-    const ins = this._insights(d).slice(0, 3);
+    const ins = this._insights(d).slice(0, 3), hidden = this._hiddenInsights(d);
     const items = ins.map((i) => `<div class="ins ${i.lvl}">${this._icon(i.icon)}<div class="it"><b>${i.title}</b><small>${i.text}</small></div>
-      ${i.tab ? `<button class="vbtn" data-act="tab" data-v="${i.tab}">${this._t(i.go)}</button>` : ""}</div>`).join("");
-    return `<ha-card>${this._header("mdi:lightbulb-on-outline", this._t("hints"))}<div class="alerts">${items}</div></ha-card>`;
+      ${i.tab ? `<button class="vbtn" data-act="tab" data-v="${i.tab}">${this._t(i.go)}</button>` : ""}
+      ${this._dismissable(i) ? `<button class="x" data-act="dismiss" data-v="${i.key}" title="${this._t("dismiss")}" aria-label="${this._t("dismiss")}">${this._icon("mdi:close")}</button>` : ""}</div>`).join("");
+    const more = hidden.length
+      ? `<div class="hid"><span title="${this._t("hidden_note")}">${this._t("hidden_n", String(hidden.length))}</span> · <button class="lnk" data-act="undismiss">${this._t("show_again")}</button></div>` : "";
+    if (!items && !more) return "";
+    return `<ha-card>${this._header("mdi:lightbulb-on-outline", this._t("hints"))}<div class="alerts">${items}</div>${more}</ha-card>`;
   }
 
   _boostMode(c) {
@@ -1591,6 +1652,8 @@ class ProxonFwtBase extends HTMLElement {
       case "hrange": this._histRange = v; this._update(); break;
       case "metric": this._metric = v; this._update(); break;
       case "ymetric": this._ymetric = v; this._sig = ""; this._update(); break;
+      case "dismiss": this._dismissed = this._dismissed || {}; this._dismissed[v] = Date.now(); this._saveDismissed(); this._sig = ""; this._update(); break;
+      case "undismiss": this._dismissed = {}; this._saveDismissed(); this._sig = ""; this._update(); break;
       case "tab": this._tab = v; this._sig = ""; this._update(); if (this.scrollIntoView) this.scrollIntoView({ block: "start" }); break;
       case "rview": this._rview = v; this._sig = ""; this._update(); break;
       case "rfilter": this._rfilter = v; this._sig = ""; this._update(); break;
@@ -1893,7 +1956,7 @@ class ProxonFwtPanel extends ProxonFwtBase {
       body = `<ha-card><div class="empty">${this._t("none")}</div></ha-card>`;
     } else if (tab === "overview") {
       body = `<div class="stack">${this._sec_alerts(d)}${this._sec_insights(d)}
-        <div class="ov"><div class="col">${this._sec_schema(d)}</div><div class="col">${this._sec_operation(d)}${this._sec_kpi(d)}${this._sec_quick(d)}</div></div></div>`;
+        <div class="ov"><div class="col">${this._sec_schema(d)}${this._sec_kpi(d)}</div><div class="col">${this._sec_operation(d)}${this._sec_quick(d)}</div></div></div>`;
     } else if (tab === "rooms") {
       body = `<div class="stack">${this._sec_rooms(d)}</div>`;
     } else if (tab === "history") {

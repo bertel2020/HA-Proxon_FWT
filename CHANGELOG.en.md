@@ -8,6 +8,7 @@ All notable changes to this project are documented here. Versions follow the
 ## 2.1.0 – 2026-11-02
 
 **New**
+- **Dismiss hints in the panel:** warnings and infos can be hidden for 24 hours with ✕ (errors cannot), stored in the Home Assistant user profile; the tab counters ignore hidden hints. The key figures now sit under the system diagram.
 - **Dashboard card aligned with the panel:** new section `operation` (operating mode and fan stages in one card, now the default; `mode` and `fan` remain available separately), new section `quick` (boost ventilation with 15/30/60 minutes), rooms show "heating" only while the PTC element is active, and "Status and maintenance" shows the filter age, the deadline to the forced shutdown and the "Filter changed" button.
 - **Yearly overview in the history tab:** heat pump runtime, energy and starts per month over 12 months, with the mean outdoor temperature and a marker for the last filter change. The values come from the long-term statistics and fill up over time; energy is estimated from the mean power.
 - **Boost ventilation with timer:** New "Boost ventilation" switch in the integration. It switches to the highest level (intensive ventilation or stage 4) and automatically restores the previous state after the chosen duration (default 30 minutes, 15/30/60 minutes in the panel, freely selectable with the service `proxon_modbus.start_boost`), even without the panel open and across Home Assistant restarts. The panel uses it and shows the end time.
