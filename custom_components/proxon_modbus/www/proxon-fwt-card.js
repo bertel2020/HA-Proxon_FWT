@@ -424,7 +424,7 @@ svg .sh { font-size: 13px; font-weight: 500; }
   background: color-mix(in srgb, var(--c) 16%, transparent); color: var(--c); --mdc-icon-size: 14px; }
 .rh .chev { color: var(--secondary-text-color); --mdc-icon-size: 18px; transition: transform .2s; flex: none; }
 .rdlg { position: fixed; inset: 0; z-index: 10; background: rgba(0, 0, 0, .45); display: grid; place-items: center; padding: 16px; }
-.rsheet { width: min(640px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--card-background-color); border-radius: 22px; padding: 16px; box-shadow: 0 12px 40px rgba(0, 0, 0, .35); cursor: default; }
+.rsheet { width: min(640px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overscroll-behavior: contain; overflow: auto; background: var(--card-background-color); border-radius: 22px; padding: 16px; box-shadow: 0 12px 40px rgba(0, 0, 0, .35); cursor: default; }
 .rsheet .rh { cursor: default; }
 .rsheet .x { margin-left: 8px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--pbd); background: var(--secondary-background-color); color: var(--primary-text-color); display: grid; place-items: center; cursor: pointer; padding: 0; flex: none; }
 .rb { display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 6px; }
@@ -463,7 +463,7 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .lcard { border-radius: 14px; padding: 8px 14px; background: var(--secondary-background-color); margin-bottom: 8px; }
 @media (max-width: 640px) {
   .rgrid { grid-template-columns: minmax(0, 1fr); } .rmore { grid-template-columns: 1fr; }
-  .rdlg { place-items: end center; padding: 0; } .rsheet { width: 100%; max-height: 90vh; border-radius: 22px 22px 0 0; }
+  .rdlg { place-items: end center; padding: 0; } .rsheet { width: 100%; max-height: 90vh; max-height: 90dvh; border-radius: 22px 22px 0 0; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
   .rc .rb { flex-direction: row; justify-content: space-around; } .ring { width: 118px; height: 118px; }
   .crow, .cscale { grid-template-columns: 96px minmax(0, 1fr) 66px; gap: 8px; } .crow .v small { display: none; }
   .rsum { grid-template-columns: 1fr 1fr; }
@@ -499,6 +499,7 @@ class ProxonFwtBase extends HTMLElement {
     this._room = 0;
     this._sig = "";
     this._config = {};
+    this.shadowRoot.addEventListener("pointerdown", (ev) => { this._pd = ev.composedPath()[0]; });
     this.shadowRoot.addEventListener("click", (ev) => this._click(ev));
     this.shadowRoot.addEventListener("keydown", (ev) => {
       if ((ev.key === "Enter" || ev.key === " ") && ev.target && ev.target.getAttribute && ev.target.getAttribute("role") === "button") {
@@ -588,9 +589,34 @@ class ProxonFwtBase extends HTMLElement {
     }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._hver || 0}|${this._histRange || "24h"}|${this._hcmp ? 1 : 0}|${this._metric || ""}|${this._ymetric || ""}|${this._tab || ""}|${this._rview || ""}|${this._rfilter || ""}|${[...(this._ropen || [])].join("+")}|${this._boost ? 1 : 0}|${this._wb || 0}|${this._settingsStamp || 0}|${Object.keys(this._dismissed || {}).join("+")}`;
     if (sig === this._sig) return;
     this._sig = sig;
+    const keep = this._keepUi();
     this._render();
     this._bindChart();
     this._bindTips();
+    this._restoreUi(keep);
+  }
+
+  // A full re-render replaces the DOM: keep the dialog's scroll position and the focused control,
+  // and move focus into the dialog when it opens / back to the room card when it closes.
+  _keepUi() {
+    const root = this.shadowRoot, sheet = root.querySelector && root.querySelector(".rsheet"), a = root.activeElement;
+    return { top: sheet ? sheet.scrollTop : 0, act: a && a.dataset ? a.dataset.act : null, v: a && a.dataset ? a.dataset.v : null, inDlg: !!(a && a.closest && a.closest(".rsheet")) };
+  }
+
+  _restoreUi(k) {
+    const root = this.shadowRoot;
+    if (!root.querySelector) return;
+    const sheet = root.querySelector(".rsheet"), want = this._focusReq;
+    this._focusReq = null;
+    if (sheet) sheet.scrollTop = k.top;
+    let el = null;
+    if (want === "open" && sheet) el = sheet.querySelector(".x");
+    else if (want && want.startsWith("close:")) el = root.querySelector(`.rh[data-act="rtoggle"][data-v="${want.slice(6)}"], .crow[data-v="${want.slice(6)}"]`);
+    else if (k.act && k.act !== "rclose" && k.act !== "noop") {
+      const sel = `[data-act="${k.act}"]${k.v != null ? `[data-v="${k.v}"]` : ""}`;
+      el = (k.inDlg && sheet ? sheet : root).querySelector(sel);
+    }
+    if (el && el.focus) el.focus({ preventScroll: true });
   }
 
   _wantsHistory() {
@@ -1942,10 +1968,14 @@ class ProxonFwtBase extends HTMLElement {
         this._ropen = this._ropen || new Set();
         const was = this._ropen.has(id);
         this._ropen.clear();
-        if (!was) this._ropen.add(id);
+        if (!was) { this._ropen.add(id); this._focusReq = "open"; this._lastRoom = v; } else this._focusReq = `close:${v}`;
         this._sig = ""; this._update(); break;
       }
-      case "rclose": if (this._ropen) this._ropen.clear(); this._sig = ""; this._update(); break;
+      case "rclose":
+        if (el.classList && el.classList.contains("rdlg") && this._pd !== el) break; // a drag that ended on the backdrop is not a close
+        if (this._ropen) this._ropen.clear();
+        if (this._lastRoom != null) this._focusReq = `close:${this._lastRoom}`;
+        this._sig = ""; this._update(); break;
       case "noop": break;
       case "rstep": {
         const [n, dir] = v.split("|"), id = this._d.rooms[Number(n)].climate, a = (this._state(id) || {}).attributes || {};
