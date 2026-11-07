@@ -45,7 +45,7 @@ const TEXT = {
     efficiency: "Rückwärmzahl", bypass_short: "bypass",
     pre_evaporator: "vor Verdampfer", post_preheat: "nach Vorwärme", pre_condenser: "vor Kondensator",
     pre_evap_s: "vor Verd.", pre_cond_s: "vor Kond.", post_preheat_s: "nach Vorwärme",
-    evap_s: "Verd.", cond_s: "Kond.", wrg_s: "WRG", open_s: "offen",
+    evap_s: "Verd.", cond_s: "Kond.", wrg_s: "WRG", open_s: "offen", off_s: "aus",
     error: "Systemfehler", no_error: "Kein Fehler", has_error: "Fehler",
     filter_device: "Gerätefilter", filter_recirc: "Umluftfilter",
     change_due: "Wechsel fällig", ok: "OK",
@@ -118,7 +118,7 @@ const TEXT = {
     efficiency: "Heat recovery", bypass_short: "bypass",
     pre_evaporator: "before evaporator", post_preheat: "after preheater", pre_condenser: "before condenser",
     pre_evap_s: "bef. evap.", pre_cond_s: "bef. cond.", post_preheat_s: "after preheat",
-    evap_s: "Evap.", cond_s: "Cond.", wrg_s: "HR", open_s: "open",
+    evap_s: "Evap.", cond_s: "Cond.", wrg_s: "HR", open_s: "open", off_s: "off",
     error: "System error", no_error: "No error", has_error: "Error",
     filter_device: "Unit filter", filter_recirc: "Recirculation filter",
     change_due: "Replace soon", ok: "OK",
@@ -856,10 +856,11 @@ class ProxonFwtBase extends HTMLElement {
     const preheat = c.temp_post_preheat && this._ok(c.temp_post_preheat)
       ? `<rect x="${X(150) - 8}" y="61" width="16" height="28" rx="5" fill="color-mix(in srgb, ${CORAL} 25%, var(--card-background-color))" stroke="${CORAL}" stroke-width="1.3"/>
          <path d="M${X(150) - 4} 66L${X(150) + 4} 71L${X(150) - 4} 76L${X(150) + 4} 81" fill="none" stroke="${CORAL}" stroke-width="1.2"/>` : "";
+    const WARMISH = `color-mix(in srgb, ${CORAL} 55%, ${BLUE})`;
     const freshN = [[92, 75], [303, 75], [340, 110], [377, 145], [588, 145]];
     const fresh = bypass ? [[92, 75], [250, 75], [250, 48], [430, 48], [430, 145], [588, 145]] : freshN;
     const exh = [[588, 75], [377, 75], [340, 110], [303, 145], [92, 145]];
-    const gF = bypass ? [[0, BLUE], [1, BLUE]] : cool ? [[0, CORAL], [0.4, CORAL], [0.6, BLUE], [1, BLUE]] : [[0, BLUE], [0.4, BLUE], [0.6, CORAL], [1, CORAL]];
+    const gF = bypass ? [[0, BLUE], [1, BLUE]] : cool ? [[0, CORAL], [0.4, CORAL], [0.6, BLUE], [1, BLUE]] : hp ? [[0, BLUE], [0.4, BLUE], [0.6, CORAL], [1, CORAL]] : [[0, BLUE], [0.4, BLUE], [0.6, WARMISH], [1, WARMISH]]; // heat pump off: only the exchanger warms the air
     const gE = bypass ? [[0, CORAL], [1, CORAL]] : cool ? [[0, BLUE], [0.4, BLUE], [0.6, CORAL], [1, CORAL]] : [[0, CORAL], [0.4, CORAL], [0.6, BLUE], [1, BLUE]];
     const spdA = run && rpmS ? Math.max(0.6, 2.2 - rpmS / 1100) : 1.2;
     const spdR = hp && rpm ? Math.max(0.5, 1.6 - rpm / 3500) : 1;
@@ -880,7 +881,7 @@ class ProxonFwtBase extends HTMLElement {
       <g><title>${this._t("tip_hx", eff === null ? "–" : eff + " %")}</title>
         <polygon points="${hx}" fill="var(--card-background-color)" stroke="var(--pbd)" stroke-width="1.5" stroke-linejoin="round"/><polygon points="${hx}" fill="url(#gX)" stroke-linejoin="round"/></g>
       ${air(freshN, "url(#gF)", run && !bypass, bypass)}${air(exh, "url(#gE)", run)}${bypass ? air(fresh, "url(#gF)", run) : ""}
-      ${loop}
+      <g opacity="${hp ? 1 : 0.35}">${loop}</g>
       <polygon points="${[[354, 305], [340, 296], [326, 305], [340, 314]].map(([x, y]) => `${X(x)},${y}`).join(" ")}" fill="var(--card-background-color)" stroke="${hp ? ring : IDLE}" stroke-width="1.5" stroke-linejoin="round"/>
       ${cool ? coil(190, CORAL, this._t("cond_s"), c.temp_condenser) + coil(490, BLUE, this._t("evap_s"), c.temp_evaporator)
         : coil(190, hp ? BLUE : MILD, this._t("evap_s"), c.temp_evaporator) + coil(490, hp ? CORAL : MILD, this._t("cond_s"), c.temp_condenser)}
@@ -894,7 +895,7 @@ class ProxonFwtBase extends HTMLElement {
         ${hp ? `<circle class="ripple" cx="${X(340)}" cy="245" r="31" fill="none" stroke="${ring}" stroke-width="2"/>` : ""}
         <circle cx="${X(340)}" cy="245" r="31" fill="var(--card-background-color)" stroke="var(--pbd)" stroke-width="3.5"/>
         <circle cx="${X(340)}" cy="245" r="31" fill="none" stroke="${ring}" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="${(circ * frac).toFixed(1)} ${circ.toFixed(1)}" transform="rotate(-90 ${X(340)} 245)"/>
-        <text class="sh" x="${X(340)}" y="243" text-anchor="middle">${rpm === null ? "–" : rpm.toLocaleString(this._hass.language)}</text><text class="st nh" x="${X(340)}" y="258" text-anchor="middle">rpm</text></g>
+        <text class="sh" x="${X(340)}" y="243" text-anchor="middle">${!hp ? this._t("off_s") : rpm === null ? "–" : rpm.toLocaleString(this._hass.language)}</text>${hp ? `<text class="st nh" x="${X(340)}" y="258" text-anchor="middle">rpm</text>` : ""}</g>
       <text class="st" x="${X(340)}" y="284" text-anchor="middle">${this._t("compressor")}${T(c.temp_compressor) ? " " + T(c.temp_compressor) : ""}</text>
       ${pill(48, 75, this._t("fresh"), c.temp_fresh_air)}${pill(48, 145, this._t("exhaust"), c.temp_exhaust_air)}
       ${pill(632, 75, this._t("extract"), c.temp_extract_air)}${pill(632, 145, this._t("supply"), c.temp_supply_air)}
