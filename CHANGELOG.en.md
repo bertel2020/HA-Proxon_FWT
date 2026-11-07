@@ -8,6 +8,7 @@ All notable changes to this project are documented here. Versions follow the
 ## 2.1.0 – 2026-11-02
 
 **New**
+- **Yearly overview in the history tab:** heat pump runtime, energy and starts per month over 12 months, with the mean outdoor temperature and a marker for the last filter change. The values come from the long-term statistics and fill up over time; energy is estimated from the mean power.
 - **Boost ventilation with timer:** New "Boost ventilation" switch in the integration. It switches to the highest level (intensive ventilation or stage 4) and automatically restores the previous state after the configured duration (default 15 minutes), even without the panel open and across Home Assistant restarts. The panel uses it and shows the end time.
 - **Dashboard card `custom:proxon-fwt-card`:** the integration ships its own card (operating mode, air paths as a cross-flow heat exchanger, ventilation, heat pump, refrigerant circuit, status, rooms). It is loaded automatically and finds the entities by itself; power consumption and outdoor temperature are optional and can be replaced by your own entities. See the README for details.
 - **Side panel "Proxon FWT":** its own sidebar entry with an animated system diagram (including all temperature probes), key figures with a calculated heat recovery rate, room heat map, notice banners and a 24-hour history. The card `custom:proxon-fwt-card` gained the optional sections `schema`, `kpi`, `alerts` and `history`; operating-mode, fan and room controls now have icons and colours.

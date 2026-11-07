@@ -74,6 +74,7 @@ const TEXT = {
     hist_30: "30 Tage", m_temp: "Temperaturen", runtime: "Wärmepumpen-Laufzeit", energy: "Energie pro Tag", day: "Tag",
     energy_note: "Näherung aus der mittleren Tagesleistung (Ø W × 24 h).",
     no_stats: "Für diesen Zeitraum liegen keine Langzeitstatistiken vor.",
+    year: "Jahresübersicht", year_sub: "12 Monate", y_runtime: "Laufzeit", y_energy: "Energie", y_starts: "Starts", y_note: "Die Monatswerte entstehen aus der Langzeitstatistik und füllen sich mit der Zeit. Energie ist eine Näherung aus der mittleren Leistung.", y_filter: "Filter getauscht", y_month: "Monat",
     legend_cool: "kühler als Soll", legend_ok: "im Soll", legend_warm: "wärmer als Soll", close: "Schließen",
     rv_cards: "Karten", rv_cmp: "Vergleich", rv_list: "Liste", rf_all: "Alle", rf_heat: "Heizt", rf_dev: "Abweichung", rf_co2: "CO₂ hoch",
     rs_avg: "Ø Raumtemperatur", rs_heat: "Heizen gerade", rs_co2: "CO₂ am höchsten", rs_rf: "Ø Feuchte", rs_none: "Keine Räume für diesen Filter.",
@@ -145,6 +146,7 @@ const TEXT = {
     hist_30: "30 days", m_temp: "Temperatures", runtime: "Heat pump runtime", energy: "Energy per day", day: "day",
     energy_note: "Estimated from the mean daily power (avg W × 24 h).",
     no_stats: "No long-term statistics for this period.",
+    year: "Yearly overview", year_sub: "12 months", y_runtime: "Runtime", y_energy: "Energy", y_starts: "Starts", y_note: "Monthly values come from the long-term statistics and fill up over time. Energy is estimated from the mean power.", y_filter: "Filter changed", y_month: "month",
     legend_cool: "cooler than target", legend_ok: "on target", legend_warm: "warmer than target", close: "Close",
     rv_cards: "Cards", rv_cmp: "Compare", rv_list: "List", rf_all: "All", rf_heat: "Heating", rf_dev: "Deviation", rf_co2: "High CO₂",
     rs_avg: "Avg. room temperature", rs_heat: "Heating now", rs_co2: "Highest CO₂", rs_rf: "Avg. humidity", rs_none: "No rooms match this filter.",
@@ -507,7 +509,7 @@ class ProxonFwtBase extends HTMLElement {
     const sig = ids.filter(Boolean).map((i) => {
       const s = h.states[i];
       return s ? `${s.state}|${s.attributes.temperature}|${s.attributes.current_temperature}|${s.attributes.preferred_stage}|${s.attributes.last_restore}` : "-";
-    }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._hver || 0}|${this._histRange || "24h"}|${this._metric || ""}|${this._tab || ""}|${this._rview || ""}|${this._rfilter || ""}|${[...(this._ropen || [])].join("+")}|${this._boost ? 1 : 0}|${this._wb || 0}|${this._settingsStamp || 0}`;
+    }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._hver || 0}|${this._histRange || "24h"}|${this._metric || ""}|${this._ymetric || ""}|${this._tab || ""}|${this._rview || ""}|${this._rfilter || ""}|${[...(this._ropen || [])].join("+")}|${this._boost ? 1 : 0}|${this._wb || 0}|${this._settingsStamp || 0}`;
     if (sig === this._sig) return;
     this._sig = sig;
     this._render();
@@ -1094,6 +1096,80 @@ class ProxonFwtBase extends HTMLElement {
     return [...days.values()].sort((a, b) => a.t - b.t);
   }
 
+  // Monthly runtime, starts, outdoor temperature and mean power for 12 months from the long-term statistics.
+  async _loadYear(d) {
+    const c = d.central, out = this._outdoorId(), pw = this._powerId();
+    const ids = [c.hp_runtime_total, c.hp_starts_total, out, pw].filter(Boolean);
+    if (!ids.length) return null;
+    const end = new Date(), start = new Date(end.getFullYear(), end.getMonth() - 11, 1);
+    const res = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
+      statistic_ids: ids, period: "month", types: ["mean", "change"] });
+    const months = new Map();
+    const put = (id, field, key) => {
+      for (const r of res[id] || []) {
+        const v = Number(r[field]);
+        if (isNaN(v)) continue;
+        const m = months.get(r.start) || { t: r.start / 1000 };
+        m[key] = v; months.set(r.start, m);
+      }
+    };
+    if (c.hp_runtime_total) put(c.hp_runtime_total, "change", "h");
+    if (c.hp_starts_total) put(c.hp_starts_total, "change", "starts");
+    if (out) put(out, "mean", "out");
+    if (pw) put(pw, "mean", "w");
+    const list = [...months.values()].sort((a, b) => a.t - b.t), now = Date.now() / 1000;
+    list.forEach((m, i) => {
+      const next = i + 1 < list.length ? list[i + 1].t : now;
+      if (m.w !== undefined) m.kwh = (m.w * Math.max(0, next - m.t)) / 3600 / 1000;
+    });
+    return list;
+  }
+
+  _sec_year(d) {
+    const c = d.central;
+    if (!c.hp_runtime_total && !c.hp_starts_total && !this._powerId()) return "";
+    const months = this._hget("year", () => this._loadYear(d));
+    if (months === null) return "";
+    const avail = [["h", "y_runtime", "mdi:timer-outline", "#3fa660", "h"], ["kwh", "y_energy", "mdi:lightning-bolt-outline", AMBER, "kWh"], ["starts", "y_starts", "mdi:repeat", BLUE, ""]]
+      .filter(([k]) => months === undefined || months.some((m) => m[k] !== undefined));
+    if (months !== undefined && !avail.length) return `<ha-card>${this._header("mdi:calendar-month-outline", this._t("year"), this._t("year_sub"))}<div class="note">${this._t("no_stats")}</div></ha-card>`;
+    const cur = avail.find(([k]) => k === this._ymetric) || avail[0];
+    const chips = avail.length > 1 ? `<div class="mchips" role="group">${avail.map(([k, l, ic]) => `<button class="vbtn ${k === cur[0] ? "a" : ""}" data-act="ymetric" data-v="${k}">${this._icon(ic)}${this._t(l)}</button>`).join("")}</div>` : "";
+    return `<ha-card>${this._header("mdi:calendar-month-outline", this._t("year"), this._t("year_sub"))}${chips}${months === undefined ? this._skel(190) : this._yearChart(months, cur, d)}</ha-card>`;
+  }
+
+  _yearChart(months, [key, label, , color, unit], d) {
+    const lang = this._hass.language;
+    const W = Math.max(300, (this.clientWidth || 680) - 80), H = 190, pl = 40, pr = 34, pt = 12, pb = 22;
+    const vals = months.map((m) => m[key] || 0), max = Math.max(1, Math.ceil(Math.max(...vals) * 1.05));
+    const outs = months.filter((m) => m.out !== undefined).map((m) => m.out);
+    const oLo = outs.length ? Math.floor(Math.min(...outs) - 1) : 0, oHi = outs.length ? Math.ceil(Math.max(...outs) + 1) : 1;
+    const slot = (W - pl - pr) / months.length, bw = Math.max(6, slot * 0.6);
+    const X = (i) => pl + slot * (i + 0.5), Y = (v) => pt + (1 - v / max) * (H - pt - pb), Yo = (v) => pt + (1 - (v - oLo) / Math.max(1, oHi - oLo)) * (H - pt - pb);
+    const mf = (t) => new Date(t * 1000).toLocaleDateString(lang, { month: "short" });
+    const mfl = (t) => new Date(t * 1000).toLocaleDateString(lang, { month: "long", year: "numeric" });
+    const fmt = (v) => v.toLocaleString(lang, { maximumFractionDigits: v < 10 ? 1 : 0 });
+    // The month in which the device filter was last changed (age + now)
+    const age = this._num(d.central.filter_age_days), chg = age === null ? null : Date.now() / 1000 - age * 86400;
+    const bars = months.map((m, i) => {
+      const v = m[key] || 0, f = chg !== null && chg >= m.t && (i + 1 >= months.length || chg < months[i + 1].t);
+      return `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, H - pb - Y(v)).toFixed(1)}" rx="3" fill="${color}" opacity=".8">
+        <title>${mfl(m.t)}: ${fmt(v)} ${unit}${m.out !== undefined ? ` · Ø ${m.out.toLocaleString(lang, { maximumFractionDigits: 1 })} °C` : ""}</title></rect>
+        ${f ? `<g><title>${this._t("y_filter")}</title><circle cx="${X(i).toFixed(1)}" cy="${H - pb + 0}" r="4.5" fill="var(--card-background-color)" stroke="${CORAL}" stroke-width="1.6"/></g>` : ""}`;
+    }).join("");
+    const gl = [0, 1, 2, 3].map((i) => `<line x1="${pl}" x2="${W - pr}" y1="${(pt + ((H - pt - pb) * i) / 3).toFixed(1)}" y2="${(pt + ((H - pt - pb) * i) / 3).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
+      <text class="st" x="${pl - 6}" y="${(pt + ((H - pt - pb) * i) / 3 + 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${Math.round(max * (1 - i / 3))}</text>
+      ${outs.length ? `<text class="st" x="${W - pr + 6}" y="${(pt + ((H - pt - pb) * i) / 3 + 4).toFixed(1)}" style="font-size:11px">${Math.round(oHi - ((oHi - oLo) * i) / 3)}°</text>` : ""}`).join("");
+    const xt = months.map((m, i) => `<text class="st" x="${X(i).toFixed(1)}" y="${H - 5}" text-anchor="middle" style="font-size:11px">${mf(m.t)}</text>`).join("");
+    const pts = months.map((m, i) => m.out === undefined ? null : `${X(i).toFixed(1)},${Yo(m.out).toFixed(1)}`).filter(Boolean).join(" ");
+    const sum = vals.reduce((a, b) => a + b, 0);
+    return `<svg style="max-width:100%;height:auto" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("year")}">${gl}${bars}
+      ${pts ? `<polyline fill="none" stroke="#7e57c2" stroke-width="1.8" stroke-linejoin="round" points="${pts}"/>` : ""}${xt}</svg>
+      <div class="legend"><span><i style="background:${color}"></i>${this._t(label)}${unit ? ` (${unit})` : ""}</span>${outs.length ? `<span><i style="background:#7e57c2"></i>${this._t("outside")} (°C)</span>` : ""}
+      ${chg !== null && chg >= months[0].t ? `<span><i style="background:none;border:2px solid ${CORAL}"></i>${this._t("y_filter")}</span>` : ""}
+      <span>Σ ${fmt(sum)} ${unit}</span></div><div class="note">${this._t("y_note")}</div>`;
+  }
+
   _skel(h) {
     return `<div class="sk" style="height:${h}px"></div>`;
   }
@@ -1417,6 +1493,7 @@ class ProxonFwtBase extends HTMLElement {
       case "autosw": call("switch", "toggle", { entity_id: c.fan_auto }); break;
       case "hrange": this._histRange = v; this._update(); break;
       case "metric": this._metric = v; this._update(); break;
+      case "ymetric": this._ymetric = v; this._sig = ""; this._update(); break;
       case "tab": this._tab = v; this._sig = ""; this._update(); if (this.scrollIntoView) this.scrollIntoView({ block: "start" }); break;
       case "rview": this._rview = v; this._sig = ""; this._update(); break;
       case "rfilter": this._rfilter = v; this._sig = ""; this._update(); break;
@@ -1721,7 +1798,7 @@ class ProxonFwtPanel extends ProxonFwtBase {
     } else if (tab === "rooms") {
       body = `<div class="stack">${this._sec_rooms(d)}</div>`;
     } else if (tab === "history") {
-      body = `<div class="stack">${this._sec_history(d)}${this._sec_runtime(d)}${this._sec_energy(d)}</div>`;
+      body = `<div class="stack">${this._sec_history(d)}${this._sec_runtime(d)}${this._sec_energy(d)}${this._sec_year(d)}</div>`;
     } else {
       body = `<div class="top"><div class="col">${this._sec_heatpump(d)}${this._sec_measure(d)}</div><div class="col">${this._sec_maint(d)}</div></div>`;
     }
