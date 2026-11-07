@@ -64,8 +64,9 @@ Settings → Devices & Services → Add Integration → **Proxon FWT (Modbus)**.
 1. Choose **Network (Modbus TCP)** or **USB / RS-485 (Modbus RTU)**.
    - TCP: host/IP, port (default `502`), Modbus unit ID (default `10`).
    - RTU: serial device path, baud rate (default `9600`), data bits (`8`), parity (default `E`/Even), stop bits (`1`), Modbus unit ID.
-2. Choose how many rooms (1–16) and external CO₂/humidity sensors (0–5) to create entities for, and whether the unit supports **cooling at all** (see below).
-3. Afterwards, use the integration's **Configure** button (Options) to rename rooms/sensors, optionally assign each room to a Home Assistant area (an empty room name skips a room that is not installed), optionally assign each CO₂/humidity sensor to a room, or change the room/sensor count, polling interval, or cooling availability without re-adding the integration. Host, port, serial parameters and unit ID can be changed via ⋮ → **Reconfigure**.
+2. Choose how many rooms (1–16) and external CO₂/humidity sensors (0–5) to create entities for, whether the unit supports **cooling at all** (see below), and which **side the outdoor air** is on (fresh and exhaust air; this turns the diagram in the card and panel).
+3. **Name the rooms:** the next step shows a name field and an optional Home Assistant **area** for every room. The names that already exist are suggested (for an existing setup the current ones), along with an area of the same name. An empty room name skips a room that is not installed. CO₂/humidity sensors can be assigned to a room here, too.
+4. Later, open the same form again with the integration's **Configure** button (Options) to change the counts, polling interval, cooling availability, outdoor side, filter interval (in days, default 180), an optional recirculation filter, the duration of the boost ventilation (default 15 minutes) and own power and outdoor temperature sensors, without re-adding the integration. Host, port, serial parameters and unit ID can be changed via ⋮ → **Reconfigure**.
 
 ## Entities
 
@@ -75,8 +76,9 @@ Two kinds of devices are created: a **central device** ("Proxon FWT" by default)
 
 - **`sensor.*`** — supply/extract/exhaust/fresh air temperatures, refrigerant-circuit temperatures, outside temperature, compressor speed, power consumption, fan speeds, plus a diagnostic "operating mode (full state)" sensor and any configured CO₂/humidity sensors not assigned to a room (see below).
 - **`binary_sensor.*`** — bypass state, **cooling available** (see below), system/filter messages, heat-pump heating/cooling/continuous-operation flags, and (diagnostic) the remaining "is X currently selectable" capability flags from register 315.
-- **`switch.*`** — global cooling enable, fan auto mode, intensive ventilation.
+- **`switch.*`** — global cooling enable, fan auto mode, intensive ventilation, **boost ventilation** (with timer) and the optional fan stage restore.
 - **`select.*`** — fan stage (Off/1–4) and operating mode (Off/Eco summer/Eco winter/Comfort/Furnace).
+- **`button.*`** — **Filter changed**: restarts the age and deadline of the device filter (see [Filter and maintenance](#filter-and-maintenance)).
 
 **Per room:**
 
@@ -135,6 +137,13 @@ The tables below assume the default device name **"Proxon FWT"** (→ `proxon_fw
 | Supply fan speed | `sensor.proxon_fwt_supply_fan_speed` | RPM (register 114) |
 | Extract fan speed | `sensor.proxon_fwt_extract_fan_speed` | RPM (register 115) |
 | Operating mode (full state) | `sensor.proxon_fwt_operating_mode_full_state` | Diagnostic enum sensor covering every state register 314 can report, including the three that can't be selected directly (emergency operation, frost protection, commissioning) |
+| Device filter age | `sensor.proxon_fwt_device_filter_age` | Days since the last filter change (counted by the integration, kept across restarts). Attributes: time of the change and of the filter message |
+| Days until forced shutdown | `sensor.proxon_fwt_days_until_forced_shutdown` | Days left after the unit reported the filter change (21-day deadline); otherwise "unknown" |
+| Device filter operating hours | `sensor.proxon_fwt_device_filter_operating_hours` | Operating hours since the last change |
+| Recirculation filter operating hours | `sensor.proxon_fwt_recirculation_filter_operating_hours` | Only present if a recirculation filter is set in the options |
+| Heat pump runtime today / total | `sensor.proxon_fwt_heat_pump_runtime_today`, `…_total` | Heat pump runtime in hours, counted by the integration (the total with long-term statistics) |
+| Heat pump starts today / total | `sensor.proxon_fwt_heat_pump_starts_today`, `…_total` | Number of compressor starts |
+| Last write error | `sensor.proxon_fwt_last_write_error` | Diagnostic: most recent failed write (register, value, reason) |
 | *(custom name)* | `sensor.proxon_fwt_<name>` | CO₂ sensor(s), in ppm, if configured and not assigned to a room (register 350+n) |
 | *(custom name)* | `sensor.proxon_fwt_<name>` | Humidity sensor(s), in % RH, if configured and not assigned to a room (register 360+n) |
 
@@ -166,6 +175,8 @@ The tables below assume the default device name **"Proxon FWT"** (→ `proxon_fw
 | Cooling enabled | `switch.proxon_fwt_cooling_enabled` | Toggles the global cooling enable (register 305 write / 306 read); only present when "Cooling available on this unit" = Yes, and even then unavailable whenever the unit itself (register 315, bit 8) currently reports no cooling |
 | Fan auto mode | `switch.proxon_fwt_fan_auto_mode` | Toggles automatic fan-stage control (registers 309/310); available only in Eco summer/winter |
 | Intensive ventilation | `switch.proxon_fwt_intensive_ventilation` | Toggles intensive ventilation (registers 311/312); available only in Comfort mode |
+| Boost ventilation | `switch.proxon_fwt_boost_ventilation` | Highest fan level for the duration set in the options, then the integration restores the previous state itself (see [Boost ventilation](#boost-ventilation)) |
+| Restore fan stage after heat pump | `switch.proxon_fwt_restore_fan_stage_after_heat_pump` | Software only, off by default: remembers the stage chosen while the heat pump idles and sets it back after each run |
 
 **Central device — `select`**
 
@@ -173,6 +184,12 @@ The tables below assume the default device name **"Proxon FWT"** (→ `proxon_fw
 |---|---|---|
 | Fan stage | `select.proxon_fwt_fan_stage` | Selects fan stage Off/1-4 (register 307 write / 308 read); available only in Eco summer/winter |
 | Operating mode | `select.proxon_fwt_operating_mode` | Selects operating mode Off/Eco summer/Eco winter/Comfort/Furnace (register 313 write / 314 read) |
+
+**Central device — `button`**
+
+| Friendly name | Entity ID | Description |
+|---|---|---|
+| Filter changed | `button.proxon_fwt_filter_changed` | Tells the integration the filter was replaced: age and deadline start over |
 
 **Per room device** (example room "Wohnen")
 
@@ -183,6 +200,22 @@ The tables below assume the default device name **"Proxon FWT"** (→ `proxon_fw
 | PTC element enabled | `switch.wohnen_ptc_element_enabled` | **Enable** for this room's electric reheater element (register 301 write / 302 read, bit n) |
 | Mid-room temperature | `sensor.wohnen_mid_room_temperature` | Readback from the room's control panel (register 220+n, rooms 2-N only) |
 | *(custom name)* | `sensor.wohnen_<name>` | CO₂ or humidity sensor, if assigned to this room from the options flow |
+
+## Filter and maintenance
+
+The device filter is replaced after **180 days** (adjustable in the options). The unit reports the change itself; if it is not done **21 days after that message**, the unit **shuts down by force**. The integration keeps count of both:
+
+- **Device filter age** shows the days since the last change, **Days until forced shutdown** counts down from the message.
+- When the unit reports the change, an entry "Replace device filter" appears in Home Assistant under Settings → System → **Repairs**. In the last seven days it is an error, before that a warning.
+- After the replacement press **Filter changed** (button or panel). The integration also notices the change by itself when the unit clears the message.
+- The unit has **two filter drawers** (fresh air and extract). The "device filter" means both, replace both.
+- A **recirculation filter** is purely optional and only shown if it is set in the options.
+
+The counters run inside the integration and survive restarts. On the first start the age is unknown until you press **Filter changed** once or the unit reports a change.
+
+## Boost ventilation
+
+The **Boost ventilation** switch goes to the highest level (intensive ventilation in Comfort mode, otherwise fan stage 4) and **automatically** restores the previous state after the configured duration (options, default 15 minutes), including fan auto mode. The timer runs inside the integration, so it needs neither the panel nor an automation and survives a Home Assistant restart. Switching it on again extends the time. The `until` attribute gives the end. The switch is unavailable when the unit does not allow a highest level in its current operating mode. In the panel it sits under quick actions.
 
 ## Dashboard card
 
@@ -203,7 +236,7 @@ The card discovers all entities of the integration by itself (via platform and e
 
 Anything the unit does not provide (e.g. power consumption or outdoor temperature) is hidden. The card can be configured graphically in the card editor.
 
-`outdoor_side`, `power_entity` and `outdoor_entity` can also be set once centrally in the integration's **options** (Configure) and then apply in every browser, to the card and the side panel. A value in the card takes precedence.
+`outdoor_side`, `power_entity` and `outdoor_entity` can also be set once centrally in the integration's **options** (Configure), as can the filter interval and an optional recirculation filter, and then apply in every browser, to the card and the side panel. A value in the card takes precedence.
 
 | Option | Default | Meaning |
 |---|---|---|
@@ -217,7 +250,14 @@ Anything the unit does not provide (e.g. power consumption or outdoor temperatur
 
 ### Side panel
 
-The integration also adds a **Proxon FWT** entry to the sidebar: a full-page view with an animated system diagram (cross-flow heat exchanger, fans, evaporator, condenser, compressor circuit and all temperature probes), key figures (including the heat recovery rate, calculated from fresh, extract and supply air temperature), room heat map, ventilation, heat pump, refrigerant circuit, status and a 24-hour temperature history. Notices about filter replacement, system errors, emergency/frost protection and write errors appear at the top as banners. The "outdoor side" comes from the integration's options and can be overridden per browser in the panel. In cooling mode the diagram reverses the refrigerant circuit. The bypass is a status display only; the unit switches it by itself.
+The integration also adds a **Proxon FWT** entry to the sidebar, a full-page view with four tabs:
+
+- **Overview:** notices (filter, errors, CO₂, frequent cycling), operating mode, a **system diagram** that follows the unit's layout (fresh-air and extract fans before the cross-counterflow heat exchanger, preheater, evaporator in the extract air, condenser in the supply air, compressor circuit, all temperature probes), key figures with the **heat recovery rate**, ventilation and quick actions (boost ventilation with timer, all rooms ±1 °C).
+- **Rooms:** a ring gauge per room with a target stepper, summary (mean temperature, rooms heating, highest CO₂, humidity), filters, three views (cards, compare, list) and expandable details with a 24-hour history.
+- **History:** temperatures, power, compressor, heat recovery and CO₂ over 24 hours, 7 and 30 days, heat pump runtime, energy per day and a **yearly overview** with runtime, energy and starts per month plus outdoor temperature and a marker for the last filter change (from the long-term statistics, fills up over time).
+- **Diagnostics:** heat pump, measurements, maintenance (filter with age in days, deadline to the forced shutdown, "Filter changed" button) and messages.
+
+The **heat recovery rate** is calculated from fresh air, extract air and the extract air after the heat exchanger ("temperature before evaporator"), because that side is not influenced by the heat pump. It is not shown while the summer bypass, which bypasses the heat exchanger, is open; the diagram then shows the path around the exchanger. The bypass is a pure status display, the unit switches it itself. The outdoor side comes from the integration's options and can be overridden per browser in the panel. In cooling mode the diagram reverses the refrigerant circuit.
 
 ![Side panel (light)](docs/panel-light.png)
 ![Side panel (dark)](docs/panel-dark.png)

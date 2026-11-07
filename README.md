@@ -66,8 +66,9 @@ Einstellungen → Geräte & Dienste → Integration hinzufügen → **Proxon FWT
 1. **Netzwerk (Modbus TCP)** oder **USB / RS-485 (Modbus RTU)** wählen.
    - TCP: Host/IP, Port (Standard `502`), Modbus-Unit-ID (Standard `10`).
    - RTU: serielle Schnittstelle, Baudrate (Standard `9600`), Datenbits (`8`), Parität (Standard `E`/Even), Stopbits (`1`), Modbus-Unit-ID.
-2. Anzahl der Räume (1–16) und externen CO₂-/Feuchtesensoren (0–5) festlegen, für die Entities angelegt werden, sowie ob am Gerät überhaupt **Kühlen verfügbar** ist (siehe unten).
-3. Danach über den **Konfigurieren**-Button (Optionen) der Integration Räume/Sensoren umbenennen, jeden Raum optional einem Home-Assistant-Bereich zuordnen (ein leerer Raumname überspringt einen nicht verbauten Raum), jeden CO₂-/Feuchtesensor optional einem Raum zuordnen, oder Anzahl/Abfrageintervall/Kühlverfügbarkeit ändern, ohne die Integration neu einzurichten. Host, Port, serielle Parameter und Unit-ID lassen sich über ⋮ → **Neu konfigurieren** ändern.
+2. Anzahl der Räume (1–16) und externen CO₂-/Feuchtesensoren (0–5) festlegen, für die Entities angelegt werden, ob am Gerät überhaupt **Kühlen verfügbar** ist (siehe unten) und auf welcher **Seite die Außenluft** liegt (Frischluft und Fortluft; das dreht das Schema in Karte und Panel).
+3. **Räume benennen:** Der nächste Schritt zeigt für jeden Raum ein Namensfeld und einen optionalen **Bereich** von Home Assistant. Vorgeschlagen werden die Namen, die schon vorhanden sind (bei einer bestehenden Einrichtung die bisherigen), und ein Bereich mit passendem Namen. Ein leerer Raumname überspringt einen nicht verbauten Raum. Hier lassen sich auch CO₂-/Feuchtesensoren einem Raum zuordnen.
+4. Später über den **Konfigurieren**-Button (Optionen) der Integration dasselbe Formular erneut öffnen, Anzahl, Abfrageintervall, Kühlverfügbarkeit, Außenseite, Filter-Intervall (in Tagen, Standard 180), einen optionalen Umluftfilter, die Dauer des Stoßlüftens (Standard 15 Minuten) sowie eigene Leistungs- und Außentemperatursensoren ändern, ohne die Integration neu einzurichten. Host, Port, serielle Parameter und Unit-ID lassen sich über ⋮ → **Neu konfigurieren** ändern.
 
 ## Entities
 
@@ -77,8 +78,9 @@ Es werden zwei Arten von Geräten angelegt: ein **zentrales Gerät** (standardm�
 
 - **`sensor.*`** — Zu-/Ab-/Fort-/Frischlufttemperaturen, Kältemittelkreislauf-Temperaturen, Außentemperatur, Drehzahl Kompressor, Leistungsaufnahme, Lüfterdrehzahlen, dazu ein diagnostischer "Betriebsart (vollständiger Zustand)"-Sensor sowie alle konfigurierten CO₂-/Feuchtesensoren (sofern nicht einem Raum zugeordnet, siehe unten).
 - **`binary_sensor.*`** — Bypass-Zustand, **Kühlen verfügbar** (siehe unten), System-/Filtermeldungen, Wärmepumpe Heiz-/Kühl-/Dauerbetrieb, sowie (Diagnose) die übrigen "ist X gerade wählbar"-Freischaltungs-Flags aus Register 315.
-- **`switch.*`** — globale Kühlfreigabe, Lüfter-Automatik, Intensivlüftung.
+- **`switch.*`** — globale Kühlfreigabe, Lüfter-Automatik, Intensivlüftung, **Stoßlüften** (mit Timer) und die optionale Lüfterstufen-Wiederherstellung.
 - **`select.*`** — Lüfterstufe (Aus/1–4) und Betriebsart (Aus/Eco Sommer/Eco Winter/Komfort/Ofenbetrieb).
+- **`button.*`** — **Filter getauscht**: setzt Alter und Frist des Gerätefilters zurück (siehe [Filter und Wartung](#filter-und-wartung)).
 
 **Je Raum:**
 
@@ -137,6 +139,13 @@ Die Tabellen unten gehen vom Standard-Gerätenamen **"Proxon FWT"** (→ `proxon
 | Drehzahl Zuluftventilator | `sensor.proxon_fwt_drehzahl_zuluftventilator` | Drehzahl des Zuluftventilators in U/min (Register 114) |
 | Drehzahl Abluftventilator | `sensor.proxon_fwt_drehzahl_abluftventilator` | Drehzahl des Abluftventilators in U/min (Register 115) |
 | Betriebsart (vollständiger Zustand) | `sensor.proxon_fwt_betriebsart_vollstandiger_zustand` | Diagnostischer Enum-Sensor mit allen möglichen Zuständen von Register 314, inklusive der drei, die nicht direkt anwählbar sind (Notbetrieb, Einfrierschutz, Einregulierung) |
+| Alter Gerätefilter | `sensor.proxon_fwt_alter_geratefilter` | Tage seit dem letzten Filterwechsel (von der Integration gezählt, neustartfest). Attribute: Zeitpunkt des Wechsels und der Filtermeldung |
+| Tage bis Zwangsabschaltung | `sensor.proxon_fwt_tage_bis_zwangsabschaltung` | Verbleibende Tage, nachdem die Anlage den Filterwechsel gemeldet hat (21 Tage Frist); sonst „unbekannt“ |
+| Betriebsstunden Gerätefilter | `sensor.proxon_fwt_betriebsstunden_geratefilter` | Betriebsstunden seit dem letzten Wechsel |
+| Betriebsstunden Umluftfilter | `sensor.proxon_fwt_betriebsstunden_umluftfilter` | Nur vorhanden, wenn in den Optionen ein Umluftfilter angegeben ist |
+| Wärmepumpe Laufzeit heute / gesamt | `sensor.proxon_fwt_warmepumpe_laufzeit_heute`, `…_gesamt` | Laufzeit der Wärmepumpe in Stunden, von der Integration gezählt (Gesamtwert mit Langzeitstatistik) |
+| Wärmepumpe Starts heute / gesamt | `sensor.proxon_fwt_warmepumpe_starts_heute`, `…_gesamt` | Anzahl der Verdichterstarts |
+| Letzter Schreibfehler | `sensor.proxon_fwt_letzter_schreibfehler` | Diagnose: zuletzt fehlgeschlagener Schreibbefehl (Register, Wert, Grund) |
 | *(benutzerdefinierter Name)* | `sensor.proxon_fwt_<name>` | CO₂-Sensor(en) in ppm, sofern konfiguriert und keinem Raum zugeordnet (Register 350+n) |
 | *(benutzerdefinierter Name)* | `sensor.proxon_fwt_<name>` | Feuchtesensor(en) in % rel. Feuchte, sofern konfiguriert und keinem Raum zugeordnet (Register 360+n) |
 
@@ -168,6 +177,8 @@ Die Tabellen unten gehen vom Standard-Gerätenamen **"Proxon FWT"** (→ `proxon
 | Kühlung freigegeben | `switch.proxon_fwt_kuhlung_freigegeben` | Schaltet die globale Kühlfreigabe (Register 305 schreiben / 306 lesen); nur vorhanden, wenn "Kühlen am Gerät verfügbar" = Ja, und auch dann nicht verfügbar, solange das Gerät selbst (Register 315, Bit 8) gerade kein Kühlen meldet |
 | Lüfter-Automatik | `switch.proxon_fwt_lufter_automatik` | Schaltet die automatische Lüfterstufenregelung (Register 309/310); nur verfügbar in Eco Sommer/Winter |
 | Intensivlüftung | `switch.proxon_fwt_intensivluftung` | Schaltet die Intensivlüftung (Register 311/312); nur verfügbar im Komfort-Modus |
+| Stoßlüften | `switch.proxon_fwt_stossluften` | Höchste Lüfterstufe für die in den Optionen eingestellte Dauer, danach stellt die Integration den vorherigen Zustand selbst wieder her (siehe [Stoßlüften](#stoßlüften)) |
+| Lüfterstufe nach Wärmepumpe wiederherstellen | `switch.proxon_fwt_lufterstufe_nach_warmepumpe_wiederherstellen` | Rein softwareseitig, standardmäßig aus: merkt die bei stehender Wärmepumpe gewählte Stufe und setzt sie nach jedem Lauf zurück |
 
 **Zentrales Gerät — `select`**
 
@@ -175,6 +186,12 @@ Die Tabellen unten gehen vom Standard-Gerätenamen **"Proxon FWT"** (→ `proxon
 |---|---|---|
 | Lüfterstufe | `select.proxon_fwt_lufterstufe` | Wählt die Lüfterstufe Aus/1–4 (Register 307 schreiben / 308 lesen); nur verfügbar in Eco Sommer/Winter |
 | Betriebsart | `select.proxon_fwt_betriebsart` | Wählt die Betriebsart Aus/Eco Sommer/Eco Winter/Komfort/Ofenbetrieb (Register 313 schreiben / 314 lesen) |
+
+**Zentrales Gerät — `button`**
+
+| Friendly Name | Entity-ID | Beschreibung |
+|---|---|---|
+| Filter getauscht | `button.proxon_fwt_filter_getauscht` | Meldet der Integration den Filterwechsel: Alter und Frist beginnen neu |
 
 **Je Raum-Gerät** (Beispiel Raum "Wohnen")
 
@@ -185,6 +202,22 @@ Die Tabellen unten gehen vom Standard-Gerätenamen **"Proxon FWT"** (→ `proxon
 | PTC-Element freigegeben | `switch.wohnen_ptc_element_freigegeben` | **Freigabe** der elektrischen Zusatzheizung dieses Raums (Register 301 schreiben / 302 lesen, Bit n) |
 | Mittentemperatur | `sensor.wohnen_mittentemperatur` | Rückmeldung vom Bedienteil des Raums (Register 220+n, nur Raum 2–N) |
 | *(benutzerdefinierter Name)* | `sensor.wohnen_<name>` | CO₂- bzw. Feuchtesensor, wenn diesem Raum im Options-Flow zugewiesen |
+
+## Filter und Wartung
+
+Der Gerätefilter wird nach **180 Tagen** getauscht (einstellbar in den Optionen). Die Anlage meldet den Wechsel selbst; wird er **21 Tage nach dieser Meldung** nicht gemacht, **schaltet sie zwangsweise ab**. Die Integration zählt beides mit:
+
+- **Alter Gerätefilter** zeigt die Tage seit dem letzten Wechsel, **Tage bis Zwangsabschaltung** läuft ab der Meldung rückwärts.
+- Meldet die Anlage den Wechsel, erscheint in Home Assistant unter Einstellungen → System → **Reparaturen** ein Eintrag „Gerätefilter wechseln“. In den letzten sieben Tagen ist er ein Fehler, vorher eine Warnung.
+- Nach dem Tausch **Filter getauscht** drücken (Button oder Panel). Die Integration erkennt den Wechsel auch selbst, sobald die Anlage die Meldung zurücknimmt.
+- Die Anlage hat **zwei Filtereinschübe** (Frischluft und Abluft). Der „Gerätefilter“ meint beide, beide tauschen.
+- Ein **Umluftfilter** ist reine Zubehörsache und wird nur angezeigt, wenn er in den Optionen angegeben ist.
+
+Die Zähler laufen in der Integration und überstehen Neustarts. Beim ersten Start ist das Alter unbekannt, bis du einmal **Filter getauscht** drückst oder die Anlage einen Wechsel meldet.
+
+## Stoßlüften
+
+Der Schalter **Stoßlüften** schaltet auf die höchste Stufe (Intensivlüftung im Komfort-Betrieb, sonst Lüfterstufe 4) und stellt nach der eingestellten Dauer (Optionen, Standard 15 Minuten) **automatisch** den vorherigen Zustand wieder her, einschließlich Lüfter-Automatik. Der Timer läuft in der Integration, braucht also weder das Panel noch eine Automation und überlebt einen Neustart von Home Assistant. Erneutes Einschalten verlängert die Zeit. Das Attribut `until` nennt das Ende. Der Schalter ist nicht verfügbar, wenn die Anlage in ihrer aktuellen Betriebsart keine höchste Stufe zulässt. Im Panel steht er unter Schnellaktionen.
 
 ## Dashboard-Karte
 
@@ -205,7 +238,7 @@ Die Karte findet alle Entities der Integration selbst (über Plattform und Entit
 
 Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wird ausgeblendet. Die Karte lässt sich im Karten-Editor grafisch konfigurieren.
 
-`outdoor_side`, `power_entity` und `outdoor_entity` lassen sich auch einmal zentral in den **Optionen der Integration** (Konfigurieren) einstellen und gelten dann für alle Browser, Karte und Seitenpanel. Eine Angabe in der Karte hat Vorrang.
+`outdoor_side`, `power_entity` und `outdoor_entity` lassen sich auch einmal zentral in den **Optionen der Integration** (Konfigurieren) einstellen, ebenso das Filter-Intervall und ein optionaler Umluftfilter und gelten dann für alle Browser, Karte und Seitenpanel. Eine Angabe in der Karte hat Vorrang.
 
 | Option | Standard | Bedeutung |
 |---|---|---|
@@ -219,7 +252,14 @@ Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wi
 
 ### Seitenpanel
 
-Zusätzlich legt die Integration in der Seitenleiste den Eintrag **Proxon FWT** an: eine ganzseitige Ansicht mit animiertem Anlagenschema (Kreuzstrom-Wärmetauscher, Ventilatoren, Verdampfer, Kondensator, Kompressor-Kreislauf und alle Temperaturmesspunkte), Kennzahlen (u. a. Rückwärmzahl, berechnet aus Frisch-, Ab- und Zulufttemperatur), Raum-Heatmap, Lüftung, Wärmepumpe, Kältekreis, Status und einem 24-Stunden-Verlauf der Temperaturen. Hinweise zu Filterwechsel, Systemfehler, Notbetrieb/Einfrierschutz und Schreibfehlern erscheinen oben als Banner. Die Seite „Außenseite rechts“ kommt aus den Optionen der Integration und lässt sich im Panel pro Browser überschreiben. Im Kühlbetrieb kehrt das Schema den Kältekreis um. Der Bypass ist eine reine Statusanzeige, das Gerät schaltet ihn selbst.
+Zusätzlich legt die Integration in der Seitenleiste den Eintrag **Proxon FWT** an, eine ganzseitige Ansicht mit vier Reitern:
+
+- **Übersicht:** Hinweise (Filter, Fehler, CO₂, häufiges Takten), Betriebsart, **Anlagenschema** nach dem Aufbau des Geräts (Frisch- und Abluftventilator vor dem Kreuzgegenstrom-Wärmetauscher, Vorwärmung, Verdampfer in der Abluft, Verflüssiger in der Zuluft, Kompressor-Kreislauf, alle Temperaturfühler), Kennzahlen mit der **Rückwärmzahl**, Lüftung und Schnellaktionen (Stoßlüften mit Timer, alle Räume ±1 °C).
+- **Räume:** Ringanzeige je Raum mit Soll-Stepper, Zusammenfassung (Ø Temperatur, heizende Räume, höchster CO₂-Wert, Feuchte), Filter, drei Ansichten (Karten, Vergleich, Liste) und aufklappbare Details mit 24-Stunden-Verlauf.
+- **Verlauf:** Temperaturen, Leistung, Verdichter, Rückwärmzahl und CO₂ über 24 Stunden, 7 und 30 Tage, Wärmepumpen-Laufzeit, Energie pro Tag und eine **Jahresübersicht** mit Laufzeit, Energie und Starts je Monat samt Außentemperatur und Markierung des letzten Filterwechsels (aus der Langzeitstatistik, füllt sich mit der Zeit).
+- **Diagnose:** Wärmepumpe, Messwerte, Wartung (Filter mit Alter in Tagen, Frist bis zur Zwangsabschaltung, Button „Filter getauscht“) und Meldungen.
+
+Die **Rückwärmzahl** wird aus Frischluft, Abluft und der Abluft nach dem Wärmetauscher („Temperatur vor Verdampfer“) berechnet, weil diese Seite von der Wärmepumpe nicht beeinflusst wird. Bei offenem Sommerbypass, der den Wärmetauscher umgeht, wird sie nicht angezeigt; das Schema zeigt dann den Weg am Tauscher vorbei. Der Bypass ist eine reine Statusanzeige, das Gerät schaltet ihn selbst. Die Seite der Außenluft kommt aus den Optionen der Integration und lässt sich im Panel pro Browser überschreiben. Im Kühlbetrieb kehrt das Schema den Kältekreis um.
 
 ![Seitenpanel (hell)](docs/panel-light.png)
 ![Seitenpanel (dunkel)](docs/panel-dark.png)
