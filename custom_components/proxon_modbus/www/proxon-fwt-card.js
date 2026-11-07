@@ -221,8 +221,8 @@ ha-card { padding: 14px 16px; display: block; border: 1px solid var(--ha-card-bo
 .opw { container-type: inline-size; }
 .lbl2 { font-size: 12px; color: var(--secondary-text-color); margin: 12px 0 6px; display: flex; gap: 8px; align-items: center; }
 .opw .lbl2:first-of-type { margin-top: 0; }
-.seg.cmp { background: var(--secondary-background-color); border-radius: 12px; padding: 4px; gap: 4px; }
-.seg.cmp button { display: flex; gap: 6px; align-items: center; justify-content: center; padding: 8px 4px; border-radius: 9px; background: transparent; white-space: nowrap; }
+.seg.cmp { background: var(--secondary-background-color); border-radius: 12px; padding: 4px; gap: 4px; border: 1px solid var(--divider-color); }
+.seg.cmp button { display: flex; gap: 6px; align-items: center; justify-content: center; padding: 8px 4px; border-radius: 9px; background: transparent; border-color: transparent; white-space: nowrap; }
 .seg.cmp button ha-icon { display: inline-block; margin: 0; --mdc-icon-size: 18px; }
 .seg.cmp button.a { background: var(--card-background-color); box-shadow: 0 1px 3px #0002; border-color: transparent; color: var(--mc, var(--primary-color)); }
 .seg.cmp .ls { display: none; }
@@ -231,7 +231,7 @@ ha-card { padding: 14px 16px; display: block; border: 1px solid var(--ha-card-bo
 .oinline .rp { display: inline-flex; gap: 10px; align-items: center; } .oinline .tg { margin-left: auto; display: inline-flex; gap: 8px; align-items: center; color: var(--primary-text-color); }
 .tag { font-size: 11px; background: color-mix(in srgb, var(--amber, #e8a13a) 18%, transparent); border-radius: 99px; padding: 2px 8px; }
 
-.seg button { font: inherit; font-size: 13px; padding: 10px 4px 8px; border: 1.5px solid transparent; border-radius: 12px; cursor: pointer;
+.seg button { font: inherit; font-size: 13px; padding: 10px 4px 8px; border: 1.5px solid var(--divider-color); border-radius: 12px; cursor: pointer;
   background: var(--secondary-background-color); color: var(--primary-text-color); transition: background .15s, border-color .15s; }
 .seg button ha-icon { display: block; margin: 0 auto 3px; --mdc-icon-size: 24px; color: var(--mc, var(--secondary-text-color)); }
 .seg button:hover:not(:disabled) { border-color: color-mix(in srgb, var(--mc, var(--primary-color)) 45%, transparent); }
@@ -336,11 +336,11 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .hid { font-size: 12px; color: var(--secondary-text-color); margin: 8px 2px 0; } .hid .lnk { font: inherit; border: 0; background: none; color: var(--primary-color); cursor: pointer; padding: 0; }
 .ins.r { --ic: #db4437; } .ins.w { --ic: #f2a516; } .ins.i { --ic: #3d8be0; } .ins.o { --ic: #3fa660; }
 .qgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
-.qa { font: inherit; text-align: left; display: flex; gap: 10px; align-items: center; padding: 10px 12px; border: 1.5px solid transparent; border-radius: 12px; cursor: pointer;
+.qa { font: inherit; text-align: left; display: flex; gap: 10px; align-items: center; padding: 10px 12px; border: 1.5px solid var(--divider-color); border-radius: 12px; cursor: pointer;
   background: var(--secondary-background-color); color: var(--primary-text-color); }
 .qa ha-icon { --mdc-icon-size: 22px; color: var(--primary-color); flex: none; }
 .qa span { display: grid; gap: 1px; } .qa b { font-weight: 500; font-size: 13px; } .qa small { font-size: 11px; color: var(--secondary-text-color); }
-.qa.bst { cursor: default; grid-column: 1 / -1; } .qa.bst:hover { border-color: transparent; } .bch { display: flex !important; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.qa.bst { cursor: default; grid-column: 1 / -1; } .qa.bst:hover { border-color: var(--divider-color); } .bch { display: flex !important; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .qa:hover { border-color: var(--primary-color); } .qa.a { border-color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 14%, transparent); }
 .mchips { display: flex; gap: 6px; flex-wrap: wrap; margin: -2px 0 10px; }
 .chw { position: relative; }
@@ -374,7 +374,7 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .msep { border-top: 1px solid var(--divider-color); padding-top: 8px; margin-top: 4px; }
 .rtop { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
 .rtop .grow { flex: 1; }
-.rseg { display: inline-flex; background: var(--secondary-background-color); border-radius: 10px; padding: 3px; gap: 2px; }
+.rseg { display: inline-flex; background: var(--secondary-background-color); border-radius: 10px; padding: 3px; gap: 2px; border: 1px solid var(--divider-color); }
 .rseg button { font: inherit; font-size: 13px; border: 0; background: none; color: var(--secondary-text-color); padding: 6px 12px; border-radius: 8px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
 .rseg button.a { background: var(--card-background-color); color: var(--primary-text-color); font-weight: 500; box-shadow: 0 1px 3px rgba(0,0,0,.18); }
 .rseg ha-icon, .fchip ha-icon { --mdc-icon-size: 16px; }
@@ -384,13 +384,13 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .fchip.a { background: color-mix(in srgb, var(--primary-color) 14%, var(--card-background-color)); border-color: var(--primary-color); color: var(--primary-color); }
 .rfil .grow { flex: 1; }
 .rsum { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 14px; }
-.rs { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; background: var(--secondary-background-color); }
+.rs { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; background: var(--secondary-background-color); border: 1px solid var(--divider-color); }
 .rs .ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex: none;
   background: color-mix(in srgb, var(--c) 16%, transparent); color: var(--c); --mdc-icon-size: 22px; }
 .rs small { display: block; color: var(--secondary-text-color); font-size: 12px; }
 .rs b { font-size: 19px; font-weight: 500; } .rs b span { font-size: 12px; font-weight: 400; color: var(--secondary-text-color); }
 .rgrid { display: grid; grid-template-columns: repeat(var(--rc, 3), minmax(0, 1fr)); gap: 12px; }
-.rc { border-radius: 18px; padding: 14px; background: var(--secondary-background-color); border: 1px solid transparent; min-width: 0; container-type: inline-size; }
+.rc { border-radius: 18px; padding: 14px; background: var(--secondary-background-color); border: 1px solid var(--divider-color); min-width: 0; container-type: inline-size; }
 @container (min-width: 330px) { .rc .rb { flex-direction: row; justify-content: space-around; } }
 .rc:hover { border-color: color-mix(in srgb, var(--primary-color) 40%, transparent); }
 .rc.open { grid-column: span 2; }
