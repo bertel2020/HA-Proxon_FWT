@@ -118,3 +118,16 @@ test("heat pump runtime bars (7 days) carry hover tooltips", () => {
   assert.match(html, /class="tip"/);
   assert.match(html, /1 h · 1 /);
 });
+
+test("power entities reporting kW or MW are normalised to W", () => {
+  const p = make();
+  p._d = { central: { power_consumption: "sensor.p" } };
+  p._config = {};
+  const set = (state, unit) => { p._hass.states["sensor.p"] = { state, attributes: { unit_of_measurement: unit } }; p._hass.entities = {}; };
+  p._num = (id) => { const s = p._hass.states[id]; return s ? Number(s.state) : null; };
+  p._state = (id) => p._hass.states[id];
+  p._opt = () => undefined;
+  set("450", "W"); assert.equal(p._pnum(), 450);
+  set("0.45", "kW"); assert.equal(p._pnum(), 450);
+  set("0.0005", "MW"); assert.equal(p._pnum(), 500);
+});

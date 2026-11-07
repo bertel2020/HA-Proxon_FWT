@@ -735,6 +735,17 @@ class ProxonFwtBase extends HTMLElement {
     return this._opt("power_entity") || this._d.central.power_consumption;
   }
 
+  // The power entity may report kW or MW; everything in the panel works in W.
+  _pscale() {
+    const u = String(((this._state(this._powerId()) || { attributes: {} }).attributes.unit_of_measurement) || "W").trim();
+    return u === "kW" ? 1e3 : u === "MW" ? 1e6 : 1;
+  }
+
+  _pnum() {
+    const v = this._num(this._powerId());
+    return v === null ? null : v * this._pscale();
+  }
+
   _efficiency() {
     // Exhaust side after the exchanger (before the evaporator): not influenced by the heat pump.
     const c = this._d.central;
@@ -804,11 +815,11 @@ class ProxonFwtBase extends HTMLElement {
       `<div class="k ${panel && metric ? "go" : ""}" style="--kc:${color}" ${panel && metric ? `data-act="kpi" data-v="${metric}" role="button" tabindex="0"` : ""}><div class="ic">${this._icon(icon)}</div><div><div class="lb">${label}</div><div class="v">${value}${unit ? ` <small>${unit}</small>` : ""}</div>${extra}</div></div>`;
     const eff = this._efficiency();
     const bypass = this._on(c.bypass_active);
-    const power = this._num(this._powerId());
+    const power = this._pnum();
     const html = tile("mdi:thermometer", CORAL, this._t("supply_t"), this._temp(c.temp_supply_air), "", "temp") +
       tile("mdi:percent-circle-outline", GREEN, this._t("efficiency"), bypass ? this._t("bypass_short") : eff === null ? null : `${eff} % <span title="${this._t("eff_info")}">${this._icon("mdi:information-outline", 'class="info"')}</span>`, "", "eff", this._effSpark(d)) +
       tile("mdi:flash", AMBER, this._t("power"), power === null ? null : this._fmt(power, power % 1 ? 1 : 0),
-        (this._state(this._powerId()) || { attributes: {} }).attributes.unit_of_measurement || "W", "power") +
+        "W", "power") +
       tile("mdi:weather-partly-cloudy", BLUE, this._t("outside"), this._temp(this._outdoorId()), "", "temp");
     if (!html) return "";
     return `<ha-card>${this._header("mdi:gauge", this._t("kpi"))}<div class="kpiw"><div class="kpi">${html}</div></div></ha-card>`;
@@ -1062,7 +1073,7 @@ class ProxonFwtBase extends HTMLElement {
     const c = d.central;
     const rpm = this._num(c.compressor_speed);
     const powerId = this._powerId();
-    const power = this._num(powerId);
+    const power = this._pnum();
     if (rpm === null && power === null && !c.heat_pump_heating) return "";
     const frac = rpm === null ? 0 : Math.min(1, rpm / (this._config.max_compressor_rpm || 6000));
     const circ = 2 * Math.PI * 44;
@@ -1072,7 +1083,7 @@ class ProxonFwtBase extends HTMLElement {
         stroke-dasharray="${(circ * frac).toFixed(1)} ${circ.toFixed(1)}" transform="rotate(-90 55 55)"/>
       <text x="55" y="50" text-anchor="middle" dominant-baseline="central" style="font-size:19px;font-weight:500">${rpm === null ? "–" : rpm.toLocaleString(this._hass.language)}</text>
       <text class="st" x="55" y="70" text-anchor="middle" style="font-size:11px">rpm</text></svg>`;
-    const unit = (this._state(powerId) || { attributes: {} }).attributes.unit_of_measurement || "W";
+    const unit = "W";
     const chip = (id, icon, label, cls) => (id && this._ok(id)) ? `<span class="chip ${this._on(id) ? cls : ""}">${this._icon(icon)}${label}</span>` : "";
     const cool = c.cooling_enable
       ? `<div class="row">${this._icon("mdi:snowflake")}${this._t("cooling_enable")}<span class="sp"><ha-switch data-act="coolsw" ${this._on(c.cooling_enable) ? "checked" : ""} ${this._ok(c.cooling_enable) ? "" : "disabled"}></ha-switch></span></div>` : "";
@@ -1314,6 +1325,8 @@ class ProxonFwtBase extends HTMLElement {
         entity_ids: ids, minimal_response: true, no_attributes: true, significant_changes_only: false });
       raw = defs.map(([id]) => (res[id] || []).map((p) => [p.lu ?? Date.parse(p.last_updated) / 1000, Number(p.s ?? p.state)]).filter(([t, v]) => !isNaN(t) && !isNaN(v)));
     }
+    const pscale = this._pscale();
+    if (pscale !== 1) raw = raw.map((pts, i) => (ids[i] === this._powerId() ? pts.map(([t, v]) => [t, v * pscale]) : pts));
     // Phases with the summer bypass open (exchanger bypassed): shown as a band and left out of the heat recovery rate.
     let bypass = [];
     const byId = this._d && this._d.central.bypass_active;
@@ -1364,9 +1377,9 @@ class ProxonFwtBase extends HTMLElement {
     const res = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
       statistic_ids: ids, period: "day", types: ["mean", "change"] });
     const days = new Map();
-    const put = (id, field, key) => {
+    const put = (id, field, key, k = 1) => {
       for (const r of res[id] || []) {
-        const v = Number(r[field]);
+        const v = Number(r[field]) * k;
         if (isNaN(v)) continue;
         const day = days.get(r.start) || { t: r.start / 1000 };
         day[key] = v; days.set(r.start, day);
@@ -1375,7 +1388,7 @@ class ProxonFwtBase extends HTMLElement {
     if (c.hp_runtime_total) put(c.hp_runtime_total, "change", "h");
     if (c.hp_starts_total) put(c.hp_starts_total, "change", "starts");
     if (out) put(out, "mean", "out");
-    if (pw) put(pw, "mean", "w");
+    if (pw) put(pw, "mean", "w", this._pscale());
     return [...days.values()].sort((a, b) => a.t - b.t);
   }
 
@@ -1388,9 +1401,9 @@ class ProxonFwtBase extends HTMLElement {
     const res = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
       statistic_ids: ids, period: "month", types: ["mean", "change"] });
     const months = new Map();
-    const put = (id, field, key) => {
+    const put = (id, field, key, k = 1) => {
       for (const r of res[id] || []) {
-        const v = Number(r[field]);
+        const v = Number(r[field]) * k;
         if (isNaN(v)) continue;
         const m = months.get(r.start) || { t: r.start / 1000 };
         m[key] = v; months.set(r.start, m);
@@ -1399,7 +1412,7 @@ class ProxonFwtBase extends HTMLElement {
     if (c.hp_runtime_total) put(c.hp_runtime_total, "change", "h");
     if (c.hp_starts_total) put(c.hp_starts_total, "change", "starts");
     if (out) put(out, "mean", "out");
-    if (pw) put(pw, "mean", "w");
+    if (pw) put(pw, "mean", "w", this._pscale());
     const list = [...months.values()].sort((a, b) => a.t - b.t), now = Date.now() / 1000;
     list.forEach((m, i) => {
       const next = i + 1 < list.length ? list[i + 1].t : now;
@@ -1834,7 +1847,7 @@ class ProxonFwtBase extends HTMLElement {
       [this._t("g_circuit"), [t(this._t("pre_evaporator"), c.temp_pre_evaporator), t(this._t("evaporator"), c.temp_evaporator), t(this._t("post_preheat"), c.temp_post_preheat),
         t(this._t("pre_condenser"), c.temp_pre_condenser), t(this._t("condenser"), c.temp_condenser), t(this._t("compressor"), c.temp_compressor)]],
       [this._t("g_drive"), [n(this._t("compressor"), c.compressor_speed, "rpm"), n(this._t("supply_fan"), c.fan_speed_supply, "rpm"),
-        n(this._t("extract_fan"), c.fan_speed_extract, "rpm"), n(this._t("power_long"), this._powerId(), "W", (this._num(this._powerId()) || 0) % 1 ? 1 : 0)]],
+        n(this._t("extract_fan"), c.fan_speed_extract, "rpm"), this._pnum() === null ? null : [this._t("power_long"), `${this._fmt(this._pnum(), this._pnum() % 1 ? 1 : 0)} W`]]],
     ].map(([g, rows]) => [g, rows.filter(Boolean)]).filter(([, rows]) => rows.length);
     if (!groups.length) return "";
     return `<ha-card>${this._header("mdi:table", this._t("measure"))}<div class="mtgrid">${groups.map(([g, rows]) => `<div><div class="mg">${g}</div>
@@ -1849,7 +1862,7 @@ class ProxonFwtBase extends HTMLElement {
     // heat pump
     if (c.heat_pump_heating || c.compressor_speed) {
       const cool = this._on(c.heat_pump_cooling), heat = this._on(c.heat_pump_heating);
-      const rpm = this._num(c.compressor_speed), pw = this._num(this._powerId());
+      const rpm = this._num(c.compressor_speed), pw = this._pnum();
       const sub = [rpm === null ? "" : `${rpm.toLocaleString(lang)} rpm`, pw === null ? "" : `${this._fmt(pw, pw % 1 ? 1 : 0)} W`].filter(Boolean).join(" · ");
       const sw = c.cooling_enable ? `<div class="s sw">${this._t("cooling_enable")}<ha-switch data-act="coolsw" ${this._on(c.cooling_enable) ? "checked" : ""} ${this._ok(c.cooling_enable) ? "" : "disabled"}></ha-switch></div>` : "";
       const col = cool ? BLUE : heat ? GREEN : "var(--secondary-text-color)";
