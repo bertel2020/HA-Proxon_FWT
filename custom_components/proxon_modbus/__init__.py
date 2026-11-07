@@ -101,20 +101,25 @@ def _ws_settings(
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Serve the bundled dashboard card and load it in the frontend.
 
-    The card is a single JS file shipped with the integration, so it is
-    available as `custom:proxon-fwt-card` without adding a Lovelace resource.
-    The integration version is appended as a query string so the browser
-    fetches the new file after an update.
+    The card is a small set of ES modules shipped with the integration, so it
+    is available as `custom:proxon-fwt-card` without adding a Lovelace
+    resource. The whole `www` folder is served below a path that contains the
+    integration version, so the browser fetches every module anew after an
+    update (the modules import each other by relative path).
     """
     websocket_api.async_register_command(hass, _ws_settings)
     integration = await async_get_integration(hass, DOMAIN)
+    www = Path(__file__).parent / "www"
     await hass.http.async_register_static_paths(
         [
             StaticPathConfig(
-                CARD_URL,
-                str(Path(__file__).parent / "www" / CARD_FILENAME),
+                f"/{DOMAIN}/{integration.version}",
+                str(www),
                 cache_headers=False,
             ),
+            # Older installations may have added the card as a manual resource at the unversioned URL.
+            StaticPathConfig(CARD_URL, str(www / CARD_FILENAME), cache_headers=False),
+            StaticPathConfig(f"/{DOMAIN}/lib", str(www / "lib"), cache_headers=False),
             StaticPathConfig(
                 f"/{DOMAIN}/icon.png",
                 str(Path(__file__).parent / "brand" / "icon@2x.png"),
@@ -122,7 +127,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             ),
         ]
     )
-    module_url = f"{CARD_URL}?v={integration.version}"
+    module_url = f"/{DOMAIN}/{integration.version}/{CARD_FILENAME}"
     add_extra_js_url(hass, module_url)
     hass.data.setdefault(DOMAIN, {})["module_url"] = module_url
     return True

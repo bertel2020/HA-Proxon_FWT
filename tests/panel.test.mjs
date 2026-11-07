@@ -2,10 +2,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import vm from "node:vm";
 
-const FILE = new URL("../custom_components/proxon_modbus/www/proxon-fwt-card.js", import.meta.url);
-const src = fs.readFileSync(FILE, "utf8");
+const WWW = new URL("../custom_components/proxon_modbus/www/", import.meta.url);
+const textSrc = fs.readFileSync(new URL("lib/text.js", WWW), "utf8");
 
 class El {
   constructor() { this.attrs = new Set(); this.events = []; this.style = {}; }
@@ -16,28 +15,22 @@ class El {
   dispatchEvent(e) { this.events.push(e); return true; }
 }
 
-function load() {
-  const registry = {};
-  const ctx = {
-    HTMLElement: El, CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init && init.detail; } }, Event: class {},
-    customElements: { get: (n) => registry[n], define: (n, c) => { registry[n] = c; } },
-    window: { customCards: [] }, localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
-    console, Date, Math, JSON, Object, Array, Set, Map, String, Number, Promise,
-    document: { createElement: (tag) => ({ tag, textContent: "" }) },
-    ResizeObserver: class { observe() {} disconnect() {} }, requestAnimationFrame: (f) => f(), setTimeout, clearTimeout,
-  };
-  ctx.window.window = ctx.window;
-  vm.createContext(ctx);
-  vm.runInContext(src + "\n;this.__x = { ProxonFwtBase, esc, TEXT };", ctx);
-  return ctx.__x;
-}
+// The panel is a set of ES modules that expect a browser: provide the few globals they touch.
+const registry = {};
+Object.assign(globalThis, {
+  HTMLElement: El, CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init && init.detail; } }, Event: class {},
+  customElements: { get: (n) => registry[n], define: (n, c) => { registry[n] = c; } },
+  window: { customCards: [] }, localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+  document: { createElement: (tag) => ({ tag, textContent: "" }) },
+  ResizeObserver: class { observe() {} disconnect() {} },
+});
+globalThis.window.window = globalThis.window;
 
-const { ProxonFwtBase, esc, TEXT } = load();
+const { ProxonFwtBase, esc, TEXT } = await import(new URL("proxon-fwt-card.js", WWW).href);
 const make = () => { const e = new ProxonFwtBase(); e._update = () => {}; e._hass = { language: "de", states: {} }; return e; };
 
 test("TEXT has no duplicate keys within a language", () => {
-  const start = src.indexOf("const TEXT = {"), end = src.indexOf("const MODE_META");
-  const body = src.slice(start, end);
+  const body = textSrc.slice(textSrc.indexOf("export const TEXT = {"));
   const blocks = body.split(/\n  (?:de|en): \{/).slice(1);
   assert.equal(blocks.length, 2);
   for (const b of blocks) {
