@@ -78,7 +78,7 @@ const TEXT = {
     no_stats: "Für diesen Zeitraum liegen keine Langzeitstatistiken vor.",
     year: "Jahresübersicht", year_sub: "12 Monate", y_runtime: "Laufzeit", y_energy: "Energie", y_starts: "Starts", y_note: "Die Monatswerte entstehen aus der Langzeitstatistik und füllen sich mit der Zeit. Energie ist eine Näherung aus der mittleren Leistung.", y_filter: "Filter getauscht", y_month: "Monat",
     legend_cool: "kühler als Soll", legend_ok: "im Soll", legend_warm: "wärmer als Soll", close: "Schließen",
-    rv_cards: "Karten", rv_cmp: "Vergleich", rv_list: "Liste", rf_all: "Alle", rf_heat: "PTC aktiv", rf_dev: "Abweichung", rf_co2: "CO₂ hoch",
+    rv_cards: "Karten", rv_cmp: "Vergleich", rv_list: "Liste", rf_all: "Alle", rf_heat: "PTC aktiv", rf_ena: "PTC freigegeben", rf_dev: "Abweichung", rf_co2: "CO₂ hoch",
     rs_avg: "Ø Raumtemperatur", rs_heat: "PTC", rs_active: "aktiv", rs_enabled: "freigegeben", rs_co2: "CO₂ am höchsten", rs_rf: "Ø Feuchte", rs_none: "Keine Räume für diesen Filter.",
     st_cool: "Unter Soll", st_warm: "Über Soll", st_ok: "Im Soll", st_heat: "PTC heizt", r_t24: "Temperatur 24 h", r_ago: "vor 24 h", r_now: "jetzt", r_details: "Details",
     r_tapnote: "Raum antippen für Details", r_noh: "Kein Verlauf verfügbar", r_set: "Soll {0}°",
@@ -151,7 +151,7 @@ const TEXT = {
     no_stats: "No long-term statistics for this period.",
     year: "Yearly overview", year_sub: "12 months", y_runtime: "Runtime", y_energy: "Energy", y_starts: "Starts", y_note: "Monthly values come from the long-term statistics and fill up over time. Energy is estimated from the mean power.", y_filter: "Filter changed", y_month: "month",
     legend_cool: "cooler than target", legend_ok: "on target", legend_warm: "warmer than target", close: "Close",
-    rv_cards: "Cards", rv_cmp: "Compare", rv_list: "List", rf_all: "All", rf_heat: "PTC on", rf_dev: "Deviation", rf_co2: "High CO₂",
+    rv_cards: "Cards", rv_cmp: "Compare", rv_list: "List", rf_all: "All", rf_heat: "PTC on", rf_ena: "PTC enabled", rf_dev: "Deviation", rf_co2: "High CO₂",
     rs_avg: "Avg. room temperature", rs_heat: "PTC", rs_active: "on", rs_enabled: "enabled", rs_co2: "Highest CO₂", rs_rf: "Avg. humidity", rs_none: "No rooms match this filter.",
     st_cool: "Below target", st_warm: "Above target", st_ok: "On target", st_heat: "PTC heating", r_t24: "Temperature 24 h", r_ago: "24 h ago", r_now: "now", r_details: "Details",
     r_tapnote: "Tap a room for details", r_noh: "No history available", r_set: "Target {0}°",
@@ -1912,7 +1912,7 @@ class ProxonFwtPanel extends ProxonFwtBase {
     if (!d.rooms.length) return `<ha-card>${this._header("mdi:home-outline", this._t("rooms"))}<div class="note">${this._t("no_rooms")}</div></ha-card>`;
     this._ropen = this._ropen || new Set();
     const view = ["cards", "cmp", "list"].includes(this._rview) ? this._rview : "cards";
-    const filter = ["all", "heat", "dev", "co2"].includes(this._rfilter) ? this._rfilter : "all";
+    const filter = ["all", "heat", "ena", "dev", "co2"].includes(this._rfilter) ? this._rfilter : "all";
     const all = d.rooms.map((r, n) => [n, this._roomInfo(r)]);
     const temps = all.filter(([, i]) => i.cur != null), rfs = all.filter(([, i]) => i.rf != null), cos = all.filter(([, i]) => i.co2 != null);
     const avg = temps.length ? temps.reduce((a, [, i]) => a + i.cur, 0) / temps.length : null;
@@ -1923,11 +1923,11 @@ class ProxonFwtPanel extends ProxonFwtBase {
       ${sum("mdi:fire", CORAL, this._t("rs_heat"), all.filter(([, i]) => i.heats).length, ` ${this._t("rs_active")} · ${all.filter(([, i]) => i.ptcE && this._on(i.ptcE)).length} ${this._t("rs_enabled")}`)}
       ${top ? sum("mdi:molecule-co2", AMBER, this._t("rs_co2"), Math.round(top[1].co2), ` ppm · ${top[1].r.name}`) : ""}
       ${arf === null ? "" : sum("mdi:water-percent", "var(--primary-color)", this._t("rs_rf"), Math.round(arf), " %")}</div>`;
-    let rows = all.filter(([, i]) => filter === "all" || (filter === "heat" && i.heats) || (filter === "dev" && Math.abs(i.dev) > 0.3) || (filter === "co2" && i.co2 != null && i.co2 > 800));
+    let rows = all.filter(([, i]) => filter === "all" || (filter === "heat" && i.heats) || (filter === "ena" && i.ptcE && this._on(i.ptcE)) || (filter === "dev" && Math.abs(i.dev) > 0.3) || (filter === "co2" && i.co2 != null && i.co2 > 800));
     if (filter === "dev") rows = rows.sort((a, b) => Math.abs(b[1].dev) - Math.abs(a[1].dev));
     const seg = [["cards", "mdi:view-grid-outline"], ["cmp", "mdi:chart-bar"], ["list", "mdi:format-list-bulleted"]]
       .map(([k, ic]) => `<button class="${k === view ? "a" : ""}" data-act="rview" data-v="${k}" aria-pressed="${k === view}">${this._icon(ic)}${this._t(`rv_${k}`)}</button>`).join("");
-    const chips = [["all", ""], ["heat", "mdi:fire"], ["dev", "mdi:swap-vertical"], ["co2", "mdi:molecule-co2"]]
+    const chips = [["all", ""], ["heat", "mdi:fire"], ["ena", "mdi:fire-circle"], ["dev", "mdi:swap-vertical"], ["co2", "mdi:molecule-co2"]]
       .map(([k, ic]) => `<button class="fchip ${k === filter ? "a" : ""}" data-act="rfilter" data-v="${k}" aria-pressed="${k === filter}">${ic ? this._icon(ic) : ""}${this._t(`rf_${k}`)}</button>`).join("");
     const body = !rows.length ? `<div class="note" style="text-align:center;padding:18px">${this._t("rs_none")}</div>`
       : view === "cards" ? `<div class="rgrid" style="--rc:${this._roomCols(rows.length)}">${rows.map(([n, i]) => this._roomCard(n, i)).join("")}</div>`
