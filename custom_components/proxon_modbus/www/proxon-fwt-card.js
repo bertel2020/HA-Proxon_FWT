@@ -254,6 +254,8 @@ ha-card { padding: 14px 16px; display: block; }
 @container (max-width: 520px) { .kpi .ic { width: 30px; height: 30px; } .kpi .k { gap: 8px; } }
 .kpi .k { display: flex; gap: 10px; align-items: center; min-width: 0; }
 .kpi .k > div:last-child { min-width: 0; }
+.kpi .k.go { cursor: pointer; border-radius: 12px; } .kpi .k.go:hover .ic { filter: brightness(.95); outline: 1px solid color-mix(in srgb, var(--kc) 50%, transparent); }
+.spk { display: block; width: 110px; max-width: 100%; height: 22px; margin-top: 2px; }
 .kpi .lb { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kpi .ic { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none;
   background: color-mix(in srgb, var(--kc) 18%, transparent); color: var(--kc); }
@@ -725,18 +727,34 @@ class ProxonFwtBase extends HTMLElement {
 
   _sec_kpi(d) {
     const c = d.central;
-    const tile = (icon, color, label, value, unit = "") => value === null || value === undefined ? "" :
-      `<div class="k" style="--kc:${color}"><div class="ic">${this._icon(icon)}</div><div><div class="lb">${label}</div><div class="v">${value}${unit ? ` <small>${unit}</small>` : ""}</div></div></div>`;
+    // In the panel a tile opens the matching history; the heat recovery tile also carries a 24 h sparkline.
+    const panel = this instanceof ProxonFwtPanel;
+    const tile = (icon, color, label, value, unit = "", metric = "", extra = "") => value === null || value === undefined ? "" :
+      `<div class="k ${panel && metric ? "go" : ""}" style="--kc:${color}" ${panel && metric ? `data-act="kpi" data-v="${metric}" role="button" tabindex="0"` : ""}><div class="ic">${this._icon(icon)}</div><div><div class="lb">${label}</div><div class="v">${value}${unit ? ` <small>${unit}</small>` : ""}</div>${extra}</div></div>`;
     const eff = this._efficiency();
     const bypass = this._on(c.bypass_active);
     const power = this._num(this._powerId());
-    const html = tile("mdi:thermometer", CORAL, this._t("supply_t"), this._temp(c.temp_supply_air)) +
-      tile("mdi:percent-circle-outline", GREEN, this._t("efficiency"), bypass ? this._t("bypass_short") : eff === null ? null : `${eff} % <span title="${this._t("eff_info")}">${this._icon("mdi:information-outline", 'class="info"')}</span>`) +
+    const html = tile("mdi:thermometer", CORAL, this._t("supply_t"), this._temp(c.temp_supply_air), "", "temp") +
+      tile("mdi:percent-circle-outline", GREEN, this._t("efficiency"), bypass ? this._t("bypass_short") : eff === null ? null : `${eff} % <span title="${this._t("eff_info")}">${this._icon("mdi:information-outline", 'class="info"')}</span>`, "", "eff", this._effSpark(d)) +
       tile("mdi:flash", AMBER, this._t("power"), power === null ? null : this._fmt(power, power % 1 ? 1 : 0),
-        (this._state(this._powerId()) || { attributes: {} }).attributes.unit_of_measurement || "W") +
-      tile("mdi:weather-partly-cloudy", BLUE, this._t("outside"), this._temp(this._outdoorId()));
+        (this._state(this._powerId()) || { attributes: {} }).attributes.unit_of_measurement || "W", "power") +
+      tile("mdi:weather-partly-cloudy", BLUE, this._t("outside"), this._temp(this._outdoorId()), "", "temp");
     if (!html) return "";
     return `<ha-card>${this._header("mdi:gauge", this._t("kpi"))}<div class="kpiw"><div class="kpi">${html}</div></div></ha-card>`;
+  }
+
+  // Small 24 h curve of the heat recovery rate (shares its data with the history chart).
+  _effSpark(d) {
+    if (!(this instanceof ProxonFwtPanel)) return "";
+    const defs = this._metricDefs(d, "eff");
+    if (!defs.length) return "";
+    const ser = this._hget("s|24h|eff", () => this._loadSeries("24h", "eff", defs));
+    const pts = ser && ser[0] ? ser[0].pts : [];
+    if (pts.length < 3) return "";
+    const t1 = Date.now() / 1000, t0 = t1 - 86400, W = 100, H = 22;
+    const vs = pts.map((p) => p[1]), lo = Math.min(...vs, 50), hi = Math.max(...vs, 90);
+    const line = pts.map(([t, v]) => `${(((t - t0) / (t1 - t0)) * W).toFixed(1)},${(H - ((v - lo) / (hi - lo)) * (H - 2) - 1).toFixed(1)}`).join(" ");
+    return `<svg class="spk" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="${GREEN}" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="${line}"/></svg>`;
   }
 
   _sec_air(d) {
@@ -1800,6 +1818,7 @@ class ProxonFwtBase extends HTMLElement {
       case "ymetric": this._ymetric = v; this._sig = ""; this._update(); break;
       case "dismiss": this._dismissed = this._dismissed || {}; this._dismissed[v] = Date.now(); this._saveDismissed(); this._sig = ""; this._update(); break;
       case "undismiss": this._dismissed = {}; this._saveDismissed(); this._sig = ""; this._update(); break;
+      case "kpi": this._metric = v; this._tab = "history"; this._sig = ""; this._update(); if (this.scrollIntoView) this.scrollIntoView({ block: "start" }); break;
       case "tab": this._tab = v; this._sig = ""; this._update(); if (this.scrollIntoView) this.scrollIntoView({ block: "start" }); break;
       case "rview": this._rview = v; this._sig = ""; this._update(); break;
       case "rfilter": this._rfilter = v; this._sig = ""; this._update(); break;

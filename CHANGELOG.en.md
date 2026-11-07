@@ -19,6 +19,7 @@ All notable changes to this project are documented here. Versions follow the
 - **History with key values:** below the chart, min, max and mean per curve are shown, for power also the energy (kWh) over the chosen period.
 - **Compare with the previous period:** a switch in the history overlays the previous period (yesterday, last week, last month, last year) as a dashed curve.
 - **New "Heat recovery rate" sensor:** the heat recovery rate is now calculated in the integration (empty while the bypass is open) and has real long-term statistics. Card and panel use it; the history for 1 month and 1 year uses its statistics once available.
+- **Key figures with history:** the heat recovery tile shows a 24-hour curve; clicking a key figure (supply, heat recovery, power, outside) opens the matching history in the panel.
 - **Diagnosis redesigned:** three status tiles on top (heat pump, device filter, system error), the measurements across the full width below, and a "Runtime and starts" card (today / total).
 - **Own CO₂ and humidity sensors per room:** in the "Names and areas" step you can pick existing sensors from other devices for each room. They replace the unit's external inputs in the card and panel.
 - **Cooling mode in the system diagram:** in cooling mode the diagram reverses the refrigerant circuit (evaporator and condenser swap sides).
