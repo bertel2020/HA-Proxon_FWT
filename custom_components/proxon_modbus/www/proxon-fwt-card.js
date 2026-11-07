@@ -20,6 +20,7 @@ const TEXT = {
     off: "Aus", eco_summer: "Eco Sommer", eco_winter: "Eco Winter", comfort: "Komfort",
     furnace: "Ofenbetrieb", emergency: "Notbetrieb", frost_protection: "Einfrierschutz",
     commissioning: "Einregulierung", not_used: "Nicht belegt",
+    ms_off: "Aus", ms_eco_summer: "Sommer", ms_eco_winter: "Winter", ms_comfort: "Komfort", ms_furnace: "Ofen", operation: "Betrieb", fan_stage_l: "Lüfterstufe",
     d_off: "Anlage ausgeschaltet.",
     d_eco_summer: "Sparbetrieb im Sommer. Lüfterstufe frei wählbar.",
     d_eco_winter: "Sparbetrieb im Winter. Lüfterstufe frei wählbar.",
@@ -92,6 +93,7 @@ const TEXT = {
     off: "Off", eco_summer: "Eco summer", eco_winter: "Eco winter", comfort: "Comfort",
     furnace: "Stove mode", emergency: "Emergency", frost_protection: "Frost protection",
     commissioning: "Commissioning", not_used: "Not used",
+    ms_off: "Off", ms_eco_summer: "Summer", ms_eco_winter: "Winter", ms_comfort: "Comfort", ms_furnace: "Furnace", operation: "Operation", fan_stage_l: "Fan stage",
     d_off: "Unit switched off.",
     d_eco_summer: "Economy mode for summer. Fan stage can be chosen freely.",
     d_eco_winter: "Economy mode for winter. Fan stage can be chosen freely.",
@@ -190,7 +192,7 @@ const CSS = `
 :host { display: block; color: var(--primary-text-color); }
 * { box-sizing: border-box; }
 .ov { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 12px; align-items: start; }
-@media (max-width: 1180px) { .ov { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1180px) { .ov { grid-template-columns: minmax(0, 1fr); } .ov > .col:last-child { order: -1; } }
 .stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
 .top { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 12px; align-items: start; }
@@ -215,6 +217,19 @@ ha-card { padding: 14px 16px; display: block; }
 .banner.r { background: color-mix(in srgb, #db4437 16%, transparent); color: #c5392d; }
 .alerts { display: grid; gap: 8px; }
 .seg { display: grid; gap: 6px; }
+.opw { container-type: inline-size; }
+.lbl2 { font-size: 12px; color: var(--secondary-text-color); margin: 12px 0 6px; display: flex; gap: 8px; align-items: center; }
+.opw .lbl2:first-of-type { margin-top: 0; }
+.seg.cmp { background: var(--secondary-background-color); border-radius: 12px; padding: 4px; gap: 4px; }
+.seg.cmp button { display: flex; gap: 6px; align-items: center; justify-content: center; padding: 8px 4px; border-radius: 9px; background: transparent; white-space: nowrap; }
+.seg.cmp button ha-icon { display: inline-block; margin: 0; --mdc-icon-size: 18px; }
+.seg.cmp button.a { background: var(--card-background-color); box-shadow: 0 1px 3px #0002; border-color: transparent; color: var(--mc, var(--primary-color)); }
+.seg.cmp .ls { display: none; }
+@container (max-width: 560px) { .seg.cmp.mo button { flex-direction: column; gap: 2px; font-size: 12px; padding: 6px 2px; } .seg.cmp .lf { display: none; } .seg.cmp .ls { display: inline; } }
+.oinline { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-top: 12px; font-size: 13px; color: var(--secondary-text-color); }
+.oinline .rp { display: inline-flex; gap: 10px; align-items: center; } .oinline .tg { margin-left: auto; display: inline-flex; gap: 8px; align-items: center; color: var(--primary-text-color); }
+.tag { font-size: 11px; background: color-mix(in srgb, var(--amber, #e8a13a) 18%, transparent); border-radius: 99px; padding: 2px 8px; }
+
 .seg button { font: inherit; font-size: 13px; padding: 10px 4px 8px; border: 1.5px solid transparent; border-radius: 12px; cursor: pointer;
   background: var(--secondary-background-color); color: var(--primary-text-color); transition: background .15s, border-color .15s; }
 .seg button ha-icon { display: block; margin: 0 auto 3px; --mdc-icon-size: 24px; color: var(--mc, var(--secondary-text-color)); }
@@ -823,6 +838,66 @@ class ProxonFwtBase extends HTMLElement {
       <div style="margin-top:8px">${bar(c.fan_speed_supply, this._t("supply_fan"), "mdi:arrow-top-right")}${bar(c.fan_speed_extract, this._t("extract_fan"), "mdi:arrow-bottom-left")}</div>
       ${sw(c.fan_intensive, this._t("intensive"), "mdi:rocket-launch-outline", "intensive")}
       ${sw(c.fan_auto, this._t("fan_auto"), "mdi:fan-auto", "autosw")}${restore}</ha-card>`;
+  }
+
+  // Panel only: operating mode and fan stages in one card (the dashboard card keeps them as separate sections).
+  _sec_operation(d) {
+    const c = d.central;
+    if (!c.operating_mode && !c.fan_stage && !c.fan_auto && !c.fan_intensive) return "";
+    // operating mode
+    let modeHtml = "", desc = "", cur = null, detail = null, readonly = false;
+    if (c.operating_mode) {
+      const sel = this._state(c.operating_mode);
+      cur = sel && !BAD.includes(sel.state) ? sel.state : null;
+      detail = this._ok(c.operating_mode_state) ? this._state(c.operating_mode_state).state : null;
+      readonly = !cur && detail && !Object.keys(MODE_META).includes(detail);
+      const unavail = !!sel && sel.state === "unavailable";
+      const changeOk = c.mode_change_possible ? this._on(c.mode_change_possible) || !this._ok(c.mode_change_possible) : true;
+      const locked = readonly || unavail || !changeOk;
+      const opts = (sel && sel.attributes.options) || Object.keys(MODE_META);
+      const banner = readonly
+        ? `<div class="banner ${detail === "emergency" ? "r" : "w"}" style="margin-bottom:10px">${this._icon("mdi:alert-outline")}${this._t(detail)} – ${this._t("locked")}</div>` : "";
+      const buttons = opts.map((o) => {
+        const meta = MODE_META[o] || { icon: "mdi:cog", color: "#8a8f98" };
+        return this._btn(`data-act="mode" data-v="${o}"`, cur === o && !locked ? "a" : "",
+          `${this._icon(meta.icon)}<span class="lf">${this._t(o)}</span><span class="ls">${this._t(`ms_${o}`)}</span>`, locked, `--mc:${meta.color}`);
+      }).join("");
+      desc = readonly ? this._t("readonly") : cur ? this._t(`d_${cur}`) : "";
+      modeHtml = `${banner}<div class="seg cmp mo" style="grid-template-columns:repeat(${opts.length},1fr)">${buttons}</div>`;
+    }
+    // fan stages
+    let fanHtml = "", current = "";
+    if (c.fan_stage || c.fan_auto) {
+      const fsel = this._state(c.fan_stage);
+      const stageOk = !!fsel && !BAD.includes(fsel.state);
+      const autoOn = this._on(c.fan_auto);
+      const selectable = (n) => {
+        const k = n === 0 ? "fan_off_selectable" : `fan_stage_${n}_selectable`;
+        return !c[k] || !this._ok(c[k]) || this._on(c[k]);
+      };
+      let buttons = FAN_STAGES.map(([opt, , label], i) =>
+        this._btn(`data-act="fan" data-v="${opt}"`, stageOk && !autoOn && fsel.state === opt ? "a" : "", label, !stageOk || !selectable(i), `--mc:${BLUE}`)).join("");
+      buttons += this._btn(`data-act="fanauto"`, autoOn ? "a" : "", this._t("auto"), !this._ok(c.fan_auto), `--mc:${GREEN}`);
+      current = autoOn ? this._t("auto") : stageOk ? `${this._t("stage")} ${FAN_STAGES.find(([o]) => o === fsel.state)?.[2] ?? ""}` : "";
+      fanHtml = `<div class="lbl2">${this._t("fan_stage_l")}${!stageOk && c.fan_stage ? `<span class="tag">${this._t("fan_note")}</span>` : ""}</div>
+        <div class="seg cmp fs" style="grid-template-columns:repeat(6,1fr)">${buttons}</div>`;
+    }
+    const rpm = (id, ic) => this._num(id) === null ? "" : `<span>${this._icon(ic, 'class="info"')} ${this._num(id).toLocaleString(this._hass.language)}</span>`;
+    const rp = rpm(c.fan_speed_supply, "mdi:arrow-top-right") + rpm(c.fan_speed_extract, "mdi:arrow-bottom-left");
+    const intensive = c.fan_intensive ? `<span class="tg">${this._t("intensive")}<ha-switch data-act="intensive" ${this._on(c.fan_intensive) ? "checked" : ""} ${this._ok(c.fan_intensive) ? "" : "disabled"}></ha-switch></span>` : "";
+    const inline = rp || intensive ? `<div class="oinline">${rp ? `<span class="rp">${rp}<span>rpm</span></span>` : ""}${intensive}</div>` : "";
+    let restore = "";
+    if (c.fan_stage_restore) {
+      const rs = this._state(c.fan_stage_restore), pref = rs?.attributes?.preferred_stage;
+      const prefLabel = FAN_STAGES.find(([o]) => o === pref)?.[2];
+      restore = `<div class="row">${this._icon("mdi:fan-clock")}${this._t("fan_restore")}<span class="sp"><ha-switch data-act="restoresw" ${this._on(c.fan_stage_restore) ? "checked" : ""} ${this._ok(c.fan_stage_restore) ? "" : "disabled"}></ha-switch></span></div>
+        <div class="note" style="margin-top:2px">${this._t("fan_pref")}: ${prefLabel ? `${this._t("stage")} ${prefLabel}` : this._t("fan_pref_none")}</div>`;
+    }
+    const hp = this._on(c.heat_pump_cooling) ? this._t("hp_cooling") : this._on(c.heat_pump_heating) ? this._t("hp_heating") : this._t("hp_idle");
+    const right = [c.heat_pump_heating ? hp : "", current].filter(Boolean).join(" · ");
+    return `<ha-card class="opw">${this._header("mdi:tune-variant", this._t("operation"), right)}
+      ${c.operating_mode ? `<div class="lbl2">${this._t("mode")}</div>` : ""}${modeHtml}${fanHtml}${inline}
+      ${desc ? `<div class="note">${desc}</div>` : ""}${restore}</ha-card>`;
   }
 
   _sec_heatpump(d) {
@@ -1806,8 +1881,8 @@ class ProxonFwtPanel extends ProxonFwtBase {
     if (!d) {
       body = `<ha-card><div class="empty">${this._t("none")}</div></ha-card>`;
     } else if (tab === "overview") {
-      body = `<div class="stack">${this._sec_alerts(d)}${this._sec_insights(d)}${this._sec_mode(d)}
-        <div class="ov"><div class="col">${this._sec_schema(d)}</div><div class="col">${this._sec_kpi(d)}${this._sec_fan(d)}${this._sec_quick(d)}</div></div></div>`;
+      body = `<div class="stack">${this._sec_alerts(d)}${this._sec_insights(d)}
+        <div class="ov"><div class="col">${this._sec_schema(d)}</div><div class="col">${this._sec_operation(d)}${this._sec_kpi(d)}${this._sec_quick(d)}</div></div></div>`;
     } else if (tab === "rooms") {
       body = `<div class="stack">${this._sec_rooms(d)}</div>`;
     } else if (tab === "history") {
