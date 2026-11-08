@@ -177,9 +177,7 @@ export class ProxonFwtPanel extends ProxonFwtBase {
       : view === "cards" ? `<div class="rgrid" style="--rc:${this._roomCols(rows.length)}">${rows.map(([n, i]) => this._roomCard(n, i)).join("")}</div>`
       : view === "cmp" ? this._roomCmp(rows) : this._roomList(rows);
     return `<ha-card><div class="rtop"><div class="h" style="margin:0">${this._icon("mdi:home-outline")}${this._t("rooms")}</div><span class="grow"></span><div class="rseg" role="group">${seg}</div></div>
-      ${summary}<div class="rfil">${chips}<span class="grow"></span>
-      <button class="fchip" data-act="allroom" data-v="-1">${this._icon("mdi:thermometer-minus")}${this._t("all_down")}</button>
-      <button class="fchip" data-act="allroom" data-v="1">${this._icon("mdi:thermometer-plus")}${this._t("all_up")}</button></div>
+      ${summary}<div class="rfil">${chips}</div>
       ${body}<div class="rlegend"><span style="color:${BLUE}">${this._icon("mdi:arrow-down")}${this._t("legend_cool")}</span><span style="color:${GREEN}">${this._icon("mdi:check")}${this._t("legend_ok")}</span><span style="color:${CORAL}">${this._icon("mdi:arrow-up")}${this._t("legend_warm")}</span><span>${this._icon("mdi:gesture-tap")}${this._t("r_tapnote")}</span></div>${this._roomDialog(all)}</ha-card>`;
   }
 

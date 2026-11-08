@@ -211,7 +211,6 @@ svg .sh { font-size: 13px; font-weight: 500; }
   border: 1px solid var(--pbd); background: var(--card-background-color); color: var(--primary-text-color); }
 .fchip.dflt { border-color: color-mix(in srgb, var(--primary-color) 55%, var(--pbd)); }
 .fchip.a { background: color-mix(in srgb, var(--primary-color) 14%, var(--card-background-color)); border-color: var(--primary-color); color: var(--primary-color); }
-.rfil .grow { flex: 1; }
 .rsum { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 14px; }
 .rs { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; background: var(--secondary-background-color); border: 1px solid var(--pbd); }
 .rs .ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex: none;

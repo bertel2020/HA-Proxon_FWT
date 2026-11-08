@@ -86,13 +86,6 @@ export class InteractionMethods {
       case "rptc": call("switch", "toggle", { entity_id: this._d.rooms[Number(v)].ents.ptc_enable }); break;
       case "boost": this._toggleBoost(); break;
       case "boostmin": { const c = this._d.central; if (c.boost) call("proxon_modbus", "start_boost", { entity_id: c.boost, minutes: Number(v) }); break; }
-      case "allroom": this._write(async () => {
-        for (const r of this._d.rooms) {
-          const a = (this._state(r.climate) || {}).attributes || {};
-          if (a.temperature == null) continue;
-          await h.callService("climate", "set_temperature", { entity_id: r.climate, temperature: Math.min(a.max_temp ?? 30, Math.max(a.min_temp ?? 18, a.temperature + Number(v))) });
-        }
-      }); break;
       case "filterchg": if (c.filter_changed && window.confirm(this._t("f_confirm"))) call("button", "press", { entity_id: c.filter_changed }); break;
       case "restoresw": call("switch", "toggle", { entity_id: c.fan_stage_restore }); break;
       case "intensive": call("switch", "toggle", { entity_id: c.fan_intensive }); break;
