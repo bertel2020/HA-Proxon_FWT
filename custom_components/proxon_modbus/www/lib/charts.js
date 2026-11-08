@@ -49,7 +49,8 @@ export class ChartsMethods {
       return s1 > s0 ? `<rect x="${x(s0).toFixed(1)}" y="${pt}" width="${Math.max(1, x(s1) - x(s0)).toFixed(1)}" height="${H - pt - pb}" fill="${BLUE}" opacity=".13"/>` : "";
     }).join("");
     const lines = series.map((s) => `<polyline fill="none" stroke="${s.color}" stroke-width="${s.prev ? 1.4 : 1.8}" ${s.prev ? 'stroke-dasharray="5 4" opacity=".55"' : ""} stroke-linejoin="round" points="${s.pts.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>`).join("");
-    const legend = series.map((s) => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join("");
+    // curves with their own stat row are named there; the legend keeps only the rest (previous period, bands)
+    const legend = series.filter((s) => s.prev || !s.pts.length).map((s) => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join("");
     const showBands = o.bands && this._hp() && this._hp().iv.length;
     // min / max / mean per curve (for power additionally the energy as the integral of the curve)
     const nf = (v) => v.toLocaleString(lang, { maximumFractionDigits: Math.abs(v) < 100 ? 1 : 0 });
@@ -59,16 +60,17 @@ export class ChartsMethods {
       if (o.energy) {
         let wh = 0;
         for (let i = 1; i < s.pts.length; i++) wh += ((s.pts[i][1] + s.pts[i - 1][1]) / 2) * ((s.pts[i][0] - s.pts[i - 1][0]) / 3600);
-        kwh = `<span>Σ <b>${nf(wh / 1000)} kWh</b></span>`;
+        kwh = `<span class="v"><b>${nf(wh / 1000)}</b> kWh</span>`;
       }
-      return `<div class="hst"><span class="n"><i style="background:${s.color}"></i>${s.label}</span><span>${this._t("st_min")} <b>${nf(Math.min(...v))}${o.unit}</b></span><span>${this._t("st_max")} <b>${nf(Math.max(...v))}${o.unit}</b></span><span>Ø <b>${nf(v.reduce((a, b) => a + b, 0) / v.length)}${o.unit}</b></span>${kwh}</div>`;
+      return `<div class="hst"><span class="n"><i style="background:${s.color}"></i>${s.label}</span><span class="v"><b>${nf(Math.min(...v))}</b>${o.unit}</span><span class="v"><b>${nf(Math.max(...v))}</b>${o.unit}</span><span class="v"><b>${nf(v.reduce((a, b) => a + b, 0) / v.length)}</b>${o.unit}</span>${kwh}</div>`;
     }).join("");
+    const statHead = statRows ? `<div class="hst hh"><span class="n"></span><span class="v">${this._t("st_min")}</span><span class="v">${this._t("st_max")}</span><span class="v">Ø</span>${o.energy ? '<span class="v">Σ</span>' : ""}</div>` : "";
     this._cm = { W, H, pl, pr, pt, pb, t0, t1, lo, hi, series, unit: o.unit, range: o.range, x, y };
     return `<div class="chw"><svg class="ch" style="max-width:100%;height:auto;touch-action:pan-y" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("history")}">
       ${bands}${byBands}${grid}${lines}${xt}<line class="xl" y1="${pt}" y2="${H - pb}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/><g class="xd"></g>
       <rect class="ov" x="${pl}" y="${pt}" width="${W - pl - pr}" height="${H - pt - pb}" fill="transparent"/></svg><div class="tip" style="display:none"></div></div>
       <div class="legend">${legend}${showBands ? `<span><i style="background:#3fa660;opacity:.4"></i>${this._t("hp_runs")}</span>` : ""}${o.bypass && o.bypass.length ? `<span><i style="background:${BLUE};opacity:.4"></i>${this._t("bypass_open")}</span>` : ""}</div>
-      <div class="hsts">${statRows}</div>`;
+      <div class="hsts" style="--c:${o.energy ? 4 : 3}">${statHead}${statRows}</div>`;
   }
 
   // Hover / touch tooltip for bar charts and sparklines: elements with data-tip="title|value".

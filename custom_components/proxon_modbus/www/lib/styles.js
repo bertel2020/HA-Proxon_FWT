@@ -172,9 +172,13 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .lbl2 small { font-size: 11px; }
 .mchips { display: flex; gap: 6px; flex-wrap: wrap; margin: -2px 0 10px; }
 .chw { position: relative; }
-.hsts { margin-top: 8px; display: grid; gap: 4px; font-size: 12.5px; color: var(--secondary-text-color); }
-.hst { display: flex; flex-wrap: wrap; gap: 4px 14px; } .hst .n { min-width: 120px; color: var(--primary-text-color); } .hst b { font-weight: 600; color: var(--primary-text-color); }
-.hst i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.hsts { margin-top: 10px; display: grid; gap: 2px; font-size: 13px; color: var(--secondary-text-color); border-top: 1px solid var(--divider-color); padding-top: 6px; }
+.hst { display: grid; grid-template-columns: minmax(90px, 1.4fr) repeat(var(--c, 3), minmax(0, 1fr)); align-items: baseline; gap: 0 8px; padding: 4px 6px; border-radius: 8px; }
+.hst:not(.hh):hover { background: var(--secondary-background-color); }
+.hst .n { color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hst .v { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; } .hst b { font-weight: 600; color: var(--primary-text-color); }
+.hst.hh { padding-top: 0; padding-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; opacity: .8; }
+.hst i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
 .tip { position: absolute; top: 4px; pointer-events: none; z-index: 2; font-size: 12px; padding: 6px 10px; border-radius: 8px; white-space: nowrap;
   background: var(--card-background-color); border: 1px solid var(--divider-color); box-shadow: 0 2px 8px rgba(0,0,0,.18); }
 .tip b { font-weight: 600; } .tip > b { display: block; margin-bottom: 2px; }
