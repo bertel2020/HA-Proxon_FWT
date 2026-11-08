@@ -271,6 +271,7 @@ svg .sh { font-size: 13px; font-weight: 500; }
   .rc .rb { flex-direction: row; justify-content: space-around; } .ring { width: 118px; height: 118px; }
   .crow, .cscale { grid-template-columns: 96px minmax(0, 1fr) 66px; gap: 8px; } .crow .v small { display: none; }
   .rsum { grid-template-columns: 1fr 1fr; }
+  .rs { padding: 10px 12px; border-left: 3px solid var(--c); } .rs .ic { display: none; }
 }
 .rlegend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--secondary-text-color); margin: 10px 0 0; align-items: center; }
 .rlegend span { display: inline-flex; gap: 4px; align-items: center; } .rlegend ha-icon { --mdc-icon-size: 14px; }
