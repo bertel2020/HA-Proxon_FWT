@@ -5,6 +5,11 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
+## Unreleased
+
+**Changed**
+- **History:** min, max and average are shown as an aligned table with a header row below the chart (right-aligned figures, plus Σ in kWh for power). The legend no longer repeats the curves and only lists heat pump, bypass and previous period.
+
 ## 2.2.0 – 2026-11-08
 
 **Changed**

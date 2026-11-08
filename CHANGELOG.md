@@ -6,6 +6,11 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## Unveröffentlicht
+
+**Geändert**
+- **Verlauf:** Min, Max und Ø stehen als ausgerichtete Tabelle mit Kopfzeile unter dem Diagramm (Zahlen rechtsbündig, bei Leistung zusätzlich Σ in kWh). Die Legende zeigt die Kurven nicht mehr doppelt, sondern nur noch Wärmepumpe, Bypass und Vorzeitraum.
+
 ## 2.2.0 – 2026-11-08
 
 **Geändert**
