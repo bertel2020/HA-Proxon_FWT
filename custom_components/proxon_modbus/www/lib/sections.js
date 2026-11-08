@@ -302,7 +302,7 @@ export class SectionsMethods {
       const rs = this._state(c.fan_stage_restore), pref = rs?.attributes?.preferred_stage;
       const prefLabel = FAN_STAGES.find(([o]) => o === pref)?.[2];
       restore = `<div class="row">${this._icon("mdi:fan-clock")}${this._t("fan_restore")}<span class="sp"><ha-switch data-act="restoresw" ${this._on(c.fan_stage_restore) ? "checked" : ""} ${this._ok(c.fan_stage_restore) ? "" : "disabled"}></ha-switch></span></div>
-        <div class="note" style="margin-top:2px">${this._t("fan_pref")}: ${prefLabel ? `${this._t("stage")} ${prefLabel}` : this._t("fan_pref_none")}</div>`;
+        <div class="note rsub">${this._t("fan_pref")}: ${prefLabel ? `${this._t("stage")} ${prefLabel}` : this._t("fan_pref_none")}</div>`;
     }
     const hp = this._on(c.heat_pump_cooling) ? this._t("hp_cooling") : this._on(c.heat_pump_heating) ? this._t("hp_heating") : this._t("hp_idle");
     const right = [c.heat_pump_heating ? hp : "", current].filter(Boolean).join(" · ");

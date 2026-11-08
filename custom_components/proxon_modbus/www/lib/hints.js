@@ -100,7 +100,7 @@ export class HintsMethods {
       note = this._t(mode === "intensive" ? "boost_d_i" : "boost_d_s");
       body = `<button class="fchip ${active ? "a" : ""}" data-act="boost">${this._icon(active ? "mdi:stop" : "mdi:play")}${this._t(active ? "boost_stop" : "boost_go")}</button>`;
     }
-    return `<div class="lbl2">${withTitle ? this._t("boost") : ""}<small>${note}</small></div><div class="bch">${body}</div>`;
+    return `<div ${withTitle ? 'class="bblk"' : ""}><div class="lbl2">${withTitle ? `<b>${this._t("boost")}</b>` : ""}<small>${note}</small></div><div class="bch">${body}</div></div>`;
   }
 
   // Own card for the dashboard card (section `quick`); the panel shows the same block inside "Operation".

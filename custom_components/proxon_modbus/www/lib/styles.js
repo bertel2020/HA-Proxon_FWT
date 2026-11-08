@@ -73,6 +73,10 @@ ha-card { padding: 14px 16px; display: block; border: 1px solid var(--ha-card-bo
 .kpi .ic ha-icon { --mdc-icon-size: 20px; }
 .kpi .v { font-size: 22px; font-weight: 500; line-height: 1.15; }
 .kpi .v small { font-size: 12px; color: var(--secondary-text-color); font-weight: 400; }
+.rsub { margin: 0 0 4px; padding-left: 26px; }
+.bblk { margin-top: 12px; padding-top: 4px; border-top: 1px solid var(--divider-color); }
+.bblk .lbl2 { margin-top: 10px; }
+.bblk .lbl2 b { font-weight: 500; color: var(--primary-text-color); font-size: 13px; }
 .note { font-size: 12px; color: var(--secondary-text-color); margin-top: 8px; }
 .hp { display: flex; align-items: center; gap: 16px; }
 .big { font-size: 26px; font-weight: 500; }
