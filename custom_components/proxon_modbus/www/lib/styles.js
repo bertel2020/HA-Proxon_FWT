@@ -275,6 +275,9 @@ svg .sh { font-size: 13px; font-weight: 500; }
   .ins { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 12px; row-gap: 8px; align-items: start; }
   .ins > ha-icon { grid-column: 1; grid-row: 1; margin-top: 2px; } .ins .it { grid-column: 2; grid-row: 1; } .ins .x { grid-column: 3; grid-row: 1; margin-top: -4px; }
   .ins .vbtn { grid-column: 2 / -1; grid-row: 2; justify-self: start; }
+  .h .r.rng { width: 100%; margin-left: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); justify-content: stretch; }
+  .h .r.rng .vbtn { padding: 6px 4px; justify-content: center; }
+  .h .r.rng .vbtn[data-act="hcmp"] { grid-column: 1 / -1; grid-row: 2; justify-self: start; padding: 5px 12px; }
 }
 .rlegend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--secondary-text-color); margin: 10px 0 0; align-items: center; }
 .rlegend span { display: inline-flex; gap: 4px; align-items: center; } .rlegend ha-icon { --mdc-icon-size: 14px; }
