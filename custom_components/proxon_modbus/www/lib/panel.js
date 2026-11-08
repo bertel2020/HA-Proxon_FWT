@@ -192,7 +192,7 @@ export class ProxonFwtPanel extends ProxonFwtBase {
       .map(([k, i]) => `<button class="tabbtn ${k === tab ? "a" : ""}" role="tab" aria-selected="${k === tab}" data-act="tab" data-v="${k}">${this._icon(i)}${this._t(`tab_${k}`)}${warn(k) ? `<span class="badge">${warn(k)}</span>` : ""}</button>`).join("");
     const head = `<div class="bar-top">
       <button class="round menu" data-act="menu" aria-label="Menu">${this._icon("mdi:menu")}</button>
-      <div class="brand"><span class="logo"><img src="/proxon_modbus/icon.png" alt="" width="30" height="30"></span><div class="bt"><h1>Proxon FWT</h1><div class="sub">${this._subline(d)}</div></div></div><div class="grow"></div>
+      <div class="brand"><span class="logo"><img src="/proxon_modbus/icon.png" alt="" width="30" height="30"></span><h1>Proxon FWT</h1></div><div class="grow"></div><div class="hchips">${this._headChips(d)}</div>
 </div>
       <nav class="tabs" role="tablist">${tabs}</nav>`;
     let body;

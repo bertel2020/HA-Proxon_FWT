@@ -3,20 +3,22 @@ import { BLUE, GREEN, BAD } from "./constants.js";
 export class PanelSectionsMethods {
   // ---- panel-only sections ---------------------------------------------
 
-  _subline(d) {
+  // Status of the heat pump and the operating mode as two quiet chips on the right of the header.
+  _headChips(d) {
     if (!d) return "";
     const c = d.central, st = c.heat_pump_heating && this._state(c.heat_pump_heating);
     const mode = this._state(c.operating_mode);
-    if (mode && mode.state === "unavailable") return `<span class="dot" style="--dc:#db4437"></span><b>${this._t("live_lost")}</b>`;
+    if (mode && mode.state === "unavailable") return `<span class="hchip s" style="--dc:#db4437"><span class="dot"></span>${this._t("live_lost")}</span>`;
     const cool = this._on(c.heat_pump_cooling), heat = this._on(c.heat_pump_heating);
-    const label = cool ? this._t("hp_cooling") : heat ? this._t("hp_heating") : this._t("hp_idle");
+    const label = this._t(cool ? "hd_cool" : heat ? "hd_heat" : "hd_idle");
     const modeKey = mode && !BAD.includes(mode.state) ? mode.state : this._ok(c.operating_mode_state) ? this._state(c.operating_mode_state).state : null;
     let since = "";
     if ((cool || heat) && st && st.last_changed) {
       const mins = Math.max(0, Math.round((Date.now() - Date.parse(st.last_changed)) / 60000));
       since = mins >= 60 ? `${Math.floor(mins / 60)} h ${mins % 60} min` : `${mins} min`;
     }
-    return `<span class="dot" style="--dc:${cool ? BLUE : heat ? GREEN : "#8a8f98"}"></span><b>${label}</b>${modeKey ? `<span class="sep">·</span>${this._t(modeKey)}` : ""}${since ? `<span class="sep hm">·</span><span class="hm">${this._t("since")} ${since}</span>` : ""}`;
+    const status = `<span class="hchip s" style="--dc:${cool ? BLUE : heat ? GREEN : "#8a8f98"}"><span class="dot"></span>${label}${since ? `<small class="hm">${since}</small>` : ""}</span>`;
+    return status + (modeKey ? `<span class="hchip">${this._t(modeKey)}</span>` : "");
   }
 
   _insightsAll(d) {

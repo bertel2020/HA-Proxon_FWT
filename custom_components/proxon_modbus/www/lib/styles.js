@@ -149,10 +149,13 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .logo { width: 38px; height: 38px; border-radius: 11px; background: #fff; display: grid; place-items: center; flex: none; border: 1px solid var(--divider-color); overflow: hidden; }
 .logo img { width: 30px; height: 30px; display: block; }
-.bt h1 { font-size: 20px; font-weight: 500; margin: 0; line-height: 1.2; }
-.sub { font-size: 13px; color: var(--secondary-text-color); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.sub b { font-weight: 500; color: var(--primary-text-color); }
-.sub .sep { opacity: .5; }
+.brand h1 { font-size: 20px; font-weight: 500; margin: 0; line-height: 1.2; }
+.hchips { display: flex; gap: 8px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+.hchip { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; padding: 5px 12px; border-radius: 99px; white-space: nowrap;
+  border: 1px solid var(--divider-color); color: var(--primary-text-color); }
+.hchip.s { font-weight: 500; background: color-mix(in srgb, var(--dc) 14%, transparent); border-color: color-mix(in srgb, var(--dc) 38%, transparent); }
+.hchip small { font-size: 12px; font-weight: 400; color: var(--secondary-text-color); }
+.hchip small::before { content: "·"; margin-right: 7px; opacity: .6; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dc, #8a8f98); flex: none; }
 .ins { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 12px; border-left: 4px solid var(--ic);
   background: color-mix(in srgb, var(--ic) 12%, transparent); }
@@ -291,7 +294,9 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
   .badge { position: absolute; top: 2px; left: 55%; }
   .hm { display: none; }
   .bar-top .vbtn { font-size: 0; padding: 6px 8px; gap: 0; }
-  .bt h1 { font-size: 18px; }
+  .brand h1 { font-size: 18px; }
+  .bar-top { flex-wrap: wrap; row-gap: 8px; }
+  .hchips { width: 100%; justify-content: flex-start; }
 }
 :host([narrow]) .menu { display: inline-flex; }
 `;
