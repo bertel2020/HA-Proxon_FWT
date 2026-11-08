@@ -96,3 +96,24 @@ test("the dashboard card renders all sections, in German and English", async () 
   en.hass = { ...hass, language: "en" };
   check(await render(en, () => {}));
 });
+
+test("the hint badge sits on the Diagnostics tab, where the hints are listed", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = hass; // room 3 has 1400 ppm CO2: a warning hint
+  const html = await render(panel, () => { panel._tab = "overview"; });
+  const badged = html.split('<button class="tabbtn').slice(1).filter((b) => b.includes('class="badge"')).map((b) => /data-v="(\w+)"/.exec(b)[1]);
+  assert.deepEqual(badged, ["diag"]);
+  const diag = await render(panel, () => { panel._tab = "diag"; });
+  assert.ok(diag.includes('class="ins w"'));
+});
+
+test("boost ventilation sits in the Operation card; there is no quick-actions card or all-rooms action", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = hass;
+  const html = await render(panel, () => { panel._tab = "overview"; });
+  const op = html.slice(html.indexOf('class="opw"'));
+  assert.ok(op.includes('data-act="boostmin"'), "duration chips in the Operation card");
+  assert.ok(!html.includes("Schnellaktionen"));
+  const rooms = await render(panel, () => { panel._tab = "rooms"; });
+  assert.ok(!rooms.includes('data-act="allroom"'));
+});

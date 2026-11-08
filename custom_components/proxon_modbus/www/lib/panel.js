@@ -185,7 +185,7 @@ export class ProxonFwtPanel extends ProxonFwtBase {
     const d = this._d;
     const tab = ["overview", "rooms", "history", "diag"].includes(this._tab) ? this._tab : "overview";
     const bad = d ? this._insights(d).filter((i) => i.lvl === "r" || i.lvl === "w") : [];
-    const warn = (k) => bad.filter((i) => i.tab === k).length; // each hint counts on the tab it leads to
+    const warn = (k) => (k === "diag" ? Math.min(bad.length, 3) : 0); // the hints live in Diagnostics, so the badge sits there (3 are shown)
     const tabs = [["overview", "mdi:view-dashboard-outline"], ["rooms", "mdi:home-outline"], ["history", "mdi:chart-line"], ["diag", "mdi:stethoscope"]]
       .map(([k, i]) => `<button class="tabbtn ${k === tab ? "a" : ""}" role="tab" aria-selected="${k === tab}" data-act="tab" data-v="${k}">${this._icon(i)}${this._t(`tab_${k}`)}${warn(k) ? `<span class="badge">${warn(k)}</span>` : ""}</button>`).join("");
     const head = `<div class="bar-top">
