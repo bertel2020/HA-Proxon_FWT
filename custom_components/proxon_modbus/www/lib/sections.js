@@ -314,7 +314,6 @@ export class SectionsMethods {
   _sec_heatpump(d) {
     const c = d.central;
     const rpm = this._num(c.compressor_speed);
-    const powerId = this._powerId();
     const power = this._pnum();
     if (rpm === null && power === null && !c.heat_pump_heating) return "";
     const frac = rpm === null ? 0 : Math.min(1, rpm / (this._config.max_compressor_rpm || 6000));

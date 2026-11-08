@@ -109,7 +109,7 @@ export class HintsMethods {
   }
 
   _sec_measure(d) {
-    const c = d.central, lang = this._hass.language;
+    const c = d.central;
     const t = (label, id) => this._ok(id) ? [label, this._temp(id)] : null;
     const n = (label, id, unit, dg = 0) => this._ok(id) && this._num(id) !== null ? [label, `${this._fmt(this._num(id), dg)} ${unit}`] : null;
     const groups = [
@@ -166,8 +166,6 @@ export class HintsMethods {
       tiles.push(tile(bad ? "mdi:alert-circle-outline" : "mdi:check-circle-outline", bad ? "#db4437" : GREEN, this._t("error"), bad ? this._t("has_error") : this._t("no_error"), chg, byp));
     }
     // runtime and starts
-    const hv = (id) => this._num(id) === null ? null : `${this._fmt(this._num(id), 1)} h`;
-    const iv0 = (id) => this._num(id) === null ? null : this._fmt(this._num(id), 0);
     const st = (icon, color, label, val, unit) => val === null ? "" : `<div class="rs" style="--c:${color}"><span class="ic">${this._icon(icon)}</span><div><small>${label}</small><b>${val}<span>${unit}</span></b></div></div>`;
     const sv = (id, dg) => this._num(id) === null ? null : this._fmt(this._num(id), dg);
     const stHtml = st("mdi:clock-outline", GREEN, this._t("rt_today"), sv(c.hp_runtime_today, 1), " h") + st("mdi:counter", BLUE, this._t("starts_today"), sv(c.hp_starts_today, 0), "×") +
