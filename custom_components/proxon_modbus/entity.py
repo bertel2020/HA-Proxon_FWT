@@ -3,7 +3,7 @@
 Entities attach to one of two Home Assistant devices: a single central
 device for the FWT unit itself (device-level sensors, switches, selects),
 and one device per configured room (climate, PTC state/enable, mid-room
-temperature), linked to the central device via `via_device` so they show
+temperature), linked to the central device (`via_device_id`) so they show
 up grouped underneath it.
 """
 from __future__ import annotations
@@ -25,15 +25,19 @@ def central_device_info(entry_id: str, device_name: str) -> DeviceInfo:
     )
 
 
-def room_device_info(entry_id: str, room_index: int, room_name: str) -> DeviceInfo:
+def room_device_info(
+    entry_id: str, room_index: int, room_name: str, central_device_id: str | None
+) -> DeviceInfo:
     """DeviceInfo for a single room's own device, linked to the central one."""
-    return DeviceInfo(
+    info = DeviceInfo(
         identifiers={(DOMAIN, f"{entry_id}_room_{room_index}")},
         name=room_name,
         manufacturer=MANUFACTURER,
         model=MODEL,
-        via_device=(DOMAIN, entry_id),
     )
+    if central_device_id is not None:
+        info["via_device_id"] = central_device_id
+    return info
 
 
 class ProxonEntity(CoordinatorEntity[ProxonModbusCoordinator]):
@@ -87,7 +91,7 @@ class ProxonRoomEntity(ProxonEntity):
 
     Each room gets its own Home Assistant device (named after the room) so
     its entities are grouped separately from the FWT's central functions,
-    linked back to the central device via `via_device`.
+    linked back to the central device (`via_device_id`).
     """
 
     def __init__(
@@ -102,6 +106,6 @@ class ProxonRoomEntity(ProxonEntity):
             coordinator,
             entry_id,
             unique_id_suffix,
-            room_device_info(entry_id, room_index, room_name),
+            room_device_info(entry_id, room_index, room_name, coordinator.central_device_id),
         )
         self._room_index = room_index

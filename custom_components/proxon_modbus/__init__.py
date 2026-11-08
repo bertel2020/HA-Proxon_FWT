@@ -9,7 +9,7 @@ from homeassistant.components.frontend import add_extra_js_url, async_remove_pan
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.components.modbus import async_get_unit
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
+from homeassistant.const import CONF_NAME, Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv, device_registry as dr, entity_platform, entity_registry as er
 from homeassistant.helpers.storage import Store
@@ -40,6 +40,7 @@ from .const import (
     DOMAIN,
 )
 from .coordinator import ProxonModbusCoordinator
+from .entity import central_device_info
 from .hub import ProxonModbusHub, params_from_entry_data
 
 PLATFORMS: list[Platform] = [
@@ -75,13 +76,13 @@ def _ws_settings(
     registry = dr.async_get(hass)
     result = []
     for entry in hass.config_entries.async_loaded_entries(DOMAIN):
-        device = registry.async_get_device(identifiers={(DOMAIN, entry.entry_id)})
+        device = registry.async_get_device_by_identifier((DOMAIN, entry.entry_id), entry.entry_id)
         rooms = []
         for kind, key in (("co2", CONF_ROOM_CO2_ENTITIES), ("rf", CONF_ROOM_RF_ENTITIES)):
             for i, ent in enumerate(entry.options.get(key, [])):
                 if not ent:
                     continue
-                room_dev = registry.async_get_device(identifiers={(DOMAIN, f"{entry.entry_id}_room_{i}")})
+                room_dev = registry.async_get_device_by_identifier((DOMAIN, f"{entry.entry_id}_room_{i}"), entry.entry_id)
                 if room_dev:
                     rooms.append({"device_id": room_dev.id, kind: ent})
         result.append(
@@ -181,6 +182,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bo
     await coordinator.async_load_stats()
     await coordinator.async_config_entry_first_refresh()
 
+    # The central device is created first so the room devices can be linked to it by id.
+    central = dr.async_get(hass).async_get_or_create(
+        config_entry_id=entry.entry_id,
+        **central_device_info(entry.entry_id, data[CONF_NAME]),
+    )
+    coordinator.central_device_id = central.id
+
     entry.runtime_data = coordinator
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
@@ -232,8 +240,8 @@ def _apply_room_areas(hass: HomeAssistant, entry: ProxonConfigEntry) -> None:
     for index, area_id in enumerate(entry.options.get(CONF_ROOM_AREAS, [])):
         if not area_id:
             continue
-        device = registry.async_get_device(
-            identifiers={(DOMAIN, f"{entry.entry_id}_room_{index}")}
+        device = registry.async_get_device_by_identifier(
+            (DOMAIN, f"{entry.entry_id}_room_{index}"), entry.entry_id
         )
         if device is not None and device.area_id != area_id:
             registry.async_update_device(device.id, area_id=area_id)

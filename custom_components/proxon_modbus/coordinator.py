@@ -139,6 +139,8 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
             update_interval=timedelta(seconds=scan_interval),
         )
         self.hub = hub
+        # Registry id of the unit's central device; room devices are linked to it (set during setup).
+        self.central_device_id: str | None = None
         self.num_rooms = num_rooms
         self.num_co2_sensors = num_co2_sensors
         self.num_rf_sensors = num_rf_sensors

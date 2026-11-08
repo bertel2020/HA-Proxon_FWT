@@ -12,11 +12,11 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import (
-    CONCENTRATION_PARTS_PER_MILLION,
     CONF_NAME,
     PERCENTAGE,
     REVOLUTIONS_PER_MINUTE,
     UnitOfPower,
+    UnitOfRatio,
     UnitOfTime,
     UnitOfTemperature,
 )
@@ -273,7 +273,7 @@ async def async_setup_entry(
                 device_name,
                 key=f"co2_{i}",
                 name=name,
-                unit=CONCENTRATION_PARTS_PER_MILLION,
+                unit=UnitOfRatio.PARTS_PER_MILLION,
                 device_class=SensorDeviceClass.CO2,
                 value_fn=lambda d, idx=i: d.co2.get(idx),
                 block=BLOCK_CO2,
@@ -493,7 +493,7 @@ class ProxonExternalSensor(ProxonEntity, SensorEntity):
         room_name: str | None = None,
     ) -> None:
         device_info = (
-            room_device_info(entry_id, room_index, room_name)
+            room_device_info(entry_id, room_index, room_name, coordinator.central_device_id)
             if room_index is not None
             else central_device_info(entry_id, device_name)
         )
