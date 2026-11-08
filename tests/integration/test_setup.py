@@ -1,13 +1,16 @@
 """Setting the integration up and taking it down again: devices, entities, panel, served frontend files, storage."""
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from homeassistant.components import frontend
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 
 from custom_components.proxon_modbus.const import CONF_CO2_NAMES, CONF_NUM_CO2_SENSORS, DOMAIN
 
-VERSION = "2.1.0"
+VERSION = json.loads((Path(__file__).resolve().parents[2] / "custom_components" / "proxon_modbus" / "manifest.json").read_text())["version"]
 
 
 async def test_setup_creates_devices_and_entities(hass, setup_integration):

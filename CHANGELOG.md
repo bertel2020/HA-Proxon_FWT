@@ -6,6 +6,32 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 2.2.0 – 2026-11-08
+
+**Geändert**
+- **Seitenpanel, Kopf:** Links Logo und Titel, rechts zwei ruhige Chips: der Zustand der Wärmepumpe („Heizt“, „Kühlt“, „Bereit“, mit der Dauer daneben) und die Betriebsart. Bei Verbindungsverlust wird der Chip rot. Auf dem Handy stehen die Chips unter dem Titel.
+- **Stoßlüften in der Karte „Betrieb“:** Die Karte „Schnellaktionen“ ist im Panel entfallen. Stoßlüften steht jetzt unter Betriebsart und Lüfterstufe: drei Dauer-Chips ohne Text (der Standard aus den Optionen ist umrandet), während des Boosts das Ende und ein Knopf „Beenden“. Der Karten-Abschnitt `quick` bleibt gültig und zeigt nur noch Stoßlüften.
+- **„Alle Räume ±1 °C“ entfernt:** Die Aktion war kaum nötig und sah neben den Filtern aus wie ein Filter.
+- **Räume als Dialog:** Die Details eines Raums klappen nicht mehr im Raster auf (alles verschob sich), sondern öffnen einen Dialog, auf dem Handy als Bottom-Sheet, mit Esc und Fokusführung.
+- **Handy:** Hinweis-Knopf unter dem Text statt daneben, Raum-Kacheln ohne Icon (dafür mit Farbstreifen), Zeiträume im Verlauf als gleich breite Zeile, letzte Kennzahl-Kachel füllt die Zeile.
+- **Hinweis-Abzeichen** sitzt auf dem Reiter „Diagnose“, wo die Hinweise stehen.
+- **Auslieferung des Panels:** Die Dateien liegen als Module unter `/proxon_modbus/<Version>/`, dadurch lädt der Browser sie nach jedem Update neu. Der alte Pfad der Karte bleibt als Alias erhalten, manuell eingetragene Ressourcen funktionieren weiter.
+- **Fähigkeits-Flags (Register 315)** werden beim Schreiben beachtet: Lüfterstufe, Betriebsart, Lüfter-Automatik und Intensivlüftung werden nicht geschrieben, wenn das Gerät sie eindeutig ablehnt. Es kommt eine verständliche Meldung.
+
+**Korrigiert**
+- **Panel:** Raumnamen und andere Texte werden maskiert; Schreibaktionen laufen nacheinander, sperren die Bedienung und melden Fehler als HA-Hinweis; schnelle Klicks am Soll-Stepper gehen nicht mehr verloren; der Verlaufscache ist an Gerät und Datenquelle gebunden (Fehler werden nach 15 s erneut versucht); Integrationsoptionen gelten ohne Neuladen; Leistung in kW/MW wird umgerechnet; der CO₂-Hinweis lässt sich ausblenden und kommt nicht bei kurzen Aussetzern zurück; die 7-Tage-Laufzeit hat einen Tooltip; die Raumreihenfolge folgt der Raumnummer; das Schreibfehler-Banner verschwindet nach einer Stunde.
+- **Statistik:** Laufzeit, Starts und Filterstunden wurden im Betrieb praktisch nie gespeichert. Jetzt höchstens alle 5 Minuten und beim Entladen.
+- **PTC-Freigabe:** Parallel geschaltete Räume überschrieben sich gegenseitig (gemeinsames Register). Die Schaltvorgänge sind jetzt serialisiert.
+- **Stoßlüften:** kein Timer-Rest mehr bei fehlgeschlagenem Setup; ein Teilfehler beim Start lässt die Lüfter-Automatik nicht mehr aus; Start und Ende sind gegeneinander gesperrt; das Beenden wird höchstens fünfmal wiederholt; nach einem Moduswechsel wird nichts zurückgeschrieben; eine schon vorher laufende Intensivlüftung bleibt an. `start_boost` auf einem anderen Schalter meldet verständlich, dass es nur für Stoßlüften gilt.
+- **„Filter getauscht“** geht beim Neustart nicht mehr verloren.
+- **Verbindungsabbruch:** Ein Abfragezyklus bei toter Verbindung dauerte ein Vielfaches des Timeouts; er bricht jetzt nach zwei Verbindungsfehlern ab.
+- **Aufräumen:** Nicht mehr bereitgestellte Entities (weniger CO₂-/Feuchtesensoren, Kühlen oder Umluftfilter abgeschaltet) werden aus der Registry entfernt, Storage-Dateien beim Entfernen der Integration gelöscht, das Panel wird bei Optionsänderungen nicht mehr neu registriert. Beim Neukonfigurieren wird der Titel übernommen.
+- **Home Assistant 2027.8:** Die von HA 2026.10 gemeldeten Veraltungen sind behoben (Raumgeräte per `via_device_id`, Geräte-Lookup über `async_get_device_by_identifier`, `UnitOfRatio` für ppm).
+
+**Intern**
+- Das Frontend ist in ES-Module unter `www/lib/` aufgeteilt (kein Build-Schritt).
+- Neue Tests: Coordinator mit schlanken Stubs, Render-Tests für alle Panel-Tabs, und 26 Integrationstests gegen ein echtes Test-Home-Assistant (Setup, Entities, ausgelieferte Dateien, Steuerung, Boost nach Neustart, Diagnose, Config-, Options- und Reconfigure-Flow). Die CI führt sie in drei Jobs aus.
+
 ## 2.1.0 – 2026-11-02
 
 **Neu**

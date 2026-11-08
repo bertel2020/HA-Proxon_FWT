@@ -5,6 +5,32 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
+## 2.2.0 – 2026-11-08
+
+**Changed**
+- **Side panel header:** logo and title on the left, two quiet chips on the right: the heat pump state ("Heating", "Cooling", "Idle", with the duration next to it) and the operating mode. The chip turns red when the connection is lost. On phones the chips sit below the title.
+- **Boost ventilation in the Operation card:** the quick actions card is gone from the panel. Boost ventilation now sits below operating mode and fan stage: three duration chips without text (the default from the options is outlined); while a boost runs it shows the end time and an "End" button. The card section `quick` stays valid and now shows boost ventilation only.
+- **"All rooms ±1 °C" removed:** it was hardly needed and looked like a filter next to the filters.
+- **Rooms as a dialog:** a room's details no longer expand inside the grid (which shifted everything) but open a dialog, a bottom sheet on phones, with Esc and focus handling.
+- **Phone:** hint button below the text instead of beside it, room tiles without icon (with a colour stripe instead), history ranges as one equal-width row, the last key figure tile fills its row.
+- **Hint badge** sits on the "Diagnostics" tab, where the hints are listed.
+- **How the panel is served:** the files are modules below `/proxon_modbus/<version>/`, so the browser fetches them anew after every update. The card's old path stays as an alias; manually added resources keep working.
+- **Capability flags (register 315)** are honoured on writes: fan stage, operating mode, fan auto mode and intensive ventilation are not written when the unit clearly refuses them. A clear message is shown.
+
+**Fixed**
+- **Panel:** room names and other texts are escaped; writes run one after the other, lock the controls and report failures as a Home Assistant notice; quick clicks on the setpoint stepper are no longer lost; the history cache is tied to the unit and data source (failures are retried after 15 s); integration options apply without a reload; power in kW/MW is converted; the CO₂ hint can be dismissed and does not come back after short gaps; the 7-day runtime has a tooltip; the room order follows the room number; the write error banner disappears after an hour.
+- **Statistics:** runtime, starts and filter hours were practically never saved during operation. Now at most every 5 minutes and on unload.
+- **PTC enable:** rooms switched in parallel overwrote each other (shared register). The writes are now serialised.
+- **Boost ventilation:** no leftover timer after a failed setup; a partial failure at the start no longer leaves fan auto mode off; start and end lock each other; ending is retried at most five times; nothing is written back after an operating mode change; an intensive ventilation that was already on stays on. `start_boost` on another switch now explains that it only works for boost ventilation.
+- **"Filter changed"** is no longer lost on restart.
+- **Connection loss:** a poll on a dead connection took a multiple of the timeout; it now aborts after two connection errors.
+- **Cleanup:** entities the integration no longer provides (fewer CO₂/humidity sensors, cooling or recirculation filter switched off) are removed from the registry, storage files are deleted when the integration is removed, the panel is no longer re-registered on option changes. Reconfigure keeps the title.
+- **Home Assistant 2027.8:** the deprecations reported by HA 2026.10 are fixed (room devices via `via_device_id`, device lookup via `async_get_device_by_identifier`, `UnitOfRatio` for ppm).
+
+**Internal**
+- The frontend is split into ES modules under `www/lib/` (no build step).
+- New tests: coordinator with small stubs, render tests for all panel tabs, and 26 integration tests against a real test Home Assistant (setup, entities, served files, control, boost after a restart, diagnostics, config, options and reconfigure flow). CI runs them in three jobs.
+
 ## 2.1.0 – 2026-11-02
 
 **New**
