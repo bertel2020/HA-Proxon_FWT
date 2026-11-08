@@ -61,7 +61,7 @@ ha-card { padding: 14px 16px; display: block; border: 1px solid var(--ha-card-bo
 .kgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .kpiw { container-type: inline-size; }
 .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
-@container (max-width: 640px) { .kpi { grid-template-columns: repeat(2, 1fr); } }
+@container (max-width: 640px) { .kpi { grid-template-columns: repeat(2, 1fr); } .kpi .k:last-child:nth-child(odd) { grid-column: 1 / -1; } }
 @container (max-width: 520px) { .kpi .ic { width: 30px; height: 30px; } .kpi .k { gap: 8px; } }
 .kpi .k { display: flex; gap: 10px; align-items: center; min-width: 0; }
 .kpi .k > div:last-child { min-width: 0; }
