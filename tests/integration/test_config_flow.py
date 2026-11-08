@@ -58,6 +58,28 @@ async def test_user_flow_creates_the_entry(hass, unit):
     assert len(hass.states.async_entity_ids("climate")) == 3
 
 
+async def test_serial_flow_creates_the_entry(hass, unit):
+    result = await hass.config_entries.flow.async_init(const.DOMAIN, context={"source": config_entries.SOURCE_USER})
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {"next_step_id": "serial"})
+    assert result["step_id"] == "serial"
+    user_input = result["data_schema"]({"serial_port": "/dev/ttyUSB7"})
+    with patch_temporary_unit(unit):
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], user_input)
+    assert result["step_id"] == "rooms"
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {const.CONF_NUM_ROOMS: 1, const.CONF_NUM_CO2_SENSORS: 0, const.CONF_NUM_RF_SENSORS: 0,
+         const.CONF_SCAN_INTERVAL: 30, const.CONF_COOLING_AVAILABLE: False, const.CONF_OUTDOOR_SIDE: "left"},
+    )
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], names_input(result, "Wohnen"))
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    data = result["data"]
+    assert data[const.CONF_CONNECTION_TYPE] == "serial"
+    assert data["serial_port"] == "/dev/ttyUSB7"
+    assert (data["baudrate"], data["bytesize"], data["stopbits"], data["unit_id"]) == (9600, 8, 1, 10)
+    assert data["parity"] == "E"
+
+
 async def test_unreachable_gateway_shows_an_error(hass, unit):
     result = await hass.config_entries.flow.async_init(const.DOMAIN, context={"source": config_entries.SOURCE_USER})
     result = await hass.config_entries.flow.async_configure(result["flow_id"], {"next_step_id": "tcp"})
