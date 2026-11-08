@@ -308,7 +308,7 @@ export class SectionsMethods {
     const right = [c.heat_pump_heating ? hp : "", current].filter(Boolean).join(" · ");
     return `<ha-card class="opw">${this._header("mdi:tune-variant", this._t("operation"), right)}
       ${c.operating_mode ? `<div class="lbl2">${this._t("mode")}</div>` : ""}${modeHtml}${fanHtml}${inline}
-      ${desc ? `<div class="note">${desc}</div>` : ""}${restore}</ha-card>`;
+      ${desc ? `<div class="note">${desc}</div>` : ""}${restore}${this._isPanel ? this._boostBlock(c, true) : ""}</ha-card>`;
   }
 
   _sec_heatpump(d) {

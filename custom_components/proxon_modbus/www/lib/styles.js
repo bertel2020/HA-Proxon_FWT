@@ -168,13 +168,8 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .hid.slim { display: flex; align-items: center; gap: 6px; margin: 0 4px; } .hid.slim ha-icon { --mdc-icon-size: 16px; }
 .hid { font-size: 12px; color: var(--secondary-text-color); margin: 8px 2px 0; } .hid .lnk { font: inherit; border: 0; background: none; color: var(--primary-color); cursor: pointer; padding: 0; }
 .ins.r { --ic: #db4437; } .ins.w { --ic: #f2a516; } .ins.i { --ic: #3d8be0; } .ins.o { --ic: #3fa660; }
-.qgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
-.qa { font: inherit; text-align: left; display: flex; gap: 10px; align-items: center; padding: 10px 12px; border: 1.5px solid var(--pbd); border-radius: 12px; cursor: pointer;
-  background: var(--secondary-background-color); color: var(--primary-text-color); }
-.qa ha-icon { --mdc-icon-size: 22px; color: var(--primary-color); flex: none; }
-.qa span { display: grid; gap: 1px; } .qa b { font-weight: 500; font-size: 13px; } .qa small { font-size: 11px; color: var(--secondary-text-color); }
-.qa.bst { cursor: default; grid-column: 1 / -1; } .qa.bst:hover { border-color: var(--pbd); } .bch { display: flex !important; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.qa:hover { border-color: var(--primary-color); } .qa.a { border-color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 14%, transparent); }
+.bch { display: flex; flex-wrap: wrap; gap: 8px; }
+.lbl2 small { font-size: 11px; }
 .mchips { display: flex; gap: 6px; flex-wrap: wrap; margin: -2px 0 10px; }
 .chw { position: relative; }
 .hsts { margin-top: 8px; display: grid; gap: 4px; font-size: 12.5px; color: var(--secondary-text-color); }
@@ -214,7 +209,7 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .rfil { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
 .fchip { font: inherit; font-size: 13px; cursor: pointer; display: inline-flex; gap: 5px; align-items: center; padding: 5px 12px; border-radius: 99px;
   border: 1px solid var(--pbd); background: var(--card-background-color); color: var(--primary-text-color); }
-.fchip .dtag { font-size: 11px; color: var(--secondary-text-color); margin-left: 6px; }
+.fchip.dflt { border-color: color-mix(in srgb, var(--primary-color) 55%, var(--pbd)); }
 .fchip.a { background: color-mix(in srgb, var(--primary-color) 14%, var(--card-background-color)); border-color: var(--primary-color); color: var(--primary-color); }
 .rfil .grow { flex: 1; }
 .rsum { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 14px; }

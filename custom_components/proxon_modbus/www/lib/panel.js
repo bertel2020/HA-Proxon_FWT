@@ -200,7 +200,7 @@ export class ProxonFwtPanel extends ProxonFwtBase {
       body = `<ha-card><div class="empty">${this._t("none")}</div></ha-card>`;
     } else if (tab === "overview") {
       body = `<div class="stack">${this._sec_alerts(d)}
-        <div class="ov"><div class="col">${this._sec_schema(d)}${this._sec_kpi(d)}</div><div class="col">${this._sec_operation(d)}${this._sec_quick(d)}</div></div></div>`;
+        <div class="ov"><div class="col">${this._sec_schema(d)}${this._sec_kpi(d)}</div><div class="col">${this._sec_operation(d)}</div></div></div>`;
     } else if (tab === "rooms") {
       body = `<div class="stack">${this._sec_rooms(d)}</div>`;
     } else if (tab === "history") {

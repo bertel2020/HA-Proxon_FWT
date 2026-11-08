@@ -78,34 +78,36 @@ export class HintsMethods {
     return null;
   }
 
-  _sec_quick(d) {
-    const c = d.central, mode = this._boostMode(c);
-    const btns = [];
-    if (mode) {
-      let active, sub;
-      if (mode === "timer") {
-        const st = this._state(c.boost), until = st.attributes.until ? new Date(st.attributes.until) : null;
-        active = st.state === "on";
-        if (!active) {
-          const dflt = Number(st.attributes.duration_minutes) || 30;
-          const chips = [15, 30, 60].map((m) => `<button class="fchip" data-act="boostmin" data-v="${m}">${this._t("boost_min", String(m))}${m === dflt ? `<small class="dtag">${this._t("boost_std")}</small>` : ""}</button>`).join("");
-          btns.push(`<div class="qa bst">${this._icon("mdi:weather-windy")}<span><b>${this._t("boost")}</b><small>${this._t("boost_d_t")}</small><span class="bch">${chips}</span></span></div>`);
-          sub = null;
-        } else {
-          sub = until ? this._t("boost_until", until.toLocaleTimeString(this._hass.language, { hour: "2-digit", minute: "2-digit" })) : "";
-        }
+  // Boost ventilation: duration chips (timer in the integration) or one button for units without it.
+  // The default duration only gets a frame and a tooltip; text stays out of the buttons.
+  _boostBlock(c, withTitle) {
+    const mode = this._boostMode(c);
+    if (!mode) return "";
+    let note, body;
+    if (mode === "timer") {
+      const st = this._state(c.boost);
+      if (st.state === "on") {
+        const until = st.attributes.until ? new Date(st.attributes.until) : null;
+        note = until ? this._t("boost_until", until.toLocaleTimeString(this._hass.language, { hour: "2-digit", minute: "2-digit" })) : "";
+        body = `<button class="fchip a" data-act="boost">${this._icon("mdi:stop")}${this._t("boost_stop")}</button>`;
       } else {
-        active = mode === "intensive" ? this._on(c.fan_intensive) : !!this._boost && this._state(c.fan_stage).state === "stage_4";
-        sub = this._t(mode === "intensive" ? "boost_d_i" : "boost_d_s");
+        const dflt = Number(st.attributes.duration_minutes) || 30;
+        note = this._t("boost_d_t");
+        body = [15, 30, 60].map((m) => `<button class="fchip ${m === dflt ? "dflt" : ""}" data-act="boostmin" data-v="${m}"${m === dflt ? ` title="${this._t("boost_std")}"` : ""}>${this._t("boost_min", String(m))}</button>`).join("");
       }
-      if (sub !== null) btns.push(`<button class="qa ${active ? "a" : ""}" data-act="boost">${this._icon("mdi:weather-windy")}<span><b>${this._t(active ? "boost_end" : "boost")}</b><small>${sub}</small></span></button>`);
+    } else {
+      const active = mode === "intensive" ? this._on(c.fan_intensive) : !!this._boost && this._state(c.fan_stage).state === "stage_4";
+      note = this._t(mode === "intensive" ? "boost_d_i" : "boost_d_s");
+      body = `<button class="fchip ${active ? "a" : ""}" data-act="boost">${this._icon(active ? "mdi:stop" : "mdi:play")}${this._t(active ? "boost_stop" : "boost_go")}</button>`;
     }
-    if (d.rooms.length) {
-      btns.push(`<button class="qa" data-act="allroom" data-v="1">${this._icon("mdi:thermometer-plus")}<span><b>${this._t("all_up")}</b></span></button>`);
-      btns.push(`<button class="qa" data-act="allroom" data-v="-1">${this._icon("mdi:thermometer-minus")}<span><b>${this._t("all_down")}</b></span></button>`);
-    }
-    if (!btns.length) return "";
-    return `<ha-card>${this._header("mdi:flash-outline", this._t("quick"))}<div class="qgrid">${btns.join("")}</div></ha-card>`;
+    return `<div class="lbl2">${withTitle ? this._t("boost") : ""}<small>${note}</small></div><div class="bch">${body}</div>`;
+  }
+
+  // Own card for the dashboard card (section `quick`); the panel shows the same block inside "Operation".
+  _sec_quick(d) {
+    const block = this._boostBlock(d.central, false);
+    if (!block) return "";
+    return `<ha-card class="opw">${this._header("mdi:weather-windy", this._t("boost"))}${block}</ha-card>`;
   }
 
   _sec_measure(d) {
