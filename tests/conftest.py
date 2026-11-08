@@ -9,6 +9,15 @@ from pathlib import Path
 
 import pytest
 
+# Two kinds of tests that cannot share one environment: the unit tests replace the few Home Assistant modules
+# they need (test_coordinator.py) and run anywhere; tests/integration/ needs a real Home Assistant installed.
+try:
+    import homeassistant  # noqa: F401
+except ImportError:
+    collect_ignore = ["integration"]
+else:
+    collect_ignore = ["test_coordinator.py"]
+
 PKG = Path(__file__).resolve().parents[1] / "custom_components" / "proxon_modbus"
 
 

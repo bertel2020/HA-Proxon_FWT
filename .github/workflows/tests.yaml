@@ -14,3 +14,23 @@ jobs:
           python-version: "3.13"
       - run: pip install pytest
       - run: python -m pytest -q tests
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - run: pip install pytest-homeassistant-custom-component
+      - run: pip install $(python tests/ha_requirements.py)
+      - run: python -m pytest -q tests
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node --test tests/panel.test.mjs tests/panel-render.test.mjs

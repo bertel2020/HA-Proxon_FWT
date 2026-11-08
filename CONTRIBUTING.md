@@ -5,8 +5,10 @@ There is a `pytest` suite for the logic that does not need Home Assistant
 (fan stage restore, run statistics, register map, translations) and for the
 coordinator (boost, PTC mask, statistics saving, link errors), which runs against
 small stand-ins for the few `homeassistant.*` modules it imports. The side panel
-and card have Node tests. Tests that exercise entities and flows with
-`pytest-homeassistant-custom-component` are very welcome.
+and card have Node tests. `tests/integration/` runs the real integration inside a
+test Home Assistant (`pytest-homeassistant-custom-component`) against a fake Modbus
+unit: setup and unload, devices and entities, the served frontend files, panel,
+services, writes, config/options flow and reconfigure.
 
 ## Local development
 
@@ -15,6 +17,17 @@ python3 -m py_compile custom_components/proxon_modbus/*.py
 python3 -m pyflakes custom_components/proxon_modbus/*.py
 python3 -m pytest -q tests
 node --test tests/panel.test.mjs tests/panel-render.test.mjs
+```
+
+The integration tests need a newer Python (3.14 at the time of writing) and their own
+environment; `pytest` picks the right set of tests depending on whether Home Assistant
+is installed:
+
+```bash
+python3.14 -m venv .venv-ha && . .venv-ha/bin/activate
+pip install pytest-homeassistant-custom-component
+pip install $(python tests/ha_requirements.py)   # Modbus library and frontend of that Home Assistant version
+python -m pytest -q tests
 ```
 
 ## Frontend layout
@@ -26,10 +39,6 @@ elements; the code lives in ES modules under `www/lib/` (`text.js`, `styles.js`,
 `www` folder below a path that contains its version, so the modules can import each
 other by relative path and browsers fetch them anew after an update. Variable text
 that ends up in a template has to go through `esc()`.
-
-For anything beyond a syntax/lint check you need a real Home Assistant
-instance (or `pip install homeassistant` in a throwaway virtualenv) to import
-against, since the integration relies on `homeassistant.*` and `pymodbus`.
 
 ## Register map changes
 
