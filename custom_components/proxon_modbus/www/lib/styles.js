@@ -272,6 +272,9 @@ svg .sh { font-size: 13px; font-weight: 500; }
   .crow, .cscale { grid-template-columns: 96px minmax(0, 1fr) 66px; gap: 8px; } .crow .v small { display: none; }
   .rsum { grid-template-columns: 1fr 1fr; }
   .rs { padding: 10px 12px; border-left: 3px solid var(--c); } .rs .ic { display: none; }
+  .ins { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 12px; row-gap: 8px; align-items: start; }
+  .ins > ha-icon { grid-column: 1; grid-row: 1; margin-top: 2px; } .ins .it { grid-column: 2; grid-row: 1; } .ins .x { grid-column: 3; grid-row: 1; margin-top: -4px; }
+  .ins .vbtn { grid-column: 2 / -1; grid-row: 2; justify-self: start; }
 }
 .rlegend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--secondary-text-color); margin: 10px 0 0; align-items: center; }
 .rlegend span { display: inline-flex; gap: 4px; align-items: center; } .rlegend ha-icon { --mdc-icon-size: 14px; }
