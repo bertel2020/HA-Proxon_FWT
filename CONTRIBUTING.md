@@ -8,7 +8,7 @@ small stand-ins for the few `homeassistant.*` modules it imports. The side panel
 and card have Node tests. `tests/integration/` runs the real integration inside a
 test Home Assistant (`pytest-homeassistant-custom-component`) against a fake Modbus
 unit: setup and unload, devices and entities, the served frontend files, panel,
-services, writes, config/options flow and reconfigure.
+services, writes, boost after a restart, diagnostics, config flow (TCP and serial), options flow and reconfigure.
 
 ## Local development
 

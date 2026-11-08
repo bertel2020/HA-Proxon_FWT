@@ -27,6 +27,10 @@ was in „Offene Punkte“ steht.
 | Raumreihenfolge folgte der Registry | Sortierung nach Raumnummer aus dem Device-Identifier |
 | Komplett-Rendering und Discovery bei jedem `hass`-Update | Discovery wird bis zur nächsten Registry-Änderung wiederverwendet, CSS als `adoptedStyleSheet` |
 | 2.400-Zeilen-Einzeldatei | ES-Module unter `www/lib/` (Texte, Styles, Konstanten, Basisklasse mit Methodengruppen, Karte, Panel, Editor); `www/` wird unter einem versionierten Pfad ausgeliefert, das erledigt das Cache-Busting aller Module |
+| Header mit drei gleichrangigen Aussagen in einer Zeile | Titel links, Status (Wärmepumpe mit Dauer) und Betriebsart als zwei Chips rechts |
+| Schnellaktionen-Karte mit textlastigen Dauer-Knöpfen und kaum genutzten „Alle Räume ±1 °C“ | Stoßlüften sitzt in der Karte „Betrieb“, die Dauer-Chips tragen keinen Text (Standard nur per Rahmen und Tooltip); Karten-Abschnitt `quick` bleibt gültig und zeigt nur Stoßlüften; die Alle-Räume-Aktion ist entfernt |
+| Handy: Hinweis-Knopf presste den Text, Raum-Kacheln brachen um, Zeitraum-Knöpfe liefen über, letzte Kennzahl allein | Knopf unter dem Text, Kacheln ohne Icon mit Farbstreifen, Zeiträume als gleich breite Zeile, letzte Kachel füllt die Zeile |
+| Hinweis-Abzeichen stand auf einem anderen Tab als die Hinweise | Abzeichen sitzt auf „Diagnose“, wo die Hinweise stehen |
 
 ### Backend
 
@@ -49,23 +53,22 @@ was in „Offene Punkte“ steht.
 - **Test in der eigenen HA-Instanz steht aus.** Setup, Entities, Panel-Registrierung, ausgelieferte Frontend-Dateien,
   Schreibpfade und Flows laufen jetzt in den Integrationstests gegen ein echtes (Test-)Home-Assistant, aber mit einem
   simulierten Gerät. Offen sind das Verhalten im echten Browser (Dialog, Stepper, Sperren während des Schreibens),
-  die Raumreihenfolge (setzt voraus, dass `hass.devices` die `identifiers` liefert) und das Gerät selbst.
+  die Raumreihenfolge (setzt voraus, dass `hass.devices` die `identifiers` liefert) und das Gerät selbst. Das dunkle
+  Theme wurde in einem lokalen Browser mit den üblichen HA-Dark-Werten in allen Tabs gesehen, nicht in HA selbst.
 - **Aktuelle Screenshots** für Desktop, Mobil, helles und dunkles Theme fehlen; `docs/` zeigt eine ältere Ansicht.
 - **Rendering:** das Panel baut bei jeder relevanten Zustandsänderung die ganze Ansicht neu auf. Die Signatur deckt
   alle Entities der Ansicht ab; eine Signatur pro Tab würde nur die Entity-Liste einschränken. Das spart wenig
   (das Rendern selbst ist günstig), birgt aber das Risiko veralteter Anzeigen, sobald eine Abhängigkeit fehlt.
   Deshalb bewusst nicht umgesetzt.
-- **Nicht abgedeckt durch die Integrationstests:** serielle Verbindung im Config-Flow, die Diagnose-Ausgabe und die
-  Wiederherstellung eines laufenden Boosts nach einem Neustart.
 
 ## Tests und Prüfung
 
 | Prüfung | Ergebnis |
 |---|---|
 | `python3 -m pytest -q tests` (ohne Home Assistant) | 44 Tests bestanden: Logik, Konstanten, Übersetzungen und der Coordinator (Boost, PTC-Maske, Statistik-Speicherung, Verbindungsabbruch, Flags) mit schlanken HA-Stubs |
-| `python -m pytest -q tests` (Python 3.14, Home Assistant 2026.10.4 mit `pytest-homeassistant-custom-component`) | 56 Tests bestanden, davon 21 Integrationstests: Setup und Entladen, Geräte und Entities, `via_device_id`, Panel und Kartenmodul, Auslieferung der Dateien unter dem versionierten Pfad, WebSocket-Einstellungen, Statistik und Panel bei Reload und Entfernen, Neuversuch bei unerreichbarem Gerät, Entfernen verwaister Entities, Climate/PTC/Selects/Boost mit Flags und Schreibfehlern, Config-Flow, Reconfigure, Options-Flow |
-| Mutationsprüfung der Integrationstests | ohne Flag-Prüfung im Select bzw. ohne `async_remove_panel` schlägt jeweils genau ein Test fehl |
-| `node --test tests/panel.test.mjs tests/panel-render.test.mjs` | 20 Tests bestanden: Übersetzungsschlüssel, Escaping, Cache-Scope, Schreibaktionen, Stepper, Dialog, Discovery, Raumreihenfolge, Rendering aller Tabs und Ansichten |
+| `python -m pytest -q tests` (Python 3.14, Home Assistant 2026.10.4 mit `pytest-homeassistant-custom-component`) | 61 Tests bestanden, davon 26 Integrationstests: Setup und Entladen, Geräte und Entities, `via_device_id`, Panel und Kartenmodul, Auslieferung der Dateien unter dem versionierten Pfad, WebSocket-Einstellungen, Statistik und Panel bei Reload und Entfernen, Neuversuch bei unerreichbarem Gerät, Entfernen verwaister Entities, Climate/PTC/Selects/Boost mit Flags und Schreibfehlern, Boost nach Neustart, Diagnose-Download, Config-Flow (TCP und seriell), Reconfigure, Options-Flow |
+| Mutationsprüfung der Integrationstests | ohne Flag-Prüfung im Select, ohne `async_remove_panel`, ohne Übernahme des Boosts nach dem Neustart bzw. ohne Schwärzen der Adresse in der Diagnose schlagen die jeweils zuständigen Tests fehl |
+| `node --test tests/panel.test.mjs tests/panel-render.test.mjs` | 22 Tests bestanden: Übersetzungsschlüssel, Escaping, Cache-Scope, Schreibaktionen, Stepper, Dialog, Discovery, Raumreihenfolge, Rendering aller Tabs und Ansichten |
 | Render-Snapshot vor und nach der Modulaufteilung | 13 Renderings (alle Tabs, Raumansichten, Historienzeiträume, Dialog, Karte de/en) byte-identisch |
 | Mutationsprüfung der Coordinator-Tests | Lock, Speicher-Drosselung, früher Abbruch und Intensiv-Vorzustand: jeweils ein Test schlägt bei Entfernen der Korrektur fehl |
 | Modulgraph im Browser | lädt ohne Fehler, drei Elemente registriert, `adoptedStyleSheets` aktiv |
