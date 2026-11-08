@@ -1,6 +1,6 @@
 # Code-Review: HA-Proxon_FWT
 
-Stand: 7. November 2026 (nach Umsetzung der Befunde)  
+Stand: 8. November 2026 (nach Umsetzung der Befunde und der Integrationstests)  
 Schwerpunkt: Home-Assistant-Integration (`custom_components/proxon_modbus/`) und Seitenpanel (`www/`)
 
 Der erste Review (Frontend) und ein zweiter Durchgang mit zwei unabhängigen Prüfern (Panel und Backend) haben
@@ -41,29 +41,30 @@ was in „Offene Punkte“ steht.
 | Poll bei toter Verbindung dauerte ein Vielfaches des Timeouts | Abbruch nach zwei Verbindungsfehlern, solange kein Block geantwortet hat |
 | Fähigkeits-Flags (Register 315) wurden beim Schreiben ignoriert | Lüfterstufe, Betriebsart, Automatik und Intensivlüftung werden bei eindeutiger Ablehnung durch das Gerät nicht geschrieben |
 | Verwaiste Entities, Storage-Dateien, Panel bei jeder Optionsänderung neu registriert | Bereinigung nach dem Setup, `async_remove_entry`, Panel bleibt registriert |
-| Kleinkram | ungenutzte Konstante und doppelte Imports entfernt, Reconfigure übernimmt den Titel |
+| Kleinkram | ungenutzte Konstante und doppelte Imports entfernt, Reconfigure übernimmt den Titel; ungenutzte lokale Variablen im Frontend entfernt |
+| Von Home Assistant 2026.10 gemeldete Veraltungen (entfallen mit 2027.8): `via_device`, `device_registry.async_get_device`, `CONCENTRATION_PARTS_PER_MILLION` | Raumgeräte werden per `via_device_id` an das vorab angelegte Zentralgerät gehängt, Lookups über `async_get_device_by_identifier`, `UnitOfRatio.PARTS_PER_MILLION`; die neuen APIs gibt es schon in 2026.9.0 (Mindestversion) |
 
 ## Offene Punkte
 
-- **Echter Test in Home Assistant steht aus.** Alles Backend-Verhalten ist nur gegen Stubs getestet, das Panel
-  nur gegen eine synthetische `hass`-Struktur und einmal in einem lokalen Browser (Module laden, Elemente
-  registriert, Styles greifen, Raumname maskiert). Dialog, Stepper, Flags, Entity-Bereinigung, Statistik-Speicher
-  und die Raumreihenfolge (setzt voraus, dass `hass.devices` die `identifiers` liefert) sollten einmal in der
-  laufenden Instanz geprüft werden.
+- **Test in der eigenen HA-Instanz steht aus.** Setup, Entities, Panel-Registrierung, ausgelieferte Frontend-Dateien,
+  Schreibpfade und Flows laufen jetzt in den Integrationstests gegen ein echtes (Test-)Home-Assistant, aber mit einem
+  simulierten Gerät. Offen sind das Verhalten im echten Browser (Dialog, Stepper, Sperren während des Schreibens),
+  die Raumreihenfolge (setzt voraus, dass `hass.devices` die `identifiers` liefert) und das Gerät selbst.
 - **Aktuelle Screenshots** für Desktop, Mobil, helles und dunkles Theme fehlen; `docs/` zeigt eine ältere Ansicht.
-- **Rendering:** das Panel baut bei jeder relevanten Zustandsänderung die ganze Ansicht neu auf. Eine Signatur
-  pro Tab würde das reduzieren, setzt aber eine genaue Zuordnung von Entities zu Tabs voraus und wurde
-  bewusst nicht umgesetzt.
-- **Integrationstests mit `pytest-homeassistant-custom-component`** fehlen weiterhin (das Paket verlangt eine
-  neuere Python-Version als die lokale Entwicklungsumgebung). Entities, Config-/Options-Flow, Services und die
-  WebSocket-Befehle sind ungetestet.
-- Einzelne ungenutzte lokale Variablen im Frontend (`lang`, `hv`, `iv0`, `powerId`), nur Aufräumarbeit.
+- **Rendering:** das Panel baut bei jeder relevanten Zustandsänderung die ganze Ansicht neu auf. Die Signatur deckt
+  alle Entities der Ansicht ab; eine Signatur pro Tab würde nur die Entity-Liste einschränken. Das spart wenig
+  (das Rendern selbst ist günstig), birgt aber das Risiko veralteter Anzeigen, sobald eine Abhängigkeit fehlt.
+  Deshalb bewusst nicht umgesetzt.
+- **Nicht abgedeckt durch die Integrationstests:** serielle Verbindung im Config-Flow, die Diagnose-Ausgabe und die
+  Wiederherstellung eines laufenden Boosts nach einem Neustart.
 
 ## Tests und Prüfung
 
 | Prüfung | Ergebnis |
 |---|---|
-| `python3 -m pytest -q` | 44 Tests bestanden: Logik, Konstanten, Übersetzungen und der Coordinator (Boost, PTC-Maske, Statistik-Speicherung, Verbindungsabbruch, Flags) mit schlanken HA-Stubs |
+| `python3 -m pytest -q tests` (ohne Home Assistant) | 44 Tests bestanden: Logik, Konstanten, Übersetzungen und der Coordinator (Boost, PTC-Maske, Statistik-Speicherung, Verbindungsabbruch, Flags) mit schlanken HA-Stubs |
+| `python -m pytest -q tests` (Python 3.14, Home Assistant 2026.10.4 mit `pytest-homeassistant-custom-component`) | 56 Tests bestanden, davon 21 Integrationstests: Setup und Entladen, Geräte und Entities, `via_device_id`, Panel und Kartenmodul, Auslieferung der Dateien unter dem versionierten Pfad, WebSocket-Einstellungen, Statistik und Panel bei Reload und Entfernen, Neuversuch bei unerreichbarem Gerät, Entfernen verwaister Entities, Climate/PTC/Selects/Boost mit Flags und Schreibfehlern, Config-Flow, Reconfigure, Options-Flow |
+| Mutationsprüfung der Integrationstests | ohne Flag-Prüfung im Select bzw. ohne `async_remove_panel` schlägt jeweils genau ein Test fehl |
 | `node --test tests/panel.test.mjs tests/panel-render.test.mjs` | 20 Tests bestanden: Übersetzungsschlüssel, Escaping, Cache-Scope, Schreibaktionen, Stepper, Dialog, Discovery, Raumreihenfolge, Rendering aller Tabs und Ansichten |
 | Render-Snapshot vor und nach der Modulaufteilung | 13 Renderings (alle Tabs, Raumansichten, Historienzeiträume, Dialog, Karte de/en) byte-identisch |
 | Mutationsprüfung der Coordinator-Tests | Lock, Speicher-Drosselung, früher Abbruch und Intensiv-Vorzustand: jeweils ein Test schlägt bei Entfernen der Korrektur fehl |
@@ -77,4 +78,4 @@ was in „Offene Punkte“ steht.
 | Sicherheit | Variable Texte werden an den bekannten Stellen maskiert; der Rest hängt daran, dass neue Stellen `esc()` nutzen. Das Panel ist weiterhin für Nicht-Admins sichtbar (`require_admin=False`), die Dienste ohnehin. |
 | Zuverlässigkeit | Schreibpfade (PTC, Boost, Statistik) sind serialisiert und fehlertolerant; Wiederholungen sind begrenzt. |
 | Usability | Ruhiges Raster, Dialog für Details, Rückmeldung bei Fehlern, gesperrte Bedienung während Schreibaktionen. |
-| Testbarkeit | Reine Logik, Coordinator (gestubbt) und Frontend sind getestet; Entities und Flows nicht. |
+| Testbarkeit | Reine Logik, Coordinator, Entities, Services, Flows und Frontend sind getestet; die Integrationstests laufen in der CI mit einem aktuellen Home Assistant und melden so Veraltungen früh. |
