@@ -5,10 +5,14 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
-## Unreleased
+## 2.2.1 – 2026-11-09
 
 **Changed**
 - **History:** min, max and average are shown as an aligned table with a header row below the chart (right-aligned figures, plus Σ in kWh for power). The legend no longer repeats the curves and only lists heat pump, bypass and previous period.
+- **Operation card:** the "preferred stage" line is indented below the switch; boost ventilation is set apart by a divider and a stronger heading.
+
+**Fixed**
+- **System diagram:** no dot on top of the ring while the compressor is off, and the "Compressor" label has more space from the ring.
 
 ## 2.2.0 – 2026-11-08
 

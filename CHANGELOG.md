@@ -6,10 +6,14 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
-## Unveröffentlicht
+## 2.2.1 – 2026-11-09
 
 **Geändert**
 - **Verlauf:** Min, Max und Ø stehen als ausgerichtete Tabelle mit Kopfzeile unter dem Diagramm (Zahlen rechtsbündig, bei Leistung zusätzlich Σ in kWh). Die Legende zeigt die Kurven nicht mehr doppelt, sondern nur noch Wärmepumpe, Bypass und Vorzeitraum.
+- **Operation-Karte:** Die „Wunschstufe“ steht eingerückt unter dem Schalter, Stoßlüften ist durch eine Trennlinie und eine betonte Überschrift abgesetzt.
+
+**Korrigiert**
+- **Anlagenschema:** Bei stehendem Kompressor erscheint kein Punkt mehr oben auf dem Ring, und die Beschriftung „Kompressor“ hat mehr Abstand zum Ring.
 
 ## 2.2.0 – 2026-11-08
 
