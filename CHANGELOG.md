@@ -2,10 +2,6 @@
 
 *[🇬🇧 English version](CHANGELOG.en.md)*
 
-Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
-Versionen folgen dem Feld `version` in
-`custom_components/proxon_modbus/manifest.json`.
-
 ## 2.2.2 – 2026-11-13
 
 **Korrigiert**
