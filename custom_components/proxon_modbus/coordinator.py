@@ -113,7 +113,7 @@ class ProxonData:
     messages: dict[str, bool] = field(default_factory=dict)
     co2: dict[int, int] = field(default_factory=dict)
     humidity: dict[int, int] = field(default_factory=dict)
-    ptc_enable_mask: int = 0
+    ptc_enable_mask: int | None = None  # None: the PTC block could not be read
     # Names of the register blocks that failed to read in this poll.
     failed: set[str] = field(default_factory=set)
 
@@ -185,9 +185,12 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
                 self._set_issue("connection_lost", True, ir.IssueSeverity.ERROR)
             raise UpdateFailed(str(err)) from err
         self._fail_since = None
-        self._ptc_pending = None  # fresh data from the unit replaces any locally assumed mask
+        if BLOCK_PTC not in data.failed:
+            self._ptc_pending = None  # fresh data from the unit replaces any locally assumed mask
         self._set_issue("connection_lost", False)
-        if not self.boost.active:  # the unit's fan stage is deliberately changed during a boost
+        # The unit's fan stage is deliberately changed during a boost, including the refresh
+        # that follows the very write which starts it (boost.active is only set afterwards).
+        if not self.boost.active and not self._boost_lock.locked():
             self._track_fan_stage(data)
         self._track_stats(data)
         return data
@@ -269,7 +272,8 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
         now = time.monotonic()
         if now - self._stats_saved_at >= STATS_SAVE_INTERVAL:
             self._stats_saved_at = now
-            self._store.async_delay_save(self.stats.as_dict, 1)
+            # Delay as long as the interval: a save is then always pending and gets written at shutdown.
+            self._store.async_delay_save(self.stats.as_dict, STATS_SAVE_INTERVAL)
 
     async def async_save_stats(self) -> None:
         """Write the statistics right away (entry unload / reload)."""
@@ -342,6 +346,15 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
             self._schedule_boost_end(minutes * 60)
             self.async_update_listeners()
 
+    def _boost_end_failed(self) -> None:
+        """Count a failed end of the boost: retry in a minute, give up after a few attempts."""
+        self._boost_end_fails += 1
+        if self._boost_end_fails < BOOST_END_MAX_RETRIES:
+            self._schedule_boost_end(60)  # retry
+        else:
+            _LOGGER.warning("Giving up restoring the fan after the boost; please check the unit")
+            self._finish_boost()
+
     async def async_end_boost(self) -> None:
         """Back to the state before the boost. Raises if the unit rejects the write; the boost then stays active
         and the end is retried for a few minutes."""
@@ -350,7 +363,11 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
                 return
             self.async_cancel_boost_timer()
             # A stage boost only makes sense in Eco mode; the intensive boost is tied to a capability flag instead.
-            mode = self.data.function_block.get("operating_mode_read")
+            mode = self.data.function_block.get("operating_mode_read") if self.data else None
+            if self.boost.kind != "intensive" and (mode is None or (self.data and BLOCK_FUNCTION in self.data.failed)):
+                # The operating mode is unknown (block unreadable): not the same as "changed", so retry later.
+                self._boost_end_failed()
+                raise ProxonModbusError("Operating mode unknown, boost end postponed")
             still_applies = self.boost.kind == "intensive" or mode in ECO_MODE_VALUES
             try:
                 if not still_applies:
@@ -365,12 +382,7 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
                     if self.boost.auto:
                         await self.async_write_register(REG_FAN_AUTO_WRITE, 1)
             except ProxonModbusError:
-                self._boost_end_fails += 1
-                if self._boost_end_fails < BOOST_END_MAX_RETRIES:
-                    self._schedule_boost_end(60)  # retry
-                else:
-                    _LOGGER.warning("Giving up restoring the fan after the boost; please check the unit")
-                    self._finish_boost()
+                self._boost_end_failed()
                 raise
             self._finish_boost()
 
@@ -382,6 +394,9 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
 
     async def _async_boost_expired(self, _now: datetime) -> None:
         self._boost_cancel = None
+        if self.data is None:  # first refresh still running (HA restarted during a boost)
+            self._schedule_boost_end(5)
+            return
         try:
             await self.async_end_boost()
         except ProxonModbusError:
@@ -407,6 +422,8 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
         """Set one room's PTC enable bit without losing the bits of other rooms written at the same time."""
         async with self._ptc_lock:
             base = self._ptc_pending if self._ptc_pending is not None else self.data.ptc_enable_mask
+            if base is None:  # unknown mask: writing from 0 would switch off the other rooms
+                raise HomeAssistantError("PTC enable state could not be read; try again shortly")
             new_mask = set_bit(base, room_index, on)
             await self.async_write_register(REG_PTC_ENABLE_WRITE, new_mask)
             self._ptc_pending = new_mask
@@ -447,9 +464,12 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
             BLOCK_PTC: self._read_ptc,
             BLOCK_FUNCTION: self._read_function,
             BLOCK_MESSAGES: self._read_messages,
-            BLOCK_CO2: self._read_co2,
-            BLOCK_HUMIDITY: self._read_humidity,
         }
+        # Readers without configured sensors would do no I/O and count as "answered".
+        if self.num_co2_sensors:
+            blocks[BLOCK_CO2] = self._read_co2
+        if self.num_rf_sensors:
+            blocks[BLOCK_HUMIDITY] = self._read_humidity
         first_error: ProxonModbusError | None = None
         any_ok = False
         link_errors = 0  # leading blocks that failed on the link itself (timeout, refused), not with a Modbus exception

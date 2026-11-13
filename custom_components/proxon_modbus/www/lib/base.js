@@ -119,7 +119,7 @@ export class ProxonFwtBase extends HTMLElement {
       : [];
     const sig = ids.filter(Boolean).map((i) => {
       const s = h.states[i];
-      return s ? `${s.state}|${s.attributes.temperature}|${s.attributes.current_temperature}|${s.attributes.preferred_stage}|${s.attributes.last_restore}` : "-";
+      return s ? `${s.state}|${s.attributes.temperature}|${s.attributes.current_temperature}|${s.attributes.preferred_stage}|${s.attributes.last_restore}|${s.attributes.until}` : "-";
     }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._hver || 0}|${this._histRange || "24h"}|${this._hcmp ? 1 : 0}|${this._metric || ""}|${this._ymetric || ""}|${this._tab || ""}|${this._rview || ""}|${this._rfilter || ""}|${[...(this._ropen || [])].join("+")}|${this._boost ? 1 : 0}|${this._wb || 0}|${this._settingsStamp || 0}|${Object.keys(this._dismissed || {}).join("+")}`;
     if (sig === this._sig) return;
     this._sig = sig;
@@ -154,9 +154,9 @@ export class ProxonFwtBase extends HTMLElement {
     if (sheet) sheet.scrollTop = k.top;
     let el = null;
     if (want === "open" && sheet) el = sheet.querySelector(".x");
-    else if (want && want.startsWith("close:")) el = root.querySelector(`.rh[data-act="rtoggle"][data-v="${want.slice(6)}"], .crow[data-v="${want.slice(6)}"]`);
+    else if (want && want.startsWith("close:")) el = root.querySelector(`.rh[data-act="rtoggle"][data-v="${CSS.escape(want.slice(6))}"], .crow[data-v="${CSS.escape(want.slice(6))}"]`);
     else if (k.act && k.act !== "rclose" && k.act !== "noop") {
-      const sel = `[data-act="${k.act}"]${k.v != null ? `[data-v="${k.v}"]` : ""}`;
+      const sel = `[data-act="${k.act}"]${k.v != null ? `[data-v="${CSS.escape(String(k.v))}"]` : ""}`;
       el = (k.inDlg && sheet ? sheet : root).querySelector(sel);
     }
     if (el && el.focus) el.focus({ preventScroll: true });
@@ -201,7 +201,7 @@ export class ProxonFwtBase extends HTMLElement {
     let next;
     try {
       const all = await this._hass.callWS({ type: "proxon_modbus/settings" });
-      next = all.find((e) => e.device_id === centralId) || all[0] || {};
+      next = all.find((e) => e.device_id === centralId) || (all.length === 1 ? all[0] : {});
     } catch (err) {
       next = this._settings || {};
     }

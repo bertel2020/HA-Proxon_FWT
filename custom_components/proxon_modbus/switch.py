@@ -254,6 +254,12 @@ class ProxonFanRestoreSwitch(_BoostServiceGuard, ProxonCentralEntity, SwitchEnti
                 self.coordinator.fan_tracker.preferred = stage
 
     @property
+    def available(self) -> bool:
+        # Pure software setting: stays available when the unit is offline, so a restart
+        # during an outage doesn't store "unavailable" and lose the setting.
+        return True
+
+    @property
     def is_on(self) -> bool:
         return self.coordinator.fan_tracker.enabled
 

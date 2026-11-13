@@ -84,6 +84,8 @@ trigger_variables:
 
 variables:
   intensive_entity: !input intensive_switch
+  # One scene per automation instance, so several instances don't overwrite each other.
+  scene_slug: "proxon_co2_previous_{{ this.entity_id.split('.')[1] }}"
 
 trigger:
   - trigger: template
@@ -115,7 +117,7 @@ action:
         sequence:
           - action: scene.create
             data:
-              scene_id: proxon_co2_previous_mode
+              scene_id: "{{ scene_slug }}"
               snapshot_entities:
                 - !input mode_select
           - action: select.select_option
@@ -133,11 +135,23 @@ action:
           - condition: trigger
             id: low
         sequence:
+          # Only act if intensive ventilation is on; otherwise it was not (or is no longer) ours to end.
+          - condition: template
+            value_template: "{{ is_state(intensive_entity, 'on') }}"
           - action: switch.turn_off
             target:
               entity_id: !input intensive_switch
             continue_on_error: true
-          - action: scene.turn_on
-            target:
-              entity_id: scene.proxon_co2_previous_mode
-            continue_on_error: true
+          # The snapshot is gone after a restart; then only the intensive ventilation is turned off.
+          - if:
+              - condition: template
+                value_template: "{{ 'scene.' ~ scene_slug in states.scene | map(attribute='entity_id') | list }}"
+            then:
+              - action: scene.turn_on
+                target:
+                  entity_id: "scene.{{ scene_slug }}"
+                continue_on_error: true
+              - action: scene.delete
+                target:
+                  entity_id: "scene.{{ scene_slug }}"
+                continue_on_error: true

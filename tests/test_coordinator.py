@@ -131,7 +131,7 @@ def make(coord):
 
     hub = FakeHub(ProxonModbusError)
     c = coord.ProxonModbusCoordinator(object(), Entry(), hub, 2, 0, 0, 30)
-    c.data = coord.ProxonData(rooms={})
+    c.data = coord.ProxonData(rooms={}, ptc_enable_mask=0)
     return c, hub
 
 
@@ -246,3 +246,22 @@ def test_capability_flags_block_only_explicit_refusals(coord):
         c.ensure_selectable("fan_off_selectable")
     c.ensure_selectable("fan_auto_selectable")
     c.ensure_selectable("unknown_flag")
+
+
+def test_ptc_write_refused_when_mask_unknown(coord):
+    c, hub = make(coord)
+    c.data.ptc_enable_mask = None
+    with pytest.raises(Exception):
+        run(c.async_set_ptc_enable(0, True))
+    assert hub.writes == []
+
+
+def test_boost_end_is_retried_when_function_block_unreadable(coord):
+    c, hub = make(coord)
+    fan_state(c, mode=1, stage=2, auto=True)
+    run(c.async_start_boost(15))
+    c.data.function_block = {}
+    c.data.failed = {coord.BLOCK_FUNCTION}
+    with pytest.raises(Exception):
+        run(c.async_end_boost())
+    assert c.boost.active  # not given up: retried later

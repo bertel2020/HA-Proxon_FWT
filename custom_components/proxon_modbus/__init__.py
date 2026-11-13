@@ -234,8 +234,8 @@ def _remove_stale_room_devices(hass: HomeAssistant, entry: ProxonConfigEntry) ->
 
 def _apply_room_areas(hass: HomeAssistant, entry: ProxonConfigEntry) -> None:
     """Put each room's device into the Home Assistant area chosen in the
-    options. Rooms without a chosen area are left alone, so areas set by hand
-    on those devices are never touched."""
+    options. Rooms without a chosen area are left alone, and so are devices that
+    already have an area, so areas set by hand are never overwritten."""
     registry = dr.async_get(hass)
     for index, area_id in enumerate(entry.options.get(CONF_ROOM_AREAS, [])):
         if not area_id:
@@ -243,7 +243,7 @@ def _apply_room_areas(hass: HomeAssistant, entry: ProxonConfigEntry) -> None:
         device = registry.async_get_device_by_identifier(
             (DOMAIN, f"{entry.entry_id}_room_{index}"), entry.entry_id
         )
-        if device is not None and device.area_id != area_id:
+        if device is not None and device.area_id is None:
             registry.async_update_device(device.id, area_id=area_id)
 
 

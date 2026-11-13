@@ -74,11 +74,16 @@ class ProxonModbusHub:
     ) -> list[int]:
         """Read `count` holding registers starting at `address`."""
         try:
-            return list(await self._unit.read_holding_registers(address, count))
+            regs = list(await self._unit.read_holding_registers(address, count))
         except (ModbusError, HomeAssistantError, OSError, TimeoutError) as err:
             raise ProxonModbusError(
                 f"Error reading register {address} ({count}): {err}"
             ) from err
+        if len(regs) != count:
+            raise ProxonModbusError(
+                f"Register {address}: expected {count} values, got {len(regs)}"
+            )
+        return regs
 
     async def async_write_register(self, address: int, value: int) -> None:
         """Write a single holding register."""
