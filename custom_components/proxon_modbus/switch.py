@@ -20,6 +20,7 @@ from . import ProxonConfigEntry
 from .const import (
     FAN_STAGE_OPTIONS,
     CONF_COOLING_AVAILABLE,
+    DOMAIN,
     CONF_ROOM_NAMES,
     DEFAULT_COOLING_AVAILABLE,
     ECO_MODE_VALUES,
@@ -137,7 +138,7 @@ class _BoostServiceGuard:
     """The start_boost entity service is offered for every Proxon switch; only the boost switch implements it."""
 
     async def async_start_boost_service(self, minutes: int | None = None) -> None:
-        raise ServiceValidationError("start_boost only works on the boost ventilation switch")
+        raise ServiceValidationError(translation_domain=DOMAIN, translation_key="boost_wrong_switch")
 
 
 class ProxonFunctionSwitch(_BoostServiceGuard, ProxonCentralEntity, SwitchEntity):

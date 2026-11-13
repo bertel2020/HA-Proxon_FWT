@@ -27,10 +27,6 @@ export class ProxonFwtCard extends ProxonFwtBase {
     return 14;
   }
 
-  _wantsHistory() {
-    return this._config.sections.some((x) => ["history", "runtime", "energy"].includes(x));
-  }
-
   _render() {
     const d = this._d;
     let body;

@@ -324,13 +324,12 @@ export class SectionsMethods {
         stroke-dasharray="${(circ * frac).toFixed(1)} ${circ.toFixed(1)}" transform="rotate(-90 55 55)"/>
       <text x="55" y="50" text-anchor="middle" dominant-baseline="central" style="font-size:19px;font-weight:500">${rpm === null ? "–" : rpm.toLocaleString(this._hass.language)}</text>
       <text class="st" x="55" y="70" text-anchor="middle" style="font-size:11px">rpm</text></svg>`;
-    const unit = "W";
     const chip = (id, icon, label, cls) => (id && this._ok(id)) ? `<span class="chip ${this._on(id) ? cls : ""}">${this._icon(icon)}${label}</span>` : "";
     const cool = c.cooling_enable
       ? `<div class="row">${this._icon("mdi:snowflake")}${this._t("cooling_enable")}<span class="sp"><ha-switch data-act="coolsw" ${this._on(c.cooling_enable) ? "checked" : ""} ${this._ok(c.cooling_enable) ? "" : "disabled"}></ha-switch></span></div>` : "";
     return `<ha-card>${this._header("mdi:heat-pump", this._t("heatpump"))}
       <div class="hp">${ring}<div style="flex:1"><div class="lb">${this._t("compressor")}</div>
-      ${power === null ? "" : `<div style="margin-top:6px"><div class="lb">${this._t("power_long")}</div><div class="big">${this._fmt(power, power % 1 ? 1 : 0)} <small>${unit}</small></div></div>`}</div></div>
+      ${power === null ? "" : `<div style="margin-top:6px"><div class="lb">${this._t("power_long")}</div><div class="big">${this._fmt(power, power % 1 ? 1 : 0)} <small>W</small></div></div>`}</div></div>
       <div class="chips">${chip(c.heat_pump_heating, "mdi:fire", this._t("hp_heating"), "g")}${chip(c.heat_pump_cooling, "mdi:snowflake", this._t("hp_cooling"), "a")}${chip(c.heat_pump_continuous, "mdi:autorenew", this._t("hp_continuous"), "a")}${chip(c.cooling_available, "mdi:snowflake-check", this._t("cooling_available"), "g")}</div>
       ${cool}</ha-card>`;
   }

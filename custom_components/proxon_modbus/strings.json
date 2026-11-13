@@ -369,5 +369,11 @@
       "title": "Proxon FWT rejects commands",
       "description": "Several write commands to \"{name}\" failed in a row. The \"Last write error\" sensor names the register and reason. Common causes: a wrong Modbus address or a gateway in read-only mode. This notice disappears after the next successful write."
     }
+  },
+  "exceptions": {
+    "boost_unavailable": {"message": "Boost ventilation is not available in the current operating mode"},
+    "change_not_allowed": {"message": "The unit currently does not allow this change ({flag})"},
+    "ptc_unknown": {"message": "PTC enable state could not be read; try again shortly"},
+    "boost_wrong_switch": {"message": "start_boost only works on the boost ventilation switch"}
   }
 }

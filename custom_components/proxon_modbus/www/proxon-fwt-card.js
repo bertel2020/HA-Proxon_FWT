@@ -9,8 +9,7 @@
  */
 
 import { TEXT } from "./lib/text.js";
-import { ALL_SECTIONS } from "./lib/constants.js";
-import { esc } from "./lib/constants.js";
+import { ALL_SECTIONS, esc } from "./lib/constants.js";
 import { ProxonFwtBase } from "./lib/compose.js";
 import { ProxonFwtCard } from "./lib/card.js";
 import { ProxonFwtPanel } from "./lib/panel.js";

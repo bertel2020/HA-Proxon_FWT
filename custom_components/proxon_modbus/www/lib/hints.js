@@ -176,37 +176,4 @@ export class HintsMethods {
     return `${tiles.length ? `<div class="dtiles">${tiles.join("")}</div>` : ""}${this._sec_measure(d)}${stats}`;
   }
 
-  _sec_maint(d) {
-    const c = d.central, f = this._filterInfo(c);
-    const fbar = () => {
-      if (!this._ok(c.filter_device) && !f.known) return "";
-      const pct = f.known ? Math.min(100, Math.round((f.age / f.iv) * 100)) : (f.due ? 100 : 0);
-      const near = f.due && f.left !== null && f.left <= 7;
-      const col = near || (!f.due && pct >= 100) ? "#db4437" : f.due || pct >= 90 ? "#f2a516" : GREEN;
-      const sub = f.due && f.left !== null ? `<b style="color:${near ? "#db4437" : "#c98400"}">${this._t("f_shutdown", this._days(f.left))}</b>`
-        : f.known ? this._t("f_age_text", String(Math.round(f.age)), String(f.iv), String(Math.max(0, Math.round(f.iv - f.age)))) : this._t("f_unknown");
-      const btn = c.filter_changed ? `<button class="vbtn" style="margin-top:8px" data-act="filterchg">${this._icon("mdi:check")}${this._t("f_btn")}</button>` : "";
-      return `<div class="mrow"><div class="mh"><span>${this._icon("mdi:air-filter")}${this._t("filter_device")}</span><b style="color:${col}">${f.due ? this._t("change_due") : this._t("ok")}</b></div>
-        <div class="pbar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%;background:${col}"></i></div>
-        <div class="lb">${sub}</div>${btn}</div>`;
-    };
-    const rbar = () => {
-      if (!this._recirc() || !this._ok(c.filter_recirculation)) return "";
-      const due = this._on(c.filter_recirculation);
-      return `<div class="mrow"><div class="mh"><span>${this._icon("mdi:air-filter")}${this._t("filter_recirc")}</span><b style="color:${due ? "#c98400" : GREEN}">${due ? this._t("change_due") : this._t("ok")}</b></div></div>`;
-    };
-    const row = (icon, label, val) => val === null ? "" : `<div class="row">${this._icon(icon)}${label}<b>${val}</b></div>`;
-    const hv = (id) => this._num(id) === null ? null : `${this._fmt(this._num(id), 1)} h`;
-    const iv0 = (id) => this._num(id) === null ? null : this._fmt(this._num(id), 0);
-    const err = this._ok(c.error_system) ? `<div class="row">${this._icon("mdi:check-circle-outline")}${this._t("error")}<b style="color:${this._on(c.error_system) ? "#db4437" : GREEN}">${this._on(c.error_system) ? this._t("has_error") : this._t("no_error")}</b></div>` : "";
-    const chg = c.mode_change_possible && this._ok(c.mode_change_possible)
-      ? `<div class="row">${this._icon("mdi:shuffle-variant")}${this._t("mode_change")}<b>${this._on(c.mode_change_possible) ? this._t("possible") : this._t("not_possible")}</b></div>` : "";
-    const stats = row("mdi:heat-pump", this._t("rt_today"), hv(c.hp_runtime_today)) + row("mdi:counter", this._t("starts_today"), iv0(c.hp_starts_today)) +
-      row("mdi:heat-pump-outline", this._t("rt_total"), hv(c.hp_runtime_total)) + row("mdi:counter", this._t("starts_total"), iv0(c.hp_starts_total));
-    const filters = fbar() + rbar();
-    const html = filters + (err || chg ? `<div class="msep">${(err + chg).replace('class="row"', 'class="row first"')}</div>` : "") + (stats ? `<div class="msep">${stats.replace('class="row"', 'class="row first"')}</div>` : "");
-    if (!html) return "";
-    return `<ha-card>${this._header("mdi:wrench-outline", this._t("maint"))}${html}</ha-card>`;
-  }
-
 }

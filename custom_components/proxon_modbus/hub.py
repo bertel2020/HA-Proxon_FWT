@@ -7,7 +7,6 @@ unit and normalizes its errors to ProxonModbusError.
 """
 from __future__ import annotations
 
-import logging
 from collections.abc import Mapping
 from typing import Any
 
@@ -30,7 +29,6 @@ from .const import (
     CONNECTION_TYPE_TCP,
 )
 
-_LOGGER = logging.getLogger(__name__)
 
 
 class ProxonModbusError(HomeAssistantError):

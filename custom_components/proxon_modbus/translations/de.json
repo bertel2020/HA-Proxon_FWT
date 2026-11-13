@@ -369,5 +369,11 @@
       "title": "Proxon FWT nimmt keine Befehle an",
       "description": "Mehrere Schreibbefehle an „{name}“ sind nacheinander fehlgeschlagen. Der Sensor „Letzter Schreibfehler“ nennt Register und Grund. Häufige Ursachen: falsche Modbus-Adresse oder ein Gateway im Nur-Lese-Modus. Die Meldung verschwindet nach dem nächsten erfolgreichen Schreibvorgang."
     }
+  },
+  "exceptions": {
+    "boost_unavailable": {"message": "Stoßlüften ist in der aktuellen Betriebsart nicht verfügbar"},
+    "change_not_allowed": {"message": "Die Anlage erlaubt diese Änderung derzeit nicht ({flag})"},
+    "ptc_unknown": {"message": "Der PTC-Freigabestatus konnte nicht gelesen werden; bitte gleich noch einmal versuchen"},
+    "boost_wrong_switch": {"message": "start_boost funktioniert nur am Schalter für das Stoßlüften"}
   }
 }

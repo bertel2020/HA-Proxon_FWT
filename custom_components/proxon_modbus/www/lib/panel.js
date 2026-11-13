@@ -17,18 +17,6 @@ export class ProxonFwtPanel extends ProxonFwtBase {
     this.toggleAttribute("narrow", !!v);
   }
 
-  set panel(p) {
-    this._panel = p;
-  }
-
-  set route(r) {
-    this._route = r;
-  }
-
-  _wantsHistory() {
-    return true;
-  }
-
   // ---- rooms tab --------------------------------------------------------
 
   _roomInfo(r) {

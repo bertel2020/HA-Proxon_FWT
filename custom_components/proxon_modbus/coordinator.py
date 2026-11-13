@@ -317,7 +317,7 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
         async with self._boost_lock:
             kind = boost_kind(self.data.capabilities, self.data.function_block)
             if kind is None:
-                raise HomeAssistantError("Boost ventilation is not available in the current operating mode")
+                raise HomeAssistantError(translation_domain=DOMAIN, translation_key="boost_unavailable")
             minutes = minutes or self.boost_minutes
             func = self.data.function_block
             # "auto" holds what to put back: the fan automatic ("stage" boost) or an intensive ventilation that was already on.
@@ -416,14 +416,16 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
         Only an explicit "not possible" blocks; unknown flags (block not read) let the write through.
         """
         if self.data.capabilities.get(flag) is False:
-            raise ServiceValidationError(f"The unit currently does not allow this change ({flag})")
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="change_not_allowed", translation_placeholders={"flag": flag}
+            )
 
     async def async_set_ptc_enable(self, room_index: int, on: bool) -> None:
         """Set one room's PTC enable bit without losing the bits of other rooms written at the same time."""
         async with self._ptc_lock:
             base = self._ptc_pending if self._ptc_pending is not None else self.data.ptc_enable_mask
             if base is None:  # unknown mask: writing from 0 would switch off the other rooms
-                raise HomeAssistantError("PTC enable state could not be read; try again shortly")
+                raise HomeAssistantError(translation_domain=DOMAIN, translation_key="ptc_unknown")
             new_mask = set_bit(base, room_index, on)
             await self.async_write_register(REG_PTC_ENABLE_WRITE, new_mask)
             self._ptc_pending = new_mask

@@ -18,7 +18,8 @@ PKG_DIR = Path(__file__).resolve().parents[1] / "custom_components" / "proxon_mo
 
 
 class HomeAssistantError(Exception):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args)
 
 
 class ServiceValidationError(HomeAssistantError):

@@ -162,10 +162,6 @@ export class ProxonFwtBase extends HTMLElement {
     if (el && el.focus) el.focus({ preventScroll: true });
   }
 
-  _wantsHistory() {
-    return false;
-  }
-
   _days(n) {
     return n === 1 ? this._t("d_one") : this._t("d_n", String(n));
   }

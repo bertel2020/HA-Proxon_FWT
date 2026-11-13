@@ -312,7 +312,7 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
             port = int(user_input[CONF_PORT])
             unit_id = int(user_input[CONF_UNIT_ID])
 
-            unique_id = f"tcp_{user_input[CONF_HOST]}_{port}_{unit_id}"
+            unique_id = f"tcp_{user_input[CONF_HOST].strip().lower()}_{port}_{unit_id}"
             await self._async_claim_unique_id(unique_id)
 
             try:
