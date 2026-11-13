@@ -6,6 +6,24 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Versionen folgen dem Feld `version` in
 `custom_components/proxon_modbus/manifest.json`.
 
+## 2.2.2 – 2026-11-13
+
+**Korrigiert**
+- **Stoßlüften:** Stufe 4 wird nicht mehr als „Wunschstufe“ gelernt. Vorher konnte die Lüfterstufe nach dem Stopp der Wärmepumpe dauerhaft auf 4 zurückspringen.
+- **Boost-Ende:** Ist der Funktionsblock im Moment des Ablaufs nicht lesbar, wird das Ende im Minutentakt wiederholt, statt die Rückstellung zu überspringen. Nach einem HA-Neustart wartet der Timer auf die ersten Daten, statt mit einem Fehler abzubrechen.
+- **Verbindungsverlust:** Antwortet die Anlage nur mit Modbus-Fehlern, erscheint jetzt auch bei 0 CO₂-/Feuchte-Sensoren der Verbindungsfehler und das Repair-Issue. Antworten mit zu wenigen Registern gelten als Lesefehler des Blocks.
+- **PTC-Freigabe:** Konnte die Maske nicht gelesen werden, wird nicht mehr mit Maske 0 geschrieben (das hätte die Freigaben der anderen Räume gelöscht), sondern eine Meldung angezeigt.
+- **Lüfterstufe wiederherstellen:** Der Schalter bleibt bei Verbindungsausfall verfügbar, die Einstellung geht beim HA-Neustart nicht mehr verloren.
+- **Statistik:** Beim Herunterfahren stehen höchstens wenige Sekunden statt bis zu 5 Minuten Laufzeit, Starts und Filterstunden aus.
+- **Blueprint CO₂-Intensivlüftung:** Die Rückstellung läuft nur, wenn die Intensivlüftung an ist, und die Szene gibt es pro Automation. Fehlt sie nach einem Neustart, wird nur die Intensivlüftung ausgeschaltet.
+- **Panel:** Fokus-Selektoren sind maskiert, ein per Dienst verlängerter Boost zeigt die neue Endzeit, und bei mehreren Anlagen werden nicht mehr die Einstellungen der ersten verwendet.
+
+**Geändert**
+- **Räume und Bereiche:** Der in den Optionen gewählte Bereich wird nur noch gesetzt, wenn das Raumgerät noch keinen hat. Von Hand geänderte Bereiche bleiben erhalten.
+- **Fehlermeldungen** sind übersetzt (de/en).
+- **Verbindung:** Der Host in der Kennung einer TCP-Verbindung wird ohne Leerzeichen und klein geschrieben verwendet. Bestehende Einträge bleiben unverändert.
+- Ungenutzter Code im Panel entfernt.
+
 ## 2.2.1 – 2026-11-09
 
 **Geändert**

@@ -5,6 +5,24 @@
 All notable changes to this project are documented here. Versions follow the
 `version` field in `custom_components/proxon_modbus/manifest.json`.
 
+## 2.2.2 – 2026-11-13
+
+**Fixed**
+- **Boost ventilation:** stage 4 is no longer learned as the "preferred stage". Before, the fan stage could jump back to 4 permanently after the heat pump stopped.
+- **Boost end:** if the function block is unreadable when the boost expires, the end is retried every minute instead of skipping the restore. After an HA restart the timer waits for the first data instead of failing with an error.
+- **Connection loss:** if the unit only answers with Modbus errors, the connection error and repair issue now also appear with 0 CO₂/humidity sensors. Replies with too few registers count as a read error of that block.
+- **PTC enable:** if the mask could not be read, nothing is written with mask 0 any more (that would have cleared the other rooms' enables); a message is shown instead.
+- **Restore fan stage:** the switch stays available during a connection outage, so the setting is no longer lost on an HA restart.
+- **Statistics:** at shutdown at most a few seconds instead of up to 5 minutes of runtime, starts and filter hours are missing.
+- **CO₂ intensive ventilation blueprint:** the restore only runs if intensive ventilation is on, and the scene is kept per automation. If it is missing after a restart, only intensive ventilation is turned off.
+- **Panel:** focus selectors are escaped, a boost extended by a service shows the new end time, and with several units the settings of the first one are no longer used.
+
+**Changed**
+- **Rooms and areas:** the area chosen in the options is only applied if the room device has none yet. Areas changed by hand are kept.
+- **Error messages** are translated (de/en).
+- **Connection:** the host in the identifier of a TCP connection is used trimmed and lowercase. Existing entries are unchanged.
+- Unused code removed from the panel.
+
 ## 2.2.1 – 2026-11-09
 
 **Changed**
