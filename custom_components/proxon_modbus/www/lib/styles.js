@@ -308,6 +308,14 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
   .hchips { width: 100%; justify-content: flex-start; }
 }
 :host([narrow]) .menu { display: inline-flex; }
+/* Panel only (the dashboard card has no .panel wrapper): flat surfaces with quiet section titles instead of framed cards with framed tiles inside. */
+.panel ha-card { border: 0; border-radius: 12px; padding: 14px 18px 16px; }
+.panel .h { font-size: 13px; color: var(--secondary-text-color); padding-bottom: 8px; margin-bottom: 10px; border-bottom: 1px solid var(--divider-color); }
+.panel .h > ha-icon { color: var(--secondary-text-color); }
+.panel .k, .panel .rs, .panel .dt, .panel .rc, .panel .lcard { border: 0; box-shadow: none; border-radius: 12px; background: var(--secondary-background-color); }
+.panel .dt { padding: 14px; }
+.panel .rseg, .panel .seg.cmp { border: 0; }
+.panel .ins { border-left-width: 3px; border-radius: 10px; }
 `;
 
 let SHEET; // one constructable stylesheet shared by every card/panel instead of a <style> per render
