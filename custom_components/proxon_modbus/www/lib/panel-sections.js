@@ -21,6 +21,34 @@ export class PanelSectionsMethods {
     return status + (modeKey ? `<span class="hchip">${this._t(modeKey)}</span>` : "");
   }
 
+  // Overview status block: one quiet row per topic (icon, label, value). The heat pump state stays in the header chips, the fan stage in the controls.
+  _sec_status(d) {
+    const c = d.central, rows = [];
+    const row = (icon, col, label, value, go = "") => `<div class="srow2 ${go ? "go" : ""}" ${go ? `role="button" tabindex="0" data-act="tab" data-v="${go}"` : ""}>
+      <span class="ic" style="color:${col}">${this._icon(icon)}</span><span class="lb2">${label}</span><b style="color:${col}">${value}</b></div>`;
+    const MUTED = "var(--primary-text-color)", WARN = "#c98400", BADC = "#db4437";
+    if (this._ok(c.error_system)) {
+      const bad = this._on(c.error_system);
+      rows.push(row(bad ? "mdi:alert-circle-outline" : "mdi:check-circle-outline", bad ? BADC : GREEN, this._t("error"), this._t(bad ? "has_error" : "no_error"), bad ? "diag" : ""));
+    }
+    if (c.mode_change_possible && this._ok(c.mode_change_possible)) {
+      const ok = this._on(c.mode_change_possible);
+      rows.push(row("mdi:swap-horizontal", MUTED, this._t("mode_change"), this._t(ok ? "possible" : "not_possible")));
+    }
+    if (c.bypass_active && this._ok(c.bypass_active)) {
+      const open = this._on(c.bypass_active), txt = this._t(open ? "bypass_open" : "bypass_closed");
+      rows.push(row("mdi:routes", open ? BLUE : MUTED, txt.replace(/\s*\(.*\)$/, ""), ""));
+    }
+    const f = this._filterInfo(c);
+    if (this._ok(c.filter_device) || f.known) {
+      rows.push(row("mdi:air-filter", f.due ? WARN : GREEN, this._t("filter_device"), this._t(f.due ? "change_due" : "ok"), "diag"));
+    }
+    const ptc = d.rooms.filter((r) => this._on(r.ents.ptc_active)).length;
+    if (d.rooms.length) rows.push(row("mdi:home-outline", ptc ? WARN : MUTED, `${this._t("rooms")} · ${this._t("rs_heat")}`, `${ptc} ${this._t("rs_active")}`, "rooms"));
+    if (!rows.length) return "";
+    return `<ha-card>${this._header("mdi:clipboard-check-outline", this._t("status"))}<div class="srows2">${rows.join("")}</div></ha-card>`;
+  }
+
   _insightsAll(d) {
     const c = d.central, out = [], f = this._filterInfo(c);
     if (f.due) {
