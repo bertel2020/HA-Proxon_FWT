@@ -306,6 +306,12 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
   .brand h1 { font-size: 18px; }
   .bar-top { flex-wrap: wrap; row-gap: 8px; }
   .hchips { width: 100%; justify-content: flex-start; }
+  /* Rooms header: summary and filters become one swipeable row each, so the first room shows without scrolling. */
+  .rsum, .rfil { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-bottom: 10px; }
+  .rsum::-webkit-scrollbar, .rfil::-webkit-scrollbar { display: none; }
+  .rsum { gap: 8px; } .rs { flex: none; padding: 6px 12px; gap: 8px; } .rs b { font-size: 16px; }
+  .fchip { flex: none; }
+  .rtop { margin-bottom: 8px; }
 }
 :host([narrow]) .menu { display: inline-flex; }
 /* Panel only (the dashboard card has no .panel wrapper): flat surfaces with quiet section titles instead of framed cards with framed tiles inside. */
