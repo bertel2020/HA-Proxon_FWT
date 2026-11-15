@@ -130,7 +130,7 @@ export class HintsMethods {
   // Diagnosis tab: status tiles on top, measurements across the full width, then runtime / starts.
   _diagTab(d) {
     const c = d.central, lang = this._hass.language;
-    const tile = (icon, col, title, value, sub, extra = "") => `<div class="dt" style="--c:${col}"><span class="ic">${this._icon(icon)}</span><div class="b"><small>${title}</small><b>${value}</b>${sub ? `<div class="s">${sub}</div>` : ""}${extra}</div></div>`;
+    const tile = (icon, col, title, value, sub, extra = "") => `<div class="srow" style="--c:${col}"><span class="ic">${this._icon(icon)}</span><div class="b"><div class="sl"><span>${title}</span><b>${value}</b></div>${sub ? `<div class="s">${sub}</div>` : ""}${extra}</div></div>`;
     const tiles = [];
     // heat pump
     if (c.heat_pump_heating || c.compressor_speed) {
@@ -168,12 +168,12 @@ export class HintsMethods {
       tiles.push(tile(bad ? "mdi:alert-circle-outline" : "mdi:check-circle-outline", bad ? "#db4437" : GREEN, this._t("error"), bad ? this._t("has_error") : this._t("no_error"), chg, byp));
     }
     // runtime and starts
-    const st = (icon, color, label, val, unit) => val === null ? "" : `<div class="rs" style="--c:${color}"><span class="ic">${this._icon(icon)}</span><div><small>${label}</small><b>${val}<span>${unit}</span></b></div></div>`;
+    const st = (icon, color, label, val, unit) => val === null ? "" : `<div class="mr"><span>${label}</span><b>${val}${unit}</b></div>`;
     const sv = (id, dg) => this._num(id) === null ? null : this._fmt(this._num(id), dg);
     const stHtml = st("mdi:clock-outline", GREEN, this._t("rt_today"), sv(c.hp_runtime_today, 1), " h") + st("mdi:counter", BLUE, this._t("starts_today"), sv(c.hp_starts_today, 0), "×") +
       st("mdi:history", GREEN, this._t("rt_total"), sv(c.hp_runtime_total, 1), " h") + st("mdi:counter", BLUE, this._t("starts_total"), sv(c.hp_starts_total, 0), "×");
-    const stats = stHtml ? `<ha-card>${this._header("mdi:counter", this._t("stats"))}<div class="rsum" style="margin-bottom:0">${stHtml}</div></ha-card>` : "";
-    return `${tiles.length ? `<div class="dtiles">${tiles.join("")}</div>` : ""}${this._sec_measure(d)}${stats}`;
+    const stats = stHtml ? `<ha-card>${this._header("mdi:counter", this._t("stats"))}<div class="mtgrid">${stHtml}</div></ha-card>` : "";
+    return `${tiles.length ? `<ha-card>${this._header("mdi:stethoscope", this._t("status"))}<div class="srows">${tiles.join("")}</div></ha-card>` : ""}${this._sec_measure(d)}${stats}`;
   }
 
 }

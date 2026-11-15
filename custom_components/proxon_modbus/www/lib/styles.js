@@ -197,6 +197,12 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .dt .b { min-width: 0; flex: 1; } .dt small { display: block; color: var(--secondary-text-color); font-size: 12.5px; }
 .dt .b > b { display: block; font-size: 20px; font-weight: 500; margin: 1px 0 2px; } .dt .s { font-size: 13px; color: var(--secondary-text-color); }
 .dt .s.sw { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; } .dt .vbtn { margin-top: 8px; }
+.srows { display: grid; }
+.srow { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--divider-color); }
+.srow:first-child { border-top: 0; padding-top: 0; } .srow:last-child { padding-bottom: 0; }
+.srow .ic { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; flex: none; color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); --mdc-icon-size: 20px; }
+.srow .b { min-width: 0; flex: 1; } .srow .sl { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; font-size: 14px; } .srow .sl b { font-weight: 500; text-align: right; }
+.srow .s { font-size: 13px; color: var(--secondary-text-color); margin-top: 2px; } .srow .s.sw { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; } .srow .vbtn { margin-top: 8px; }
 .dstat { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 32px; }
 .dsr { display: flex; gap: 32px; } .dsr b { display: block; font-size: 22px; font-weight: 500; } .dsr small { color: var(--secondary-text-color); font-size: 12.5px; }
 .mtgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 4px 24px; }
