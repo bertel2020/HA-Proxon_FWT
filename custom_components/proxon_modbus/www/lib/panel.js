@@ -190,7 +190,7 @@ export class ProxonFwtPanel extends ProxonFwtBase {
     } else if (tab === "rooms") {
       body = `<div class="stack">${this._sec_rooms(d)}</div>`;
     } else if (tab === "history") {
-      body = `<div class="stack">${this._sec_history(d)}${this._sec_runtime(d)}${this._sec_energy(d)}${this._sec_year(d)}</div>`;
+      body = `<div class="stack"><div class="fl">${this._sec_history(d)}${this._sec_runtime(d)}${this._sec_energy(d)}${this._sec_year(d)}</div></div>`;
     } else {
       body = `<div class="stack">${this._sec_insights(d)}${this._diagTab(d)}</div>`;
     }

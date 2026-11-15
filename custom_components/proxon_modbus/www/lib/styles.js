@@ -328,6 +328,10 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .panel .dt { padding: 14px; }
 .panel .rseg, .panel .seg.cmp { border: 0; }
 .panel .ins { border-left-width: 3px; border-radius: 10px; }
+/* History tab: the sections share one surface, separated by lines. */
+.panel .fl { background: var(--ha-card-background, var(--card-background-color)); border-radius: 12px; padding: 0 18px; box-shadow: var(--ha-card-box-shadow, none); }
+.panel .fl ha-card { background: none; box-shadow: none; border-radius: 0; padding: 16px 0; }
+.panel .fl ha-card + ha-card { border-top: 1px solid var(--divider-color); }
 `;
 
 let SHEET; // one constructable stylesheet shared by every card/panel instead of a <style> per render
