@@ -48,7 +48,7 @@ class FakeStore:
 
 
 class FakeDataUpdateCoordinator:
-    def __init__(self, hass, logger, *, config_entry=None, name=None, update_interval=None):
+    def __init__(self, hass, logger, *, config_entry=None, name=None, update_interval=None, request_refresh_debouncer=None):
         self.hass, self.config_entry, self.data = hass, config_entry, None
 
     def __class_getitem__(cls, item):
@@ -80,6 +80,7 @@ def _install_stubs():
     issues = mod("homeassistant.helpers.issue_registry", IssueSeverity=IssueSeverity,
                  async_create_issue=lambda *a, **k: None, async_delete_issue=lambda *a, **k: None)
     helpers.issue_registry = issues
+    mod("homeassistant.helpers.debounce", Debouncer=lambda *a, **k: None)
     mod("homeassistant.helpers.event", async_call_later=lambda hass, delay, cb: (lambda: None))
     mod("homeassistant.helpers.storage", Store=FakeStore)
     mod("homeassistant.helpers.update_coordinator", DataUpdateCoordinator=FakeDataUpdateCoordinator, UpdateFailed=UpdateFailed)
