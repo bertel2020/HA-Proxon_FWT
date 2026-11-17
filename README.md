@@ -25,7 +25,7 @@
 
 <p align="center"><em><a href="README.en.md">🇬🇧 English version</a></em></p>
 
-Eine über die Oberfläche konfigurierbare Home-Assistant-Custom-Integration für die **Proxon FWT - Frischluftwärmetechnik**, die per Modbus mit ihrem **FWT Modbus-Gateway** kommuniziert. Sie nutzt eine vollwertige Config-Entry-Integration: einen Config-Flow, einen gemeinsam genutzten `DataUpdateCoordinator` und typisierte Entities (`climate`, `sensor`, `binary_sensor`, `switch`, `select`) — auf Basis der [modernisierten Modbus-Architektur](https://developers.home-assistant.io/blog/2026/07/05/modernizing-modbus/) von Home Assistant (Einrichtung über einen Config-Entry statt handgeschriebener YAML-Registerlisten, die Verbindung kommt als gemeinsam genutzte Unit von der `modbus`-Integration, Plattformen auf Basis von Entity-Descriptions).
+Eine über die Oberfläche konfigurierbare Home-Assistant-Custom-Integration für die **Proxon FWT - Frischluftwärmetechnik** (**FWT 1.0** mit **Modbus-Modul**), die per Modbus mit ihrem **FWT Modbus-Gateway** kommuniziert. Sie nutzt eine vollwertige Config-Entry-Integration: einen Config-Flow, einen gemeinsam genutzten `DataUpdateCoordinator` und typisierte Entities (`climate`, `sensor`, `binary_sensor`, `switch`, `select`) — auf Basis der [modernisierten Modbus-Architektur](https://developers.home-assistant.io/blog/2026/07/05/modernizing-modbus/) von Home Assistant (Einrichtung über einen Config-Entry statt handgeschriebener YAML-Registerlisten, die Verbindung kommt als gemeinsam genutzte Unit von der `modbus`-Integration, Plattformen auf Basis von Entity-Descriptions).
 
 Beide Übertragungsarten werden unterstützt:
 - **Modbus TCP** — das Gateway über das Netzwerk erreichbar (z.B. `192.168.x.x:502`).
@@ -33,6 +33,7 @@ Beide Übertragungsarten werden unterstützt:
 
 ## Voraussetzungen
 
+- Eine **Proxon FWT 1.0** mit **Modbus-Modul** (dem FWT Modbus-Gateway). Die Integration ist für dieses Gerät und seine Registerbelegung gemacht; andere Geräte oder Generationen sind nicht vorgesehen.
 - Home Assistant **2026.9.0** oder neuer (die Integration nutzt die `modbus`-Integration von Home Assistant für die Verbindung).
 
 ## Installation

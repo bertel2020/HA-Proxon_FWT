@@ -25,7 +25,7 @@
 
 <p align="center"><em><a href="README.md">🇩🇪 Deutsche Version</a></em></p>
 
-A UI-configurable Home Assistant custom integration for the **Proxon FWT - Frischluftwärmetechnik** ventilation unit, talking Modbus to its **FWT Modbus gateway**. It uses a proper config-entry integration: a config flow, a shared `DataUpdateCoordinator`, and typed entities (`climate`, `sensor`, `binary_sensor`, `switch`, `select`) — built on Home Assistant's [modernized Modbus architecture](https://developers.home-assistant.io/blog/2026/07/05/modernizing-modbus/) (config-entry setup instead of hand-written YAML register maps, the connection is a shared unit provided by the `modbus` integration, entity-description-driven platforms).
+A UI-configurable Home Assistant custom integration for the **Proxon FWT - Frischluftwärmetechnik** ventilation unit (**FWT 1.0** with the **Modbus module**), talking Modbus to its **FWT Modbus gateway**. It uses a proper config-entry integration: a config flow, a shared `DataUpdateCoordinator`, and typed entities (`climate`, `sensor`, `binary_sensor`, `switch`, `select`) — built on Home Assistant's [modernized Modbus architecture](https://developers.home-assistant.io/blog/2026/07/05/modernizing-modbus/) (config-entry setup instead of hand-written YAML register maps, the connection is a shared unit provided by the `modbus` integration, entity-description-driven platforms).
 
 Both transports are supported:
 - **Modbus TCP** — the gateway reachable over the network (e.g. `192.168.x.x:502`).
@@ -33,6 +33,7 @@ Both transports are supported:
 
 ## Requirements
 
+- A **Proxon FWT 1.0** with the **Modbus module** (the FWT Modbus gateway). The integration is built for this unit and its register map; other devices or generations are not supported.
 - Home Assistant **2026.9.0** or newer (the integration uses Home Assistant's `modbus` integration for the connection).
 
 ## Installation
