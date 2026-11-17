@@ -256,7 +256,8 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .stp { display: flex; align-items: center; gap: 6px; justify-content: center; }
 .stp .t { min-width: 70px; text-align: center; } .stp .t small { display: block; color: var(--secondary-text-color); font-size: 11px; } .stp .t b { font-size: 18px; font-weight: 500; }
 .mp { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
-.mp .chip { margin: 0; }
+.mp .chip { margin: 0; font-size: 15px; padding: 4px 12px; gap: 6px; }
+.mp .chip ha-icon { --mdc-icon-size: 18px; }
 .rmore { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--divider-color); }
 .rmore h4 { margin: 0 0 6px; font-size: 12px; font-weight: 500; color: var(--secondary-text-color); text-transform: uppercase; letter-spacing: .04em; }
 .rmore .f { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--divider-color); font-size: 13px; }
