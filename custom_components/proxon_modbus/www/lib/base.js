@@ -16,7 +16,17 @@ export class ProxonFwtBase extends HTMLElement {
     this._room = 0;
     this._sig = "";
     this._config = {};
-    this.shadowRoot.addEventListener("pointerdown", (ev) => { this._pd = ev.composedPath()[0]; });
+    this.shadowRoot.addEventListener("pointerdown", (ev) => {
+      this._pd = ev.composedPath()[0];
+      const knob = this._pd.closest && this._pd.closest(".knob");
+      if (knob && this._d) {
+        this._drag = { el: knob, n: Number(knob.dataset.ring) };
+        if (knob.setPointerCapture) knob.setPointerCapture(ev.pointerId);
+        ev.preventDefault();
+      }
+    });
+    this.shadowRoot.addEventListener("pointermove", (ev) => { if (this._drag) this._dragRing(ev); });
+    for (const t of ["pointerup", "pointercancel"]) this.shadowRoot.addEventListener(t, () => { this._drag = null; });
     this.shadowRoot.addEventListener("click", (ev) => this._click(ev));
     this.shadowRoot.addEventListener("keydown", (ev) => {
       if ((ev.key === "Enter" || ev.key === " ") && ev.target && ev.target.getAttribute && ev.target.getAttribute("role") === "button") {

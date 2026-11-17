@@ -12,8 +12,16 @@ export class InteractionMethods {
   // Steps of the +/- buttons add up on a pending target and are written once, shortly after the last click.
   _bump(id, dir) {
     const a = (this._state(id) || {}).attributes || {}, step = a.target_temp_step || 1;
+    const e = (this._pend || {})[id] || {};
+    this._setTgt(id, (e.t ?? a.temperature ?? a.current_temperature ?? 21) + dir * step);
+  }
+
+  // Sets a pending target (clamped to the room's range) and writes it once, shortly after the last change.
+  _setTgt(id, value) {
+    const a = (this._state(id) || {}).attributes || {};
     const pend = (this._pend = this._pend || {}), e = pend[id] || {};
-    const t = Math.min(a.max_temp ?? 30, Math.max(a.min_temp ?? 18, (e.t ?? a.temperature ?? a.current_temperature ?? 21) + dir * step));
+    const t = Math.min(a.max_temp ?? 30, Math.max(a.min_temp ?? 18, value));
+    if (e.t === t) return;
     clearTimeout(e.timer);
     const fire = () => {
       if (this._wbusy) { pend[id].timer = setTimeout(fire, 200); return; }
@@ -22,6 +30,19 @@ export class InteractionMethods {
     };
     pend[id] = { t, timer: setTimeout(fire, 500) };
     this._sig = ""; this._update();
+  }
+
+  // Dragging the knob of a room ring: angle around the ring centre (270 degrees from bottom left, clockwise) -> the room's range.
+  _dragRing(ev) {
+    const d = this._drag;
+    if (!d) return;
+    const ring = d.el.parentElement, r = ring.getBoundingClientRect();
+    const dx = ev.clientX - (r.left + r.width / 2), dy = ev.clientY - (r.top + r.height * 75 / 128);
+    let a = (Math.atan2(dy, dx) * 180 / Math.PI - 135 + 360) % 360;
+    if (a > 270) a = a > 315 ? 0 : 270; // the open part at the bottom snaps to the nearer end
+    const id = this._d.rooms[d.n].climate, at = (this._state(id) || {}).attributes || {}, step = at.target_temp_step || 1;
+    const [lo, hi] = this._ringScale(at);
+    this._setTgt(id, Math.round((lo + (a / 270) * (hi - lo)) / step) * step);
   }
 
   // Runs service calls one after another; while they run, controls are locked and a failure is shown as a toast.

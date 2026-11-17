@@ -31,15 +31,24 @@ export class ProxonFwtPanel extends ProxonFwtBase {
       ptcA: this._on(r.ents.ptc_active), ptcE: r.ents.ptc_enable };
   }
 
-  _ring(i) {
-    const R0 = 62, C = 2 * Math.PI * R0, arc = C * 0.75, f = (v) => Math.max(0, Math.min(1, (v - 16) / 12));
+  // The ring spans the room's settable range.
+  _ringScale(a) {
+    const lo = a && a.min_temp, hi = a && a.max_temp;
+    return lo != null && hi != null && hi > lo ? [lo, hi] : [16, 28];
+  }
+
+  _ring(n, i) {
+    const R0 = 62, C = 2 * Math.PI * R0, arc = C * 0.75, [lo, hi] = this._ringScale(i.a), f = (v) => Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
     const rot = "rotate(135 75 75)";
     const rad = ((i.tgt == null ? 0 : f(i.tgt)) * 270 + 135) * Math.PI / 180;
-    const mark = i.tgt == null ? "" : `<circle cx="${75 + R0 * Math.cos(rad)}" cy="${75 + R0 * Math.sin(rad)}" r="7" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="2.5"/>`;
-    return `<div class="ring"><svg viewBox="0 0 150 150" aria-hidden="true">
+    const kx = 75 + R0 * Math.cos(rad), ky = 75 + R0 * Math.sin(rad);
+    const mark = i.tgt == null ? "" : `<circle cx="${kx}" cy="${ky}" r="7" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="2.5"/>`;
+    // The open bottom of the ring is cropped (viewBox height 128); the knob is a larger touch target to drag the target temperature.
+    const knob = i.tgt == null || i.down ? "" : `<div class="knob" data-act="noop" data-ring="${n}" style="left:${(kx / 150 * 100).toFixed(2)}%;top:${(ky / 128 * 100).toFixed(2)}%"></div>`;
+    return `<div class="ring"><svg viewBox="0 0 150 128" aria-hidden="true">
       <circle cx="75" cy="75" r="${R0}" fill="none" stroke="var(--card-background-color)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${arc} ${C}" transform="${rot}"/>
       ${i.cur == null ? "" : `<circle cx="75" cy="75" r="${R0}" fill="none" stroke="${i.col}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${Math.max(0.1, arc * f(i.cur))} ${C}" transform="${rot}"/>`}${mark}</svg>
-      <div class="c"><div><b>${i.cur == null ? "–" : this._fmt(i.cur) + "°"}</b><small>${this._t("actual")}</small></div></div></div>`;
+      <div class="c"><div><b>${i.cur == null ? "–" : this._fmt(i.cur) + "°"}</b><small>${this._t("actual")}</small></div></div>${knob}</div>`;
   }
 
   _stepper(n, i) {
@@ -87,10 +96,7 @@ export class ProxonFwtPanel extends ProxonFwtBase {
 
   _roomFacts(n, i) {
     const a = i.a;
-    return `<div><h4>${this._t("r_details")}</h4>
-      ${a.min_temp != null ? `<div class="f"><span>${this._t("adjustable")}</span><b>${this._fmt(a.min_temp, 0)}–${this._fmt(a.max_temp, 0)} °C</b></div>` : ""}
-      ${i.co2 != null ? `<div class="f"><span>${this._t("co2")}</span><b>${Math.round(i.co2)} ppm</b></div>` : ""}
-      ${i.rf != null ? `<div class="f"><span>${this._t("humidity")}</span><b>${Math.round(i.rf)} %</b></div>` : ""}
+    return `<div class="rows">      ${a.min_temp != null ? `<div class="f"><span>${this._t("adjustable")}</span><b>${this._fmt(a.min_temp, 0)}–${this._fmt(a.max_temp, 0)} °C</b></div>` : ""}
       ${i.r.ents.ptc_active ? `<div class="f"><span>${this._t("ptc")}</span><b>${i.ptcA ? this._t("ptc_active") : this._t("ptc_off")}</b></div>` : ""}
       ${i.ptcE ? `<div class="f"><span>${this._t("ptc_enabled")}</span><ha-switch data-act="rptc" data-v="${n}" ${this._on(i.ptcE) ? "checked" : ""} ${this._ok(i.ptcE) ? "" : "disabled"}></ha-switch></div>` : ""}</div>`;
   }
@@ -99,7 +105,7 @@ export class ProxonFwtPanel extends ProxonFwtBase {
     return `<div class="rc"><div class="rh" role="button" tabindex="0" aria-haspopup="dialog" data-act="rtoggle" data-v="${n}">
       <span class="ri">${this._icon(this._roomIcon(i.r.name))}</span><b>${i.r.name}</b>
       <span class="st" style="--c:${i.st[2]}">${this._icon(i.st[1])}${i.st[0]}</span><span class="chev">${this._icon("mdi:arrow-expand-all")}</span></div>
-      <div class="rb">${this._ring(i)}<div class="rctl">${this._stepper(n, i)}<div class="mp">${this._roomChips(i)}</div></div></div></div>`;
+      <div class="rb">${this._ring(n, i)}<div class="rctl">${this._stepper(n, i)}<div class="mp">${this._roomChips(i)}</div></div></div></div>`;
   }
 
   // Details open in a dialog (bottom sheet on phones), so the room grid never reflows.
@@ -108,11 +114,13 @@ export class ProxonFwtPanel extends ProxonFwtBase {
     const hit = id && all.find(([, i]) => i.r.climate === id);
     if (!hit) return "";
     const [n, i] = hit;
-    return `<div class="rdlg" data-act="rclose"><div class="rsheet rc open" role="dialog" aria-modal="true" aria-label="${i.r.name}" data-act="noop">
-      <div class="rh"><span class="ri">${this._icon(this._roomIcon(i.r.name))}</span><b>${i.r.name}</b>
-      <span class="st" style="--c:${i.st[2]}">${this._icon(i.st[1])}${i.st[0]}</span><button class="x" data-act="rclose" aria-label="${this._t("close")}">${this._icon("mdi:close")}</button></div>
-      <div class="rb">${this._ring(i)}<div class="rctl">${this._stepper(n, i)}<div class="mp">${this._roomChips(i)}</div></div></div>
-      <div class="rmore"><div><h4>${this._t("r_t24")}</h4>${this._roomSpark(i)}</div>${this._roomFacts(n, i)}</div></div></div>`;
+    return `<div class="rdlg" data-act="rclose"><div class="rsheet" role="dialog" aria-modal="true" aria-label="${i.r.name}" data-act="noop">
+      <div class="grab"></div>
+      <div class="dh"><div><h3>${i.r.name}</h3><div class="ds" style="--c:${i.st[2]}">${this._icon(i.st[1])}${i.st[0]}</div></div>
+        <button class="x" data-act="rclose" aria-label="${this._t("close")}">${this._icon("mdi:close")}</button></div>
+      <div class="dring">${this._ring(n, i)}${this._stepper(n, i)}<div class="mp">${this._roomChips(i)}</div></div>
+      <div class="dsec"><h4>${this._t("r_t24")}</h4>${this._roomSpark(i)}</div>
+      <div class="dsec"><h4>${this._t("r_details")}</h4>${this._roomFacts(n, i)}</div></div></div>`;
   }
 
   _roomCmp(rows) {

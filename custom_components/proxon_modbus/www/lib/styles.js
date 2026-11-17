@@ -243,14 +243,16 @@ svg .sh { font-size: 13px; font-weight: 500; }
   background: color-mix(in srgb, var(--c) 16%, transparent); color: var(--c); --mdc-icon-size: 14px; }
 .rh .chev { color: var(--secondary-text-color); --mdc-icon-size: 18px; transition: transform .2s; flex: none; }
 .rdlg { position: fixed; inset: 0; z-index: 10; background: rgba(0, 0, 0, .45); display: grid; place-items: center; padding: 16px; }
-.rsheet { width: min(640px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overscroll-behavior: contain; overflow: auto; background: var(--card-background-color); border-radius: 22px; padding: 16px; box-shadow: 0 12px 40px rgba(0, 0, 0, .35); cursor: default; }
+.rsheet { width: min(420px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overscroll-behavior: contain; overflow: auto; background: var(--card-background-color); border-radius: 22px; padding: 12px 20px 20px; box-shadow: 0 12px 40px rgba(0, 0, 0, .35); cursor: default; }
 .rsheet .rh { cursor: default; }
 .rsheet .x { margin-left: 8px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--pbd); background: var(--secondary-background-color); color: var(--primary-text-color); display: grid; place-items: center; cursor: pointer; padding: 0; flex: none; }
 .rb { display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 6px; }
 .rc.open .rb { flex-direction: row; justify-content: space-around; flex-wrap: wrap; }
-.ring { position: relative; width: 140px; height: 140px; flex: none; }
+.ring { position: relative; width: 140px; aspect-ratio: 150 / 128; flex: none; }
+.ring .knob { position: absolute; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; touch-action: none; cursor: grab; }
+.ring .knob:active { cursor: grabbing; }
 .ring svg { width: 100%; height: 100%; display: block; }
-.ring .c { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.ring .c { position: absolute; inset: 17.19% 0 0 0; display: grid; place-content: center; text-align: center; }
 .ring .c b { display: block; font-size: 28px; font-weight: 500; line-height: 1.1; }
 .ring .c small { display: block; color: var(--secondary-text-color); font-size: 12px; }
 .rctl { display: flex; flex-direction: column; align-items: center; gap: 10px; }
@@ -284,7 +286,7 @@ svg .sh { font-size: 13px; font-weight: 500; }
 @media (max-width: 640px) {
   .rgrid { grid-template-columns: minmax(0, 1fr); } .rmore { grid-template-columns: 1fr; }
   .rdlg { place-items: end center; padding: 0; } .rsheet { width: 100%; max-height: 90vh; max-height: 90dvh; border-radius: 22px 22px 0 0; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
-  .rc .rb { flex-direction: row; justify-content: space-around; } .ring { width: 118px; height: 118px; }
+  .rc .rb { flex-direction: row; justify-content: space-around; } .ring { width: 118px; }
   .crow, .cscale { grid-template-columns: 96px minmax(0, 1fr) 66px; gap: 8px; } .crow .v small { display: none; }
   .rsum { grid-template-columns: 1fr 1fr; }
   .rs { padding: 10px 12px; border-left: 3px solid var(--c); } .rs .ic { display: none; }
@@ -339,6 +341,26 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .panel .fl { background: var(--ha-card-background, var(--card-background-color)); border-radius: 12px; padding: 0 18px; box-shadow: var(--ha-card-box-shadow, none); }
 .panel .fl ha-card { background: none; box-shadow: none; border-radius: 0; padding: 16px 0; }
 .panel .fl ha-card + ha-card { border-top: 1px solid var(--divider-color); }
+.panel .rsheet { background: var(--card-background-color); }
+.rsheet .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--divider-color); margin: 0 auto 12px; }
+.rsheet .dh { display: flex; align-items: flex-start; gap: 10px; }
+.rsheet .dh h3 { margin: 0; font-size: 18px; font-weight: 500; }
+.rsheet .ds { display: inline-flex; gap: 5px; align-items: center; font-size: 13px; margin-top: 2px; color: var(--c); --mdc-icon-size: 16px; }
+.rsheet .dh .x { margin-left: auto; }
+.rsheet .dring { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 6px; }
+.rsheet .dring .ring { width: 210px; }
+.rsheet .ring .c { inset: 22% 0 0 0; }
+.rsheet .ring .c b { font-size: 40px; }
+.rsheet .ring .c small { font-size: 13px; }
+.rsheet .stp { margin-top: -10px; gap: 18px; }
+.rsheet .stp .t b { font-size: 22px; }
+.rsheet .stp .t small { font-size: 12px; }
+.rsheet .mp { margin-top: 10px; }
+.rsheet .dsec { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--divider-color); }
+.rsheet .dsec h4 { margin: 0 0 8px; font-size: 12px; font-weight: 500; color: var(--secondary-text-color); text-transform: uppercase; letter-spacing: .04em; }
+.rsheet .rows .f { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--divider-color); font-size: 15px; }
+.rsheet .rows .f:first-child { border-top: 0; } .rsheet .rows .f span { color: var(--secondary-text-color); } .rsheet .rows .f b { font-weight: 500; }
+@media (max-width: 640px) { .rsheet .dring .ring { width: 190px; } }
 `;
 
 let SHEET; // one constructable stylesheet shared by every card/panel instead of a <style> per render
