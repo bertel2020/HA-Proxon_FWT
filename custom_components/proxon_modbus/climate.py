@@ -14,6 +14,7 @@ from typing import Any
 from homeassistant.components.climate import (
     ClimateEntity,
     ClimateEntityFeature,
+    HVACAction,
     HVACMode,
 )
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
@@ -22,9 +23,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import ProxonConfigEntry
 from .const import (
-    CONF_COOLING_AVAILABLE,
     CONF_ROOM_NAMES,
-    DEFAULT_COOLING_AVAILABLE,
     REG_ROOM_SETPOINT_WRITE_BASE,
     ROOM_SETPOINT_MAX,
     ROOM_SETPOINT_MID_SPAN,
@@ -58,8 +57,10 @@ class ProxonRoomClimate(ProxonRoomEntity, ClimateEntity):
     room's device name, e.g. "Wohnen" rather than "Wohnen Wohnen").
 
     The settable range follows the device: room 1 takes 18-30 degC directly,
-    every other room its mid temperature +/- 3 degC. The mode is HEAT, or
-    HEAT_COOL while cooling is available and enabled on the unit.
+    every other room its mid temperature +/- 3 degC. The mode only
+    reflects the room's PTC element: HEAT while it is enabled, OFF while not;
+    setting the mode switches the PTC enable bit. The action is HEATING
+    while the PTC element is running.
     """
 
     _blocks = frozenset({BLOCK_ROOMS})
@@ -78,21 +79,27 @@ class ProxonRoomClimate(ProxonRoomEntity, ClimateEntity):
         super().__init__(coordinator, entry_id, room_index, room_name, f"room_{room_index}_climate")
 
     @property
-    def hvac_mode(self) -> HVACMode:
-        """HEAT_COOL only if the unit has cooling and it is enabled, else HEAT."""
-        options = self.coordinator.config_entry.options
-        if not options.get(CONF_COOLING_AVAILABLE, DEFAULT_COOLING_AVAILABLE):
-            return HVACMode.HEAT
-        data = self.coordinator.data
-        if data.capabilities.get("cooling_enable_possible") and data.function_block.get(
-            "cooling_enable_read"
-        ):
-            return HVACMode.HEAT_COOL
-        return HVACMode.HEAT
+    def hvac_mode(self) -> HVACMode | None:
+        """HEAT while the room's PTC element is enabled, OFF while it is not."""
+        room = self.coordinator.data.rooms.get(self._room_index)
+        if room is None or room.ptc_enabled is None:
+            return None
+        return HVACMode.HEAT if room.ptc_enabled else HVACMode.OFF
+
+    @property
+    def hvac_action(self) -> HVACAction | None:
+        """HEATING while the PTC element is running, IDLE while enabled but not
+        running, OFF while it is not enabled."""
+        room = self.coordinator.data.rooms.get(self._room_index)
+        if room is None or room.ptc_enabled is None:
+            return None
+        if not room.ptc_enabled:
+            return HVACAction.OFF
+        return HVACAction.HEATING if room.ptc_active else HVACAction.IDLE
 
     @property
     def hvac_modes(self) -> list[HVACMode]:
-        return [self.hvac_mode]
+        return [HVACMode.OFF, HVACMode.HEAT]
 
     def _setpoint_limits(self) -> tuple[int, int]:
         """Settable range: 18-30 degC for room 1, otherwise the room's mid
@@ -135,5 +142,5 @@ class ProxonRoomClimate(ProxonRoomEntity, ClimateEntity):
         await self.coordinator.async_write_register(register, round(temperature))
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
-        """The FWT has no per-room on/off; only HEAT_COOL is supported."""
-        return
+        """Enable (HEAT) or disable (OFF) the room's PTC element."""
+        await self.coordinator.async_set_ptc_enable(self._room_index, hvac_mode == HVACMode.HEAT)

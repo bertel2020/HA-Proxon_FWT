@@ -82,7 +82,7 @@ Two kinds of devices are created: a **central device** ("Proxon FWT" by default)
 
 **Per room:**
 
-- **`climate.<room>`** — current temperature (register `150+n`), target temperature (read from `180+n`, written to the separate write-only register `200+n`). The settable range follows the device: room 1 (Wohnen) directly 18–30 °C, every other room its mid temperature ±3 °C (whole degrees, within 18–30 °C; without a mid temperature 18–30 °C applies). The mode is "Heat", and "Heat/Cool" only when cooling is available on the unit (unlock bit, register 315) and enabled (register 306).
+- **`climate.<room>`** — current temperature (register `150+n`), target temperature (read from `180+n`, written to the separate write-only register `200+n`). The settable range follows the device: room 1 (Wohnen) directly 18–30 °C, every other room its mid temperature ±3 °C (whole degrees, within 18–30 °C; without a mid temperature 18–30 °C applies). The mode only reflects the room's PTC element: "Heat" while it is enabled (register 302), otherwise "Off"; changing it sets the PTC enable (register 301). The action shows "Heating" while the PTC element is running (register 300), otherwise "Idle" or "Off".
 - **`binary_sensor.*`** — PTC element active (current **state**, register 300).
 - **`switch.*`** — PTC element enabled (**enable**, registers 301/302).
 - **`sensor.*`** — mid-room temperature (rooms 2–N, control-panel readback).

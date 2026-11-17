@@ -84,7 +84,7 @@ Es werden zwei Arten von Geräten angelegt: ein **zentrales Gerät** (standardm�
 
 **Je Raum:**
 
-- **`climate.<raum>`** — aktuelle Temperatur (Register `150+n`), Solltemperatur (gelesen von `180+n`, geschrieben auf das separate, nur schreibbare Register `200+n`). Der einstellbare Bereich folgt dem Gerät: Raum 1 (Wohnen) direkt 18–30 °C, alle anderen Räume ihre Mittentemperatur ±3 °C (ganze Grad, innerhalb 18–30 °C; fehlt die Mittentemperatur, gilt 18–30 °C). Die Betriebsart ist „Heizen“, und nur „Heizen/Kühlen“, wenn Kühlen am Gerät verfügbar (Freischaltung, Register 315) und freigegeben (Register 306) ist.
+- **`climate.<raum>`** — aktuelle Temperatur (Register `150+n`), Solltemperatur (gelesen von `180+n`, geschrieben auf das separate, nur schreibbare Register `200+n`). Der einstellbare Bereich folgt dem Gerät: Raum 1 (Wohnen) direkt 18–30 °C, alle anderen Räume ihre Mittentemperatur ±3 °C (ganze Grad, innerhalb 18–30 °C; fehlt die Mittentemperatur, gilt 18–30 °C). Die Betriebsart zeigt nur das PTC-Element des Raums: „Heizen“, solange es freigegeben ist (Register 302), sonst „Aus“; das Umschalten setzt die PTC-Freigabe (Register 301). Die Aktion zeigt „Heizt“, solange das PTC-Element läuft (Register 300), sonst „Leerlauf“ bzw. „Aus“.
 - **`binary_sensor.*`** — PTC-Element aktiv (aktueller **Zustand**, Register 300).
 - **`switch.*`** — PTC-Element freigegeben (**Freigabe**, Register 301/302).
 - **`sensor.*`** — Mittentemperatur (Raum 2–N, Rückmeldung vom Bedienteil).
