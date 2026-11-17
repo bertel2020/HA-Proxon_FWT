@@ -11,6 +11,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -63,6 +64,7 @@ from .const import (
     REG_TEMP_PRE_CONDENSER,
     REG_TEMP_PRE_EVAPORATOR,
     REG_TEMP_SUPPLY_AIR,
+    REFRESH_COOLDOWN,
     WRITE_SETTLE_DELAY,
 )
 from .logic import Boost, FanStageTracker, RunStats, boost_kind
@@ -137,6 +139,9 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
             config_entry=entry,
             name=DOMAIN,
             update_interval=timedelta(seconds=scan_interval),
+            # Writes request a refresh to read the "Ist" register back (see README, "Soll und Ist"). The default
+            # cooldown of 10 s would keep the entity on the old value after a second command shortly after the first.
+            request_refresh_debouncer=Debouncer(hass, _LOGGER, cooldown=REFRESH_COOLDOWN, immediate=True),
         )
         self.hub = hub
         # Registry id of the unit's central device; room devices are linked to it (set during setup).

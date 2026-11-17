@@ -84,6 +84,7 @@ DEFAULT_COOLING_AVAILABLE = True
 # and polling immediately would just read back the pre-write "Ist" value.
 # Starting value only; adjust after observing real settle time on the device.
 WRITE_SETTLE_DELAY = 2
+REFRESH_COOLDOWN = 1  # s, minimum gap between two refreshes requested after writes
 
 DEFAULT_NUM_ROOMS = 7
 DEFAULT_NUM_CO2_SENSORS = 1

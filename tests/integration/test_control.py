@@ -1,8 +1,12 @@
 """Writing to the unit through the entities and services, against the fake register map."""
 from __future__ import annotations
 
+from datetime import timedelta
+
 import pytest
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.util import dt as dt_util
+from pytest_homeassistant_custom_component.common import async_fire_time_changed
 
 from custom_components.proxon_modbus import const
 
@@ -95,7 +99,7 @@ async def test_climate_mode_is_the_ptc_enable_of_its_room(hass, setup_integratio
     assert hass.states.get("climate.schlafen").state == "off"  # other rooms keep their own bit
     await call(hass, "climate", "set_hvac_mode", {"entity_id": "climate.wohnen", "hvac_mode": "off"})
     assert unit.writes[-1] == (PTC_WRITE, 0)
-    await entry.runtime_data.async_refresh()  # the debounced refresh after a write may not have run yet
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=const.REFRESH_COOLDOWN + 1))  # the trailing refresh
     await hass.async_block_till_done()
     assert hass.states.get("climate.wohnen").state == "off"
 
