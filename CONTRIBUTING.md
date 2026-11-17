@@ -66,6 +66,12 @@ repository — see [`brands/README.md`](brands/README.md) for why that's a
 separate, one-time step and how to do it. Until that PR is merged, the
 integration shows Home Assistant's generic icon; that's expected.
 
+## Releases
+
+1. Write the section `## <version> – <date>` in `CHANGELOG.en.md` and `CHANGELOG.md` and raise `version` in `custom_components/proxon_modbus/manifest.json` (the panel is served under that version, so the browser loads it anew).
+2. Commit, push and wait for the checks (tests, hassfest, HACS) to pass.
+3. `scripts/release.sh <version>` builds the release text (English and German section, support footer from `.github/release-footer.md`) and creates the GitHub release after you confirm. `--dry-run` only prints the text.
+
 ## Continuous integration
 
 Two GitHub Actions run on every push/PR:
