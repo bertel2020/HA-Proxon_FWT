@@ -2,7 +2,7 @@
 
 *[🇬🇧 English version](CHANGELOG.en.md)*
 
-## Unveröffentlicht
+## 2.3.0 – 2026-11-17
 
 **Geändert**
 - **Raum-Thermostate (`climate`):** Die Betriebsart zeigt nur noch das PTC-Element des Raums: „Heizen“, solange es freigegeben ist, sonst „Aus“. Das Umschalten setzt die PTC-Freigabe des Raums (wie der Schalter). „Heizen/Kühlen“ entfällt. Die neue Aktion (`hvac_action`) zeigt „Heizt“, solange das PTC-Element läuft, sonst „Leerlauf“ bzw. „Aus“. **Automationen**, die auf den Zustand `heat_cool` oder auf einen festen Zustand `heat` prüfen, müssen angepasst werden.

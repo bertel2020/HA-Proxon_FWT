@@ -2,7 +2,7 @@
 
 *[🇩🇪 Deutsche Version](CHANGELOG.md)*
 
-## Unreleased
+## 2.3.0 – 2026-11-17
 
 **Changed**
 - **Room thermostats (`climate`):** The mode now only reflects the room's PTC element: "Heat" while it is enabled, otherwise "Off". Changing it sets the room's PTC enable (like the switch). "Heat/Cool" is gone. The new action (`hvac_action`) shows "Heating" while the PTC element is running, otherwise "Idle" or "Off". **Automations** that test for the state `heat_cool` or a fixed state `heat` need adjusting.
