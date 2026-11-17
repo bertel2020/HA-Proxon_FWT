@@ -647,16 +647,16 @@ class ProxonModbusOptionsFlow(OptionsFlow):
                     selector.EntitySelectorConfig(domain="sensor", device_class="power")
                 ),
                 vol.Optional(
-                    CONF_OUTDOOR_ENTITY,
-                    description={"suggested_value": options.get(CONF_OUTDOOR_ENTITY)},
-                ): selector.EntitySelector(
-                    selector.EntitySelectorConfig(domain="sensor", device_class="temperature")
-                ),
-                vol.Optional(
                     CONF_ENERGY_ENTITY,
                     description={"suggested_value": options.get(CONF_ENERGY_ENTITY)},
                 ): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain="sensor", device_class="energy")
+                ),
+                vol.Optional(
+                    CONF_OUTDOOR_ENTITY,
+                    description={"suggested_value": options.get(CONF_OUTDOOR_ENTITY)},
+                ): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain="sensor", device_class="temperature")
                 ),
             }
         )
