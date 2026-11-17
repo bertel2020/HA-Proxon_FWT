@@ -82,3 +82,40 @@ async def test_start_boost_on_another_switch_is_a_clear_error(hass, setup_integr
     await setup_integration()
     with pytest.raises(ServiceValidationError, match="boost"):
         await call(hass, "proxon_modbus", "start_boost", {"entity_id": "switch.proxon_fwt_cooling_enabled"})
+
+
+async def test_climate_mode_is_the_ptc_enable_of_its_room(hass, setup_integration, unit):
+    entry = await setup_integration()
+    state = hass.states.get("climate.wohnen")
+    assert state.state == "off"
+    assert state.attributes["hvac_modes"] == ["off", "heat"]
+    await call(hass, "climate", "set_hvac_mode", {"entity_id": "climate.wohnen", "hvac_mode": "heat"})
+    assert unit.writes[-1] == (PTC_WRITE, 0b01)
+    assert hass.states.get("climate.wohnen").state == "heat"
+    assert hass.states.get("climate.schlafen").state == "off"  # other rooms keep their own bit
+    await call(hass, "climate", "set_hvac_mode", {"entity_id": "climate.wohnen", "hvac_mode": "off"})
+    assert unit.writes[-1] == (PTC_WRITE, 0)
+    await entry.runtime_data.async_refresh()  # the debounced refresh after a write may not have run yet
+    await hass.async_block_till_done()
+    assert hass.states.get("climate.wohnen").state == "off"
+
+
+@pytest.mark.parametrize(
+    ("enabled", "running", "action"),
+    [(0b01, 0b01, "heating"), (0b01, 0, "idle"), (0, 0b01, "off"), (0, 0, "off")],
+)
+async def test_climate_action_follows_the_ptc_element(hass, setup_integration, unit, enabled, running, action):
+    unit.regs[const.REG_PTC_ENABLE_READ] = enabled
+    unit.regs[const.REG_PTC_STATE] = running
+    await setup_integration()
+    assert hass.states.get("climate.wohnen").attributes["hvac_action"] == action
+
+
+async def test_preferred_fan_stage_is_set_without_touching_the_unit(hass, setup_integration, unit):
+    entry = await setup_integration()
+    entity = "select.proxon_fwt_preferred_fan_stage"
+    assert hass.states.get(entity).state == "unknown"  # nothing learned yet
+    await call(hass, "select", "select_option", {"entity_id": entity, "option": "stage_3"})
+    assert hass.states.get(entity).state == "stage_3"
+    assert entry.runtime_data.fan_tracker.preferred == 3
+    assert not unit.writes

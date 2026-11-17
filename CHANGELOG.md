@@ -2,6 +2,18 @@
 
 *[🇬🇧 English version](CHANGELOG.en.md)*
 
+## Unveröffentlicht
+
+**Geändert**
+- **Raum-Thermostate (`climate`):** Die Betriebsart zeigt nur noch das PTC-Element des Raums: „Heizen“, solange es freigegeben ist, sonst „Aus“. Das Umschalten setzt die PTC-Freigabe des Raums (wie der Schalter). „Heizen/Kühlen“ entfällt. Die neue Aktion (`hvac_action`) zeigt „Heizt“, solange das PTC-Element läuft, sonst „Leerlauf“ bzw. „Aus“. **Automationen**, die auf den Zustand `heat_cool` oder auf einen festen Zustand `heat` prüfen, müssen angepasst werden.
+- **Panel – Verlauf:** Ein gemeinsamer Zeitraum-Schalter gilt für Verlauf, Wärmepumpen-Laufzeit und Energie (Balken je Stunde, Tag oder Monat, der laufende Balken ist markiert, die Legende nennt den Stand der Daten). Die Karte „Jahresübersicht“ entfällt, sie geht im Zeitraum „1 Jahr“ auf.
+- **Panel – Räume:** Der Ring im Raum lässt sich über den Punkt ziehen (auch per Pfeiltasten), umfasst den einstellbaren Bereich des Raums und hat keinen leeren Boden mehr. Das Raum-Popup ist neu gestaltet. Die Werte-Chips sind größer, die Betriebsart im Kopf ist ein Chip, die Kennzahlen zeigen immer vier Kacheln („–“ bei fehlendem Wert), und die PTC-Zeile in der Übersicht nennt auch die freigegebenen Räume.
+- **Panel – Aktualisierung:** Neue Werte ändern nur noch die betroffenen Stellen, statt die ganze Oberfläche neu aufzubauen. Die Scroll-Position springt nicht mehr nach oben.
+
+**Neu**
+- **Wunschstufe einstellbar:** Neue Auswahl `select.…_preferred_fan_stage` (Stufe 1–4) und eine Stufenauswahl im Panel. Sie setzt die Lüfterstufe, die nach dem Wärmepumpenlauf wiederhergestellt wird.
+- `tests/browser/harness.html` und `.claude/launch.json`: Testseite für das Panel mit Beispieldaten.
+
 ## 2.2.2 – 2026-11-13
 
 **Korrigiert**

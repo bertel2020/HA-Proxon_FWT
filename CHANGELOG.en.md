@@ -2,6 +2,18 @@
 
 *[🇩🇪 Deutsche Version](CHANGELOG.md)*
 
+## Unreleased
+
+**Changed**
+- **Room thermostats (`climate`):** The mode now only reflects the room's PTC element: "Heat" while it is enabled, otherwise "Off". Changing it sets the room's PTC enable (like the switch). "Heat/Cool" is gone. The new action (`hvac_action`) shows "Heating" while the PTC element is running, otherwise "Idle" or "Off". **Automations** that test for the state `heat_cool` or a fixed state `heat` need adjusting.
+- **Panel – history:** One shared range switch applies to history, heat pump runtime and energy (bars per hour, day or month; the running bar is marked and the legend shows when the data was loaded). The "yearly overview" card is gone, it is covered by the "1 year" range.
+- **Panel – rooms:** The room ring can be dragged by its dot (also with the arrow keys), spans the room's settable range and no longer has an empty bottom. The room dialog is redesigned. Value chips are larger, the operating mode in the header is a chip, the key figures always show four tiles ("–" when a value is missing), and the PTC row in the overview also names the enabled rooms.
+- **Panel – updates:** New values only change the affected parts instead of rebuilding the whole page. The scroll position no longer jumps to the top.
+
+**Added**
+- **Preferred stage can be set:** New select `select.…_preferred_fan_stage` (stage 1-4) and a stage selector in the panel. It sets the fan stage restored after the heat pump has run.
+- `tests/browser/harness.html` and `.claude/launch.json`: a test page for the panel with sample data.
+
 ## 2.2.2 – 2026-11-13
 
 **Fixed**
