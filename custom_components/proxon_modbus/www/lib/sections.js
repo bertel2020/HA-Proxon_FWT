@@ -3,9 +3,8 @@ import { MODE_META, FAN_STAGES, BLUE, CORAL, AMBER, GREEN, WRITE_ERROR_SHOWN_MS,
 export class SectionsMethods {
   // ---- sections ---------------------------------------------------------
 
-  _sec_mode(d) {
-    const c = d.central;
-    if (!c.operating_mode) return "";
+  // Operating mode state shared by the dashboard card and the panel: what is selected, whether it can be changed, what to offer.
+  _modeState(c) {
     const sel = this._state(c.operating_mode);
     const cur = sel && !BAD.includes(sel.state) ? sel.state : null;
     const detail = this._ok(c.operating_mode_state) ? this._state(c.operating_mode_state).state : null;
@@ -17,15 +16,52 @@ export class SectionsMethods {
     const banner = readonly
       ? `<div class="banner ${detail === "emergency" ? "r" : "w"}" style="margin-bottom:10px">${this._icon("mdi:alert-outline")}${this._t(detail)} – ${this._t("locked")}</div>`
       : "";
-    const buttons = opts.map((o) => {
-      const meta = MODE_META[o] || { icon: "mdi:cog", color: "#8a8f98" };
-      return this._btn(`data-act="mode" data-v="${esc(o)}"`, cur === o && !locked ? "a" : "",
-        `${this._icon(meta.icon)}${this._t(o)}`, locked, `--mc:${meta.color}`);
-    }).join("");
     const desc = readonly ? this._t("readonly") : cur ? this._t(`d_${cur}`) : "";
-    return `<ha-card>${this._header("mdi:tune-variant", this._t("mode"), readonly ? this._t(detail) : cur ? this._t(cur) : "")}
-      ${banner}<div class="seg" style="grid-template-columns:repeat(auto-fit,minmax(96px,1fr))">${buttons}</div>
-      <div class="note">${desc}</div></ha-card>`;
+    return { cur, detail, readonly, locked, opts, banner, desc };
+  }
+
+  // One button per selectable mode; `inner(option, meta)` is the card's or the panel's button content.
+  _modeButtons(m, inner) {
+    return m.opts.map((o) => {
+      const meta = MODE_META[o] || { icon: "mdi:cog", color: "#8a8f98" };
+      return this._btn(`data-act="mode" data-v="${esc(o)}"`, m.cur === o && !m.locked ? "a" : "", inner(o, meta), m.locked, `--mc:${meta.color}`);
+    }).join("");
+  }
+
+  // Fan stage state shared by the card and the panel.
+  _fanState(c) {
+    const sel = this._state(c.fan_stage);
+    const stageOk = !!sel && !BAD.includes(sel.state);
+    const autoOn = this._on(c.fan_auto);
+    const selectable = (n) => {
+      const k = n === 0 ? "fan_off_selectable" : `fan_stage_${n}_selectable`;
+      return !c[k] || !this._ok(c[k]) || this._on(c[k]);
+    };
+    const label = stageOk ? FAN_STAGES.find(([o]) => o === sel.state)?.[2] ?? "" : null;
+    return { sel, stageOk, autoOn, selectable, current: autoOn ? this._t("auto") : stageOk ? `${this._t("stage")} ${label}` : "" };
+  }
+
+  // Stage buttons plus the auto button; `inner(icon, label)` is the card's or the panel's button content.
+  _fanButtons(c, f, inner) {
+    return FAN_STAGES.map(([opt, icon, label], i) =>
+      this._btn(`data-act="fan" data-v="${esc(opt)}"`, f.stageOk && !f.autoOn && f.sel.state === opt ? "a" : "", inner(icon, label), !f.stageOk || !f.selectable(i), `--mc:${BLUE}`)).join("")
+      + this._btn(`data-act="fanauto"`, f.autoOn ? "a" : "", inner("mdi:fan-auto", this._t("auto")), !this._ok(c.fan_auto), `--mc:${GREEN}`);
+  }
+
+  // The remembered ("Wunschstufe") stage of the restore switch.
+  _restoreState(c) {
+    const rs = this._state(c.fan_stage_restore), pref = rs?.attributes?.preferred_stage;
+    return { rs, pref, prefLabel: FAN_STAGES.find(([o]) => o === pref)?.[2] };
+  }
+
+  _sec_mode(d) {
+    const c = d.central;
+    if (!c.operating_mode) return "";
+    const m = this._modeState(c);
+    const buttons = this._modeButtons(m, (o, meta) => `${this._icon(meta.icon)}${this._t(o)}`);
+    return `<ha-card>${this._header("mdi:tune-variant", this._t("mode"), m.readonly ? this._t(m.detail) : m.cur ? this._t(m.cur) : "")}
+      ${m.banner}<div class="seg" style="grid-template-columns:repeat(auto-fit,minmax(96px,1fr))">${buttons}</div>
+      <div class="note">${m.desc}</div></ha-card>`;
   }
 
   _sec_alerts(d) {
@@ -222,18 +258,9 @@ export class SectionsMethods {
   _sec_fan(d) {
     const c = d.central;
     if (!c.fan_stage && !c.fan_auto && !c.fan_intensive) return "";
-    const sel = this._state(c.fan_stage);
-    const stageOk = !!sel && !BAD.includes(sel.state);
-    const autoOn = this._on(c.fan_auto);
-    const selectable = (n) => {
-      const k = n === 0 ? "fan_off_selectable" : `fan_stage_${n}_selectable`;
-      return !c[k] || !this._ok(c[k]) || this._on(c[k]);
-    };
-    let buttons = FAN_STAGES.map(([opt, icon, label], i) =>
-      this._btn(`data-act="fan" data-v="${esc(opt)}"`, stageOk && !autoOn && sel.state === opt ? "a" : "",
-        `${this._icon(icon)}${label}`, !stageOk || !selectable(i), `--mc:${BLUE}`)).join("");
-    buttons += this._btn(`data-act="fanauto"`, autoOn ? "a" : "", `${this._icon("mdi:fan-auto")}${this._t("auto")}`, !this._ok(c.fan_auto), `--mc:${GREEN}`);
-    const current = autoOn ? this._t("auto") : stageOk ? `${this._t("stage")} ${FAN_STAGES.find(([o]) => o === sel.state)?.[2] ?? ""}` : this._t("automatic");
+    const f = this._fanState(c), { stageOk } = f;
+    const buttons = this._fanButtons(c, f, (icon, label) => `${this._icon(icon)}${label}`);
+    const current = f.current || this._t("automatic");
     const bar = (id, label, icon) => {
       const v = this._num(id);
       if (v === null) return "";
@@ -244,9 +271,7 @@ export class SectionsMethods {
       <ha-switch data-act="${act}" ${this._on(id) ? "checked" : ""} ${this._ok(id) ? "" : "disabled"}></ha-switch></span></div>` : "";
     let restore = "";
     if (c.fan_stage_restore) {
-      const rs = this._state(c.fan_stage_restore);
-      const pref = rs?.attributes?.preferred_stage;
-      const prefLabel = FAN_STAGES.find(([o]) => o === pref)?.[2];
+      const { rs, pref, prefLabel } = this._restoreState(c);
       const last = rs?.attributes?.last_restore;
       const when = last ? new Date(last).toLocaleString(this._hass.language, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
       restore = `${sw(c.fan_stage_restore, this._t("fan_restore"), "mdi:fan-clock", "restoresw")}
@@ -265,41 +290,20 @@ export class SectionsMethods {
     const c = d.central;
     if (!c.operating_mode && !c.fan_stage && !c.fan_auto && !c.fan_intensive) return "";
     // operating mode
-    let modeHtml = "", desc = "", cur = null, detail = null, readonly = false;
+    let modeHtml = "", desc = "";
     if (c.operating_mode) {
-      const sel = this._state(c.operating_mode);
-      cur = sel && !BAD.includes(sel.state) ? sel.state : null;
-      detail = this._ok(c.operating_mode_state) ? this._state(c.operating_mode_state).state : null;
-      readonly = !cur && detail && !Object.keys(MODE_META).includes(detail);
-      const unavail = !!sel && sel.state === "unavailable";
-      const changeOk = c.mode_change_possible ? this._on(c.mode_change_possible) || !this._ok(c.mode_change_possible) : true;
-      const locked = readonly || unavail || !changeOk;
-      const opts = (sel && sel.attributes.options) || Object.keys(MODE_META);
-      const banner = readonly
-        ? `<div class="banner ${detail === "emergency" ? "r" : "w"}" style="margin-bottom:10px">${this._icon("mdi:alert-outline")}${this._t(detail)} – ${this._t("locked")}</div>` : "";
-      const buttons = opts.map((o) => {
-        const meta = MODE_META[o] || { icon: "mdi:cog", color: "#8a8f98" };
-        return this._btn(`data-act="mode" data-v="${esc(o)}"`, cur === o && !locked ? "a" : "",
-          `${this._icon(meta.icon)}<span class="lf">${this._t(o)}</span><span class="ls">${this._t(`ms_${o}`)}</span>`, locked, `--mc:${meta.color}`);
-      }).join("");
-      desc = readonly ? this._t("readonly") : cur ? this._t(`d_${cur}`) : "";
-      modeHtml = `${banner}<div class="seg cmp mo" style="grid-template-columns:repeat(${opts.length},1fr)">${buttons}</div>`;
+      const m = this._modeState(c);
+      desc = m.desc;
+      const buttons = this._modeButtons(m, (o, meta) => `${this._icon(meta.icon)}<span class="lf">${this._t(o)}</span><span class="ls">${this._t(`ms_${o}`)}</span>`);
+      modeHtml = `${m.banner}<div class="seg cmp mo" style="grid-template-columns:repeat(${m.opts.length},1fr)">${buttons}</div>`;
     }
     // fan stages
     let fanHtml = "", current = "";
     if (c.fan_stage || c.fan_auto) {
-      const fsel = this._state(c.fan_stage);
-      const stageOk = !!fsel && !BAD.includes(fsel.state);
-      const autoOn = this._on(c.fan_auto);
-      const selectable = (n) => {
-        const k = n === 0 ? "fan_off_selectable" : `fan_stage_${n}_selectable`;
-        return !c[k] || !this._ok(c[k]) || this._on(c[k]);
-      };
-      let buttons = FAN_STAGES.map(([opt, , label], i) =>
-        this._btn(`data-act="fan" data-v="${esc(opt)}"`, stageOk && !autoOn && fsel.state === opt ? "a" : "", label, !stageOk || !selectable(i), `--mc:${BLUE}`)).join("");
-      buttons += this._btn(`data-act="fanauto"`, autoOn ? "a" : "", this._t("auto"), !this._ok(c.fan_auto), `--mc:${GREEN}`);
-      current = autoOn ? this._t("auto") : stageOk ? `${this._t("stage")} ${FAN_STAGES.find(([o]) => o === fsel.state)?.[2] ?? ""}` : "";
-      fanHtml = `<div class="lbl2">${this._t("fan_stage_l")}${!stageOk && c.fan_stage ? `<span class="tag">${this._t("fan_note")}</span>` : ""}</div>
+      const f = this._fanState(c);
+      const buttons = this._fanButtons(c, f, (icon, label) => label);
+      current = f.current;
+      fanHtml = `<div class="lbl2">${this._t("fan_stage_l")}${!f.stageOk && c.fan_stage ? `<span class="tag">${this._t("fan_note")}</span>` : ""}</div>
         <div class="seg cmp fs" style="grid-template-columns:repeat(6,1fr)">${buttons}</div>`;
     }
     const rpm = (id, ic) => this._num(id) === null ? "" : `<span>${this._icon(ic, 'class="info"')} ${this._num(id).toLocaleString(this._hass.language)}</span>`;
@@ -308,8 +312,7 @@ export class SectionsMethods {
     const inline = rp || intensive ? `<div class="oinline">${rp ? `<span class="rp">${rp}<span>rpm</span></span>` : ""}${intensive}</div>` : "";
     let restore = "";
     if (c.fan_stage_restore) {
-      const rs = this._state(c.fan_stage_restore), pref = rs?.attributes?.preferred_stage;
-      const prefLabel = FAN_STAGES.find(([o]) => o === pref)?.[2];
+      const { pref, prefLabel } = this._restoreState(c);
       restore = `<div class="row">${this._icon("mdi:fan-clock")}${this._t("fan_restore")}<span class="sp"><ha-switch data-act="restoresw" ${this._on(c.fan_stage_restore) ? "checked" : ""} ${this._ok(c.fan_stage_restore) ? "" : "disabled"}></ha-switch></span></div>
         <div class="note rsub">${this._t("fan_pref")}${prefLabel ? "" : `: ${this._t("fan_pref_none")}`}</div>${this._prefSeg(c, pref)}`;
     }
