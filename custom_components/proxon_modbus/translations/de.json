@@ -335,6 +335,15 @@
           "stage_4": "Stufe 4"
         }
       },
+      "fan_stage_preferred": {
+        "name": "Wunschstufe",
+        "state": {
+          "stage_1": "Stufe 1",
+          "stage_2": "Stufe 2",
+          "stage_3": "Stufe 3",
+          "stage_4": "Stufe 4"
+        }
+      },
       "operating_mode": {
         "name": "Betriebsart",
         "state": {

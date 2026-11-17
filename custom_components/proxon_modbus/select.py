@@ -31,6 +31,7 @@ async def async_setup_entry(
         [
             ProxonFanStageSelect(coordinator, entry.entry_id, device_name),
             ProxonOperatingModeSelect(coordinator, entry.entry_id, device_name),
+            ProxonPreferredFanStageSelect(coordinator, entry.entry_id, device_name),
         ]
     )
 
@@ -99,3 +100,36 @@ class ProxonOperatingModeSelect(ProxonCentralEntity, SelectEntity):
         value = next(k for k, v in OPERATING_MODE_WRITE_OPTIONS.items() if v == option)
         self.coordinator.ensure_selectable("mode_change_possible")
         await self.coordinator.async_write_register(REG_OPERATING_MODE_WRITE, value)
+
+
+class ProxonPreferredFanStageSelect(ProxonCentralEntity, SelectEntity):
+    """The fan stage restored after the heat pump has stopped.
+
+    Purely a software setting: it edits the stage the `FanStageTracker`
+    otherwise learns on its own (the next stage chosen while the heat pump
+    idles replaces it). Persisted by the "restore fan stage" switch.
+    """
+
+    _attr_translation_key = "fan_stage_preferred"
+    _blocks = frozenset()
+    _attr_icon = "mdi:fan-clock"
+    _attr_options = [v for k, v in FAN_STAGE_OPTIONS.items() if k > 0]
+
+    def __init__(
+        self, coordinator: ProxonModbusCoordinator, entry_id: str, device_name: str
+    ) -> None:
+        super().__init__(coordinator, entry_id, device_name, "fan_stage_preferred")
+
+    @property
+    def available(self) -> bool:
+        return True  # pure software setting, see ProxonFanRestoreSwitch
+
+    @property
+    def current_option(self) -> str | None:
+        return FAN_STAGE_OPTIONS.get(self.coordinator.fan_tracker.preferred)
+
+    async def async_select_option(self, option: str) -> None:
+        self.coordinator.fan_tracker.preferred = next(
+            k for k, v in FAN_STAGE_OPTIONS.items() if v == option
+        )
+        self.coordinator.async_update_listeners()  # also refreshes the restore switch's saved stage

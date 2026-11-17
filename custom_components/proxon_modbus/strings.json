@@ -335,6 +335,15 @@
           "stage_4": "Stage 4"
         }
       },
+      "fan_stage_preferred": {
+        "name": "Preferred fan stage",
+        "state": {
+          "stage_1": "Stage 1",
+          "stage_2": "Stage 2",
+          "stage_3": "Stage 3",
+          "stage_4": "Stage 4"
+        }
+      },
       "operating_mode": {
         "name": "Operating mode",
         "state": {
