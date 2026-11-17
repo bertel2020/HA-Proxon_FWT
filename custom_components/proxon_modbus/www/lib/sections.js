@@ -53,7 +53,10 @@ export class SectionsMethods {
     const c = d.central;
     // In the panel a tile opens the matching history; the heat recovery tile also carries a 24 h sparkline.
     const panel = this._isPanel;
-    const tile = (icon, color, label, value, unit = "", metric = "", extra = "") => value === null || value === undefined ? "" :
+    const missing = (v) => v === null || v === undefined;
+    // A missing value shows a dash, so the four tiles are always the same and it is visible which one has no data.
+    const tile = (icon, color, label, value, unit = "", metric = "", extra = "") => missing(value) ? tile0(icon, color, label, "–", "", "", "") : tile0(icon, color, label, value, unit, metric, extra);
+    const tile0 = (icon, color, label, value, unit, metric, extra) =>
       `<div class="k ${panel && metric ? "go" : ""}" style="--kc:${color}" ${panel && metric ? `data-act="kpi" data-v="${metric}" role="button" tabindex="0"` : ""}><div class="ic">${this._icon(icon)}</div><div><div class="lb">${label}</div><div class="v">${value}${unit ? ` <small>${unit}</small>` : ""}</div>${extra}</div></div>`;
     const eff = this._efficiency();
     const bypass = this._on(c.bypass_active);
@@ -63,7 +66,7 @@ export class SectionsMethods {
       tile("mdi:flash", AMBER, this._t("power"), power === null ? null : this._fmt(power, power % 1 ? 1 : 0),
         "W", "power") +
       tile("mdi:weather-partly-cloudy", BLUE, this._t("outside"), this._temp(this._outdoorId()), "", "temp");
-    if (!html) return "";
+    if (![this._temp(c.temp_supply_air), power, this._temp(this._outdoorId()), bypass ? 1 : eff].some((v) => !missing(v))) return "";
     return `<ha-card>${this._header("mdi:gauge", this._t("kpi"))}<div class="kpiw"><div class="kpi">${html}</div></div></ha-card>`;
   }
 

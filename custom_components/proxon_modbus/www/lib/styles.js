@@ -251,6 +251,7 @@ svg .sh { font-size: 13px; font-weight: 500; }
 .ring { position: relative; width: 140px; aspect-ratio: 150 / 128; flex: none; }
 .ring .knob { position: absolute; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; touch-action: none; cursor: grab; }
 .ring .knob:active { cursor: grabbing; }
+.ring .knob:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -4px; }
 .ring svg { width: 100%; height: 100%; display: block; }
 .ring .c { position: absolute; inset: 17.19% 0 0 0; display: grid; place-content: center; text-align: center; }
 .ring .c b { display: block; font-size: 28px; font-weight: 500; line-height: 1.1; }
@@ -349,6 +350,7 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .rsheet .dh .x { margin-left: auto; }
 .rsheet .dring { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 6px; }
 .rsheet .dring .ring { width: 210px; }
+.rsheet .ring svg circle:first-child { stroke: var(--secondary-background-color); } /* the track must differ from the sheet background */
 .rsheet .ring .c { inset: 22% 0 0 0; }
 .rsheet .ring .c b { font-size: 40px; }
 .rsheet .ring .c small { font-size: 13px; }

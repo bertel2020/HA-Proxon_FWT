@@ -44,7 +44,7 @@ export class ProxonFwtPanel extends ProxonFwtBase {
     const kx = 75 + R0 * Math.cos(rad), ky = 75 + R0 * Math.sin(rad);
     const mark = i.tgt == null ? "" : `<circle cx="${kx}" cy="${ky}" r="7" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="2.5"/>`;
     // The open bottom of the ring is cropped (viewBox height 128); the knob is a larger touch target to drag the target temperature.
-    const knob = i.tgt == null || i.down ? "" : `<div class="knob" data-act="noop" data-ring="${n}" style="left:${(kx / 150 * 100).toFixed(2)}%;top:${(ky / 128 * 100).toFixed(2)}%"></div>`;
+    const knob = i.tgt == null || i.down ? "" : `<div class="knob" data-act="noop" data-ring="${n}" role="slider" tabindex="0" aria-label="${this._t("target")}" aria-valuemin="${lo}" aria-valuemax="${hi}" aria-valuenow="${i.tgt}" aria-valuetext="${this._fmt(i.tgt, i.tgt % 1 ? 1 : 0)}°" style="left:${(kx / 150 * 100).toFixed(2)}%;top:${(ky / 128 * 100).toFixed(2)}%"></div>`;
     return `<div class="ring"><svg viewBox="0 0 150 128" aria-hidden="true">
       <circle cx="75" cy="75" r="${R0}" fill="none" stroke="var(--card-background-color)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${arc} ${C}" transform="${rot}"/>
       ${i.cur == null ? "" : `<circle cx="75" cy="75" r="${R0}" fill="none" stroke="${i.col}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${Math.max(0.1, arc * f(i.cur))} ${C}" transform="${rot}"/>`}${mark}</svg>

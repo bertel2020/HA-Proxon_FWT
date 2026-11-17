@@ -29,6 +29,9 @@ export class ProxonFwtBase extends HTMLElement {
     for (const t of ["pointerup", "pointercancel"]) this.shadowRoot.addEventListener(t, () => { this._drag = null; });
     this.shadowRoot.addEventListener("click", (ev) => this._click(ev));
     this.shadowRoot.addEventListener("keydown", (ev) => {
+      const knob = ev.target && ev.target.closest && ev.target.closest(".knob");
+      const dir = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[ev.key];
+      if (knob && dir && this._d) { ev.preventDefault(); this._bump(this._d.rooms[Number(knob.dataset.ring)].climate, dir); return; }
       if ((ev.key === "Enter" || ev.key === " ") && ev.target && ev.target.getAttribute && ev.target.getAttribute("role") === "button") {
         ev.preventDefault();
         this._click(ev);
