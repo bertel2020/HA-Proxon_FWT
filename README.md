@@ -79,7 +79,7 @@ Es werden zwei Arten von Geräten angelegt: ein **zentrales Gerät** (standardm�
 - **`sensor.*`** — Zu-/Ab-/Fort-/Frischlufttemperaturen, Kältemittelkreislauf-Temperaturen, Außentemperatur, Drehzahl Kompressor, Leistungsaufnahme, Rückwärmzahl, Lüfterdrehzahlen, dazu ein diagnostischer "Betriebsart (vollständiger Zustand)"-Sensor sowie alle konfigurierten CO₂-/Feuchtesensoren (sofern nicht einem Raum zugeordnet, siehe unten).
 - **`binary_sensor.*`** — Bypass-Zustand, **Kühlen verfügbar** (siehe unten), System-/Filtermeldungen, Wärmepumpe Heiz-/Kühl-/Dauerbetrieb, sowie (Diagnose) die übrigen "ist X gerade wählbar"-Freischaltungs-Flags aus Register 315.
 - **`switch.*`** — globale Kühlfreigabe, Lüfter-Automatik, Intensivlüftung, **Stoßlüften** (mit Timer) und die optionale Lüfterstufen-Wiederherstellung.
-- **`select.*`** — Lüfterstufe (Aus/1–4) und Betriebsart (Aus/Eco Sommer/Eco Winter/Komfort/Ofenbetrieb).
+- **`select.*`** — Lüfterstufe (Aus/1–4), Betriebsart (Aus/Eco Sommer/Eco Winter/Komfort/Ofenbetrieb) und **Wunschstufe** (1–4, die Stufe, die nach dem Wärmepumpenlauf wiederhergestellt wird; reine Software-Einstellung).
 - **`button.*`** — **Filter getauscht**: setzt Alter und Frist des Gerätefilters zurück (siehe [Filter und Wartung](#filter-und-wartung)).
 
 **Je Raum:**
@@ -187,6 +187,7 @@ Die Tabellen unten gehen vom Standard-Gerätenamen **"Proxon FWT"** (→ `proxon
 |---|---|---|
 | Lüfterstufe | `select.proxon_fwt_lufterstufe` | Wählt die Lüfterstufe Aus/1–4 (Register 307 schreiben / 308 lesen); nur verfügbar in Eco Sommer/Winter |
 | Betriebsart | `select.proxon_fwt_betriebsart` | Wählt die Betriebsart Aus/Eco Sommer/Eco Winter/Komfort/Ofenbetrieb (Register 313 schreiben / 314 lesen) |
+| Wunschstufe | `select.proxon_fwt_wunschstufe` | Die Lüfterstufe 1–4, die nach dem Wärmepumpenlauf wiederhergestellt wird (nur Software, schreibt nichts ans Gerät); wird sonst aus der zuletzt gewählten Stufe gelernt |
 
 **Zentrales Gerät — `button`**
 
@@ -198,7 +199,7 @@ Die Tabellen unten gehen vom Standard-Gerätenamen **"Proxon FWT"** (→ `proxon
 
 | Friendly Name | Entity-ID | Beschreibung |
 |---|---|---|
-| Wohnen (Raumname, `climate`) | `climate.wohnen` | Ist-Temperatur (Register 150+n) und Solltemperatur (gelesen von 180+n, geschrieben auf 200+n), Regler 18–30 °C (Raum 1) bzw. Mittentemperatur ±3 °C |
+| Wohnen (Raumname, `climate`) | `climate.wohnen` | Ist-Temperatur (Register 150+n) und Solltemperatur (gelesen von 180+n, geschrieben auf 200+n), Regler 18–30 °C (Raum 1) bzw. Mittentemperatur ±3 °C. Betriebsart „Heizen“/„Aus“ = PTC freigegeben oder nicht (umschaltbar), Aktion „Heizt“ solange das PTC-Element läuft |
 | PTC-Element aktiv | `binary_sensor.wohnen_ptc_element_aktiv` | Aktueller **Zustand** der elektrischen Zusatzheizung dieses Raums (Register 300, Bit n) |
 | PTC-Element freigegeben | `switch.wohnen_ptc_element_freigegeben` | **Freigabe** der elektrischen Zusatzheizung dieses Raums (Register 301 schreiben / 302 lesen, Bit n) |
 | Mittentemperatur | `sensor.wohnen_mittentemperatur` | Rückmeldung vom Bedienteil des Raums (Register 220+n, nur Raum 2–N) |
@@ -257,7 +258,7 @@ Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wi
 Zusätzlich legt die Integration in der Seitenleiste den Eintrag **Proxon FWT** an, eine ganzseitige Ansicht mit vier Reitern:
 
 - **Übersicht:** die Karte **Betrieb** (Betriebsart und Lüfterstufen zusammen, auf dem Handy oben), **Anlagenschema** nach dem Aufbau des Geräts (Frisch- und Abluftventilator vor dem Kreuzgegenstrom-Wärmetauscher, Vorwärmung, Verdampfer in der Abluft, Verflüssiger in der Zuluft, Kompressor-Kreislauf, alle Temperaturfühler), Kennzahlen mit der **Rückwärmzahl**. Das Stoßlüften (15/30/60 Minuten, danach automatisch zurück) sitzt in der Karte **Betrieb**.
-- **Räume:** Ringanzeige je Raum mit Soll-Stepper, Zusammenfassung (Ø Temperatur, PTC aktiv und freigegeben, höchster CO₂-Wert, Feuchte), Filter (alle, PTC aktiv, PTC freigegeben, Abweichung, CO₂ hoch), drei Ansichten (Karten, Vergleich, Liste) und aufklappbare Details mit 24-Stunden-Verlauf.
+- **Räume:** Ringanzeige je Raum mit Soll-Stepper, Zusammenfassung (Ø Temperatur, PTC aktiv und freigegeben, höchster CO₂-Wert, Feuchte), Filter (alle, PTC aktiv, PTC freigegeben, Abweichung, CO₂ hoch), drei Ansichten (Karten, Vergleich, Liste) und ein Popup mit Details und 24-Stunden-Verlauf. Die Solltemperatur lässt sich auch über den Punkt am Ring ziehen (oder mit den Pfeiltasten verstellen).
 - **Verlauf:** Temperaturen, Leistung, Verdichter, Rückwärmzahl und CO₂ über 1 Tag, 1 Woche, 1 Monat und 1 Jahr, mit Min/Max/Mittelwert (bei der Leistung auch kWh) unter dem Diagramm, einem Schalter **Vorzeitraum** (gestrichelte Kurve des vorherigen Zeitraums), markierten Phasen mit offenem Bypass und sofortigen Tooltips an allen Diagrammen, Wärmepumpen-Laufzeit (mit Starts und Außentemperatur) und Energie. Ein **gemeinsamer Zeitraum-Schalter** oben gilt für alle Karten: Balken pro Stunde (1 Tag), pro Tag (1 Woche, 1 Monat) oder pro Monat (1 Jahr, mit Markierung des letzten Filterwechsels), aus der Langzeitstatistik, die sich mit der Zeit füllt.
 - **Diagnose:** Hinweise oben, dann drei Status-Kacheln (Wärmepumpe mit Verdichterauslastung, Gerätefilter mit Alter in Tagen, Frist bis zur Zwangsabschaltung und Button „Filter getauscht“, Systemfehler), Messwerte über die volle Breite, Laufzeit und Starts (heute/gesamt). Die **Hinweise** (Filter, CO₂, häufiges Takten, Rückwärmzahl; Warnungen und Infos lassen sich mit ✕ für 24 Stunden ausblenden, Fehler nicht; das Ausblenden gilt im Home-Assistant-Benutzerprofil auf allen Geräten). Ein Hinweis zählt als Zahl am Reiter, zu dem er führt.
 

@@ -77,7 +77,7 @@ Two kinds of devices are created: a **central device** ("Proxon FWT" by default)
 - **`sensor.*`** — supply/extract/exhaust/fresh air temperatures, refrigerant-circuit temperatures, outside temperature, compressor speed, power consumption, heat recovery rate, fan speeds, plus a diagnostic "operating mode (full state)" sensor and any configured CO₂/humidity sensors not assigned to a room (see below).
 - **`binary_sensor.*`** — bypass state, **cooling available** (see below), system/filter messages, heat-pump heating/cooling/continuous-operation flags, and (diagnostic) the remaining "is X currently selectable" capability flags from register 315.
 - **`switch.*`** — global cooling enable, fan auto mode, intensive ventilation, **boost ventilation** (with timer) and the optional fan stage restore.
-- **`select.*`** — fan stage (Off/1–4) and operating mode (Off/Eco summer/Eco winter/Comfort/Furnace).
+- **`select.*`** — fan stage (Off/1–4), operating mode (Off/Eco summer/Eco winter/Comfort/Furnace) and **preferred stage** (1–4, the stage restored after the heat pump has run; a software-only setting).
 - **`button.*`** — **Filter changed**: restarts the age and deadline of the device filter (see [Filter and maintenance](#filter-and-maintenance)).
 
 **Per room:**
@@ -185,6 +185,7 @@ The tables below assume the default device name **"Proxon FWT"** (→ `proxon_fw
 |---|---|---|
 | Fan stage | `select.proxon_fwt_fan_stage` | Selects fan stage Off/1-4 (register 307 write / 308 read); available only in Eco summer/winter |
 | Operating mode | `select.proxon_fwt_operating_mode` | Selects operating mode Off/Eco summer/Eco winter/Comfort/Furnace (register 313 write / 314 read) |
+| Preferred fan stage | `select.proxon_fwt_preferred_fan_stage` | The fan stage 1–4 restored after the heat pump has run (software only, writes nothing to the unit); otherwise learned from the stage chosen last |
 
 **Central device — `button`**
 
@@ -196,7 +197,7 @@ The tables below assume the default device name **"Proxon FWT"** (→ `proxon_fw
 
 | Friendly Name | Entity ID | Description |
 |---|---|---|
-| Wohnen (room name, `climate`) | `climate.wohnen` | Actual temperature (register 150+n) and target temperature (read from 180+n, written to 200+n), 18–30 °C slider (room 1) or mid temperature ±3 °C |
+| Wohnen (room name, `climate`) | `climate.wohnen` | Actual temperature (register 150+n) and target temperature (read from 180+n, written to 200+n), 18–30 °C slider (room 1) or mid temperature ±3 °C. Mode "Heat"/"Off" = PTC enabled or not (settable), action "Heating" while the PTC element is running |
 | PTC element active | `binary_sensor.wohnen_ptc_element_active` | Current **state** of this room's electric reheater element (register 300, bit n) |
 | PTC element enabled | `switch.wohnen_ptc_element_enabled` | **Enable** for this room's electric reheater element (register 301 write / 302 read, bit n) |
 | Mid-room temperature | `sensor.wohnen_mid_room_temperature` | Readback from the room's control panel (register 220+n, rooms 2-N only) |
@@ -255,7 +256,7 @@ Anything the unit does not provide (e.g. power consumption or outdoor temperatur
 The integration also adds a **Proxon FWT** entry to the sidebar, a full-page view with four tabs:
 
 - **Overview:** the **Operation** card (operating mode and fan stages together, at the top on phones), a **system diagram** that follows the unit's layout (fresh-air and extract fans before the cross-counterflow heat exchanger, preheater, evaporator in the extract air, condenser in the supply air, compressor circuit, all temperature probes), key figures with the **heat recovery rate**. Boost ventilation (15/30/60 minutes, then back automatically) sits in the **Operation** card.
-- **Rooms:** a ring gauge per room with a target stepper, summary (mean temperature, PTC on and enabled, highest CO₂, humidity), filters (all, PTC on, PTC enabled, deviation, high CO₂), three views (cards, compare, list) and expandable details with a 24-hour history.
+- **Rooms:** a ring gauge per room with a target stepper, summary (mean temperature, PTC on and enabled, highest CO₂, humidity), filters (all, PTC on, PTC enabled, deviation, high CO₂), three views (cards, compare, list) and a dialog with details and a 24-hour history. The target can also be set by dragging the dot on the ring (or with the arrow keys).
 - **History:** temperatures, power, compressor, heat recovery and CO₂ over 1 day, 1 week, 1 month and 1 year, with min/max/mean (and kWh for power) below the chart, a **Previous period** switch (dashed curve of the preceding period), marked phases with the bypass open and instant tooltips on every chart, heat pump runtime (with starts and outdoor temperature) and energy. One **shared range switch** at the top applies to every card: bars per hour (1 day), per day (1 week, 1 month) or per month (1 year, with a marker for the last filter change), from the long-term statistics, which fill up over time.
 - **Diagnostics:** notices on top, then three status tiles (heat pump with compressor load; device filter with age in days, deadline to the forced shutdown and "Filter changed" button; system error), measurements across the full width, runtime and starts (today/total). The **notices** (filter, CO₂, frequent cycling, heat recovery; warnings and infos can be hidden for 24 hours with ✕, errors cannot; hiding applies to your Home Assistant user profile on all devices). A notice counts as a number on the tab it leads to.
 
