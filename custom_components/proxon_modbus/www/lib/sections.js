@@ -91,17 +91,20 @@ export class SectionsMethods {
     const panel = this._isPanel;
     const missing = (v) => v === null || v === undefined;
     // A missing value shows a dash, so the four tiles are always the same and it is visible which one has no data.
-    const tile = (icon, color, label, value, unit = "", metric = "", extra = "") => missing(value) ? tile0(icon, color, label, "–", "", "", "") : tile0(icon, color, label, value, unit, metric, extra);
+    // A missing value says why: no source at all (`src` false: nothing chosen or found) or a source without a value.
+    const tile = (icon, color, label, value, unit = "", metric = "", extra = "", src = true) => missing(value)
+      ? tile0(icon, color, label, "–", "", "", `<div class="lb" title="${this._t(src ? "kpi_nodata" : "kpi_nosrc")}">${this._t(src ? "kpi_nodata" : "kpi_nosrc")}</div>`)
+      : tile0(icon, color, label, value, unit, metric, extra);
     const tile0 = (icon, color, label, value, unit, metric, extra) =>
       `<div class="k ${panel && metric ? "go" : ""}" style="--kc:${color}" ${panel && metric ? `data-act="kpi" data-v="${metric}" role="button" tabindex="0"` : ""}><div class="ic">${this._icon(icon)}</div><div><div class="lb">${label}</div><div class="v">${value}${unit ? ` <small>${unit}</small>` : ""}</div>${extra}</div></div>`;
     const eff = this._efficiency();
     const bypass = this._on(c.bypass_active);
     const power = this._pnum();
-    const html = tile("mdi:thermometer", CORAL, this._t("supply_t"), this._temp(c.temp_supply_air), "", "temp") +
+    const html = tile("mdi:thermometer", CORAL, this._t("supply_t"), this._temp(c.temp_supply_air), "", "temp", "", !!c.temp_supply_air) +
       tile("mdi:percent-circle-outline", GREEN, this._t("efficiency"), bypass ? this._t("bypass_short") : eff === null ? null : `${eff} % <span title="${this._t("eff_info")}">${this._icon("mdi:information-outline", 'class="info"')}</span>`, "", "eff", this._effSpark(d)) +
       tile("mdi:flash", AMBER, this._t("power"), power === null ? null : this._fmt(power, power % 1 ? 1 : 0),
-        "W", "power") +
-      tile("mdi:weather-partly-cloudy", BLUE, this._t("outside"), this._temp(this._outdoorId()), "", "temp");
+        "W", "power", "", !!this._powerId()) +
+      tile("mdi:weather-partly-cloudy", BLUE, this._t("outside"), this._temp(this._outdoorId()), "", "temp", "", !!this._outdoorId());
     if (![this._temp(c.temp_supply_air), power, this._temp(this._outdoorId()), bypass ? 1 : eff].some((v) => !missing(v))) return "";
     return `<ha-card>${this._header("mdi:gauge", this._t("kpi"))}<div class="kpiw"><div class="kpi">${html}</div></div></ha-card>`;
   }

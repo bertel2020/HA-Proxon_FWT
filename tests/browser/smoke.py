@@ -40,6 +40,11 @@ def main() -> int:
         show("overview")
         check(js("return root.querySelectorAll('.kpi .k').length") == 4, "overview shows four key figures")
 
+        # a key figure without a value says why (the sample data has no power entity configured here)
+        js("window.__hass.states['sensor.power_consumption'] = { ...window.__hass.states['sensor.power_consumption'], state: 'unavailable' }; el.hass = { ...window.__hass }; el._sig = ''; el._update(); await new Promise(r => setTimeout(r, 200));")
+        check("kein Wert" in js("return [...root.querySelectorAll('.kpi .k')].map((k) => k.textContent).join('|')"), "a key figure without a value says so")
+        js("window.__hass.states['sensor.power_consumption'] = { ...window.__hass.states['sensor.power_consumption'], state: '450' }; el.hass = { ...window.__hass };")
+
         show("rooms", rview="cards")
         check(js("return root.querySelectorAll('.knob').length") == 7, "every room ring has a knob")
         before = js("return window.__calls.length")
