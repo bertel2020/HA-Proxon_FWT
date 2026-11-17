@@ -29,6 +29,12 @@ export class HistorySectionsMethods {
       <span class="r rng"><button class="vbtn ${this._hcmp ? "a" : ""}" data-act="hcmp" aria-pressed="${!!this._hcmp}">${this._icon("mdi:compare-horizontal")}${this._t("prev_period")}</button>${this._isPanel ? "" : `${rb("24h", this._t("hist_24"))}${rb("7d", this._t("hist_7"))}${rb("30d", this._t("hist_30"))}${rb("1y", this._t("hist_365"))}`}</span></div>${chips}${body}</ha-card>`;
   }
 
+  // When a cached history load last succeeded (ms), or 0.
+  _hstamp(key) {
+    const e = this._hc && this._hc[key];
+    return e && e.v ? e.t : 0;
+  }
+
   // One range switch for the whole history page.
   _histBar() {
     const range = this._range();
@@ -46,7 +52,7 @@ export class HistorySectionsMethods {
     if (!c.hp_runtime_total && !c.hp_starts_total) return "";
     const range = this._range(), rows = this._hget(`b|${range}`, () => this._loadBuckets(d, range));
     const body = rows === undefined ? this._skel(190)
-      : rows && rows.some((x) => x.h !== undefined) ? this._barChart(rows, { key: "h", label: "runtime", color: "#3fa660", unit: "h", range, out: true }) : `<div class="note">${this._t("no_stats")}</div>`;
+      : rows && rows.some((x) => x.h !== undefined) ? this._barChart(rows, { key: "h", label: "runtime", color: "#3fa660", unit: "h", range, out: true, stamp: this._hstamp(`b|${range}`) }) : `<div class="note">${this._t("no_stats")}</div>`;
     return `<ha-card>${this._header("mdi:heat-pump-outline", this._t("runtime"), this._rangeSub(range))}${body}</ha-card>`;
   }
 
@@ -55,7 +61,7 @@ export class HistorySectionsMethods {
     const range = this._range(), rows = this._hget(`b|${range}`, () => this._loadBuckets(d, range));
     if (rows === null || (rows && !rows.some((x) => x.kwh !== undefined))) return "";
     return `<ha-card>${this._header("mdi:lightning-bolt-outline", this._t("energy"), this._rangeSub(range))}${rows === undefined ? this._skel(190)
-      : this._barChart(rows, { key: "kwh", label: "energy", color: "#BA7517", unit: "kWh", range, ref: `<div class="note">${this._t("energy_note")}</div>` })}</ha-card>`;
+      : this._barChart(rows, { key: "kwh", label: "energy", color: "#BA7517", unit: "kWh", range, stamp: this._hstamp(`b|${range}`), ref: `<div class="note">${this._t("energy_note")}</div>` })}</ha-card>`;
   }
 
 }

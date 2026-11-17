@@ -135,7 +135,7 @@ export class ChartsMethods {
   }
 
   // Bars per bucket (hour / day / month by range) for one key, optionally with the mean outdoor temperature as a line.
-  _barChart(rows, { key, label, color, unit, range, out, ref }) {
+  _barChart(rows, { key, label, color, unit, range, out, ref, stamp }) {
     const lang = this._hass.language, data = rows.filter((m) => m[key] !== undefined);
     if (!data.length) return `<div class="note">${this._t("no_stats")}</div>`;
     const W = Math.max(300, (this.clientWidth || 680) - 80), H = 190, pl = 36, pr = out ? 34 : 10, pt = 12, pb = 22;
@@ -149,9 +149,12 @@ export class ChartsMethods {
     const full = (t) => range === "24h" ? `${dt(t, { weekday: "short" })} ${tm(t)}` : range === "1y" ? dt(t, { month: "long", year: "numeric" }) : dt(t, { weekday: "short", day: "2-digit", month: "2-digit" });
     const fmt = (v) => v.toLocaleString(lang, { maximumFractionDigits: v < 10 ? 1 : 0 });
     const age = this._num(this._d.central.filter_age_days), chg = age === null || range !== "1y" ? null : Date.now() / 1000 - age * 86400;
+    // The last bar is still growing while its hour / day / month has not ended yet.
+    const last = data[data.length - 1], lastEnd = range === "1y" ? new Date(new Date(last.t * 1000).getFullYear(), new Date(last.t * 1000).getMonth() + 1, 1).getTime() / 1000 : last.t + (range === "24h" ? 3600 : 86400);
+    const growing = lastEnd > Date.now() / 1000;
     const bars = data.map((m, i) => {
-      const v = m[key], f = chg !== null && chg >= m.t && (i + 1 >= data.length || chg < data[i + 1].t);
-      return `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, H - pb - Y(v)).toFixed(1)}" rx="3" fill="${color}" opacity=".8"/>
+      const v = m[key], part = growing && i === data.length - 1, f = chg !== null && chg >= m.t && (i + 1 >= data.length || chg < data[i + 1].t);
+      return `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, H - pb - Y(v)).toFixed(1)}" rx="3" fill="${color}" opacity="${part ? ".4" : ".8"}"${part ? ` stroke="${color}" stroke-dasharray="4 3"` : ""}/>
         <rect x="${(X(i) - slot / 2).toFixed(1)}" y="${pt}" width="${slot.toFixed(1)}" height="${H - pt - pb}" fill="transparent" data-tip="${full(m.t)}|${fmt(v)} ${unit}${m.starts !== undefined && key === "h" ? ` · ${Math.round(m.starts)} ${this._t("y_starts")}` : ""}${m.out !== undefined && out ? ` · Ø ${m.out.toLocaleString(lang, { maximumFractionDigits: 1 })} °C` : ""}"/>
         ${f ? `<g><title>${this._t("y_filter")}</title><circle cx="${X(i).toFixed(1)}" cy="${H - pb}" r="4.5" fill="var(--card-background-color)" stroke="${CORAL}" stroke-width="1.6"/></g>` : ""}`;
     }).join("");
@@ -166,6 +169,7 @@ export class ChartsMethods {
       ${pts ? `<polyline fill="none" stroke="#7e57c2" stroke-width="1.8" stroke-linejoin="round" points="${pts}"/>` : ""}${xt}</svg><div class="tip" style="display:none"></div></div>
       <div class="legend"><span><i style="background:${color}"></i>${this._t(label)} (${unit})</span>${outs.length ? `<span><i style="background:#7e57c2"></i>${this._t("outside")} (°C)</span>` : ""}
       ${chg !== null && chg >= data[0].t ? `<span><i style="background:none;border:2px solid ${CORAL}"></i>${this._t("y_filter")}</span>` : ""}
+      ${growing ? `<span><i style="background:${color};opacity:.4"></i>${this._t("ongoing")}</span>` : ""}${stamp ? `<span>${this._t("asof")} ${tm(stamp / 1000)}</span>` : ""}
       <span>Σ ${fmt(sum)} ${unit}${key === "h" && starts ? ` · ${Math.round(starts)} ${this._t("y_starts")}` : ""} · Ø ${fmt(sum / data.length)} ${unit}/${this._t(range === "24h" ? "per_h" : range === "1y" ? "per_m" : "per_d")}</span></div>${ref || ""}`;
   }
 
