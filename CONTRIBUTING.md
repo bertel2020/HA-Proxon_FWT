@@ -19,6 +19,13 @@ python3 -m pytest -q tests
 node --test tests/panel.test.mjs tests/panel-render.test.mjs
 ```
 
+The panel also has a browser test against sample data (`tests/browser/harness.html`, no Home Assistant needed):
+
+```bash
+pip install playwright && playwright install chromium
+python tests/browser/smoke.py
+```
+
 The integration tests need a newer Python (3.14 at the time of writing) and their own
 environment; `pytest` picks the right set of tests depending on whether Home Assistant
 is installed:

@@ -1,6 +1,9 @@
 import { ROOM_ICONS, SETTINGS_TTL, BAD, esc } from "./constants.js";
 import { TEXT } from "./text.js";
-import { CSS, sharedSheet } from "./styles.js";
+import { CSS as CARD_CSS, sharedSheet } from "./styles.js";
+
+// CSS.escape of the browser (the name CSS is the stylesheet text in this project); without it, text is used as it is.
+const cssEscape = (v) => (typeof globalThis.CSS !== "undefined" && globalThis.CSS.escape ? globalThis.CSS.escape(v) : v);
 import { patchDom } from "./morph.js";
 
 export class ProxonFwtBase extends HTMLElement {
@@ -155,7 +158,7 @@ export class ProxonFwtBase extends HTMLElement {
       if (!this._adopted) { root.adoptedStyleSheets = [sh]; this._adopted = true; }
       return "";
     }
-    return `<style>${CSS}</style>`;
+    return `<style>${CARD_CSS}</style>`;
   }
 
   // A full re-render replaces the DOM: keep the dialog's scroll position and the focused control,
@@ -173,9 +176,9 @@ export class ProxonFwtBase extends HTMLElement {
     if (sheet) sheet.scrollTop = k.top;
     let el = null;
     if (want === "open" && sheet) el = sheet.querySelector(".x");
-    else if (want && want.startsWith("close:")) el = root.querySelector(`.rh[data-act="rtoggle"][data-v="${CSS.escape(want.slice(6))}"], .crow[data-v="${CSS.escape(want.slice(6))}"]`);
+    else if (want && want.startsWith("close:")) el = root.querySelector(`.rh[data-act="rtoggle"][data-v="${cssEscape(want.slice(6))}"], .crow[data-v="${cssEscape(want.slice(6))}"]`);
     else if (k.act && k.act !== "rclose" && k.act !== "noop") {
-      const sel = `[data-act="${k.act}"]${k.v != null ? `[data-v="${CSS.escape(String(k.v))}"]` : ""}`;
+      const sel = `[data-act="${k.act}"]${k.v != null ? `[data-v="${cssEscape(String(k.v))}"]` : ""}`;
       el = (k.inDlg && sheet ? sheet : root).querySelector(sel);
     }
     if (el && el.focus) el.focus({ preventScroll: true });
