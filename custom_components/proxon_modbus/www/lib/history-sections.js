@@ -57,11 +57,11 @@ export class HistorySectionsMethods {
   }
 
   _sec_energy(d) {
-    if (!this._powerId()) return "";
+    if (!this._powerId() && !this._energyId()) return "";
     const range = this._range(), rows = this._hget(`b|${range}`, () => this._loadBuckets(d, range));
     if (rows === null || (rows && !rows.some((x) => x.kwh !== undefined))) return "";
     return `<ha-card>${this._header("mdi:lightning-bolt-outline", this._t("energy"), this._rangeSub(range))}${rows === undefined ? this._skel(190)
-      : this._barChart(rows, { key: "kwh", label: "energy", color: "#BA7517", unit: "kWh", range, stamp: this._hstamp(`b|${range}`), ref: `<div class="note">${this._t("energy_note")}</div>` })}</ha-card>`;
+      : this._barChart(rows, { key: "kwh", label: "energy", color: "#BA7517", unit: "kWh", range, stamp: this._hstamp(`b|${range}`), ref: `<div class="note">${this._t(rows.meter ? "energy_meter" : "energy_note")}</div>` })}</ha-card>`;
   }
 
 }

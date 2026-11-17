@@ -227,3 +227,32 @@ test("rooms follow the configured room number, not the registry order", () => {
   p._hass.devices = { r1: dev("r1", "Zweites"), r0: dev("r0", "Erstes"), central: { id: "central", name: "Proxon" } };
   assert.equal(JSON.stringify(p._discoverNow().rooms.map((r) => r.name)), '["Zweites","Erstes"]'); // no identifiers: registry order
 });
+
+test("an energy meter gives the consumption per bucket and replaces the estimate from the power", async () => {
+  const p = make();
+  p._d = { central: { power_consumption: "sensor.p", hp_runtime_total: "sensor.rt" } };
+  p._config = {};
+  const day = 86400e3, t0 = Math.floor(Date.now() / day) * day - 2 * day;
+  let meterUnit = "Wh", withMeter = true;
+  p._opt = (k) => (k === "energy_entity" && withMeter ? "sensor.e" : undefined);
+  p._state = (id) => (id === "sensor.e" ? { attributes: { unit_of_measurement: meterUnit } } : { attributes: {} });
+  p._outdoorId = () => null;
+  p._pscale = () => 1;
+  p._hass.callWS = async () => ({
+    "sensor.rt": [{ start: t0, change: 2 }, { start: t0 + day, change: 3 }],
+    "sensor.p": [{ start: t0, mean: 1000 }, { start: t0 + day, mean: 2000 }],
+    "sensor.e": withMeter ? [{ start: t0, change: 1500 }, { start: t0 + day, change: 2500 }] : [],
+  });
+  assert.equal(p._escale === undefined, false);
+  let rows = await p._loadBuckets(p._d, "7d");
+  assert.deepEqual(rows.map((r) => r.kwh), [1.5, 2.5]); // Wh -> kWh, not 1000 W x 24 h
+  assert.equal(rows.meter, true);
+  meterUnit = "MWh";
+  assert.equal(p._escale(), 1e3);
+  meterUnit = "kWh";
+  assert.equal(p._escale(), 1);
+  withMeter = false; // no meter configured: estimate from the mean power
+  rows = await p._loadBuckets(p._d, "7d");
+  assert.deepEqual(rows.map((r) => Math.round(r.kwh)), [24, 48]);
+  assert.equal(rows.meter, false);
+});

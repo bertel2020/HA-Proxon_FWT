@@ -239,12 +239,13 @@ Die Karte findet alle Entities der Integration selbst (über Plattform und Entit
 
 Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wird ausgeblendet. Die Karte lässt sich im Karten-Editor grafisch konfigurieren.
 
-`outdoor_side`, `power_entity` und `outdoor_entity` lassen sich auch einmal zentral in den **Optionen der Integration** (Konfigurieren) einstellen, ebenso das Filter-Intervall und ein optionaler Umluftfilter und gelten dann für alle Browser, Karte und Seitenpanel. Eine Angabe in der Karte hat Vorrang.
+`outdoor_side`, `power_entity`, `energy_entity` und `outdoor_entity` lassen sich auch einmal zentral in den **Optionen der Integration** (Konfigurieren) einstellen, ebenso das Filter-Intervall und ein optionaler Umluftfilter und gelten dann für alle Browser, Karte und Seitenpanel. Eine Angabe in der Karte hat Vorrang.
 
 | Option | Standard | Bedeutung |
 |---|---|---|
 | `outdoor_side` | Integration (`left`) | `left` oder `right`: auf welcher Seite des Wärmetauschers Frischluft/Fortluft liegen |
 | `power_entity` | Integration | eigene Entität für die Leistungsaufnahme (z. B. Shelly) statt des Gerätesensors |
+| `energy_entity` | Integration | eigener Energiezähler (Wh/kWh/MWh): Die Energie-Karte zeigt dann den gemessenen Verbrauch statt einer Schätzung aus der Leistung |
 | `outdoor_entity` | Integration | eigene Entität für die Außentemperatur statt des Gerätesensors |
 | `sections` | alle | Liste der anzuzeigenden Bereiche. Standard: `operation`, `air`, `heatpump`, `refrigerant`, `status`, `rooms`. Zusätzlich möglich: `mode`, `fan` (statt `operation`), `quick` (nur Stoßlüften mit 15/30/60 Minuten; im Panel ist es Teil von `operation`), `schema`, `kpi`, `alerts`, `history`, `runtime`, `energy` |
 | `max_fan_rpm` | `3000` | Drehzahl, bei der die Lüfter-Balken voll sind |

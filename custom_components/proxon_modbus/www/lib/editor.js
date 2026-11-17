@@ -17,10 +17,10 @@ export class ProxonFwtCardEditor extends HTMLElement {
     const T = TEXT[lang] || TEXT.en;
     const labels = lang === "de"
       ? { sections: "Bereiche", outdoor_side: "Außenseite des Wärmetauschers", power_entity: "Leistungssensor (optional)",
-          outdoor_entity: "Außentemperatursensor (optional)", max_fan_rpm: "Lüfter-Drehzahl für volle Balken (rpm)",
+          energy_entity: "Energiezähler (optional)", outdoor_entity: "Außentemperatursensor (optional)", max_fan_rpm: "Lüfter-Drehzahl für volle Balken (rpm)",
           max_compressor_rpm: "Kompressor-Drehzahl für vollen Ring (rpm)" }
       : { sections: "Sections", outdoor_side: "Outdoor side of the heat exchanger", power_entity: "Power sensor (optional)",
-          outdoor_entity: "Outdoor temperature sensor (optional)", max_fan_rpm: "Fan speed for full bars (rpm)",
+          energy_entity: "Energy meter (optional)", outdoor_entity: "Outdoor temperature sensor (optional)", max_fan_rpm: "Fan speed for full bars (rpm)",
           max_compressor_rpm: "Compressor speed for full ring (rpm)" };
     return labels[name] || T[name] || name;
   }
@@ -48,6 +48,7 @@ export class ProxonFwtCardEditor extends HTMLElement {
         { value: "auto", label: lang === "de" ? "Wie in der Integration" : "As set in the integration" },
         { value: "left", label: lang === "de" ? "Links" : "Left" }, { value: "right", label: lang === "de" ? "Rechts" : "Right" }] } } },
       { name: "power_entity", selector: { entity: { domain: "sensor", device_class: "power" } } },
+      { name: "energy_entity", selector: { entity: { domain: "sensor", device_class: "energy" } } },
       { name: "outdoor_entity", selector: { entity: { domain: "sensor", device_class: "temperature" } } },
       { name: "max_fan_rpm", selector: { number: { min: 500, max: 10000, step: 100, mode: "box" } } },
       { name: "max_compressor_rpm", selector: { number: { min: 500, max: 20000, step: 100, mode: "box" } } },

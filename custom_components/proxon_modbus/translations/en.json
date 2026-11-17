@@ -154,7 +154,8 @@
           "recirc_filter": "Recirculation filter installed (optional)",
           "boost_minutes": "Boost ventilation duration (minutes)",
           "power_entity": "Own power sensor (optional)",
-          "outdoor_entity": "Own outdoor temperature sensor (optional)"
+          "outdoor_entity": "Own outdoor temperature sensor (optional)",
+          "energy_entity": "Own energy meter (optional)"
         },
         "data_description": {
           "filter_interval": "Basis of the maintenance bar in the side panel. The unit asks for a change after 180 days and shuts down by force 21 days after that message.",
@@ -162,7 +163,8 @@
           "boost_minutes": "After this time the previous fan stage is restored automatically.",
           "outdoor_side": "Which side of the unit are fresh air and exhaust air connected to, seen from the front? This turns the diagram in the card and side panel. The supply and extract air are on the opposite side.",
           "power_entity": "Replaces the unit's power consumption in the card and side panel, e.g. a Shelly on the unit. Leave empty to use the unit's sensor.",
-          "outdoor_entity": "Replaces the unit's outdoor temperature in the card and side panel. Leave empty to use the unit's sensor."
+          "outdoor_entity": "Replaces the unit's outdoor temperature in the card and side panel. Leave empty to use the unit's sensor.",
+          "energy_entity": "Used for the energy card in the side panel instead of estimating from the power, e.g. the energy counter of a Shelly on the unit. Accepts Wh, kWh and MWh. Leave empty to estimate from the power."
         }
       },
       "names": {

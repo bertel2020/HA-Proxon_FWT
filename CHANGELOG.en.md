@@ -14,6 +14,7 @@
 - **Feedback after writing:** A second command shortly after the first (for example PTC on, then off) waited up to 10 seconds for the device's confirmation. The gap between two read-backs is now 1 second.
 
 **Added**
+- **Energy meter:** New optional setting `energy_entity` (integration options and dashboard editor). With a meter the energy card shows the measured consumption per hour, day or month from the long-term statistics (Wh, kWh and MWh) instead of an estimate from the mean power. Without a meter it stays an estimate.
 - **Preferred stage can be set:** New select `select.…_preferred_fan_stage` (stage 1-4) and a stage selector in the panel. It sets the fan stage restored after the heat pump has run.
 - `tests/browser/harness.html` and `.claude/launch.json`: a test page for the panel with sample data.
 

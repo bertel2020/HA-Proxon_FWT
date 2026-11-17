@@ -25,6 +25,7 @@ from .const import (
     CONF_FILTER_INTERVAL,
     CONF_RECIRC_FILTER,
     DEFAULT_RECIRC_FILTER,
+    CONF_ENERGY_ENTITY,
     CONF_OUTDOOR_ENTITY,
     DEFAULT_FILTER_INTERVAL,
     CONF_OUTDOOR_SIDE,
@@ -92,6 +93,7 @@ def _ws_settings(
                 "outdoor_side": entry.options.get(CONF_OUTDOOR_SIDE, "left"),
                 "power_entity": entry.options.get(CONF_POWER_ENTITY),
                 "outdoor_entity": entry.options.get(CONF_OUTDOOR_ENTITY),
+                "energy_entity": entry.options.get(CONF_ENERGY_ENTITY),
                 "filter_interval": entry.options.get(CONF_FILTER_INTERVAL, DEFAULT_FILTER_INTERVAL),
                 "recirc_filter": entry.options.get(CONF_RECIRC_FILTER, DEFAULT_RECIRC_FILTER),
             }

@@ -60,6 +60,7 @@ CONF_COOLING_AVAILABLE = "cooling_available"
 CONF_OUTDOOR_SIDE = "outdoor_side"  # "left" | "right": side of the heat exchanger the outdoor air is on
 CONF_POWER_ENTITY = "power_entity"  # optional own power sensor instead of the unit's register 113
 CONF_OUTDOOR_ENTITY = "outdoor_entity"  # optional own outdoor temperature sensor
+CONF_ENERGY_ENTITY = "energy_entity"  # optional energy meter (Wh/kWh/MWh) for the energy card instead of estimating from the power
 CONF_FILTER_INTERVAL = "filter_interval"  # days between device filter changes (maintenance bar)
 DEFAULT_FILTER_INTERVAL = 180
 CONF_BOOST_MINUTES = "boost_minutes"  # duration of the boost ventilation (Stoßlüften)

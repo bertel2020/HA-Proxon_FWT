@@ -7,7 +7,7 @@ export class HistoryDataMethods {
   // Cached async loader: returns the cached value, `undefined` while the first load runs, `null` on failure.
   _hget(key, loader) {
     // History caches belong to one unit and its data sources; a changed scope drops them.
-    const scope = [this._settingsFor || "", this._opt("power_entity") || "", this._opt("outdoor_entity") || "", this._opt("outdoor_side", "left")].join("|");
+    const scope = [this._settingsFor || "", this._opt("power_entity") || "", this._opt("energy_entity") || "", this._opt("outdoor_entity") || "", this._opt("outdoor_side", "left")].join("|");
     if (this._hscope !== scope) { this._hc = {}; this._hscope = scope; }
     const cache = (this._hc = this._hc || {});
     const e = cache[key];
@@ -140,8 +140,8 @@ export class HistoryDataMethods {
   // Runtime, starts, outdoor temperature, mean power and energy per bucket (hour / day / month, depending on the range)
   // from the long-term statistics. The one loader for every card below the history chart, so they always share a range.
   async _loadBuckets(d, range) {
-    const c = d.central, out = this._outdoorId(), pw = this._powerId();
-    const ids = [c.hp_runtime_total, c.hp_starts_total, out, pw].filter(Boolean);
+    const c = d.central, out = this._outdoorId(), pw = this._powerId(), en = this._energyId();
+    const ids = [c.hp_runtime_total, c.hp_starts_total, out, pw, en].filter(Boolean);
     if (!ids.length) return null;
     const period = { "24h": "hour", "7d": "day", "30d": "day", "1y": "month" }[range], now = new Date();
     const start = range === "1y" ? new Date(now.getFullYear(), now.getMonth() - 11, 1) : new Date(now.getTime() - RANGE_MS[range]);
@@ -160,11 +160,14 @@ export class HistoryDataMethods {
     if (c.hp_starts_total) put(c.hp_starts_total, "change", "starts");
     if (out) put(out, "mean", "out");
     if (pw) put(pw, "mean", "w", this._pscale());
+    if (en) put(en, "change", "kwh", this._escale()); // a meter gives the real consumption per bucket
     const list = [...rows.values()].sort((a, b) => a.t - b.t), nowS = now.getTime() / 1000, fixed = period === "hour" ? 3600 : 86400;
+    const meter = list.some((m) => m.kwh !== undefined); // no meter statistics yet: estimate from the power like before
     list.forEach((m, i) => {
       const next = period === "month" ? (i + 1 < list.length ? list[i + 1].t : nowS) : Math.min(m.t + fixed, nowS);
-      if (m.w !== undefined) m.kwh = (m.w * Math.max(0, next - m.t)) / 3600 / 1000;
+      if (!meter && m.w !== undefined) m.kwh = (m.w * Math.max(0, next - m.t)) / 3600 / 1000;
     });
+    list.meter = meter;
     return list;
   }
 

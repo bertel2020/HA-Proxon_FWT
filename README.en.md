@@ -237,12 +237,13 @@ The card discovers all entities of the integration by itself (via platform and e
 
 Anything the unit does not provide (e.g. power consumption or outdoor temperature) is hidden. The card can be configured graphically in the card editor.
 
-`outdoor_side`, `power_entity` and `outdoor_entity` can also be set once centrally in the integration's **options** (Configure), as can the filter interval and an optional recirculation filter, and then apply in every browser, to the card and the side panel. A value in the card takes precedence.
+`outdoor_side`, `power_entity`, `energy_entity` and `outdoor_entity` can also be set once centrally in the integration's **options** (Configure), as can the filter interval and an optional recirculation filter, and then apply in every browser, to the card and the side panel. A value in the card takes precedence.
 
 | Option | Default | Meaning |
 |---|---|---|
 | `outdoor_side` | integration (`left`) | `left` or `right`: which side of the heat exchanger fresh and exhaust air are on |
 | `power_entity` | integration | own entity for the power consumption (e.g. a Shelly) instead of the device sensor |
+| `energy_entity` | integration | own energy meter (Wh/kWh/MWh): the energy card then shows the measured consumption instead of an estimate from the power |
 | `outdoor_entity` | integration | own entity for the outdoor temperature instead of the device sensor |
 | `sections` | all | list of sections to show. Default: `operation`, `air`, `heatpump`, `refrigerant`, `status`, `rooms`. Also possible: `mode`, `fan` (instead of `operation`), `quick` (boost ventilation with 15/30/60 minutes only; in the panel it is part of `operation`), `schema`, `kpi`, `alerts`, `history`, `runtime`, `energy` |
 | `max_fan_rpm` | `3000` | speed at which the fan bars are full |

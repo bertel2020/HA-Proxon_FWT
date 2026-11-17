@@ -154,7 +154,8 @@
           "recirc_filter": "Umluftfilter vorhanden (optional)",
           "boost_minutes": "Dauer des Stoßlüftens (Minuten)",
           "power_entity": "Eigener Leistungssensor (optional)",
-          "outdoor_entity": "Eigener Außentemperatursensor (optional)"
+          "outdoor_entity": "Eigener Außentemperatursensor (optional)",
+          "energy_entity": "Eigener Energiezähler (optional)"
         },
         "data_description": {
           "filter_interval": "Grundlage für den Wartungsbalken im Seitenpanel. Die Anlage meldet den Wechsel nach 180 Tagen und schaltet 21 Tage nach der Meldung zwangsweise ab.",
@@ -162,7 +163,8 @@
           "boost_minutes": "Nach dieser Zeit wird die vorherige Lüfterstufe automatisch wiederhergestellt.",
           "outdoor_side": "Auf welcher Seite der Anlage sind Frischluft und Fortluft angeschlossen, von vorn gesehen? Das dreht das Schema in Karte und Seitenpanel. Zuluft und Abluft liegen auf der Gegenseite.",
           "power_entity": "Ersetzt die Leistungsaufnahme des Geräts in Karte und Seitenpanel, z. B. ein Shelly an der Anlage. Leer lassen, um den Gerätesensor zu verwenden.",
-          "outdoor_entity": "Ersetzt die Außentemperatur des Geräts in Karte und Seitenpanel. Leer lassen, um den Gerätesensor zu verwenden."
+          "outdoor_entity": "Ersetzt die Außentemperatur des Geräts in Karte und Seitenpanel. Leer lassen, um den Gerätesensor zu verwenden.",
+          "energy_entity": "Wird für die Energie-Karte im Seitenpanel statt der Schätzung aus der Leistung verwendet, z. B. der Energiezähler eines Shelly an der Anlage. Wh, kWh und MWh sind möglich. Leer lassen, um aus der Leistung zu schätzen."
         }
       },
       "names": {

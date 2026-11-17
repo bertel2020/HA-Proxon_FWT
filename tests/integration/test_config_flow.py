@@ -129,3 +129,17 @@ async def test_options_flow_changes_room_count_and_reloads(hass, entry, unit, se
     await hass.async_block_till_done()
     assert entry.options[const.CONF_NUM_ROOMS] == 1
     assert hass.states.async_entity_ids("climate") == ["climate.wohnen"]  # the dropped room is gone, not unavailable
+
+
+async def test_options_flow_stores_the_energy_meter(hass, entry, unit, setup_integration):
+    await setup_integration()
+    hass.states.async_set("sensor.zaehler", "12", {"device_class": "energy", "unit_of_measurement": "kWh"})
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    values = result["data_schema"]({})
+    values[const.CONF_ENERGY_ENTITY] = "sensor.zaehler"
+    result = await hass.config_entries.options.async_configure(result["flow_id"], values)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], names_input(result, *entry.options[const.CONF_ROOM_NAMES])
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options[const.CONF_ENERGY_ENTITY] == "sensor.zaehler"

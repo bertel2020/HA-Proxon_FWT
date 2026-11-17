@@ -299,6 +299,17 @@ export class ProxonFwtBase extends HTMLElement {
     return u === "kW" ? 1e3 : u === "MW" ? 1e6 : 1;
   }
 
+  // The optional energy meter of the options; its statistics replace the estimate from the power.
+  _energyId() {
+    return this._opt("energy_entity") || null;
+  }
+
+  // Factor from the meter's unit to kWh.
+  _escale() {
+    const u = String(((this._state(this._energyId()) || { attributes: {} }).attributes.unit_of_measurement) || "kWh").trim();
+    return u === "Wh" ? 1e-3 : u === "MWh" ? 1e3 : 1;
+  }
+
   _pnum() {
     const v = this._num(this._powerId());
     return v === null ? null : v * this._pscale();
