@@ -10,6 +10,9 @@
 - **Panel – rooms:** The room ring can be dragged by its dot (also with the arrow keys), spans the room's settable range and no longer has an empty bottom. The room dialog is redesigned. Value chips are larger, the operating mode in the header is a chip, the key figures always show four tiles ("–" when a value is missing), and the PTC row in the overview also names the enabled rooms.
 - **Panel – updates:** New values only change the affected parts instead of rebuilding the whole page. The scroll position no longer jumps to the top.
 
+**Fixed**
+- **Feedback after writing:** A second command shortly after the first (for example PTC on, then off) waited up to 10 seconds for the device's confirmation. The gap between two read-backs is now 1 second.
+
 **Added**
 - **Preferred stage can be set:** New select `select.…_preferred_fan_stage` (stage 1-4) and a stage selector in the panel. It sets the fan stage restored after the heat pump has run.
 - `tests/browser/harness.html` and `.claude/launch.json`: a test page for the panel with sample data.

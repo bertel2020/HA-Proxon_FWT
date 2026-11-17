@@ -10,6 +10,9 @@
 - **Panel – Räume:** Der Ring im Raum lässt sich über den Punkt ziehen (auch per Pfeiltasten), umfasst den einstellbaren Bereich des Raums und hat keinen leeren Boden mehr. Das Raum-Popup ist neu gestaltet. Die Werte-Chips sind größer, die Betriebsart im Kopf ist ein Chip, die Kennzahlen zeigen immer vier Kacheln („–“ bei fehlendem Wert), und die PTC-Zeile in der Übersicht nennt auch die freigegebenen Räume.
 - **Panel – Aktualisierung:** Neue Werte ändern nur noch die betroffenen Stellen, statt die ganze Oberfläche neu aufzubauen. Die Scroll-Position springt nicht mehr nach oben.
 
+**Korrigiert**
+- **Rückmeldung nach dem Schreiben:** Ein zweiter Befehl kurz nach dem ersten (zum Beispiel PTC erst an, dann aus) wartete bis zu 10 Sekunden auf die Bestätigung des Geräts. Die Wartezeit zwischen zwei Rückmeldungen beträgt jetzt 1 Sekunde.
+
 **Neu**
 - **Wunschstufe einstellbar:** Neue Auswahl `select.…_preferred_fan_stage` (Stufe 1–4) und eine Stufenauswahl im Panel. Sie setzt die Lüfterstufe, die nach dem Wärmepumpenlauf wiederhergestellt wird.
 - `tests/browser/harness.html` und `.claude/launch.json`: Testseite für das Panel mit Beispieldaten.
