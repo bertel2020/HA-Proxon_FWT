@@ -26,31 +26,36 @@ export class HistorySectionsMethods {
     const rb = (v, l) => `<button class="vbtn ${range === v ? "a" : ""}" data-act="hrange" data-v="${v}">${l}</button>`;
     const chips = avail.length > 1 ? `<div class="mchips" role="group">${avail.map((m) => `<button class="vbtn ${m === metric ? "a" : ""}" data-act="metric" data-v="${m}">${this._icon(METRIC_META[m].icon)}${this._t(METRIC_META[m].label)}</button>`).join("")}</div>` : "";
     return `<ha-card><div class="h">${this._icon("mdi:chart-line")}${this._t("history")}
-      <span class="r rng"><button class="vbtn ${this._hcmp ? "a" : ""}" data-act="hcmp" aria-pressed="${!!this._hcmp}">${this._icon("mdi:compare-horizontal")}${this._t("prev_period")}</button>${rb("24h", this._t("hist_24"))}${rb("7d", this._t("hist_7"))}${rb("30d", this._t("hist_30"))}${rb("1y", this._t("hist_365"))}</span></div>${chips}${body}</ha-card>`;
+      <span class="r rng"><button class="vbtn ${this._hcmp ? "a" : ""}" data-act="hcmp" aria-pressed="${!!this._hcmp}">${this._icon("mdi:compare-horizontal")}${this._t("prev_period")}</button>${this._isPanel ? "" : `${rb("24h", this._t("hist_24"))}${rb("7d", this._t("hist_7"))}${rb("30d", this._t("hist_30"))}${rb("1y", this._t("hist_365"))}`}</span></div>${chips}${body}</ha-card>`;
+  }
+
+  // One range switch for the whole history page.
+  _histBar() {
+    const range = this._range();
+    return `<div class="seg cmp" role="group" style="grid-template-columns:repeat(4,1fr)">${[["24h", "hist_24"], ["7d", "hist_7"], ["30d", "hist_30"], ["1y", "hist_365"]].map(([v, l]) =>
+      this._btn(`data-act="hrange" data-v="${v}" aria-pressed="${range === v}"`, range === v ? "a" : "", this._t(l))).join("")}</div>`;
+  }
+
+  // Header subtitle shared by the cards below the chart: the range and what one bar stands for.
+  _rangeSub(range) {
+    return `${this._t({ "24h": "hist_24", "7d": "hist_7", "30d": "hist_30", "1y": "hist_365" }[range])} · ${this._t(range === "24h" ? "per_hour" : range === "1y" ? "per_month" : "per_day")}`;
   }
 
   _sec_runtime(d) {
     const c = d.central;
-    if (!c.heat_pump_heating && !c.hp_runtime_total) return "";
-    let body, sub;
-    if (this._range() === "30d") {
-      const days = this._hget("run", () => this._loadRun(d));
-      sub = this._t("hist_30");
-      body = days === undefined ? this._skel(190)
-        : days && days.some((x) => x.h !== undefined) ? this._runChart(days) : `<div class="note">${this._t("no_stats")}</div>`;
-    } else {
-      this._hget("hp", () => this._loadHp(d));
-      sub = this._t("hist_7");
-      body = this._hpBars();
-    }
-    return `<ha-card>${this._header("mdi:heat-pump-outline", this._t("runtime"), sub)}${body}</ha-card>`;
+    if (!c.hp_runtime_total && !c.hp_starts_total) return "";
+    const range = this._range(), rows = this._hget(`b|${range}`, () => this._loadBuckets(d, range));
+    const body = rows === undefined ? this._skel(190)
+      : rows && rows.some((x) => x.h !== undefined) ? this._barChart(rows, { key: "h", label: "runtime", color: "#3fa660", unit: "h", range, out: true }) : `<div class="note">${this._t("no_stats")}</div>`;
+    return `<ha-card>${this._header("mdi:heat-pump-outline", this._t("runtime"), this._rangeSub(range))}${body}</ha-card>`;
   }
 
   _sec_energy(d) {
     if (!this._powerId()) return "";
-    const days = this._hget("run", () => this._loadRun(d));
-    if (days === null || (days && !days.some((x) => x.w !== undefined))) return "";
-    return `<ha-card>${this._header("mdi:lightning-bolt-outline", this._t("energy"), this._t("hist_30"))}${days === undefined ? this._skel(150) : this._energyChart(days)}</ha-card>`;
+    const range = this._range(), rows = this._hget(`b|${range}`, () => this._loadBuckets(d, range));
+    if (rows === null || (rows && !rows.some((x) => x.kwh !== undefined))) return "";
+    return `<ha-card>${this._header("mdi:lightning-bolt-outline", this._t("energy"), this._rangeSub(range))}${rows === undefined ? this._skel(190)
+      : this._barChart(rows, { key: "kwh", label: "energy", color: "#BA7517", unit: "kWh", range, ref: `<div class="note">${this._t("energy_note")}</div>` })}</ha-card>`;
   }
 
 }

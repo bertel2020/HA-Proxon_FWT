@@ -137,102 +137,35 @@ export class HistoryDataMethods {
     return e && e.v ? e.v : null;
   }
 
-  // Daily runtime, starts, outdoor temperature and mean power for 30 days from the long-term statistics.
-  async _loadRun(d) {
+  // Runtime, starts, outdoor temperature, mean power and energy per bucket (hour / day / month, depending on the range)
+  // from the long-term statistics. The one loader for every card below the history chart, so they always share a range.
+  async _loadBuckets(d, range) {
     const c = d.central, out = this._outdoorId(), pw = this._powerId();
     const ids = [c.hp_runtime_total, c.hp_starts_total, out, pw].filter(Boolean);
     if (!ids.length) return null;
-    const end = new Date(), start = new Date(end.getTime() - 30 * 864e5);
-    const res = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
-      statistic_ids: ids, period: "day", types: ["mean", "change"] });
-    const days = new Map();
+    const period = { "24h": "hour", "7d": "day", "30d": "day", "1y": "month" }[range], now = new Date();
+    const start = range === "1y" ? new Date(now.getFullYear(), now.getMonth() - 11, 1) : new Date(now.getTime() - RANGE_MS[range]);
+    const res = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: now.toISOString(),
+      statistic_ids: ids, period, types: ["mean", "change"] });
+    const rows = new Map();
     const put = (id, field, key, k = 1) => {
       for (const r of res[id] || []) {
         const v = Number(r[field]) * k;
         if (isNaN(v)) continue;
-        const day = days.get(r.start) || { t: r.start / 1000 };
-        day[key] = v; days.set(r.start, day);
+        const row = rows.get(r.start) || { t: r.start / 1000 };
+        row[key] = v; rows.set(r.start, row);
       }
     };
     if (c.hp_runtime_total) put(c.hp_runtime_total, "change", "h");
     if (c.hp_starts_total) put(c.hp_starts_total, "change", "starts");
     if (out) put(out, "mean", "out");
     if (pw) put(pw, "mean", "w", this._pscale());
-    return [...days.values()].sort((a, b) => a.t - b.t);
-  }
-
-  // Monthly runtime, starts, outdoor temperature and mean power for 12 months from the long-term statistics.
-  async _loadYear(d) {
-    const c = d.central, out = this._outdoorId(), pw = this._powerId();
-    const ids = [c.hp_runtime_total, c.hp_starts_total, out, pw].filter(Boolean);
-    if (!ids.length) return null;
-    const end = new Date(), start = new Date(end.getFullYear(), end.getMonth() - 11, 1);
-    const res = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
-      statistic_ids: ids, period: "month", types: ["mean", "change"] });
-    const months = new Map();
-    const put = (id, field, key, k = 1) => {
-      for (const r of res[id] || []) {
-        const v = Number(r[field]) * k;
-        if (isNaN(v)) continue;
-        const m = months.get(r.start) || { t: r.start / 1000 };
-        m[key] = v; months.set(r.start, m);
-      }
-    };
-    if (c.hp_runtime_total) put(c.hp_runtime_total, "change", "h");
-    if (c.hp_starts_total) put(c.hp_starts_total, "change", "starts");
-    if (out) put(out, "mean", "out");
-    if (pw) put(pw, "mean", "w", this._pscale());
-    const list = [...months.values()].sort((a, b) => a.t - b.t), now = Date.now() / 1000;
+    const list = [...rows.values()].sort((a, b) => a.t - b.t), nowS = now.getTime() / 1000, fixed = period === "hour" ? 3600 : 86400;
     list.forEach((m, i) => {
-      const next = i + 1 < list.length ? list[i + 1].t : now;
+      const next = period === "month" ? (i + 1 < list.length ? list[i + 1].t : nowS) : Math.min(m.t + fixed, nowS);
       if (m.w !== undefined) m.kwh = (m.w * Math.max(0, next - m.t)) / 3600 / 1000;
     });
     return list;
-  }
-
-  _sec_year(d) {
-    const c = d.central;
-    if (!c.hp_runtime_total && !c.hp_starts_total && !this._powerId()) return "";
-    const months = this._hget("year", () => this._loadYear(d));
-    if (months === null) return "";
-    const avail = [["h", "y_runtime", "mdi:timer-outline", "#3fa660", "h"], ["kwh", "y_energy", "mdi:lightning-bolt-outline", AMBER, "kWh"], ["starts", "y_starts", "mdi:repeat", BLUE, ""]]
-      .filter(([k]) => months === undefined || months.some((m) => m[k] !== undefined));
-    if (months !== undefined && !avail.length) return `<ha-card>${this._header("mdi:calendar-month-outline", this._t("year"), this._t("year_sub"))}<div class="note">${this._t("no_stats")}</div></ha-card>`;
-    const cur = avail.find(([k]) => k === this._ymetric) || avail[0];
-    const chips = avail.length > 1 ? `<div class="mchips" role="group">${avail.map(([k, l, ic]) => `<button class="vbtn ${k === cur[0] ? "a" : ""}" data-act="ymetric" data-v="${k}">${this._icon(ic)}${this._t(l)}</button>`).join("")}</div>` : "";
-    return `<ha-card>${this._header("mdi:calendar-month-outline", this._t("year"), this._t("year_sub"))}${chips}${months === undefined ? this._skel(190) : this._yearChart(months, cur, d)}</ha-card>`;
-  }
-
-  _yearChart(months, [key, label, , color, unit], d) {
-    const lang = this._hass.language;
-    const W = Math.max(300, (this.clientWidth || 680) - 80), H = 190, pl = 40, pr = 34, pt = 12, pb = 22;
-    const vals = months.map((m) => m[key] || 0), max = Math.max(1, Math.ceil(Math.max(...vals) * 1.05));
-    const outs = months.filter((m) => m.out !== undefined).map((m) => m.out);
-    const oLo = outs.length ? Math.floor(Math.min(...outs) - 1) : 0, oHi = outs.length ? Math.ceil(Math.max(...outs) + 1) : 1;
-    const slot = (W - pl - pr) / months.length, bw = Math.max(6, slot * 0.6);
-    const X = (i) => pl + slot * (i + 0.5), Y = (v) => pt + (1 - v / max) * (H - pt - pb), Yo = (v) => pt + (1 - (v - oLo) / Math.max(1, oHi - oLo)) * (H - pt - pb);
-    const mf = (t) => new Date(t * 1000).toLocaleDateString(lang, { month: "short" });
-    const mfl = (t) => new Date(t * 1000).toLocaleDateString(lang, { month: "long", year: "numeric" });
-    const fmt = (v) => v.toLocaleString(lang, { maximumFractionDigits: v < 10 ? 1 : 0 });
-    // The month in which the device filter was last changed (age + now)
-    const age = this._num(d.central.filter_age_days), chg = age === null ? null : Date.now() / 1000 - age * 86400;
-    const bars = months.map((m, i) => {
-      const v = m[key] || 0, f = chg !== null && chg >= m.t && (i + 1 >= months.length || chg < months[i + 1].t);
-      return `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, H - pb - Y(v)).toFixed(1)}" rx="3" fill="${color}" opacity=".8"/>
-        <rect x="${(X(i) - slot / 2).toFixed(1)}" y="${pt}" width="${slot.toFixed(1)}" height="${H - pt - pb}" fill="transparent" data-tip="${mfl(m.t)}|${fmt(v)} ${unit}${m.out !== undefined ? ` · Ø ${m.out.toLocaleString(lang, { maximumFractionDigits: 1 })} °C` : ""}"/>
-        ${f ? `<g><title>${this._t("y_filter")}</title><circle cx="${X(i).toFixed(1)}" cy="${H - pb + 0}" r="4.5" fill="var(--card-background-color)" stroke="${CORAL}" stroke-width="1.6"/></g>` : ""}`;
-    }).join("");
-    const gl = [0, 1, 2, 3].map((i) => `<line x1="${pl}" x2="${W - pr}" y1="${(pt + ((H - pt - pb) * i) / 3).toFixed(1)}" y2="${(pt + ((H - pt - pb) * i) / 3).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
-      <text class="st" x="${pl - 6}" y="${(pt + ((H - pt - pb) * i) / 3 + 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${Math.round(max * (1 - i / 3))}</text>
-      ${outs.length ? `<text class="st" x="${W - pr + 6}" y="${(pt + ((H - pt - pb) * i) / 3 + 4).toFixed(1)}" style="font-size:11px">${Math.round(oHi - ((oHi - oLo) * i) / 3)}°</text>` : ""}`).join("");
-    const xt = months.map((m, i) => `<text class="st" x="${X(i).toFixed(1)}" y="${H - 5}" text-anchor="middle" style="font-size:11px">${mf(m.t)}</text>`).join("");
-    const pts = months.map((m, i) => m.out === undefined ? null : `${X(i).toFixed(1)},${Yo(m.out).toFixed(1)}`).filter(Boolean).join(" ");
-    const sum = vals.reduce((a, b) => a + b, 0);
-    return `<div class="chw"><svg style="max-width:100%;height:auto" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("year")}">${gl}${bars}
-      ${pts ? `<polyline fill="none" stroke="#7e57c2" stroke-width="1.8" stroke-linejoin="round" points="${pts}"/>` : ""}${xt}</svg><div class="tip" style="display:none"></div></div>
-      <div class="legend"><span><i style="background:${color}"></i>${this._t(label)}${unit ? ` (${unit})` : ""}</span>${outs.length ? `<span><i style="background:#7e57c2"></i>${this._t("outside")} (°C)</span>` : ""}
-      ${chg !== null && chg >= months[0].t ? `<span><i style="background:none;border:2px solid ${CORAL}"></i>${this._t("y_filter")}</span>` : ""}
-      <span>Σ ${fmt(sum)} ${unit}</span></div><div class="note">${this._t("y_note")}</div>`;
   }
 
   _skel(h) {

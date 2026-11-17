@@ -1,4 +1,4 @@
-import { BLUE, AMBER, RANGE_MS } from "./constants.js";
+import { BLUE, AMBER, CORAL, RANGE_MS } from "./constants.js";
 
 export class ChartsMethods {
   // ---- history: charts --------------------------------------------------
@@ -134,47 +134,39 @@ export class ChartsMethods {
     svg._chOff = () => { svg.removeEventListener("pointermove", move); svg.removeEventListener("pointerdown", move); svg.removeEventListener("pointerleave", hide); };
   }
 
-  // Bars for daily runtime with the mean outdoor temperature as a line on the right axis.
-  _runChart(days) {
-    const lang = this._hass.language;
-    const W = Math.max(300, (this.clientWidth || 680) - 80), H = 190, pl = 34, pr = 34, pt = 12, pb = 22;
-    const hs = days.map((x) => x.h || 0), maxH = Math.max(4, Math.ceil(Math.max(...hs)));
-    const outs = days.filter((x) => x.out !== undefined).map((x) => x.out);
-    const oLo = outs.length ? Math.floor(Math.min(...outs) - 1) : 0, oHi = outs.length ? Math.ceil(Math.max(...outs) + 1) : 1;
-    const slot = (W - pl - pr) / days.length, bw = Math.max(3, slot * 0.62);
-    const X = (i) => pl + slot * (i + 0.5), Yh = (v) => pt + (1 - v / maxH) * (H - pt - pb), Yo = (v) => pt + (1 - (v - oLo) / Math.max(1, oHi - oLo)) * (H - pt - pb);
-    const df = (t) => new Date(t * 1000).toLocaleDateString(lang, { day: "2-digit", month: "2-digit" });
-    const bars = days.map((x, i) => `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${Yh(x.h || 0).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, H - pb - Yh(x.h || 0)).toFixed(1)}" rx="2" fill="#3fa660" opacity=".75"/>
-      <rect x="${(X(i) - slot / 2).toFixed(1)}" y="${pt}" width="${slot.toFixed(1)}" height="${H - pt - pb}" fill="transparent" data-tip="${df(x.t)}|${(x.h || 0).toLocaleString(lang, { maximumFractionDigits: 1 })} h${x.starts !== undefined ? ` · ${Math.round(x.starts)} ${this._t("hp_starts")}` : ""}${x.out !== undefined ? ` · Ø ${x.out.toLocaleString(lang, { maximumFractionDigits: 1 })} °C` : ""}"/>`).join("");
-    const pts = days.map((x, i) => x.out === undefined ? null : `${X(i).toFixed(1)},${Yo(x.out).toFixed(1)}`).filter(Boolean).join(" ");
-    const gl = [0, 1, 2, 3].map((i) => `<line x1="${pl}" x2="${W - pr}" y1="${(pt + ((H - pt - pb) * i) / 3).toFixed(1)}" y2="${(pt + ((H - pt - pb) * i) / 3).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
-      <text class="st" x="${pl - 6}" y="${(pt + ((H - pt - pb) * i) / 3 + 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${Math.round(maxH * (1 - i / 3))}</text>
-      ${outs.length ? `<text class="st" x="${W - pr + 6}" y="${(pt + ((H - pt - pb) * i) / 3 + 4).toFixed(1)}" style="font-size:11px">${Math.round(oHi - ((oHi - oLo) * i) / 3)}°</text>` : ""}`).join("");
-    const xt = days.map((x, i) => i % Math.ceil(days.length / (W < 420 ? 4 : 8)) === 0 ? `<text class="st" x="${X(i).toFixed(1)}" y="${H - 5}" text-anchor="middle" style="font-size:11px">${df(x.t)}</text>` : "").join("");
-    const sumH = hs.reduce((a, b) => a + b, 0), avgO = outs.length ? outs.reduce((a, b) => a + b, 0) / outs.length : null;
-    return `<div class="chw"><svg style="max-width:100%;height:auto" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("runtime")}">${gl}${bars}
-      ${pts ? `<polyline fill="none" stroke="#7e57c2" stroke-width="1.8" stroke-linejoin="round" points="${pts}"/>` : ""}${xt}</svg><div class="tip" style="display:none"></div></div>
-      <div class="legend"><span><i style="background:#3fa660"></i>${this._t("runtime")} (h)</span>${outs.length ? `<span><i style="background:#7e57c2"></i>${this._t("outside")} (°C)</span>` : ""}
-      <span>Σ ${sumH.toLocaleString(lang, { maximumFractionDigits: 0 })} h${avgO === null ? "" : ` · Ø ${this._t("outside")} ${avgO.toLocaleString(lang, { maximumFractionDigits: 1 })} °C`}</span></div>`;
-  }
-
-  _energyChart(days) {
-    const lang = this._hass.language;
-    const data = days.filter((x) => x.w !== undefined).map((x) => ({ t: x.t, kwh: (x.w * 24) / 1000 }));
+  // Bars per bucket (hour / day / month by range) for one key, optionally with the mean outdoor temperature as a line.
+  _barChart(rows, { key, label, color, unit, range, out, ref }) {
+    const lang = this._hass.language, data = rows.filter((m) => m[key] !== undefined);
     if (!data.length) return `<div class="note">${this._t("no_stats")}</div>`;
-    const W = Math.max(300, (this.clientWidth || 680) - 80), H = 150, pl = 34, pr = 10, pt = 12, pb = 22;
-    const max = Math.max(1, Math.ceil(Math.max(...data.map((x) => x.kwh)))), slot = (W - pl - pr) / data.length, bw = Math.max(3, slot * 0.62);
-    const X = (i) => pl + slot * (i + 0.5), Y = (v) => pt + (1 - v / max) * (H - pt - pb);
-    const df = (t) => new Date(t * 1000).toLocaleDateString(lang, { day: "2-digit", month: "2-digit" });
-    const bars = data.map((x, i) => `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${Y(x.kwh).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, H - pb - Y(x.kwh)).toFixed(1)}" rx="2" fill="${AMBER}" opacity=".85"/>
-      <rect x="${(X(i) - slot / 2).toFixed(1)}" y="${pt}" width="${slot.toFixed(1)}" height="${H - pt - pb}" fill="transparent" data-tip="${df(x.t)}|${x.kwh.toLocaleString(lang, { maximumFractionDigits: 1 })} kWh"/>`).join("");
-    const gl = [0, 1, 2].map((i) => `<line x1="${pl}" x2="${W - pr}" y1="${(pt + ((H - pt - pb) * i) / 2).toFixed(1)}" y2="${(pt + ((H - pt - pb) * i) / 2).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
-      <text class="st" x="${pl - 6}" y="${(pt + ((H - pt - pb) * i) / 2 + 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${Math.round(max * (1 - i / 2))}</text>`).join("");
-    const xt = data.map((x, i) => i % Math.ceil(data.length / (W < 420 ? 4 : 8)) === 0 ? `<text class="st" x="${X(i).toFixed(1)}" y="${H - 5}" text-anchor="middle" style="font-size:11px">${df(x.t)}</text>` : "").join("");
-    const sum = data.reduce((a, b) => a + b.kwh, 0);
-    return `<div class="chw"><svg style="max-width:100%;height:auto" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("energy")}">${gl}${bars}${xt}</svg><div class="tip" style="display:none"></div></div>
-      <div class="legend"><span><i style="background:${AMBER}"></i>kWh</span><span>Σ ${sum.toLocaleString(lang, { maximumFractionDigits: 0 })} kWh · Ø ${(sum / data.length).toLocaleString(lang, { maximumFractionDigits: 1 })} kWh/${this._t("day")}</span></div>
-      <div class="note">${this._t("energy_note")}</div>`;
+    const W = Math.max(300, (this.clientWidth || 680) - 80), H = 190, pl = 36, pr = out ? 34 : 10, pt = 12, pb = 22;
+    const vals = data.map((m) => m[key]), max = Math.max(1, Math.ceil(Math.max(...vals) * 1.05));
+    const outs = out ? data.filter((m) => m.out !== undefined).map((m) => m.out) : [];
+    const oLo = outs.length ? Math.floor(Math.min(...outs) - 1) : 0, oHi = outs.length ? Math.ceil(Math.max(...outs) + 1) : 1;
+    const slot = (W - pl - pr) / data.length, bw = Math.max(3, Math.min(46, slot * 0.62));
+    const X = (i) => pl + slot * (i + 0.5), Y = (v) => pt + (1 - v / max) * (H - pt - pb), Yo = (v) => pt + (1 - (v - oLo) / Math.max(1, oHi - oLo)) * (H - pt - pb);
+    const dt = (t, o) => new Date(t * 1000).toLocaleDateString(lang, o), tm = (t) => new Date(t * 1000).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" });
+    const short = (t) => range === "24h" ? tm(t) : range === "7d" ? dt(t, { weekday: "short" }) : range === "1y" ? dt(t, { month: "short" }) : dt(t, { day: "2-digit", month: "2-digit" });
+    const full = (t) => range === "24h" ? `${dt(t, { weekday: "short" })} ${tm(t)}` : range === "1y" ? dt(t, { month: "long", year: "numeric" }) : dt(t, { weekday: "short", day: "2-digit", month: "2-digit" });
+    const fmt = (v) => v.toLocaleString(lang, { maximumFractionDigits: v < 10 ? 1 : 0 });
+    const age = this._num(this._d.central.filter_age_days), chg = age === null || range !== "1y" ? null : Date.now() / 1000 - age * 86400;
+    const bars = data.map((m, i) => {
+      const v = m[key], f = chg !== null && chg >= m.t && (i + 1 >= data.length || chg < data[i + 1].t);
+      return `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, H - pb - Y(v)).toFixed(1)}" rx="3" fill="${color}" opacity=".8"/>
+        <rect x="${(X(i) - slot / 2).toFixed(1)}" y="${pt}" width="${slot.toFixed(1)}" height="${H - pt - pb}" fill="transparent" data-tip="${full(m.t)}|${fmt(v)} ${unit}${m.starts !== undefined && key === "h" ? ` · ${Math.round(m.starts)} ${this._t("y_starts")}` : ""}${m.out !== undefined && out ? ` · Ø ${m.out.toLocaleString(lang, { maximumFractionDigits: 1 })} °C` : ""}"/>
+        ${f ? `<g><title>${this._t("y_filter")}</title><circle cx="${X(i).toFixed(1)}" cy="${H - pb}" r="4.5" fill="var(--card-background-color)" stroke="${CORAL}" stroke-width="1.6"/></g>` : ""}`;
+    }).join("");
+    const gl = [0, 1, 2, 3].map((i) => `<line x1="${pl}" x2="${W - pr}" y1="${(pt + ((H - pt - pb) * i) / 3).toFixed(1)}" y2="${(pt + ((H - pt - pb) * i) / 3).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
+      <text class="st" x="${pl - 6}" y="${(pt + ((H - pt - pb) * i) / 3 + 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${Math.round(max * (1 - i / 3))}</text>
+      ${outs.length ? `<text class="st" x="${W - pr + 6}" y="${(pt + ((H - pt - pb) * i) / 3 + 4).toFixed(1)}" style="font-size:11px">${Math.round(oHi - ((oHi - oLo) * i) / 3)}°</text>` : ""}`).join("");
+    const every = Math.ceil(data.length / (range === "1y" ? (W < 420 ? 6 : 12) : W < 420 ? 4 : 8));
+    const xt = data.map((m, i) => i % every === 0 ? `<text class="st" x="${X(i).toFixed(1)}" y="${H - 5}" text-anchor="middle" style="font-size:11px">${short(m.t)}</text>` : "").join("");
+    const pts = outs.length ? data.map((m, i) => m.out === undefined ? null : `${X(i).toFixed(1)},${Yo(m.out).toFixed(1)}`).filter(Boolean).join(" ") : "";
+    const sum = vals.reduce((a, b) => a + b, 0), starts = data.reduce((a, m) => a + (m.starts || 0), 0);
+    return `<div class="chw"><svg style="max-width:100%;height:auto" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t(label)}">${gl}${bars}
+      ${pts ? `<polyline fill="none" stroke="#7e57c2" stroke-width="1.8" stroke-linejoin="round" points="${pts}"/>` : ""}${xt}</svg><div class="tip" style="display:none"></div></div>
+      <div class="legend"><span><i style="background:${color}"></i>${this._t(label)} (${unit})</span>${outs.length ? `<span><i style="background:#7e57c2"></i>${this._t("outside")} (°C)</span>` : ""}
+      ${chg !== null && chg >= data[0].t ? `<span><i style="background:none;border:2px solid ${CORAL}"></i>${this._t("y_filter")}</span>` : ""}
+      <span>Σ ${fmt(sum)} ${unit}${key === "h" && starts ? ` · ${Math.round(starts)} ${this._t("y_starts")}` : ""} · Ø ${fmt(sum / data.length)} ${unit}/${this._t(range === "24h" ? "per_h" : range === "1y" ? "per_m" : "per_d")}</span></div>${ref || ""}`;
   }
 
 }

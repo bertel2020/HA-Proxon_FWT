@@ -101,15 +101,19 @@ test("room details open in a dialog, one at a time, and close again", () => {
   assert.equal(p._ropen.size, 0);
 });
 
-test("heat pump runtime bars (7 days) carry hover tooltips", () => {
+test("runtime and energy bars carry hover tooltips for every range", () => {
   const p = make();
-  const now = Date.now() / 1000;
-  p._hc = { hp: { t: Date.now(), v: { iv: [[now - 7200, now - 3600]], t0: now - 86400 * 8 } } };
-  const html = p._hpBars();
-  assert.equal((html.match(/data-tip="/g) || []).length, 7);
-  assert.match(html, /class="chw"/);
-  assert.match(html, /class="tip"/);
-  assert.match(html, /1 h · 1 /);
+  p._d = { central: {} };
+  p._num = () => null;
+  const day = 86400, t0 = Math.floor(Date.now() / 1000 / day) * day - 6 * day;
+  const rows = Array.from({ length: 7 }, (_, i) => ({ t: t0 + i * day, h: 1 + i, starts: 2, out: 5 + i, kwh: 3 + i }));
+  for (const range of ["24h", "7d", "30d", "1y"]) {
+    const html = p._barChart(rows, { key: "h", label: "runtime", color: "#3fa660", unit: "h", range, out: true });
+    assert.equal((html.match(/data-tip="/g) || []).length, 7, range);
+    assert.match(html, /class="tip"/);
+  }
+  assert.match(p._barChart(rows, { key: "kwh", label: "energy", color: "#BA7517", unit: "kWh", range: "7d" }), /data-tip="[^"]*\|3 kWh/);
+  assert.match(p._barChart([], { key: "h", label: "runtime", color: "#000", unit: "h", range: "7d" }), /class="note"/);
 });
 
 test("power entities reporting kW or MW are normalised to W", () => {
