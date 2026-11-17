@@ -7,6 +7,19 @@
   ha-card { display:block; background:var(--card-background-color); border-radius:12px; }
   ha-icon { display:inline-block; width:1em; height:1em; }
 </style>
+<script>
+  // Preview helpers: ?icons loads the Material Design Icons font, ?dark switches the theme.
+  const q = new URLSearchParams(location.search);
+  if (q.has("dark")) document.documentElement.style.cssText = "--card-background-color:#1c1d27;--secondary-background-color:#272936;--primary-text-color:#e8e9f0;--secondary-text-color:#a0a3b8;--primary-color:#5aa0ec;--divider-color:#34364a;color-scheme:dark";
+  if (q.has("dark")) document.body.style.background = "#14151d";
+  // @font-face only registers from the document, the glyph rules are loaded again inside every icon
+  if (q.has("icons")) document.head.insertAdjacentHTML("beforeend", '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">');
+  if (q.has("icons")) customElements.define("ha-icon", class extends HTMLElement {
+    static get observedAttributes() { return ["icon"]; }
+    constructor() { super(); this.attachShadow({ mode: "open" }); }
+    attributeChangedCallback() { this.shadowRoot.innerHTML = `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css"><style>:host{display:inline-flex;align-items:center;justify-content:center;width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px)}.mdi:before{font-size:var(--mdc-icon-size,24px);line-height:1}</style><span class="mdi mdi-${(this.getAttribute("icon") || "").replace(/^mdi:/, "")}"></span>`; }
+  });
+</script>
 <proxon-fwt-panel id="p"></proxon-fwt-panel>
 <script type="module">
 import "../../custom_components/proxon_modbus/www/proxon-fwt-card.js";
@@ -19,7 +32,7 @@ const ent = (id, device, extra = {}, state = "1", attrs = {}) => {
   states[id] = { state, attributes: attrs, last_updated: "2026-11-07T11:00:00Z" };
 };
 devices.central = { id: "central", name: "Proxon FWT" };
-const num = { temp_supply_air: "19.4", temp_fresh_air: "4.1", temp_exhaust_air: "6.2", temp_extract_air: "21.3", temp_pre_evaporator: "3", temp_evaporator: "1", temp_post_preheat: "10", temp_pre_condenser: "40", temp_condenser: "45", temp_compressor: "70", compressor_speed: "2400", fan_speed_supply: "1500", fan_speed_extract: "1480", heat_recovery: "82", filter_age_days: "45", filter_shutdown_days: "30", hp_runtime_total: "1200", hp_starts_total: "300", hp_runtime_today: "3.5", hp_starts_today: "4", power_consumption: "450" };
+const num = { temp_supply_air: "19.4", temp_fresh_air: "4.1", temp_exhaust_air: "6.2", temp_outside: "-2.3", temp_extract_air: "21.3", temp_pre_evaporator: "3", temp_evaporator: "1", temp_post_preheat: "10", temp_pre_condenser: "40", temp_condenser: "45", temp_compressor: "70", compressor_speed: "2400", fan_speed_supply: "1500", fan_speed_extract: "1480", heat_recovery: "82", filter_age_days: "45", filter_shutdown_days: "30", hp_runtime_total: "1200", hp_starts_total: "300", hp_runtime_today: "3.5", hp_starts_today: "4", power_consumption: "450" };
 for (const [k, v] of Object.entries(num)) ent(`sensor.${k}`, "central", { translation_key: k }, v, { unit_of_measurement: k === "power_consumption" ? "W" : "" });
 ent("select.operating_mode", "central", { translation_key: "operating_mode" }, "eco_winter", { options: ["off", "eco_winter", "eco_summer", "comfort"] });
 ent("select.fan_stage", "central", { translation_key: "fan_stage" }, "stage_2", { options: ["off", "stage_1", "stage_2", "stage_3", "stage_4"] });
@@ -27,14 +40,16 @@ for (const k of ["fan_auto", "fan_intensive", "fan_stage_restore", "cooling_enab
 for (const k of ["heat_pump_heating", "heat_pump_cooling", "heat_pump_continuous", "bypass_active", "filter_device", "filter_recirculation", "error_system", "mode_change_possible", "fan_stage_4_selectable", "intensive_ventilation_selectable", "cooling_available"]) ent(`binary_sensor.${k}`, "central", { translation_key: k }, k === "heat_pump_heating" || k === "mode_change_possible" || k === "fan_stage_4_selectable" ? "on" : "off");
 ent("sensor.last_write_error", "central", { translation_key: "last_write_error" }, "none", {});
 ent("button.filter_changed", "central", { translation_key: "filter_changed" }, "unknown");
-["Wohnen", "Schlafen", "Bad & <WC>"].forEach((name, i) => {
+const roomData = [["Wohnen", 21.6, 22, 720, 44, 0], ["Küche", 20.9, 21, 600, 44, 0], ["Schlafzimmer", 18.8, 19, 1180, 46, 0], ["Kind 1", 20.2, 21, 900, 48, 1],
+  ["Kind 2", 21.0, 21, 600, 45, 0], ["Bad", 22.9, 22, 700, 58, 0], ["Büro", 21.3, 21, 940, 42, 0]];
+roomData.forEach(([name, cur, tgt, co2, rf, ptc], i) => {
   const id = `room${i}`;
   devices[id] = { id, name, via_device_id: "central", identifiers: [["proxon_modbus", `e1_room_${i}`]] };
-  ent(`climate.${id}`, id, {}, "heat", { current_temperature: 20.5 + i, temperature: 21, min_temp: 18, max_temp: 26, target_temp_step: 0.5 });
-  ent(`binary_sensor.${id}_ptc_active`, id, { translation_key: "ptc_active" }, i === 1 ? "on" : "off");
-  ent(`switch.${id}_ptc_enable`, id, { translation_key: "ptc_enable" }, i === 1 ? "on" : "off");
-  ent(`sensor.${id}_co2`, id, {}, String(600 + i * 400), { device_class: "carbon_dioxide" });
-  ent(`sensor.${id}_rf`, id, {}, String(40 + i * 5), { device_class: "humidity" });
+  ent(`climate.${id}`, id, {}, "heat", { current_temperature: cur, temperature: tgt, min_temp: 18, max_temp: 30, target_temp_step: 1 });
+  ent(`binary_sensor.${id}_ptc_active`, id, { translation_key: "ptc_active" }, ptc ? "on" : "off");
+  ent(`switch.${id}_ptc_enable`, id, { translation_key: "ptc_enable" }, i === 0 || ptc ? "on" : "off");
+  ent(`sensor.${id}_co2`, id, {}, String(co2), { device_class: "carbon_dioxide" });
+  ent(`sensor.${id}_rf`, id, {}, String(rf), { device_class: "humidity" });
 });
 
 const hass = {
