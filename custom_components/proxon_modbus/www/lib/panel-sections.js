@@ -44,7 +44,8 @@ export class PanelSectionsMethods {
       rows.push(row("mdi:air-filter", f.due ? WARN : GREEN, this._t("filter_device"), this._t(f.due ? "change_due" : "ok"), "diag"));
     }
     const ptc = d.rooms.filter((r) => this._on(r.ents.ptc_active)).length;
-    if (d.rooms.length) rows.push(row("mdi:home-outline", ptc ? WARN : MUTED, `${this._t("rooms")} · ${this._t("rs_heat")}`, `${ptc} ${this._t("rs_active")}`, "rooms"));
+    const ptcEna = d.rooms.filter((r) => r.ents.ptc_enable && this._on(r.ents.ptc_enable)).length;
+    if (d.rooms.length) rows.push(row("mdi:home-outline", ptc ? WARN : MUTED, `${this._t("rooms")} · ${this._t("rs_heat")}`, `${ptc} ${this._t("rs_active")} · ${ptcEna} ${this._t("rs_enabled")}`, "rooms"));
     if (!rows.length) return "";
     return `<ha-card>${this._header("mdi:clipboard-check-outline", this._t("status"))}<div class="srows2">${rows.join("")}</div></ha-card>`;
   }
