@@ -194,6 +194,6 @@ export class ProxonFwtPanel extends ProxonFwtBase {
     } else {
       body = `<div class="stack">${this._sec_insights(d)}${this._diagTab(d)}</div>`;
     }
-    this.shadowRoot.innerHTML = `${this._styleTag()}<div class="panel">${head}${body}</div>`;
+    this._paint(`${this._styleTag()}<div class="panel">${head}${body}</div>`);
   }
 }

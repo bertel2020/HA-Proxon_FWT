@@ -1,6 +1,7 @@
 import { ROOM_ICONS, SETTINGS_TTL, BAD, esc } from "./constants.js";
 import { TEXT } from "./text.js";
 import { CSS, sharedSheet } from "./styles.js";
+import { patchDom } from "./morph.js";
 
 export class ProxonFwtBase extends HTMLElement {
   // Overridden by the side panel; the shared code shows panel-only parts based on it.
@@ -123,32 +124,16 @@ export class ProxonFwtBase extends HTMLElement {
     }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._hver || 0}|${this._histRange || "24h"}|${this._hcmp ? 1 : 0}|${this._metric || ""}|${this._ymetric || ""}|${this._tab || ""}|${this._rview || ""}|${this._rfilter || ""}|${[...(this._ropen || [])].join("+")}|${this._boost ? 1 : 0}|${this._wb || 0}|${this._settingsStamp || 0}|${Object.keys(this._dismissed || {}).join("+")}`;
     if (sig === this._sig) return;
     this._sig = sig;
-    const keep = this._keepUi(), scrolled = this._scrollers();
-    // The re-render replaces the whole DOM: hold the height so the page cannot shrink, and put the scroll position back.
-    const h0 = this.offsetHeight;
-    if (scrolled.length && h0) this.style.minHeight = `${h0}px`;
+    const keep = this._keepUi();
     this._render();
     this._bindChart();
     this._bindTips();
     this._restoreUi(keep);
-    for (const [el, top] of scrolled) if (el.scrollTop !== top) el.scrollTop = top;
-    if (scrolled.length) {
-      const release = () => { this.style.minHeight = ""; for (const [el, top] of scrolled) if (el.scrollTop !== top) el.scrollTop = top; };
-      if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => requestAnimationFrame(release)); else release();
-    }
   }
 
-  // Every scrolled ancestor (across shadow roots) with its scroll offset; the page may scroll on any of them.
-  _scrollers() {
-    const out = [];
-    let n = this;
-    while (n) {
-      if (n.scrollTop > 0) out.push([n, n.scrollTop]);
-      n = n.parentNode && n.parentNode.host ? n.parentNode.host : n.parentNode;
-    }
-    const se = typeof document !== "undefined" && document.scrollingElement;
-    if (se && se.scrollTop > 0 && !out.some(([e]) => e === se)) out.push([se, se.scrollTop]);
-    return out;
+  // Replace the shadow DOM's content, touching only the nodes that changed.
+  _paint(html) {
+    patchDom(this.shadowRoot, html);
   }
 
   _styleTag() {

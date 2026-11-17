@@ -48,6 +48,6 @@ export class ProxonFwtCard extends ProxonFwtBase {
       flush();
       body = `<div class="stack">${out.join("")}</div>`;
     }
-    this.shadowRoot.innerHTML = `${this._styleTag()}${body}`;
+    this._paint(`${this._styleTag()}${body}`);
   }
 }

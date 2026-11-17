@@ -78,6 +78,7 @@ export class ChartsMethods {
     for (const box of this.shadowRoot.querySelectorAll(".chw")) {
       if (!box.querySelector("[data-tip]")) continue;
       const svg = box.querySelector("svg"), tip = box.querySelector(".tip");
+      if (svg._tipOff) svg._tipOff(); // the node survived the refresh: drop the listeners bound to the old data
       const hide = () => { tip.style.display = "none"; };
       const move = (ev) => {
         const el = ev.target.closest && ev.target.closest("[data-tip]");
@@ -94,12 +95,14 @@ export class ChartsMethods {
       svg.addEventListener("pointermove", move);
       svg.addEventListener("pointerdown", move);
       svg.addEventListener("pointerleave", hide);
+      svg._tipOff = () => { svg.removeEventListener("pointermove", move); svg.removeEventListener("pointerdown", move); svg.removeEventListener("pointerleave", hide); };
     }
   }
 
   _bindChart() {
     const svg = this.shadowRoot.querySelector("svg.ch"), m = this._cm;
     if (!svg || !m) return;
+    if (svg._chOff) svg._chOff(); // the node survived the refresh: drop the listeners bound to the old data
     const tip = svg.parentElement.querySelector(".tip"), xl = svg.querySelector(".xl"), xd = svg.querySelector(".xd");
     const lang = this._hass.language;
     const hide = () => { xl.style.display = "none"; xd.innerHTML = ""; tip.style.display = "none"; };
@@ -128,6 +131,7 @@ export class ChartsMethods {
     svg.addEventListener("pointermove", move);
     svg.addEventListener("pointerdown", move);
     svg.addEventListener("pointerleave", hide);
+    svg._chOff = () => { svg.removeEventListener("pointermove", move); svg.removeEventListener("pointerdown", move); svg.removeEventListener("pointerleave", hide); };
   }
 
   // Bars for daily runtime with the mean outdoor temperature as a line on the right axis.
