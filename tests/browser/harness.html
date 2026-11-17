@@ -6,12 +6,22 @@
   body { margin:0; background:#eceef2; font-family: system-ui, sans-serif; }
   ha-card { display:block; background:var(--card-background-color); border-radius:12px; }
   ha-icon { display:inline-block; width:1em; height:1em; }
+  html.dark body { background:#14151d; }
 </style>
 <script>
   // Preview helpers: ?icons loads the Material Design Icons font, ?dark switches the theme.
   const q = new URLSearchParams(location.search);
   if (q.has("dark")) document.documentElement.style.cssText = "--card-background-color:#1c1d27;--secondary-background-color:#272936;--primary-text-color:#e8e9f0;--secondary-text-color:#a0a3b8;--primary-color:#5aa0ec;--divider-color:#34364a;color-scheme:dark";
-  if (q.has("dark")) document.body.style.background = "#14151d";
+  if (q.has("dark")) document.documentElement.classList.add("dark"); // the body does not exist yet here
+  if (q.has("icons")) customElements.define("ha-switch", class extends HTMLElement {
+    static get observedAttributes() { return ["checked", "disabled"]; }
+    constructor() { super(); this.attachShadow({ mode: "open" }); }
+    connectedCallback() { this.attributeChangedCallback(); }
+    attributeChangedCallback() {
+      const on = this.hasAttribute("checked"), dim = this.hasAttribute("disabled") ? 0.5 : 1;
+      this.shadowRoot.innerHTML = `<style>:host{display:inline-block;width:38px;height:22px;vertical-align:middle}.t{width:38px;height:22px;border-radius:11px;background:${on ? "var(--primary-color)" : "#8a8f98"};position:relative;opacity:${dim}}.t::after{content:"";position:absolute;top:3px;left:${on ? 19 : 3}px;width:16px;height:16px;border-radius:50%;background:#fff}</style><div class="t"></div>`;
+    }
+  });
   // @font-face only registers from the document, the glyph rules are loaded again inside every icon
   if (q.has("icons")) document.head.insertAdjacentHTML("beforeend", '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">');
   if (q.has("icons")) customElements.define("ha-icon", class extends HTMLElement {
@@ -38,6 +48,9 @@ ent("select.operating_mode", "central", { translation_key: "operating_mode" }, "
 ent("select.fan_stage", "central", { translation_key: "fan_stage" }, "stage_2", { options: ["off", "stage_1", "stage_2", "stage_3", "stage_4"] });
 for (const k of ["fan_auto", "fan_intensive", "fan_stage_restore", "cooling_enable", "boost"]) ent(`switch.${k}`, "central", { translation_key: k }, k === "fan_auto" ? "on" : "off");
 for (const k of ["heat_pump_heating", "heat_pump_cooling", "heat_pump_continuous", "bypass_active", "filter_device", "filter_recirculation", "error_system", "mode_change_possible", "fan_stage_4_selectable", "intensive_ventilation_selectable", "cooling_available"]) ent(`binary_sensor.${k}`, "central", { translation_key: k }, k === "heat_pump_heating" || k === "mode_change_possible" || k === "fan_stage_4_selectable" ? "on" : "off");
+states["switch.fan_auto"].state = "off";
+states["switch.fan_stage_restore"] = { state: "on", attributes: { preferred_stage: "stage_2", last_restore: "2026-11-17T08:42:00Z" }, last_updated: "2026-11-17T08:42:00Z" };
+ent("select.fan_stage_preferred", "central", { translation_key: "fan_stage_preferred" }, "stage_2", { options: ["stage_1", "stage_2", "stage_3", "stage_4"] });
 ent("sensor.last_write_error", "central", { translation_key: "last_write_error" }, "none", {});
 ent("button.filter_changed", "central", { translation_key: "filter_changed" }, "unknown");
 const roomData = [["Wohnen", 21.6, 22, 720, 44, 0], ["Küche", 20.9, 21, 600, 44, 0], ["Schlafzimmer", 18.8, 19, 1180, 46, 0], ["Kind 1", 20.2, 21, 900, 48, 1],

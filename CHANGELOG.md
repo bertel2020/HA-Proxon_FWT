@@ -17,6 +17,7 @@
 **Neu**
 - **Energiezähler:** Neue optionale Einstellung `energy_entity` (Optionen der Integration und Dashboard-Editor). Mit einem Zähler zeigt die Energie-Karte den gemessenen Verbrauch je Stunde, Tag oder Monat aus der Langzeitstatistik (Wh, kWh und MWh) statt einer Schätzung aus der mittleren Leistung. Ohne Zähler bleibt es bei der Schätzung.
 - **Wunschstufe einstellbar:** Neue Auswahl `select.…_preferred_fan_stage` (Stufe 1–4) und eine Stufenauswahl im Panel. Sie setzt die Lüfterstufe, die nach dem Wärmepumpenlauf wiederhergestellt wird.
+- Neue Screenshots des Seitenpanels (hell und dunkel) in der README.
 - `tests/browser/harness.html`, `tests/browser/smoke.py` und `.claude/launch.json`: Testseite für das Panel mit Beispieldaten und ein Browser-Test, der auch in der CI läuft.
 
 ## 2.2.2 – 2026-11-13
