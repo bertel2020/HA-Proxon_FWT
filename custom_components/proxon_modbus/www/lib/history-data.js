@@ -43,6 +43,13 @@ export class HistoryDataMethods {
     return [];
   }
 
+  // Staircase: the last value holds until the next one (a sensor that only reports changes does not ramp between them).
+  static _stairs(pts) {
+    const out = [];
+    pts.forEach((p, i) => { if (i) out.push([p[0], pts[i - 1][1]]); out.push(p); });
+    return out;
+  }
+
   static _down(pts, n) {
     if (pts.length <= n) return pts;
     const t0 = pts[0][0], t1 = pts[pts.length - 1][0], w = (t1 - t0) / n || 1;

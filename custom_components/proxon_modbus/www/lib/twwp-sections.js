@@ -67,15 +67,22 @@ export class TwwpSectionsMethods {
   }
 
   // Overview tile (panel only): water temperature and program of each heat pump; a click opens the Hot water tab.
+  // 24 h curve of the water temperature for the key figure tile (shares its data with the history when it shows 24 h).
+  _twSpark(t) {
+    const m = this._twMetrics(t).find((x) => x.k === "water");
+    if (!m) return this._sparkSvg(null, BLUE);
+    const ser = this._hget(`tws|${m.id}|${m.attr ? "a" : "s"}|24h`, () => this._twLoadSeries(m, "24h"));
+    return this._sparkSvg(ser && ser[0] ? ser[0].pts : null, BLUE);
+  }
+
   _twKpi(d) {
     const many = d.twwp.length > 1;
     return d.twwp.map((t) => {
       const w = this._twWater(t), prog = this._ok(t.ents.twwp_program) ? this._state(t.ents.twwp_program).state : null;
       const bad = this._on(t.ents.twwp_sensor_problem);
       const col = bad ? "#db4437" : PHASE_COLOR[prog] || "var(--secondary-text-color)";
-      const sub = bad ? this._t("tw_problem") : prog ? this._t(`tw_p_${prog}`) : "";
       return `<div class="k go" style="--kc:${col}" data-act="tab" data-v="warm" role="button" tabindex="0"><div class="ic">${this._icon(bad ? "mdi:alert-outline" : "mdi:water-boiler")}</div>
-        <div><div class="lb">${many ? t.name : this._t("tab_warm")}</div><div class="v">${w === null ? "–" : `${this._fmt(w)}°`}</div><div class="lb">${sub}</div></div></div>`;
+        <div><div class="lb">${many ? t.name : this._t("tab_warm")}</div><div class="v">${w === null ? "–" : `${this._fmt(w)}°`}</div>${this._twSpark(t)}</div></div>`;
     }).join("");
   }
 
@@ -313,7 +320,7 @@ export class TwwpSectionsMethods {
       if (k !== 1) pts = pts.map(([t, v]) => [t, v * k]);
     }
     const heat = m.k === "power" && !long ? this._twRuns(pts, end.getTime() / 1000).heat : null;
-    let out = pts.length ? [{ label: this._t(m.label), color: m.color, pts: this.constructor._down(pts, 360) }] : [];
+    let out = pts.length ? [{ label: this._t(m.label), color: m.color, pts: this.constructor._down(pts, 360), step: !long && (m.k === "power" || m.k === "pv") }] : [];
     if (prev) out = out.map((x) => ({ ...x, prev: true, label: `${x.label} · ${this._t("prev_period")}`, pts: x.pts.map(([t, v]) => [t + ms / 1000, v]) }));
     out.heat = heat;
     return out;

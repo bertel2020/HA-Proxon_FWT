@@ -2,6 +2,15 @@
 
 *[🇬🇧 English version](CHANGELOG.en.md)*
 
+## 2.4.2 – 2026-11-18
+
+**Geändert**
+- **Panel – Kennzahlen:** Alle Kacheln haben eine 24‑Stunden-Kurve (Zuluft, Rückwärmzahl, Leistung, Außen, Warmwasser) und sind oben ausgerichtet, sodass Beschriftung und Wert überall gleich hoch stehen. Die Warmwasser-Kachel zeigt das Programm nicht mehr, es steht schon oben.
+- **Panel – Verlauf:** Leistung und PV werden als Treppe gezeichnet (der letzte Wert bleibt stehen, bis der nächste kommt), statt zwischen zwei Änderungen schräg zu verlaufen. Die 0‑Linie ist kräftiger und wird nicht mehr von der Kurve verdeckt.
+
+**Korrigiert**
+- Der Hinweis bei einem Sensorproblem sagte noch „Freigaben abgeschaltet“. Seit 2.4.1 regelt die Wärmepumpe dann selbst, der Text sagt das jetzt.
+
 ## 2.4.1 – 2026-11-18
 
 **Geändert**

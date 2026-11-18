@@ -102,28 +102,46 @@ export class SectionsMethods {
     const eff = this._efficiency();
     const bypass = this._on(c.bypass_active);
     const power = this._pnum();
-    const html = tile("mdi:thermometer", CORAL, this._t("supply_t"), this._temp(c.temp_supply_air), "", "temp", "", !!c.temp_supply_air) +
+    const html = tile("mdi:thermometer", CORAL, this._t("supply_t"), this._temp(c.temp_supply_air), "", "temp", this._kpiSpark(d, "temp", this._t("supply_t"), CORAL), !!c.temp_supply_air) +
       tile("mdi:percent-circle-outline", GREEN, this._t("efficiency"), bypass ? this._t("bypass_short") : eff === null ? null : `${eff} % <span title="${this._t("eff_info")}">${this._icon("mdi:information-outline", 'class="info"')}</span>`, "", "eff", this._effSpark(d)) +
       tile("mdi:flash", AMBER, this._t("power"), power === null ? null : this._fmt(power, power % 1 ? 1 : 0),
-        "W", "power", "", !!this._powerId()) +
-      tile("mdi:weather-partly-cloudy", BLUE, this._t("outside"), this._temp(this._outdoorId()), "", "temp", "", !!this._outdoorId()) +
+        "W", "power", this._kpiSpark(d, "power", this._t("power"), AMBER, { lo: 0, step: true }), !!this._powerId()) +
+      tile("mdi:weather-partly-cloudy", BLUE, this._t("outside"), this._temp(this._outdoorId()), "", "temp", this._kpiSpark(d, "temp", this._t("outside"), BLUE), !!this._outdoorId()) +
       (panel && d.twwp.length ? this._twKpi(d) : "");
     if (![this._temp(c.temp_supply_air), power, this._temp(this._outdoorId()), bypass ? 1 : eff].some((v) => !missing(v))) return "";
     return `<ha-card>${this._header("mdi:gauge", this._t("kpi"))}<div class="kpiw"><div class="kpi">${html}</div></div></ha-card>`;
   }
 
-  // Small 24 h curve of the heat recovery rate (shares its data with the history chart).
+  // Small 24 h curve for a key figure tile (panel only). pts: [[time, value]]; o: { lo, hi } to widen the scale, step for a staircase.
+  // Without enough data an empty placeholder of the same height keeps all tiles equally tall.
+  _sparkSvg(pts, color, o = {}) {
+    if (!this._isPanel) return "";
+    if (!pts || pts.length < 3) return `<div class="spk"></div>`;
+    const t1 = Date.now() / 1000, t0 = t1 - 86400, W = 100, H = 22;
+    const vs = pts.map((p) => p[1]);
+    const lo = Math.min(...vs, o.lo ?? Infinity);
+    let hi = Math.max(...vs, o.hi ?? -Infinity);
+    if (hi - lo < 1e-9) hi = lo + 1;
+    const line = (o.step ? this.constructor._stairs(pts) : pts).map(([t, v]) => `${(((t - t0) / (t1 - t0)) * W).toFixed(1)},${(H - ((v - lo) / (hi - lo)) * (H - 2) - 1).toFixed(1)}`).join(" ");
+    return `<svg class="spk" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="${color}" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="${line}"/></svg>`;
+  }
+
+  // The 24 h curve of one curve of a history metric (shares its data with the history chart); label picks the curve.
+  _kpiSpark(d, metric, label, color, o) {
+    if (!this._isPanel) return "";
+    const defs = this._metricDefs(d, metric), i = defs.findIndex((x) => x[1] === label);
+    if (i < 0) return this._sparkSvg(null, color);
+    const ser = this._hget(`s|24h|${metric}`, () => this._loadSeries("24h", metric, defs));
+    return this._sparkSvg(ser && ser[i] ? ser[i].pts : null, color, o);
+  }
+
+  // Small 24 h curve of the heat recovery rate.
   _effSpark(d) {
     if (!this._isPanel) return "";
     const defs = this._metricDefs(d, "eff");
-    if (!defs.length) return "";
+    if (!defs.length) return this._sparkSvg(null, GREEN);
     const ser = this._hget("s|24h|eff", () => this._loadSeries("24h", "eff", defs));
-    const pts = ser && ser[0] ? ser[0].pts : [];
-    if (pts.length < 3) return "";
-    const t1 = Date.now() / 1000, t0 = t1 - 86400, W = 100, H = 22;
-    const vs = pts.map((p) => p[1]), lo = Math.min(...vs, 50), hi = Math.max(...vs, 90);
-    const line = pts.map(([t, v]) => `${(((t - t0) / (t1 - t0)) * W).toFixed(1)},${(H - ((v - lo) / (hi - lo)) * (H - 2) - 1).toFixed(1)}`).join(" ");
-    return `<svg class="spk" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="${GREEN}" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="${line}"/></svg>`;
+    return this._sparkSvg(ser && ser[0] ? ser[0].pts : null, GREEN, { lo: 50, hi: 90 });
   }
 
   _sec_air(d) {

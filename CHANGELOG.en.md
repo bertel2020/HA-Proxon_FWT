@@ -2,6 +2,15 @@
 
 *[🇩🇪 Deutsche Version](CHANGELOG.md)*
 
+## 2.4.2 – 2026-11-18
+
+**Changed**
+- **Panel – key figures:** All tiles have a 24 hour curve (supply air, heat recovery, power, outside, hot water) and are top-aligned, so label and value sit at the same height everywhere. The hot water tile no longer shows the program, it is already shown above.
+- **Panel – history:** Power and PV are drawn as a staircase (the last value holds until the next one) instead of sloping between two changes. The zero line is stronger and no longer hidden by the curve.
+
+**Fixed**
+- The sensor problem notice still said "enables switched off". Since 2.4.1 the heat pump then regulates itself, and the text now says so.
+
 ## 2.4.1 – 2026-11-18
 
 **Changed**

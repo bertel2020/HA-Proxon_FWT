@@ -202,7 +202,7 @@ test("the overview shows a hot water tile in the panel, not in the dashboard car
   const html = await render(panel, () => { panel._tab = "overview"; });
   const tile = html.slice(html.indexOf('data-v="warm" role="button"'));
   assert.ok(html.includes('data-act="tab" data-v="warm" role="button"'), "tile opens the Hot water tab");
-  assert.ok(tile.includes("54,2°") && tile.includes(">PV<"), "temperature and program");
+  assert.ok(tile.includes("54,2°") && !tile.includes(">PV<"), "temperature, no program (it is in the header)");
   check(html);
   const plain = new X.ProxonFwtPanel();
   plain.hass = hass;
@@ -215,7 +215,7 @@ test("the overview shows a hot water tile in the panel, not in the dashboard car
   const p2 = new X.ProxonFwtPanel();
   p2.hass = bad;
   const down = await render(p2, () => { p2._tab = "overview"; });
-  assert.ok(down.includes("Sensorproblem") && down.includes("mdi:alert-outline"));
+  assert.ok(down.includes("Sensor oder Sollwert nicht verfügbar") && down.includes("mdi:alert-outline"));
 });
 
 test("the overview flags a failed sensor, and a controller that only observes and would act differently", async () => {

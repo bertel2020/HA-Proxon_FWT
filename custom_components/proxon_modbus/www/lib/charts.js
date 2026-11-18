@@ -43,7 +43,8 @@ export class ChartsMethods {
     const dec = step < 1 ? 1 : 0;
     let grid = "";
     for (let v = lo; v <= hi + step / 2; v += step) {
-      grid += `<line x1="${pl}" x2="${W - pr}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
+      const zero = Math.abs(v) < step / 1e6; // the zero line is drawn stronger
+      grid += `<line x1="${pl}" x2="${W - pr}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" ${zero ? 'stroke="var(--secondary-text-color)" stroke-width="1" opacity=".55"' : 'stroke="var(--divider-color)" stroke-width=".6"'}/>
         <text class="st" x="${pl - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end" style="font-size:12px">${v.toLocaleString(lang, { minimumFractionDigits: dec, maximumFractionDigits: dec })}</text>`;
     }
     const xt = this._timeAxis(o, t0, t1, W, H, x);
@@ -64,7 +65,7 @@ export class ChartsMethods {
     // The label sits above its line, or below it when the line is at the top edge (it would be cut off there).
     const refLines = (o.refs || []).map((r) => `<line x1="${pl}" x2="${W - pr}" y1="${y(r.v).toFixed(1)}" y2="${y(r.v).toFixed(1)}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="4 4" opacity=".75"/>
       <text class="st" x="${W - pr - 2}" y="${(y(r.v) - 4 < pt + 9 ? y(r.v) + 13 : y(r.v) - 4).toFixed(1)}" text-anchor="end" style="font-size:12px">${r.label}</text>`).join("");
-    const lines = series.map((s) => `<polyline fill="none" stroke="${s.color}" stroke-width="${s.prev ? 1.4 : 1.8}" ${s.prev ? 'stroke-dasharray="5 4" opacity=".55"' : ""} stroke-linejoin="round" points="${s.pts.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>`).join("");
+    const lines = series.map((s) => `<polyline fill="none" stroke="${s.color}" stroke-width="${s.prev ? 1.4 : 1.8}" ${s.prev ? 'stroke-dasharray="5 4" opacity=".55"' : ""} stroke-linejoin="round" points="${(s.step ? this.constructor._stairs(s.pts) : s.pts).map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>`).join("");
     // curves with their own stat row are named there; the legend keeps only the rest (previous period, bands)
     const legend = series.filter((s) => s.prev || !s.pts.length).map((s) => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join("");
     const showBands = o.bands && this._hp() && this._hp().iv.length;
@@ -113,14 +114,15 @@ export class ChartsMethods {
         ys = (v) => lt + (1 - (v - lo) / (hi - lo)) * lane.h;
         const dec = step < 1 ? 1 : 0;
         for (let v = lo; v <= hi + step / 2; v += step) {
-          grid += `<line x1="${pl}" x2="${W - pr}" y1="${ys(v).toFixed(1)}" y2="${ys(v).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
+          const zero = Math.abs(v) < step / 1e6;
+          grid += `<line x1="${pl}" x2="${W - pr}" y1="${ys(v).toFixed(1)}" y2="${ys(v).toFixed(1)}" ${zero ? 'stroke="var(--secondary-text-color)" stroke-width="1" opacity=".55"' : 'stroke="var(--divider-color)" stroke-width=".6"'}/>
             <text class="st" x="${pl - 6}" y="${(ys(v) + 4).toFixed(1)}" text-anchor="end" style="font-size:12px">${v.toLocaleString(lang, { minimumFractionDigits: dec, maximumFractionDigits: dec })}</text>`;
         }
         grid += (lane.refs || []).map((r) => `<line x1="${pl}" x2="${W - pr}" y1="${ys(r.v).toFixed(1)}" y2="${ys(r.v).toFixed(1)}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="4 4" opacity=".75"/>
           <text class="st" x="${W - pr - 2}" y="${(ys(r.v) - 4 < lt + 9 ? ys(r.v) + 13 : ys(r.v) - 4).toFixed(1)}" text-anchor="end" style="font-size:12px">${r.label}</text>`).join("");
         lane.y = ys;
       } else {
-        grid += `<line x1="${pl}" x2="${W - pr}" y1="${bot.toFixed(1)}" y2="${bot.toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>`;
+        grid += `<line x1="${pl}" x2="${W - pr}" y1="${bot.toFixed(1)}" y2="${bot.toFixed(1)}" stroke="var(--secondary-text-color)" stroke-width="1" opacity=".55"/>`; // own scale from zero: the bottom is the zero line
       }
       all.forEach((s, k) => {
         let y = ys;
@@ -129,7 +131,7 @@ export class ChartsMethods {
           y = (v) => bot - (Math.max(0, v) / mx) * lane.h;
           if (s.short) grid += `<text class="st" x="${pl - 6}" y="${(bot - 4 - k * 13).toFixed(1)}" text-anchor="end" style="font-size:12px;fill:${s.color}">${s.short}</text>`;
         }
-        const pts = s.pts.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+        const pts = (s.step ? this.constructor._stairs(s.pts) : s.pts).map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
         if (s.kind === "area" && s.pts.length > 1) {
           body += `<polygon points="${x(s.pts[0][0]).toFixed(1)},${bot.toFixed(1)} ${pts} ${x(s.pts[s.pts.length - 1][0]).toFixed(1)},${bot.toFixed(1)}" fill="${s.color}" opacity=".35"/>`;
         }
