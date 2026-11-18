@@ -240,13 +240,13 @@ test("the hysteresis is shown and editable, the note follows it, and a narrow ba
   const html = await render(panel, () => { panel._tab = "warm"; });
   check(html);
   assert.ok(html.includes('data-v="number.tw_hlow|1"') && html.includes('data-v="number.tw_hhigh|-1"'), "steppers for both values");
-  assert.ok(html.includes("3 K") && html.includes("Heizt unter Soll − 3 K und stoppt bei Soll + 1 K."), "note with the current values");
+  assert.ok(html.includes("Normal: heizt unter 50°, stoppt ab 54°") && html.includes("PV: heizt unter 57°, stoppt ab 61°"), "brackets of the scale follow the values");
   assert.ok(!html.includes("kleiner als 2 K"), "the default band of 4 K is fine");
   const narrow = { ...twHass, states: { ...twStates, "number.tw_hlow": { ...twStates["number.tw_hlow"], state: "1" }, "number.tw_hhigh": { ...twStates["number.tw_hhigh"], state: "0.5" } } };
   const p2 = new X.ProxonFwtPanel();
   p2.hass = narrow;
   const warn = await render(p2, () => { p2._tab = "warm"; });
-  assert.ok(warn.includes("kleiner als 2 K") && warn.includes("Soll + 0,5 K"));
+  assert.ok(warn.includes("kleiner als 2 K") && warn.includes("Normal: heizt unter 52°, stoppt ab 53,5°"));
   calls.length = 0;
   panel._click({ composedPath: () => [{ dataset: { act: "twstep", v: "number.tw_hlow|1" } }] });
   await new Promise((r) => setTimeout(r, 700));
@@ -305,7 +305,7 @@ test("the hot water history switches measurement and range", async () => {
   panel._click({ composedPath: () => [{ dataset: { act: "twmetric", v: "power" } }] });
   const power = await render(panel, () => { panel._tab = "warm"; });
   assert.ok(power.includes("Σ") && power.includes(" W"), "power: unit and energy sum");
-  assert.ok(!power.includes("Soll PV 60°"), "no target lines on the power curve");
+  assert.ok(!power.slice(power.indexOf('class="ch"')).includes("Soll PV 60°"), "no target lines on the power curve");
   const month = await render(panel, () => { panel._tab = "warm"; panel._histRange = "30d"; });
   check(month);
   assert.ok(month.includes('class="ch"') && !month.includes("Heizzeit:"), "statistics for long ranges, no heating time under the chart, no phases");
@@ -351,4 +351,21 @@ test("heating runs are added up from the power curve", () => {
   assert.deepEqual(panel._twRuns([[0, 389], [100, 0]], 150), { heat: 100, since: null });
   assert.deepEqual(panel._twRuns([], 10), { heat: 0, since: null });
   assert.deepEqual(panel._twRuns([[0, 100], [10, 100.5]], 20), { heat: 10, since: 10 }, "exactly 100 W does not count as heating");
+});
+
+test("the target scale shows zones, marks, pointer and the switching band; the day strip shows the programs of today", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = twHist;
+  const html = await render(panel, () => { panel._tab = "warm"; });
+  check(html);
+  assert.ok(html.includes("Minimum 42°") && html.includes("Soll 53°") && html.includes("Soll PV 60°"), "marks");
+  assert.ok(html.includes("jetzt 54,2°"), "pointer at the water temperature");
+  for (const z of ["unter Minimum", "heizt", "halten", "Soll erreicht"]) assert.ok(html.includes(`${z}</span>`), `zone ${z}`);
+  assert.ok(html.includes(">Heute<") && html.includes('aria-label="Heute"'), "day strip card");
+  const sm = panel._twScale({ ents: {}, id: "tw1" });
+  assert.equal(sm, "", "without the numbers there is no scale");
+  const nodata = new X.ProxonFwtPanel();
+  nodata.hass = twHass; // no history: nothing for the day strip
+  const none = await render(nodata, () => { nodata._tab = "warm"; });
+  assert.ok(none.includes("Heute noch keine Programmdaten.") && none.includes("jetzt 54,2°"));
 });

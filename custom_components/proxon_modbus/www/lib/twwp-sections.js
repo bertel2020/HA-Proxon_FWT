@@ -5,7 +5,8 @@ const PHASE_COLOR = { pv: GREEN, normal: AMBER, minimum: CORAL, night: BLUE };
 const TARGETS = [["twwp_target_normal", "tw_t_normal"], ["twwp_target_pv", "tw_t_pv"], ["twwp_target_min", "tw_t_min"]];
 const HYSTS = [["twwp_hyst_low", "tw_h_low"], ["twwp_hyst_high", "tw_h_high"]];
 const MIN_BAND = 2; // K: below this the heat pump may switch on and off in short intervals
-const T_LO = 20, T_HI = 70; // the tank graphic and the number entities share this range
+const T_LO = 20, T_HI = 70; // the history scale; the number entities accept 30 to 70
+const S_LO = 30, S_HI = 70; // the target scale
 
 // The "Warmwasser" tab: hot water heat pump (TWWP) with tank, targets, program and the controller's last decision.
 export class TwwpSectionsMethods {
@@ -211,14 +212,63 @@ export class TwwpSectionsMethods {
       ${this._btn(`data-act="twstep" data-v="${id}|1" aria-label="+"`, "round", this._icon("mdi:plus"), down)}</span></div>`;
   }
 
+  // One scale from 30 to 70 degrees: the zones around the normal target, the three targets as marks, the pointer at the water
+  // temperature and brackets for the switching band of the normal and the PV target.
+  _twScale(t) {
+    const g = (k) => this._num(t.ents[k]), tn = g("twwp_target_normal"), tp = g("twwp_target_pv"), tm = g("twwp_target_min");
+    const lo = g("twwp_hyst_low"), hi = g("twwp_hyst_high"), w = this._twWater(t);
+    if (tn === null || tp === null || tm === null || lo === null || hi === null) return "";
+    const W = Math.max(320, Math.min(900, (this.clientWidth || 900) - 64)), pl = 24, H = 172, y0 = 44;
+    const x = (v) => pl + ((Math.max(S_LO, Math.min(S_HI, v)) - S_LO) / (S_HI - S_LO)) * (W - 2 * pl);
+    const bounds = [S_LO, tm, tn - lo, tn + hi, S_HI].reduce((o, v) => (o.push(Math.max(o.length ? o[o.length - 1] : S_LO, Math.min(S_HI, v))), o), []);
+    const zones = [["tw_z_min", BLUE, .5], ["tw_z_heat", AMBER, .55], ["tw_z_hold", "#8a8f98", .45], ["tw_z_done", CORAL, .5]];
+    const bar = zones.map(([, c, op], k) => (bounds[k + 1] > bounds[k] ? `<rect x="${x(bounds[k]).toFixed(1)}" y="${y0}" width="${(x(bounds[k + 1]) - x(bounds[k])).toFixed(1)}" height="14" fill="${c}" opacity="${op}"/>` : "")).join("");
+    const marks = [[tm, this._t("tw_ref_min", this._fmt(tm, 0))], [tn, this._t("tw_ref_n", this._fmt(tn, 0))], [tp, this._t("tw_pv_line", this._fmt(tp, 0))]].sort((m, n) => m[0] - n[0]);
+    let lastX = -1e9, level = 0;
+    const flags = marks.map(([v, l]) => {
+      level = x(v) - lastX < 84 ? 1 - level : 0; lastX = x(v);
+      return `<line x1="${x(v).toFixed(1)}" x2="${x(v).toFixed(1)}" y1="${level ? 22 : 36}" y2="66" stroke="var(--primary-text-color)" stroke-width="1.4"/><text x="${x(v).toFixed(1)}" y="${level ? 18 : 32}" text-anchor="middle" font-size="12" font-weight="500" fill="var(--primary-text-color)">${l}</text>`;
+    }).join("");
+    const ticks = [30, 40, 50, 60, 70].map((v) => `<text x="${x(v).toFixed(1)}" y="82" text-anchor="middle" font-size="10" fill="var(--secondary-text-color)">${v}</text>`).join("");
+    const pointer = w === null ? "" : `<path d="M${x(w).toFixed(1)} 60 L${(x(w) - 6).toFixed(1)} 70 L${(x(w) + 6).toFixed(1)} 70 Z" fill="${CORAL}"/><text x="${Math.max(48, Math.min(W - 48, x(w))).toFixed(1)}" y="98" text-anchor="middle" font-size="12" font-weight="500" fill="var(--primary-text-color)">${this._t("tw_now", this._fmt(w))}</text>`;
+    const bracket = (a, b, yy, text) => {
+      const xa = x(a), xb = x(b), cx = Math.max(W * 0.22, Math.min(W * 0.78, (xa + xb) / 2));
+      return `<path d="M${xa.toFixed(1)} ${yy} L${xa.toFixed(1)} ${yy + 6} L${xb.toFixed(1)} ${yy + 6} L${xb.toFixed(1)} ${yy}" fill="none" stroke="var(--secondary-text-color)" stroke-width="1.2"/><text x="${cx.toFixed(1)}" y="${yy + 22}" text-anchor="middle" font-size="11" fill="var(--secondary-text-color)">${text}</text>`;
+    };
+    const f = (v) => this._fmt(v, v % 1 ? 1 : 0);
+    const br = bracket(tn - lo, tn + hi, 110, this._t("tw_br_n", f(tn - lo), f(tn + hi))) + bracket(tp - lo, tp + hi, 142, this._t("tw_br_pv", f(tp - lo), f(tp + hi)));
+    const legend = zones.map(([k, c, op]) => `<span><i style="background:${c};opacity:${op + 0.15}"></i>${this._t(k)}</span>`).join("");
+    return `<div class="chw"><svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto" role="img" aria-label="${this._t("tw_targets")}">${bar}${flags}${ticks}${pointer}${br}</svg></div><div class="twleg">${legend}</div>`;
+  }
+
   _twTargets(t) {
     const lo = this._twTarget(t.ents.twwp_hyst_low), hi = this._twTarget(t.ents.twwp_hyst_high);
-    const hyst = HYSTS.filter(([k]) => t.ents[k]);
+    const rows = [...TARGETS.filter(([k]) => t.ents[k]).map(([k, l]) => this._twStepper(t.ents[k], this._t(l))),
+      ...HYSTS.filter(([k]) => t.ents[k]).map(([k, l]) => this._twStepper(t.ents[k], this._t(l), " K"))].join("");
     const warn = lo !== null && hi !== null && lo + hi < MIN_BAND;
-    return `<ha-card>${this._header("mdi:tune-variant", this._t("tw_targets"))}<div class="rows">${TARGETS.map(([k, l]) => (t.ents[k] ? this._twStepper(t.ents[k], this._t(l)) : "")).join("")}</div>
-      ${hyst.length ? `<div class="lbl2">${this._t("tw_hyst_h")}</div><div class="rows">${hyst.map(([k, l]) => this._twStepper(t.ents[k], this._t(l), " K")).join("")}</div>` : ""}
-      <div class="note">${lo !== null && hi !== null ? this._t("tw_hyst", this._fmt(lo, lo % 1 ? 1 : 0), this._fmt(hi, hi % 1 ? 1 : 0)) : ""}</div>
+    return `<ha-card>${this._header("mdi:tune-variant", this._t("tw_targets"))}${this._twScale(t)}<div class="rows twsteps">${rows}</div>
       ${warn ? `<div class="note" style="color:#c98400">${this._t("tw_hyst_warn")}</div>` : ""}</ha-card>`;
+  }
+
+  // The calendar day as a strip: which program ran when, with the time per program.
+  _twDay(t) {
+    const today = this._twToday(t);
+    const body = (() => {
+      if (today === undefined) return this._skel(90);
+      if (!today || !today.phases.length) return `<div class="note">${this._t("tw_day_none")}</div>`;
+      const two = (this.clientWidth || 900) >= 760, W = Math.max(240, Math.min(560, two ? ((this.clientWidth || 900) - 32 - 12) / 2 - 32 : (this.clientWidth || 900) - 64));
+      const day = 86400, x = (ts) => Math.max(0, Math.min(W, ((ts - today.t0) / day) * W));
+      const segs = today.phases.filter((p) => PHASE_COLOR[p.s]).map((p) => `<rect x="${x(p.a).toFixed(1)}" y="22" width="${Math.max(1, x(p.b) - x(p.a)).toFixed(1)}" height="24" fill="${PHASE_COLOR[p.s]}" opacity=".7"/>`).join("");
+      const ticks = [0, 6, 12, 18, 24].map((h) => `<text x="${((h / 24) * W).toFixed(1)}" y="64" text-anchor="${h === 0 ? "start" : h === 24 ? "end" : "middle"}" font-size="10" fill="var(--secondary-text-color)">${h}</text>`).join("");
+      const nowX = x(today.t1);
+      const per = {};
+      today.phases.forEach((p) => { if (PHASE_COLOR[p.s]) per[p.s] = (per[p.s] || 0) + (p.b - p.a); });
+      const legend = ["pv", "normal", "minimum", "night"].filter((k) => per[k] > 60).map((k) => `<span style="color:${PHASE_COLOR[k]}">${this._t(`tw_p_${k}`)} <b style="font-weight:500;color:var(--primary-text-color)">${this._twFmtDur(per[k])}</b></span>`).join("");
+      return `<svg viewBox="0 0 ${W} 72" style="width:100%;max-width:${W}px;height:auto" role="img" aria-label="${this._t("tw_day")}"><rect x="0" y="22" width="${W}" height="24" rx="6" fill="var(--secondary-background-color)"/>${segs}
+        <line x1="${nowX.toFixed(1)}" x2="${nowX.toFixed(1)}" y1="14" y2="52" stroke="var(--primary-text-color)" stroke-width="2"/><text x="${Math.max(18, Math.min(W - 18, nowX)).toFixed(1)}" y="11" text-anchor="middle" font-size="11" font-weight="500" fill="var(--primary-text-color)">${this._t("tw_now_short")}</text>${ticks}</svg>
+        <div class="twleg">${legend}</div>`;
+    })();
+    return `<ha-card>${this._header("mdi:calendar-clock-outline", this._t("tw_day"))}${body}</ha-card>`;
   }
 
   // The program is chosen by the controller, so it is only shown; the switch lets the controller take over.
@@ -335,7 +385,8 @@ export class TwwpSectionsMethods {
     const many = d.twwp.length > 1;
     return `<div class="stack">${d.twwp.map((t, i) => `${many ? `<h3 class="twname">${t.name}</h3>` : ""}
       ${this._twHero(t, i)}
-      <div class="ov"><div class="col">${this._twTargets(t)}</div><div class="col">${this._twOperation(t)}${this._twDecision(t)}</div></div>
+      ${this._twTargets(t)}
+      <div class="twc"><div class="twtwo">${this._twDay(t)}<div class="col">${this._twOperation(t)}${this._twDecision(t)}</div></div></div>
       ${this._twHistory(t)}`).join("")}</div>`;
   }
 }

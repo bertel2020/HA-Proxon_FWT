@@ -399,6 +399,10 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 @keyframes twdash { to { stroke-dashoffset: -13; } }
 @media (prefers-reduced-motion: reduce) { .twhsvg.heat .twflow, .twhsvg.heat .fan { animation: none; } }
 @keyframes twspin { to { transform: rotate(360deg); } }
+.twsteps { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0 28px; margin-top: 4px; }
+.twc { container-type: inline-size; }
+.twtwo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+@container (max-width: 760px) { .twtwo { grid-template-columns: minmax(0, 1fr); } }
 `;
 
 let SHEET; // one constructable stylesheet shared by every card/panel instead of a <style> per render
