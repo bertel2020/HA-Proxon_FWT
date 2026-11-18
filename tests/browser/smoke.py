@@ -38,7 +38,8 @@ def main() -> int:
         )
 
         show("overview")
-        check(js("return root.querySelectorAll('.kpi .k').length") == 4, "overview shows four key figures")
+        # four figures of the ventilation unit plus one hot water tile per heat pump (the sample data has one)
+        check(js("return root.querySelectorAll('.kpi .k').length") == 5, "overview shows four key figures and the hot water tile")
 
         # a key figure without a value says why (the sample data has no power entity configured here)
         js("window.__hass.states['sensor.power_consumption'] = { ...window.__hass.states['sensor.power_consumption'], state: 'unavailable' }; el.hass = { ...window.__hass }; el._sig = ''; el._update(); await new Promise(r => setTimeout(r, 200));")
