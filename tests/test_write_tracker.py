@@ -57,3 +57,17 @@ def test_no_verdict_without_a_value_from_the_unit(logic):
     t.sent(0, 22, now=100)
     assert t.check(0, None, now=500) is None
     assert t.state(0)["status"] == "pending"
+
+
+def test_overall_status_clears_only_with_a_later_confirmation(logic):
+    t = logic.WriteTracker()
+    assert t.overall() == "ok"
+    t.sent(307, 3, now=100)
+    assert t.overall() == "pending"
+    assert t.check(307, 1, now=140) == "not_applied"
+    assert t.overall() == "not_applied"
+    t.sent(307, 3, now=150)
+    assert t.overall() == "not_applied"  # a new write does not hide the earlier failure
+    assert t.check(307, 3, now=152) == "confirmed"
+    assert t.overall() == "ok"
+    assert t.states()[307]["status"] == "confirmed"

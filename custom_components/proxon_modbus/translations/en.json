@@ -280,6 +280,10 @@
       "filter_age_days": { "name": "Device filter age" },
       "filter_shutdown_days": { "name": "Days until forced shutdown" },
       "recirculation_filter_hours": { "name": "Recirculation filter operating hours" },
+      "write_status": {
+        "name": "Write status",
+        "state": { "ok": "OK", "pending": "Pending", "not_applied": "Not applied" }
+      },
       "room_temperature": { "name": "Room temperature" },
       "room_setpoint": { "name": "Setpoint (confirmed)" },
       "mid_temperature": { "name": "Mid-room temperature" },

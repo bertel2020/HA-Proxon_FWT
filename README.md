@@ -147,6 +147,7 @@ Die Tabellen unten gehen vom Standard-Gerätenamen **"Proxon FWT"** (→ `proxon
 | Betriebsstunden Umluftfilter | `sensor.proxon_fwt_betriebsstunden_umluftfilter` | Nur vorhanden, wenn in den Optionen ein Umluftfilter angegeben ist |
 | Wärmepumpe Laufzeit heute / gesamt | `sensor.proxon_fwt_warmepumpe_laufzeit_heute`, `…_gesamt` | Laufzeit der Wärmepumpe in Stunden, von der Integration gezählt (Gesamtwert mit Langzeitstatistik) |
 | Wärmepumpe Starts heute / gesamt | `sensor.proxon_fwt_warmepumpe_starts_heute`, `…_gesamt` | Anzahl der Verdichterstarts |
+| Schreibstatus | `sensor.proxon_fwt_schreibstatus` | Diagnose: „OK“, „Ausstehend“ (ein geschriebener Wert wartet auf die Bestätigung des Geräts) oder „Nicht übernommen“ (bis ein späterer Schreibvorgang bestätigt wird). Das Attribut `writes` listet den letzten Schreibvorgang je Register |
 | Letzter Schreibfehler | `sensor.proxon_fwt_letzter_schreibfehler` | Diagnose: zuletzt fehlgeschlagener Schreibbefehl (Register, Wert, Grund). Attribute `last_not_applied`, `last_not_applied_at`, `not_applied_count`: Schreibvorgänge, die das Gerät angenommen, aber nicht innerhalb von 30 s bestätigt hat |
 | *(benutzerdefinierter Name)* | `sensor.proxon_fwt_<name>` | CO₂-Sensor(en) in ppm, sofern konfiguriert und keinem Raum zugeordnet (Register 350+n) |
 | *(benutzerdefinierter Name)* | `sensor.proxon_fwt_<name>` | Feuchtesensor(en) in % rel. Feuchte, sofern konfiguriert und keinem Raum zugeordnet (Register 360+n) |

@@ -145,6 +145,7 @@ The tables below assume the default device name **"Proxon FWT"** (→ `proxon_fw
 | Recirculation filter operating hours | `sensor.proxon_fwt_recirculation_filter_operating_hours` | Only present if a recirculation filter is set in the options |
 | Heat pump runtime today / total | `sensor.proxon_fwt_heat_pump_runtime_today`, `…_total` | Heat pump runtime in hours, counted by the integration (the total with long-term statistics) |
 | Heat pump starts today / total | `sensor.proxon_fwt_heat_pump_starts_today`, `…_total` | Number of compressor starts |
+| Write status | `sensor.proxon_fwt_write_status` | Diagnostic: "OK", "Pending" (a written value waits for the unit's confirmation) or "Not applied" (until a later write is confirmed). The `writes` attribute lists the last write per register |
 | Last write error | `sensor.proxon_fwt_last_write_error` | Diagnostic: most recent failed write (register, value, reason). Attributes `last_not_applied`, `last_not_applied_at`, `not_applied_count`: writes the unit accepted but did not confirm within 30 s |
 | *(custom name)* | `sensor.proxon_fwt_<name>` | CO₂ sensor(s), in ppm, if configured and not assigned to a room (register 350+n) |
 | *(custom name)* | `sensor.proxon_fwt_<name>` | Humidity sensor(s), in % RH, if configured and not assigned to a room (register 360+n) |

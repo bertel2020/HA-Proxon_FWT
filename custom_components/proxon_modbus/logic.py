@@ -86,6 +86,7 @@ class WriteTracker:
     def __init__(self) -> None:
         self._writes: dict[int, dict[str, Any]] = {}
         self.not_applied_count = 0
+        self._last_verdict: str | None = None
 
     def sent(self, key: int, value: float, now: float, stamp: Any = None) -> None:
         """Remember a value just written to register `key` (`now`: monotonic seconds, `stamp`: shown to the user)."""
@@ -108,7 +109,18 @@ class WriteTracker:
             self.not_applied_count += 1
         else:
             return None
+        self._last_verdict = entry["status"]
         return entry["status"]
+
+    def overall(self) -> str:
+        """"not_applied" until a later write is confirmed, else "pending" while one waits for its verdict, else "ok"."""
+        if self._last_verdict == "not_applied":
+            return "not_applied"
+        return "pending" if self.pending() else "ok"
+
+    def states(self) -> dict[int, dict[str, Any]]:
+        """The last write of every register that was written."""
+        return {key: self.state(key) for key in self._writes}
 
     def state(self, key: int) -> dict[str, Any] | None:
         """Last write to `key`: sent value, time, status and the value last seen from the unit."""

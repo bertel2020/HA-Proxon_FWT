@@ -241,6 +241,7 @@ async def async_setup_entry(
         ProxonSensor(coordinator, entry.entry_id, device_name, OPERATING_MODE_SENSOR)
     )
     entities.append(ProxonLastWriteErrorSensor(coordinator, entry.entry_id, device_name))
+    entities.append(ProxonWriteStatusSensor(coordinator, entry.entry_id, device_name))
     entities.extend(
         ProxonStatSensor(coordinator, entry.entry_id, device_name, d)
         for d in STAT_SENSORS
@@ -449,6 +450,47 @@ class ProxonLastWriteErrorSensor(ProxonCentralEntity, SensorEntity):
             "last_not_applied": self.coordinator.last_not_applied,
             "last_not_applied_at": self.coordinator.last_not_applied_at,
             "not_applied_count": self.coordinator.write_tracker.not_applied_count,
+        }
+
+
+class ProxonWriteStatusSensor(ProxonCentralEntity, SensorEntity):
+    """Diagnostic sensor: did the unit apply what was written to it?
+
+    "ok", "pending" (a written value waits for the unit's confirmation) or
+    "not_applied" (the unit did not confirm a write, until a later write is
+    confirmed). The attributes list the last write of every register.
+    """
+
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["ok", "pending", "not_applied"]
+    _attr_translation_key = "write_status"
+    _attr_icon = "mdi:check-network-outline"
+
+    def __init__(
+        self,
+        coordinator: ProxonModbusCoordinator,
+        entry_id: str,
+        device_name: str,
+    ) -> None:
+        super().__init__(coordinator, entry_id, device_name, "write_status")
+
+    @property
+    def native_value(self) -> str:
+        return self.coordinator.write_tracker.overall()
+
+    @property
+    def extra_state_attributes(self) -> dict[str, object]:
+        return {
+            "writes": {
+                str(register): {
+                    "sent": last["sent"],
+                    "confirmed": last["confirmed"],
+                    "status": last["status"],
+                    "sent_at": last["stamp"],
+                }
+                for register, last in self.coordinator.write_tracker.states().items()
+            }
         }
 
 
