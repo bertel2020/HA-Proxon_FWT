@@ -77,7 +77,7 @@ export class ChartsMethods {
     return `<div class="chw"><svg class="ch" style="max-width:100%;height:auto;touch-action:pan-y" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("history")}">
       ${bands}${byBands}${phaseBands}${grid}${refLines}${lines}${xt}<line class="xl" y1="${pt}" y2="${H - pb}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/><g class="xd"></g>
       <rect class="ov" x="${pl}" y="${pt}" width="${W - pl - pr}" height="${H - pt - pb}" fill="transparent"/></svg><div class="tip" style="display:none"></div></div>
-      <div class="legend">${legend}${(o.phases || []).filter((ph) => ph.iv.length).map((ph) => `<span><i style="background:${ph.color};opacity:.5"></i>${ph.label}</span>`).join("")}${showBands ? `<span><i style="background:#3fa660;opacity:.4"></i>${this._t("hp_runs")}</span>` : ""}${o.bypass && o.bypass.length ? `<span><i style="background:${BLUE};opacity:.4"></i>${this._t("bypass_open")}</span>` : ""}</div>
+      <div class="legend">${legend}${(o.phases || []).filter((ph) => ph.iv.length && !ph.noLegend).map((ph) => `<span><i style="background:${ph.color};opacity:.5"></i>${ph.legend || ph.label}</span>`).join("")}${showBands ? `<span><i style="background:#3fa660;opacity:.4"></i>${this._t("hp_runs")}</span>` : ""}${o.bypass && o.bypass.length ? `<span><i style="background:${BLUE};opacity:.4"></i>${this._t("bypass_open")}</span>` : ""}</div>
       <div class="hsts" style="--c:${o.energy ? 4 : 3}">${statHead}${statRows}</div>`;
   }
 

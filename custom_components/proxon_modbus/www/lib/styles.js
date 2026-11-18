@@ -409,7 +409,7 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 @container (min-width: 1000px) {
   .twgrid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
   .tw-hero { grid-column: 1; grid-row: 1; } .tw-op { grid-column: 2; grid-row: 1; }
-  .tw-scale { grid-column: 1; grid-row: 2; } .tw-day { grid-column: 2; grid-row: 2; }
+  .tw-scale { grid-column: 1 / -1; grid-row: 2; }
   .tw-hist { grid-column: 1 / -1; grid-row: 3; }
 }
 `;

@@ -298,7 +298,8 @@ test("the hot water history shows axes, targets, program phases and the heating 
   check(html);
   assert.ok(html.includes('class="ch"'), "the chart of the FWT history");
   assert.ok(html.includes("Soll PV 60°") && html.includes("Soll 53°") && html.includes("Minimum 42°"), "target lines");
-  assert.ok(html.includes("PV-Betrieb</span>") && html.includes("Normalbetrieb</span>") && html.includes("Nachtabschaltung</span>") === false, "legend lists only phases that occurred");
+  const lg = html.slice(html.indexOf('class="legend"', html.indexOf('class="ch"')));
+  assert.ok(lg.includes("PV ") && lg.includes("Normal ") && !lg.includes("Nacht"), "legend lists only phases that occurred");
   assert.ok(html.includes("Heizzeit: 5 h 0 min"), "heating time from the power above 100 W");
   assert.ok(html.includes('data-act="twmetric" data-v="power"') && html.includes('data-act="hrange"') && html.includes('data-act="hcmp"'), "chips, range and previous period");
   assert.ok(html.includes("Min") && html.includes("Ø"), "min / max / mean");
@@ -359,7 +360,7 @@ test("heating runs are added up from the power curve", () => {
   assert.deepEqual(panel._twRuns([[0, 100], [10, 100.5]], 20), { heat: 10, since: 10 }, "exactly 100 W does not count as heating");
 });
 
-test("the target scale shows zones, marks, pointer and the switching band; the day strip shows the programs of today", async () => {
+test("the target scale shows zones, marks, pointer and the switching band", async () => {
   const panel = new X.ProxonFwtPanel();
   panel.hass = twHist;
   const html = await render(panel, () => { panel._tab = "warm"; });
@@ -367,13 +368,12 @@ test("the target scale shows zones, marks, pointer and the switching band; the d
   assert.ok(html.includes("Minimum 42°") && html.includes("Soll 53°") && html.includes("Soll PV 60°"), "marks");
   assert.ok(html.includes("jetzt 54,2°"), "pointer at the water temperature");
   for (const z of ["unter Minimum", "heizt", "halten", "Soll erreicht"]) assert.ok(html.includes(`${z}</span>`), `zone ${z}`);
-  assert.ok(html.includes(">Heute<") && html.includes('aria-label="Heute"'), "day strip card");
+  assert.ok(!html.includes('aria-label="Heute"'), "no separate day strip: the history shows the programs");
   const sm = panel._twScale({ ents: {}, id: "tw1" });
   assert.equal(sm, null, "without the numbers there is no scale");
   const nodata = new X.ProxonFwtPanel();
-  nodata.hass = twHass; // no history: nothing for the day strip
-  const none = await render(nodata, () => { nodata._tab = "warm"; });
-  assert.ok(none.includes("Heute noch keine Programmdaten.") && none.includes("jetzt 54,2°"));
+  nodata.hass = twHass; // no history
+  assert.ok((await render(nodata, () => { nodata._tab = "warm"; })).includes("jetzt 54,2°"), "the scale needs no history");
 });
 
 test("one Operation card: switch, PV status, enables and the last decision; no separate program bar or decision card", async () => {
@@ -387,7 +387,7 @@ test("one Operation card: switch, PV status, enables and the last decision; no s
   assert.ok(op.includes("Letzte Entscheidung") && op.includes("PV-Überschuss: Start"), "last decision");
   assert.ok(op.includes("Geplante Schaltungen"), "planned switching is listed when there is one");
   assert.ok(!html.includes('class="twprog"') && !html.includes("Das Programm wählt der Regler"), "the program bar is gone");
-  assert.equal((html.match(/<ha-card>/g) || []).length, 5, "main picture, targets, day, operation, history");
+  assert.equal((html.match(/<ha-card>/g) || []).length, 4, "main picture, targets, operation, history");
   const idle = { ...twHass, states: { ...twStates, "sensor.tw_planned": { ...twStates["sensor.tw_planned"], state: "0" } } };
   const p2 = new X.ProxonFwtPanel();
   p2.hass = idle;
@@ -399,8 +399,9 @@ test("the page is a grid: main picture and operation, scale and day, then the hi
   panel.hass = twHist;
   const html = await render(panel, () => { panel._tab = "warm"; });
   check(html);
-  const order = ["tw-hero", "tw-scale", "tw-op", "tw-day", "tw-hist"].map((c) => html.indexOf(`class="${c}"`));
-  assert.ok(order.every((v) => v > 0) && order.every((v, k) => k === 0 || v > order[k - 1]), "five areas in reading order for the narrow layout");
+  const order = ["tw-hero", "tw-scale", "tw-op", "tw-hist"].map((c) => html.indexOf(`class="${c}"`));
+  assert.ok(order.every((v) => v > 0) && order.every((v, k) => k === 0 || v > order[k - 1]), "four areas in reading order for the narrow layout");
+  assert.ok(!html.includes("tw-day"), "the day card is gone");
   assert.ok(html.includes('class="twgrid"') && html.includes('class="twc"'));
   assert.ok(!html.includes("Ein Fühler in der Mitte des Speichers: Das Wasser ist einheitlich gefüllt.</div>"), "the explanation is a tooltip, not a text line");
   assert.ok(html.includes("<title>Ein Fühler in der Mitte des Speichers"), "tooltip of the main picture");
@@ -414,8 +415,20 @@ test("the width of the cards follows the layout", () => {
   panel.hass = hass;
   panel.clientWidth = 1500;
   assert.equal(panel._twWide(), true);
-  assert.ok(panel._twCardW(2 / 3) < panel._twCardW(1), "the wide layout gives the scale two thirds");
+  assert.equal(panel._twCardW(), 1500 - 64, "a full-width card: panel width minus paddings");
   panel.clientWidth = 700;
   assert.equal(panel._twWide(), false);
-  assert.equal(panel._twCardW(2 / 3), panel._twCardW(1), "narrow: every card has the full width");
+});
+
+test("the history legend names how long each program ran in the shown range", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = twHist;
+  const html = await render(panel, () => { panel._tab = "warm"; panel._histRange = "24h"; });
+  check(html);
+  // twData programs: minimum 18 h to 14 h ago (4 h), normal 14 h to 9 h (5 h), pv 9 h to 5 h (4 h), off after that
+  const legend = html.slice(html.indexOf('class="legend"', html.indexOf('class="ch"')));
+  assert.ok(legend.includes("PV 4 h 0 min") && legend.includes("Normal 5 h 0 min") && legend.includes("Minimum 4 h 0 min"), "time per program");
+  assert.ok(!legend.includes("Nacht"), "a program that did not run is not listed");
+  // the tooltip names only the program, without the duration
+  assert.deepEqual(panel._cm.phases.map((p) => p.label).sort(), ["Minimum", "Nacht", "Normal", "PV"]);
 });

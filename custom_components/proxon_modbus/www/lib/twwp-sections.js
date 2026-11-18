@@ -116,11 +116,11 @@ export class TwwpSectionsMethods {
     return { heat, since };
   }
 
-  // Today (calendar day) of one heat pump: heating time, energy and the program phases, for the main picture and the day strip.
+  // Today (calendar day) of one heat pump: heating time, energy and the current heating run, for the main picture.
   async _twLoadToday(t) {
     const c = this._twCfg(t), now = new Date(), start = new Date(now.getFullYear(), now.getMonth(), now.getDate()), t0 = start.getTime() / 1000, t1 = now.getTime() / 1000;
-    const pid = t.ents.twwp_program, wid = c.power_entity, eid = c.energy_entity, ids = [wid, pid].filter(Boolean);
-    const out = { t0, t1, heat: null, since: null, kwh: null, phases: [] };
+    const wid = c.power_entity, eid = c.energy_entity, ids = [wid].filter(Boolean);
+    const out = { t0, t1, heat: null, since: null, kwh: null };
     if (ids.length) {
       const res = await this._hass.callWS({ type: "history/history_during_period", start_time: start.toISOString(), end_time: now.toISOString(),
         entity_ids: ids, minimal_response: true, no_attributes: true, significant_changes_only: false });
@@ -135,10 +135,6 @@ export class TwwpSectionsMethods {
           out.heat = r.heat; out.since = r.since;
           if (!eid) { let wh = 0; pts.forEach(([x, v], i) => { wh += (v * ((i + 1 < pts.length ? pts[i + 1][0] : t1) - x)) / 3600; }); out.kwh = wh / 1000; }
         }
-      }
-      if (pid) {
-        const pr = rows(pid);
-        out.phases = pr.map(([x, st], i) => ({ s: String(st), a: x, b: i + 1 < pr.length ? pr[i + 1][0] : t1 }));
       }
     }
     if (eid) {
@@ -210,15 +206,14 @@ export class TwwpSectionsMethods {
       ${this._btn(`data-act="twstep" data-v="${id}|1" aria-label="+"`, "round", this._icon("mdi:plus"), down)}</span></div>`;
   }
 
-  // Wide panel: main picture and operation side by side (2 : 1), scale and day below them; narrow: one column.
+  // Wide panel: main picture and operation side by side (2 : 1), the scale and the history below; narrow: one column.
   _twWide() {
     return (this.clientWidth || 900) - 32 >= 1000;
   }
 
-  // Usable width of a card: the whole width, or its share of the wide layout.
-  _twCardW(share) {
-    const total = (this.clientWidth || 900) - 32;
-    return (this._twWide() ? (total - 12) * share : total) - 32;
+  // Usable width of a full-width card.
+  _twCardW() {
+    return (this.clientWidth || 900) - 32 - 32;
   }
 
   // One scale from 30 to 70 degrees: the zones around the normal target, the three targets as marks, the pointer at the water
@@ -227,7 +222,7 @@ export class TwwpSectionsMethods {
     const g = (k) => this._num(t.ents[k]), tn = g("twwp_target_normal"), tp = g("twwp_target_pv"), tm = g("twwp_target_min");
     const lo = g("twwp_hyst_low"), hi = g("twwp_hyst_high"), w = this._twWater(t);
     if (tn === null || tp === null || tm === null || lo === null || hi === null) return null;
-    const W = Math.max(320, Math.min(1300, this._twCardW(2 / 3))), pl = 24, y0 = 44;
+    const W = Math.max(320, Math.min(1300, this._twCardW())), pl = 24, y0 = 44;
     const x = (v) => pl + ((Math.max(S_LO, Math.min(S_HI, v)) - S_LO) / (S_HI - S_LO)) * (W - 2 * pl);
     const bounds = [S_LO, tm, tn - lo, tn + hi, S_HI].reduce((o, v) => (o.push(Math.max(o.length ? o[o.length - 1] : S_LO, Math.min(S_HI, v))), o), []);
     const zones = [["tw_z_min", BLUE, .5], ["tw_z_heat", AMBER, .55], ["tw_z_hold", "#8a8f98", .45], ["tw_z_done", CORAL, .5]];
@@ -262,27 +257,6 @@ export class TwwpSectionsMethods {
     return `<ha-card>${this._header("mdi:tune-variant", this._t("tw_targets"), scale ? `<span class="legend" style="margin:0">${scale.legend}</span>` : "")}${scale ? scale.svg : ""}
       <div class="rows twsteps">${group(TARGETS, "°")}</div>${hyst}
       ${warn ? `<div class="note" style="color:#c98400">${this._t("tw_hyst_warn")}</div>` : ""}</ha-card>`;
-  }
-
-  // The calendar day as a strip: which program ran when, with the time per program.
-  _twDay(t) {
-    const today = this._twToday(t);
-    const body = (() => {
-      if (today === undefined) return this._skel(90);
-      if (!today || !today.phases.length) return `<div class="note">${this._t("tw_day_none")}</div>`;
-      const W = Math.max(240, Math.min(560, this._twCardW(1 / 3)));
-      const day = 86400, x = (ts) => Math.max(0, Math.min(W, ((ts - today.t0) / day) * W));
-      const segs = today.phases.filter((p) => PHASE_COLOR[p.s]).map((p) => `<rect x="${x(p.a).toFixed(1)}" y="22" width="${Math.max(1, x(p.b) - x(p.a)).toFixed(1)}" height="24" fill="${PHASE_COLOR[p.s]}" opacity=".7"/>`).join("");
-      const ticks = [0, 6, 12, 18, 24].map((h) => `<text x="${((h / 24) * W).toFixed(1)}" y="64" text-anchor="${h === 0 ? "start" : h === 24 ? "end" : "middle"}" font-size="10" fill="var(--secondary-text-color)">${h}</text>`).join("");
-      const nowX = x(today.t1);
-      const per = {};
-      today.phases.forEach((p) => { if (PHASE_COLOR[p.s]) per[p.s] = (per[p.s] || 0) + (p.b - p.a); });
-      const legend = ["pv", "normal", "minimum", "night"].filter((k) => per[k] > 60).map((k) => `<span style="color:${PHASE_COLOR[k]}">${this._t(`tw_p_${k}`)} <b style="font-weight:500;color:var(--primary-text-color)">${this._twFmtDur(per[k])}</b></span>`).join("");
-      return `<svg viewBox="0 0 ${W} 72" style="width:100%;max-width:${W}px;height:auto" role="img" aria-label="${this._t("tw_day")}"><rect x="0" y="22" width="${W}" height="24" rx="6" fill="var(--secondary-background-color)"/>${segs}
-        <line x1="${nowX.toFixed(1)}" x2="${nowX.toFixed(1)}" y1="14" y2="52" stroke="var(--primary-text-color)" stroke-width="2"/><text x="${Math.max(18, Math.min(W - 18, nowX)).toFixed(1)}" y="11" text-anchor="middle" font-size="11" font-weight="500" fill="var(--primary-text-color)">${this._t("tw_now_short")}</text>${ticks}</svg>
-        <div class="twleg">${legend}</div>`;
-    })();
-    return `<ha-card>${this._header("mdi:calendar-clock-outline", this._t("tw_day"))}${body}</ha-card>`;
   }
 
   // Operation: whether the controller switches (or only runs dry), the PV status, the enables and the last decision.
@@ -371,7 +345,13 @@ export class TwwpSectionsMethods {
       const prev = this._hget(key(m, true), () => this._twLoadSeries(m, range, true));
       if (prev) series = [...series, ...prev];
     }
-    const pid = t.ents.twwp_program, phases = hist && pid ? this._hget(`twp|${pid}|${range}`, () => this._twLoadPhases(pid, range)) : null;
+    const pid = t.ents.twwp_program, loaded = hist && pid ? this._hget(`twp|${pid}|${range}`, () => this._twLoadPhases(pid, range)) : null;
+    // the legend names how long each program ran in the shown range
+    const t1 = Date.now() / 1000, t0 = t1 - RANGE_MS[range] / 1000;
+    const phases = Array.isArray(loaded) ? loaded.map((ph) => {
+      const sec = ph.iv.reduce((n, [a, b]) => n + Math.max(0, Math.min(b, t1) - Math.max(a, t0)), 0);
+      return { ...ph, legend: `${ph.label} ${this._twFmtDur(sec)}`, noLegend: sec < 60 };
+    }) : [];
     const pm = metrics.find((x) => x.k === "power"), ps = pm && hist ? this._hget(key(pm), () => this._twLoadSeries(pm, range)) : null;
     const tv = (id) => this._num(id);
     const refs = m.k === "water" ? [["twwp_target_pv", "tw_pv_line"], ["twwp_target_normal", "tw_ref_n"], ["twwp_target_min", "tw_ref_min"]]
@@ -379,7 +359,7 @@ export class TwwpSectionsMethods {
     let body;
     if (series === undefined) body = this._skel(190);
     else if (!series || !series.some((s) => s.pts.length > 1)) body = `<div class="note">${this._t(range === "30d" || range === "1y" ? "no_stats" : "no_history")}</div>`;
-    else body = this._chart(series, { range, unit: m.unit, bands: false, phases: Array.isArray(phases) ? phases : [], refs, energy: m.k === "power" });
+    else body = this._chart(series, { range, unit: m.unit, bands: false, phases, refs, energy: m.k === "power" });
     const heat = ps && ps.heat != null && ps.heat > 0 ? `<div class="note">${this._t("tw_heat_time", this._twFmtDur(ps.heat))}</div>` : "";
     const rb = (v, l) => `<button class="vbtn ${range === v ? "a" : ""}" data-act="hrange" data-v="${v}">${l}</button>`;
     const chips = metrics.length > 1 ? `<div class="mchips" role="group">${metrics.map((x) => `<button class="vbtn ${x.k === m.k ? "a" : ""}" data-act="twmetric" data-v="${x.k}">${this._icon(x.icon)}${this._t(x.label)}</button>`).join("")}</div>` : "";
@@ -392,7 +372,7 @@ export class TwwpSectionsMethods {
     return `<div class="stack">${d.twwp.map((t, i) => `${many ? `<h3 class="twname">${t.name}</h3>` : ""}
       <div class="twc"><div class="twgrid">
         <div class="tw-hero">${this._twHero(t, i)}</div><div class="tw-scale">${this._twTargets(t)}</div>
-        <div class="tw-op">${this._twOperation(t)}</div><div class="tw-day">${this._twDay(t)}</div>
+        <div class="tw-op">${this._twOperation(t)}</div>
         <div class="tw-hist">${this._twHistory(t)}</div></div></div>`).join("")}</div>`;
   }
 }
