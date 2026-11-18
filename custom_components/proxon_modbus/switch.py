@@ -296,7 +296,8 @@ class ProxonRoomPtcEnableSwitch(_BoostServiceGuard, ProxonRoomEntity, SwitchEnti
 
     _attr_translation_key = "ptc_enable"
     _blocks = frozenset({BLOCK_PTC})
-    _attr_icon = "mdi:radiator"
+    # Not the radiator: the "PTC element active" binary sensor already uses it.
+    _attr_icon = "mdi:toggle-switch-variant"
 
     def __init__(
         self,

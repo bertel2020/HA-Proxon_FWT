@@ -10,6 +10,9 @@
 - **Setpoint as a diagnostic sensor:** One `sensor.<room>_setpoint_confirmed` per room with the setpoint confirmed by the device (register 180+n), with long-term statistics.
 - **Write check:** Every value written (setpoint, PTC enable, cooling, fan stage, fan automatic, intensive ventilation, operating mode) is remembered and compared with the value the unit reports back. If it does not confirm it within 30 seconds, a warning is logged and the "Last write error" sensor shows the attributes `last_not_applied`, `last_not_applied_at` and `not_applied_count`. Each room's setpoint sensor shows `last_sent`, `last_sent_at` and `write_status` (`pending`, `confirmed`, `not_applied`). The new diagnostic sensor `sensor.proxon_fwt_write_status` shows "OK", "Pending" or "Not applied". The unit may also set a value differently on purpose (for example a fan stage while the automatic is on); the warning then appears as well.
 
+**Changed**
+- **PTC enable icon:** The "PTC element enabled" switch shows a toggle (`mdi:toggle-switch-variant`) instead of the radiator that the "PTC element active" sensor already uses. An icon set by hand in the UI is kept.
+
 ## 2.3.0 – 2026-11-17
 
 **Changed**

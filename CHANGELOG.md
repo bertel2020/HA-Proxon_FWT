@@ -10,6 +10,9 @@
 - **Solltemperatur als Diagnose-Sensor:** Je Raum ein Sensor `sensor.<raum>_solltemperatur_bestatigt` mit dem vom Gerät bestätigten Sollwert (Register 180+n), mit Langzeitstatistik.
 - **Schreibkontrolle:** Jeder geschriebene Wert (Solltemperatur, PTC-Freigabe, Kühlen, Lüfterstufe, Lüfterautomatik, Intensivlüftung, Betriebsart) wird gemerkt und mit dem Wert verglichen, den das Gerät zurückmeldet. Bestätigt es ihn nicht innerhalb von 30 Sekunden, steht eine Warnung im Log, und der Sensor „Letzter Schreibfehler“ zeigt dazu die Attribute `last_not_applied`, `last_not_applied_at` und `not_applied_count`. Der Solltemperatur-Sensor jedes Raums zeigt `last_sent`, `last_sent_at` und `write_status` (`pending`, `confirmed`, `not_applied`). Der neue Diagnose-Sensor `sensor.proxon_fwt_schreibstatus` zeigt „OK“, „Ausstehend“ oder „Nicht übernommen“. Das Gerät kann einen Wert auch bewusst abweichend setzen (zum Beispiel eine Lüfterstufe bei aktiver Automatik), dann erscheint ebenfalls die Warnung.
 
+**Geändert**
+- **Icon der PTC-Freigabe:** Der Schalter „PTC-Element freigegeben“ zeigt einen Schalter (`mdi:toggle-switch-variant`) statt des Heizkörpers, den der Sensor „PTC-Element aktiv“ schon nutzt. Ein in der Oberfläche gesetzter eigener Icon bleibt erhalten.
+
 ## 2.3.0 – 2026-11-17
 
 **Geändert**
