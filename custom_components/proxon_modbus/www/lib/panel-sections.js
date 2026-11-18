@@ -18,7 +18,7 @@ export class PanelSectionsMethods {
       since = mins >= 60 ? `${Math.floor(mins / 60)} h ${mins % 60} min` : `${mins} min`;
     }
     const status = `<span class="hchip s" style="--dc:${cool ? BLUE : heat ? GREEN : "#8a8f98"}"><span class="dot"></span>${label}${since ? `<small class="hm">${since}</small>` : ""}</span>`;
-    return status + (modeKey ? `<span class="hchip m">${this._t(modeKey)}</span>` : "");
+    return status + (modeKey ? `<span class="hchip m">${this._t(modeKey)}</span>` : "") + this._twHeadChip(d);
   }
 
   // Overview status block: one quiet row per topic (icon, label, value). The heat pump state stays in the header chips, the fan stage in the controls.

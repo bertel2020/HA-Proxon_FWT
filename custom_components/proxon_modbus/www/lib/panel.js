@@ -179,10 +179,12 @@ export class ProxonFwtPanel extends ProxonFwtBase {
 
   _render() {
     const d = this._d;
-    const tab = ["overview", "rooms", "history", "diag"].includes(this._tab) ? this._tab : "overview";
+    const hasTw = !!(d && d.twwp && d.twwp.length);
+    const tab = ["overview", "rooms", "history", "diag"].concat(hasTw ? ["warm"] : []).includes(this._tab) ? this._tab : "overview";
     const bad = d ? this._insights(d).filter((i) => i.lvl === "r" || i.lvl === "w") : [];
     const warn = (k) => (k === "diag" ? Math.min(bad.length, 3) : 0); // the hints live in Diagnostics, so the badge sits there (3 are shown)
-    const tabs = [["overview", "mdi:view-dashboard-outline"], ["rooms", "mdi:home-outline"], ["history", "mdi:chart-line"], ["diag", "mdi:stethoscope"]]
+    const tabs = [["overview", "mdi:view-dashboard-outline"], ["rooms", "mdi:home-outline"]]
+      .concat(hasTw ? [["warm", "mdi:water-boiler"]] : []).concat([["history", "mdi:chart-line"], ["diag", "mdi:stethoscope"]])
       .map(([k, i]) => `<button class="tabbtn ${k === tab ? "a" : ""}" role="tab" aria-selected="${k === tab}" data-act="tab" data-v="${k}">${this._icon(i)}${this._t(`tab_${k}`)}${warn(k) ? `<span class="badge">${warn(k)}</span>` : ""}</button>`).join("");
     const head = `<div class="bar-top">
       <button class="round menu" data-act="menu" aria-label="Menu">${this._icon("mdi:menu")}</button>
@@ -197,6 +199,8 @@ export class ProxonFwtPanel extends ProxonFwtBase {
         <div class="ov"><div class="col">${this._sec_schema(d)}${this._sec_kpi(d)}</div><div class="col">${this._sec_operation(d)}${this._sec_status(d)}</div></div></div>`;
     } else if (tab === "rooms") {
       body = `<div class="stack">${this._sec_rooms(d)}</div>`;
+    } else if (tab === "warm") {
+      body = this._twTab(d);
     } else if (tab === "history") {
       body = `<div class="stack"><div class="hsurf">${this._sec_history(d)}${this._sec_runtime(d)}${this._sec_energy(d)}</div></div>`;
     } else {

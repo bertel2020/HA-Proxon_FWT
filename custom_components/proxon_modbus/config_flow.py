@@ -78,6 +78,8 @@ from .const import (
 from .twwp import (
     CONF_BRIGHTNESS,
     CONF_DAY_ABOVE,
+    CONF_ENERGY_ENTITY as CONF_TWWP_ENERGY,
+    CONF_POWER_ENTITY as CONF_TWWP_POWER,
     CONF_ENABLE_PV_SWITCH,
     CONF_ENABLE_SWITCH,
     CONF_FROST_BELOW,
@@ -743,6 +745,10 @@ def _twwp_schema() -> vol.Schema:
             vol.Required(CONF_PV_POWER_AVG): power,
             vol.Optional(CONF_BRIGHTNESS): selector.EntitySelector(
                 selector.EntitySelectorConfig(domain="sensor")
+            ),
+            vol.Optional(CONF_TWWP_POWER): power,
+            vol.Optional(CONF_TWWP_ENERGY): selector.EntitySelector(
+                selector.EntitySelectorConfig(domain="sensor", device_class="energy")
             ),
             vol.Required(CONF_PV_THRESHOLD, default=DEFAULT_PV_THRESHOLD): number(0, 20000, 100, "W"),
             vol.Required(CONF_FROST_BELOW, default=DEFAULT_FROST_BELOW): number(-20, 20, 0.5, "°C"),

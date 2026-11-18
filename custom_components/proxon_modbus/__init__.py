@@ -45,7 +45,18 @@ from .const import (
 from .coordinator import ProxonModbusCoordinator
 from .entity import central_device_info
 from .hub import ProxonModbusHub, params_from_entry_data
-from .twwp import SUBENTRY_TYPE_TWWP
+from .twwp import (
+    CONF_BRIGHTNESS as TWWP_BRIGHTNESS,
+    CONF_ENABLE_PV_SWITCH,
+    CONF_ENABLE_SWITCH,
+    CONF_ENERGY_ENTITY as TWWP_ENERGY,
+    CONF_OUTER,
+    CONF_POWER_ENTITY as TWWP_POWER,
+    CONF_PV_POWER,
+    CONF_PV_POWER_AVG,
+    CONF_WATER,
+    SUBENTRY_TYPE_TWWP,
+)
 from .twwp_controller import RUN_INTERVAL, TwwpController
 from .twwp_entity import twwp_device_identifier
 
@@ -93,9 +104,38 @@ def _ws_settings(
                 room_dev = registry.async_get_device_by_identifier((DOMAIN, f"{entry.entry_id}_room_{i}"), entry.entry_id)
                 if room_dev:
                     rooms.append({"device_id": room_dev.id, kind: ent})
+        twwp = []
+        for subentry_id, subentry in entry.subentries.items():
+            if subentry.subentry_type != SUBENTRY_TYPE_TWWP:
+                continue
+            twwp_device = registry.async_get_device_by_identifier(
+                twwp_device_identifier(entry.entry_id, subentry_id), entry.entry_id
+            )
+            if twwp_device is None:
+                continue
+            twwp.append(
+                {
+                    "device_id": twwp_device.id,
+                    **{
+                        key: subentry.data.get(key)
+                        for key in (
+                            CONF_WATER,
+                            CONF_OUTER,
+                            CONF_PV_POWER,
+                            CONF_PV_POWER_AVG,
+                            TWWP_BRIGHTNESS,
+                            TWWP_POWER,
+                            TWWP_ENERGY,
+                            CONF_ENABLE_SWITCH,
+                            CONF_ENABLE_PV_SWITCH,
+                        )
+                    },
+                }
+            )
         result.append(
             {
                 "device_id": device.id if device else None,
+                "twwp": twwp,
                 "room_sensors": rooms,
                 "outdoor_side": entry.options.get(CONF_OUTDOOR_SIDE, "left"),
                 "power_entity": entry.options.get(CONF_POWER_ENTITY),

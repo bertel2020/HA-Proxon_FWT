@@ -476,6 +476,8 @@
             "outer_temp": "Temperatur Oberteil",
             "pv_power": "PV-Leistung aktuell",
             "pv_power_avg": "PV-Leistung Mittelwert (15 min)",
+            "power_entity": "Leistung der Wärmepumpe (optional)",
+            "energy_entity": "Energiezähler der Wärmepumpe (optional)",
             "brightness": "Helligkeits-/Dämmerungssensor (optional)",
             "pv_threshold": "PV-Schwelle",
             "frost_below": "Frostgrenze",
@@ -490,7 +492,9 @@
             "pv_power_avg": "Beide PV-Leistungen müssen über der Schwelle liegen.",
             "brightness": "Unterscheidet Tag und Nacht. Ohne Sensor ist immer Tag, und es gibt keine Nachtabschaltung.",
             "night_below": "Helligkeitswert, unter dem es Nacht ist.",
-            "day_above": "Helligkeitswert, über dem es Tag ist."
+            "day_above": "Helligkeitswert, über dem es Tag ist.",
+            "power_entity": "Wird nur im Seitenpanel angezeigt.",
+            "energy_entity": "Wird nur im Seitenpanel angezeigt."
           }
         },
         "reconfigure": {
@@ -504,6 +508,8 @@
             "outer_temp": "Temperatur Oberteil",
             "pv_power": "PV-Leistung aktuell",
             "pv_power_avg": "PV-Leistung Mittelwert (15 min)",
+            "power_entity": "Leistung der Wärmepumpe (optional)",
+            "energy_entity": "Energiezähler der Wärmepumpe (optional)",
             "brightness": "Helligkeits-/Dämmerungssensor (optional)",
             "pv_threshold": "PV-Schwelle",
             "frost_below": "Frostgrenze",
@@ -518,7 +524,9 @@
             "pv_power_avg": "Beide PV-Leistungen müssen über der Schwelle liegen.",
             "brightness": "Unterscheidet Tag und Nacht. Ohne Sensor ist immer Tag, und es gibt keine Nachtabschaltung.",
             "night_below": "Helligkeitswert, unter dem es Nacht ist.",
-            "day_above": "Helligkeitswert, über dem es Tag ist."
+            "day_above": "Helligkeitswert, über dem es Tag ist.",
+            "power_entity": "Wird nur im Seitenpanel angezeigt.",
+            "energy_entity": "Wird nur im Seitenpanel angezeigt."
           }
         }
       },

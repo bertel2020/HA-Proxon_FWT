@@ -120,7 +120,21 @@ export class ProxonFwtBase extends HTMLElement {
       if (room.climate) rooms.push(room);
     }
     if (rooms.length && rooms.every((r) => r.idx !== undefined)) rooms.sort((a, b) => a.idx - b.idx);
-    return { central, rooms };
+    // Hot water heat pumps (TWWP): devices below the central one whose identifier is "<entry>_twwp_<subentry>".
+    const twwp = [];
+    for (const [id, dev] of Object.entries(h.devices || {})) {
+      if (dev.via_device_id !== centralId) continue;
+      const own = (dev.identifiers || []).some((ident) => ident && ident[0] === "proxon_modbus" && /_twwp_[^_]+$/.test(String(ident[1])));
+      if (!own) continue;
+      const t = { id, name: esc(dev.name_by_user || dev.name), ents: {} };
+      for (const e of entities) {
+        if (e.device_id !== id) continue;
+        if (e.entity_id.startsWith("water_heater.")) t.heater = e.entity_id;
+        else if (e.translation_key) t.ents[e.translation_key] = e.entity_id;
+      }
+      if (t.heater) twwp.push(t);
+    }
+    return { central, rooms, twwp };
   }
 
   _update() {
@@ -132,11 +146,11 @@ export class ProxonFwtBase extends HTMLElement {
     if (d && centralId && (this._settingsFor !== centralId || (!this._settingsBusy && Date.now() - (this._settingsAt || 0) > SETTINGS_TTL))) this._loadSettings(centralId);
     const ids = d
       ? [...Object.values(d.central), ...d.rooms.flatMap((r) => [r.climate, r.co2, r.rf, ...Object.values(r.ents)]),
-        this._opt("power_entity"), this._opt("outdoor_entity")]
+        ...d.twwp.flatMap((t) => this._twIds(t)), this._opt("power_entity"), this._opt("outdoor_entity")]
       : [];
     const sig = ids.filter(Boolean).map((i) => {
       const s = h.states[i];
-      return s ? `${s.state}|${s.attributes.temperature}|${s.attributes.current_temperature}|${s.attributes.preferred_stage}|${s.attributes.last_restore}|${s.attributes.until}` : "-";
+      return s ? `${s.state}|${s.attributes.temperature}|${s.attributes.current_temperature}|${s.attributes.preferred_stage}|${s.attributes.last_restore}|${s.attributes.until}|${s.attributes.last_run}` : "-";
     }).join(",") + `|${this._view}|${this._room}|${h.language}|${this._flip()}|${this._hver || 0}|${this._histRange || "24h"}|${this._hcmp ? 1 : 0}|${this._metric || ""}|${this._tab || ""}|${this._rview || ""}|${this._rfilter || ""}|${[...(this._ropen || [])].join("+")}|${this._boost ? 1 : 0}|${this._wb || 0}|${this._settingsStamp || 0}|${Object.keys(this._dismissed || {}).join("+")}`;
     if (sig === this._sig) return;
     this._sig = sig;

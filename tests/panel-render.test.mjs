@@ -117,3 +117,79 @@ test("boost ventilation sits in the Operation card; there is no quick-actions ca
   const rooms = await render(panel, () => { panel._tab = "rooms"; });
   assert.ok(!rooms.includes('data-act="allroom"'));
 });
+
+// ---- hot water heat pump (TWWP) ---------------------------------------------
+const twEntities = { ...entities }, twStates = { ...states }, twDevices = { ...devices };
+const twEnt = (id, extra = {}, state = "1", attrs = {}) => {
+  twEntities[id] = { entity_id: id, platform: "proxon_modbus", device_id: "tw1", ...extra };
+  twStates[id] = { state, attributes: attrs, last_updated: "2026-11-07T11:00:00Z" };
+};
+twDevices.tw1 = { id: "tw1", name: "Warmwasser <TWWP>", via_device_id: "central", identifiers: [["proxon_modbus", "e1_twwp_SUB1"]] };
+twEnt("water_heater.tw", {}, "pv", { current_temperature: 54.2, temperature: 53 });
+twEnt("number.tw_normal", { translation_key: "twwp_target_normal" }, "53", { min: 20, max: 70, step: 0.5 });
+twEnt("number.tw_pv", { translation_key: "twwp_target_pv" }, "60", { min: 20, max: 70, step: 0.5 });
+twEnt("number.tw_min", { translation_key: "twwp_target_min" }, "42", { min: 20, max: 70, step: 0.5 });
+twEnt("sensor.tw_program", { translation_key: "twwp_program" }, "pv");
+twEnt("sensor.tw_pv_status", { translation_key: "twwp_pv_status" }, "pv");
+twEnt("sensor.tw_reason", { translation_key: "twwp_reason" }, "pv", { control: false, last_run: new Date(Date.now() - 23000).toISOString(), last_error: "a <b>" });
+twEnt("sensor.tw_planned", { translation_key: "twwp_planned" }, "1", { switches: { "switch.freigabe": "on" } });
+twEnt("binary_sensor.tw_problem", { translation_key: "twwp_sensor_problem" }, "off");
+twEnt("switch.tw_control", { translation_key: "twwp_control" }, "off");
+for (const [id, state, a] of [["sensor.tw_water", "54.2", { unit_of_measurement: "°C" }], ["sensor.tw_outer", "5.2", { unit_of_measurement: "°C" }], ["sensor.tw_pv", "2.5", { unit_of_measurement: "kW" }],
+  ["sensor.tw_power", "389", { unit_of_measurement: "W" }], ["sensor.tw_energy", "5604.6", { unit_of_measurement: "kWh" }], ["switch.freigabe", "on", {}], ["switch.freigabe_pv", "off", {}]]) {
+  twStates[id] = { state, attributes: a, last_updated: "2026-11-07T11:00:00Z" };
+}
+const twSettings = [{ device_id: "central", twwp: [{ device_id: "tw1", water_temp: "sensor.tw_water", outer_temp: "sensor.tw_outer", pv_power: "sensor.tw_pv",
+  power_entity: "sensor.tw_power", energy_entity: "sensor.tw_energy", enable_switch: "switch.freigabe", enable_pv_switch: "switch.freigabe_pv" }] }];
+const calls = [];
+const twHass = { ...hass, entities: twEntities, states: twStates, devices: twDevices,
+  callWS: async (m) => (m.type === "proxon_modbus/settings" ? twSettings : m.type === "frontend/get_user_data" ? { value: null } : {}),
+  callService: async (...a) => { calls.push(a); } };
+
+test("the hot water tab appears only with a heat pump, and renders without undefined or NaN", async () => {
+  const none = new X.ProxonFwtPanel();
+  none.hass = hass;
+  assert.ok(!(await render(none, () => { none._tab = "warm"; })).includes('data-v="warm"'), "no TWWP: no tab, falls back to the overview");
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = twHass;
+  const html = await render(panel, () => { panel._tab = "warm"; });
+  check(html);
+  assert.ok(html.includes('data-v="warm"') && html.includes("Warmwasser"));
+  assert.ok(html.includes("54,2°") && html.includes("389 W") && html.includes("2,5 kW") && html.includes("5.605 kWh"));
+  assert.ok(html.includes('data-act="twstep"') && html.includes('data-act="twctl"'));
+  assert.ok(html.includes("PV-Überschuss: Start") && html.includes("vor 2"));
+  assert.ok(html.includes("switch.freigabe → an"), "planned switching is listed");
+});
+
+test("markup in the device name and in the last error is masked", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = { ...twHass, devices: { ...twDevices, tw1: { ...twDevices.tw1 } } };
+  const many = { ...twDevices, tw2: { id: "tw2", name: "Zweite", via_device_id: "central", identifiers: [["proxon_modbus", "e1_twwp_SUB2"]] } };
+  twEntities["water_heater.tw2"] = { entity_id: "water_heater.tw2", platform: "proxon_modbus", device_id: "tw2" };
+  twStates["water_heater.tw2"] = { state: "off", attributes: {}, last_updated: "2026-11-07T11:00:00Z" };
+  panel.hass = { ...twHass, devices: many };
+  const html = await render(panel, () => { panel._tab = "warm"; });
+  assert.ok(html.includes("Warmwasser &lt;TWWP&gt;") && !html.includes("<TWWP>"));
+  assert.ok(html.includes("a &lt;b&gt;") && !html.includes("a <b>"));
+  check(html);
+  delete twEntities["water_heater.tw2"]; delete twStates["water_heater.tw2"];
+});
+
+test("the header shows the program, and the controls call the right services", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = twHass;
+  const html = await render(panel, () => { panel._tab = "overview"; });
+  assert.ok(html.includes('class="hchip m"><ha-icon  icon="mdi:water-boiler"></ha-icon>PV'), "program chip in the header");
+  calls.length = 0;
+  const el = (act, v) => ({ dataset: { act, v } });
+  panel._click({ composedPath: () => [el("twctl", "switch.tw_control")] });
+  await tick();
+  assert.deepEqual(calls[0], ["switch", "toggle", { entity_id: "switch.tw_control" }]);
+  panel._click({ composedPath: () => [el("twstep", "number.tw_pv|1")] });
+  panel._click({ composedPath: () => [el("twstep", "number.tw_pv|1")] });
+  assert.equal(panel._twTarget("number.tw_pv"), 61, "steps add up on the pending target");
+  await new Promise((r) => setTimeout(r, 700));
+  const set = calls.filter((c) => c[1] === "set_value");
+  assert.equal(set.length, 1, "written once");
+  assert.deepEqual(set[0], ["number", "set_value", { entity_id: "number.tw_pv", value: 61 }]);
+});

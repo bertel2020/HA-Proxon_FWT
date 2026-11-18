@@ -1,6 +1,6 @@
 // Panel/card stylesheet; one constructable sheet is shared by all instances.
 export const CSS = `
-  :host([busy]) [data-act]:not([data-act="tab"]):not([data-act="view"]):not([data-act="room"]):not([data-act="rclose"]):not([data-act="noop"]):not([data-act="rstep"]):not([data-act="up"]):not([data-act="down"]) { opacity: .6; pointer-events: none; }
+  :host([busy]) [data-act]:not([data-act="tab"]):not([data-act="view"]):not([data-act="room"]):not([data-act="rclose"]):not([data-act="noop"]):not([data-act="rstep"]):not([data-act="twstep"]):not([data-act="up"]):not([data-act="down"]) { opacity: .6; pointer-events: none; }
 :host { display: block; color: var(--primary-text-color); --pbd: color-mix(in srgb, var(--primary-text-color) 24%, transparent); }
 * { box-sizing: border-box; }
 .ov { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 12px; align-items: start; }
@@ -367,6 +367,22 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .panel .rgrp { display: inline-flex; gap: 2px; padding: 2px; border-radius: 10px; background: var(--secondary-background-color); }
 .panel .rgrp .vbtn { border-color: transparent; background: transparent; }
 .panel .rgrp .vbtn.a { background: var(--card-background-color); box-shadow: 0 1px 3px #0002; }
+.twtk { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.twtank { width: 130px; height: auto; flex: none; }
+.twrows { flex: 1; min-width: 160px; }
+.rows .f, .twctl { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid var(--divider-color); font-size: 13px; }
+.rows .f:first-child { border-top: none; }
+.rows .f > span:first-child { color: var(--secondary-text-color); }
+.twstp { display: inline-flex; align-items: center; gap: 8px; }
+.twstp b { min-width: 46px; text-align: center; font-weight: 500; }
+.twprog { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; background: var(--secondary-background-color); border-radius: 12px; padding: 4px; border: 1px solid var(--pbd); }
+.twprog span { text-align: center; font-size: 12px; padding: 7px 2px; border-radius: 9px; color: var(--secondary-text-color); overflow: hidden; text-overflow: ellipsis; }
+.twprog span.a { background: var(--card-background-color); box-shadow: 0 1px 3px #0002; color: var(--mc, var(--primary-text-color)); font-weight: 600; }
+.twctl { margin-top: 10px; border-top: 1px solid var(--divider-color); }
+.twctl small { display: block; font-size: 12px; color: var(--secondary-text-color); margin-top: 2px; }
+.twreason { font-size: 15px; font-weight: 500; margin-bottom: 8px; }
+.twleg { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; margin-top: 6px; }
+.twname { margin: 4px 0 0; font-size: 15px; font-weight: 500; }
 `;
 
 let SHEET; // one constructable stylesheet shared by every card/panel instead of a <style> per render

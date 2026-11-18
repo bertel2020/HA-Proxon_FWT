@@ -103,6 +103,8 @@ export class InteractionMethods {
         this._bump(id, Number(dir));
         break;
       }
+      case "twstep": { const [id, dir] = v.split("|"); this._twBump(id, Number(dir)); break; }
+      case "twctl": this._write(() => h.callService("switch", "toggle", { entity_id: v })).finally(() => { this._sig = ""; this._update(); }); break;
       case "rptc": call("switch", "toggle", { entity_id: this._d.rooms[Number(v)].ents.ptc_enable }); break;
       case "boost": this._toggleBoost(); break;
       case "boostmin": { const c = this._d.central; if (c.boost) call("proxon_modbus", "start_boost", { entity_id: c.boost, minutes: Number(v) }); break; }

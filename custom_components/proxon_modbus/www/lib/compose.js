@@ -7,6 +7,7 @@ import { ChartsMethods } from "./charts.js";
 import { PanelSectionsMethods } from "./panel-sections.js";
 import { HintsMethods } from "./hints.js";
 import { InteractionMethods } from "./interaction.js";
+import { TwwpSectionsMethods } from "./twwp-sections.js";
 
 function mixin(target, source) {
   for (const key of Object.getOwnPropertyNames(source.prototype)) {
@@ -24,5 +25,6 @@ mixin(ProxonFwtBase, ChartsMethods);
 mixin(ProxonFwtBase, PanelSectionsMethods);
 mixin(ProxonFwtBase, HintsMethods);
 mixin(ProxonFwtBase, InteractionMethods);
+mixin(ProxonFwtBase, TwwpSectionsMethods);
 
 export { ProxonFwtBase };

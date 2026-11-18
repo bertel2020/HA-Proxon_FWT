@@ -65,9 +65,32 @@ roomData.forEach(([name, cur, tgt, co2, rf, ptc], i) => {
   ent(`sensor.${id}_rf`, id, {}, String(rf), { device_class: "humidity" });
 });
 
+// Hot water heat pump (TWWP): device below the central one, its entities, the options the panel reads and a day of history.
+devices.tw1 = { id: "tw1", name: "Trinkwasser-Wärmepumpe", via_device_id: "central", identifiers: [["proxon_modbus", "e1_twwp_SUB1"]] };
+ent("water_heater.tw", "tw1", {}, "pv", { current_temperature: 54.2, temperature: 53 });
+for (const [k, v] of [["normal", 53], ["pv", 60], ["min", 42]]) ent(`number.tw_${k}`, "tw1", { translation_key: `twwp_target_${k}` }, String(v), { min: 20, max: 70, step: 0.5 });
+ent("sensor.tw_program", "tw1", { translation_key: "twwp_program" }, "pv");
+ent("sensor.tw_pv_status", "tw1", { translation_key: "twwp_pv_status" }, "pv");
+ent("sensor.tw_reason", "tw1", { translation_key: "twwp_reason" }, "pv", { control: false, last_run: new Date(Date.now() - 23000).toISOString(), last_error: null });
+ent("sensor.tw_planned", "tw1", { translation_key: "twwp_planned" }, "0", { switches: {} });
+ent("binary_sensor.tw_problem", "tw1", { translation_key: "twwp_sensor_problem" }, "off");
+ent("switch.tw_control", "tw1", { translation_key: "twwp_control" }, "off");
+for (const [id, state, a] of [["sensor.tw_water", "54.2", { unit_of_measurement: "°C" }], ["sensor.tw_outer", "5.2", { unit_of_measurement: "°C" }], ["sensor.tw_pv", "2.5", { unit_of_measurement: "kW" }],
+  ["sensor.tw_power", "389", { unit_of_measurement: "W" }], ["sensor.tw_energy", "5604.6", { unit_of_measurement: "kWh" }], ["switch.freigabe", "on", {}], ["switch.freigabe_pv", "on", {}]]) {
+  states[id] = { state, attributes: a, last_updated: "2026-11-07T11:00:00Z" };
+}
+const twSettings = [{ device_id: "central", twwp: [{ device_id: "tw1", water_temp: "sensor.tw_water", outer_temp: "sensor.tw_outer", pv_power: "sensor.tw_pv",
+  power_entity: "sensor.tw_power", energy_entity: "sensor.tw_energy", enable_switch: "switch.freigabe", enable_pv_switch: "switch.freigabe_pv" }] }];
+const twHistory = () => {
+  const now = Date.now() / 1000, t = (h) => now - h * 3600, water = [], prog = [];
+  [[24, 44], [20, 41], [16, 45], [12, 52], [10, 50], [8, 47], [7, 52], [5, 58], [4, 60], [3, 58], [1, 55], [0, 54.2]].forEach(([h, v]) => water.push({ lu: t(h), s: String(v) }));
+  [[24, "off"], [18, "minimum"], [14, "normal"], [9, "off"], [7, "pv"], [2, "off"]].forEach(([h, s]) => prog.push({ lu: t(h), s }));
+  return { "sensor.tw_water": water, "sensor.tw_program": prog };
+};
+
 const hass = {
   language: "de", entities, states, devices,
-  callWS: async (m) => (m.type === "proxon_modbus/settings" ? [] : m.type === "frontend/get_user_data" ? { value: null } : {}),
+  callWS: async (m) => (m.type === "proxon_modbus/settings" ? twSettings : m.type === "history/history_during_period" && m.entity_ids.includes("sensor.tw_water") ? twHistory() : m.type === "frontend/get_user_data" ? { value: null } : {}),
   callService: async (d, s, x) => { calls.push([d, s, x]); },
 };
 

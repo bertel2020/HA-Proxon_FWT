@@ -476,6 +476,8 @@
             "outer_temp": "Top unit temperature",
             "pv_power": "Current PV power",
             "pv_power_avg": "PV power average (15 min)",
+            "power_entity": "Power of the heat pump (optional)",
+            "energy_entity": "Energy meter of the heat pump (optional)",
             "brightness": "Brightness / twilight sensor (optional)",
             "pv_threshold": "PV threshold",
             "frost_below": "Frost limit",
@@ -490,7 +492,9 @@
             "pv_power_avg": "Both PV powers must be above the threshold.",
             "brightness": "Tells day from night. Without a sensor it is always day and there is no night shutdown.",
             "night_below": "Brightness value below which it is night.",
-            "day_above": "Brightness value above which it is day."
+            "day_above": "Brightness value above which it is day.",
+            "power_entity": "Only shown in the side panel.",
+            "energy_entity": "Only shown in the side panel."
           }
         },
         "reconfigure": {
@@ -504,6 +508,8 @@
             "outer_temp": "Top unit temperature",
             "pv_power": "Current PV power",
             "pv_power_avg": "PV power average (15 min)",
+            "power_entity": "Power of the heat pump (optional)",
+            "energy_entity": "Energy meter of the heat pump (optional)",
             "brightness": "Brightness / twilight sensor (optional)",
             "pv_threshold": "PV threshold",
             "frost_below": "Frost limit",
@@ -518,7 +524,9 @@
             "pv_power_avg": "Both PV powers must be above the threshold.",
             "brightness": "Tells day from night. Without a sensor it is always day and there is no night shutdown.",
             "night_below": "Brightness value below which it is night.",
-            "day_above": "Brightness value above which it is day."
+            "day_above": "Brightness value above which it is day.",
+            "power_entity": "Only shown in the side panel.",
+            "energy_entity": "Only shown in the side panel."
           }
         }
       },
