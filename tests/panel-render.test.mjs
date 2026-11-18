@@ -494,3 +494,37 @@ test("the housing in the main picture is clearly taller than wide, and everythin
   assert.ok(vb && Number(vb[2]) >= h + 10, "the picture is high enough for the housing");
   assert.ok(Number(vb[1]) >= 232 + w, "and wide enough");
 });
+
+test("the lane chart stacks measurements on one time axis, each lane with its own scale, with shared bands, legend and crosshair data", () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = hass;
+  const now = Date.now() / 1000, h = 3600;
+  const pts = (arr) => arr.map(([hh, v]) => [now - hh * h, v]);
+  const deg = (v) => `${Math.round(v)}°`, w = (v) => `${Math.round(v)} W`;
+  const lanes = [
+    { h: 150, axis: true, series: [{ label: "Wasser", color: "#378ADD", pts: pts([[20, 41], [10, 47], [2, 58]]), kind: "line", fmt: deg }], refs: [{ v: 60, label: "Soll PV 60°" }] },
+    { h: 90, axis: false, series: [
+      { label: "PV-Leistung", short: "PV", color: "#f2a516", kind: "area", pts: pts([[20, 0], [10, 3000], [2, 500]]), fmt: w },
+      { label: "Leistung", short: "WP", color: "#185FA5", kind: "line", pts: pts([[20, 0], [10, 400], [2, 0]]), fmt: w, energy: true }] },
+    { h: 56, axis: true, series: [{ label: "Luft", color: "#D85A30", pts: pts([[20, 3], [10, 8], [2, 6]]), kind: "line", fmt: deg }], refs: [{ v: 5, label: "PV-Betrieb ab 5°" }] },
+  ];
+  const phases = [{ iv: [[now - 12 * h, now - 6 * h]], color: "#3fa660", label: "PV-Betrieb", legend: "PV-Betrieb 6 h 0 min" }];
+  const html = panel._laneChart(lanes, { range: "24h", phases });
+  assert.ok(!html.includes("NaN") && !html.includes("undefined"));
+  assert.equal((html.match(/<svg class="ch"/g) || []).length, 1, "one chart");
+  assert.ok(html.includes("Soll PV 60°") && html.includes("PV-Betrieb ab 5°"), "reference lines in their lanes");
+  assert.ok(html.includes("<polygon") && html.includes(">PV</text>") && html.includes(">WP</text>"), "the lane without axis: area plus the names of the two curves");
+  assert.ok(html.includes('fill="#3fa660" opacity=".18"') && html.includes("PV-Betrieb 6 h 0 min"), "phase band through all lanes, legend with the time");
+  assert.ok(html.includes("<b>3.000 W</b>") || html.includes("<b>3000 W</b>"), "max of the PV curve in the table");
+  assert.ok(html.includes("Σ") && html.includes("kWh"), "energy of the power curve");
+  const m = panel._cm, top = m.pt, bottom = m.H - m.pb;
+  assert.equal(m.series.length, 4);
+  for (const s of m.series) {
+    for (const [, v] of s.pts) { const yy = s.y(v); assert.ok(yy >= top - 0.5 && yy <= bottom + 0.5, `${s.label}: ${yy} inside ${top}..${bottom}`); }
+    assert.equal(typeof s.fmt, "function", "each curve brings its own number format for the tooltip");
+  }
+  const [water, pv, power, air] = m.series;
+  assert.ok(Math.max(...water.pts.map((p) => water.y(p[1]))) < Math.min(...air.pts.map((p) => air.y(p[1]))), "the water lane lies above the air lane");
+  assert.ok(pv.y(3000) < pv.y(0) && power.y(400) < power.y(0), "each curve rises with its own scale");
+  assert.ok(Math.abs(pv.y(3000) - (power.y(400))) < 20, "both curves of the unlabelled lane fill the lane height, whatever their units");
+});

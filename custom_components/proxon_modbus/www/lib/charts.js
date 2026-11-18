@@ -3,6 +3,30 @@ import { BLUE, AMBER, CORAL, RANGE_MS } from "./constants.js";
 export class ChartsMethods {
   // ---- history: charts --------------------------------------------------
 
+  // Time labels along the bottom edge for the range; shared by the chart and the lane chart.
+  _timeAxis(o, t0, t1, W, H, x) {
+    const lang = this._hass.language;
+    const ticks = [];
+    if (o.range === "24h") for (let i = 0; i <= 4; i++) ticks.push(t0 + ((t1 - t0) * i) / 4);
+    else {
+      if (o.range === "1y") {
+        const every = W < 420 ? 2 : 1;
+        const dd = new Date(t0 * 1000); dd.setDate(1); dd.setHours(0, 0, 0, 0); dd.setMonth(dd.getMonth() + 1);
+        for (; dd.getTime() / 1000 <= t1; dd.setMonth(dd.getMonth() + every)) ticks.push(dd.getTime() / 1000);
+      } else {
+        const every = o.range === "7d" ? 1 : W < 420 ? 10 : 5;
+        const dd = new Date(t0 * 1000); dd.setHours(24, 0, 0, 0);
+        for (; dd.getTime() / 1000 <= t1; dd.setDate(dd.getDate() + every)) ticks.push(dd.getTime() / 1000);
+      }
+    }
+    const tl = (t) => o.range === "24h" ? new Date(t * 1000).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })
+      : o.range === "7d" ? new Date(t * 1000).toLocaleDateString(lang, { weekday: "short" })
+        : o.range === "1y" ? new Date(t * 1000).toLocaleDateString(lang, { month: "short" })
+        : new Date(t * 1000).toLocaleDateString(lang, { day: "2-digit", month: "2-digit" });
+    const xt = ticks.map((t) => `<text class="st" x="${x(t).toFixed(1)}" y="${H - 5}" text-anchor="${x(t) > W - 24 ? "end" : "middle"}" style="font-size:11px">${tl(t)}</text>`).join("");
+    return xt;
+  }
+
   _chart(series, o) {
     const W = Math.max(300, (this.clientWidth || 680) - 80), H = 190, pl = 42, pr = 10, pt = 10, pb = 22;
     const lang = this._hass.language;
@@ -22,24 +46,7 @@ export class ChartsMethods {
       grid += `<line x1="${pl}" x2="${W - pr}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
         <text class="st" x="${pl - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${v.toLocaleString(lang, { minimumFractionDigits: dec, maximumFractionDigits: dec })}</text>`;
     }
-    const ticks = [];
-    if (o.range === "24h") for (let i = 0; i <= 4; i++) ticks.push(t0 + ((t1 - t0) * i) / 4);
-    else {
-      if (o.range === "1y") {
-        const every = W < 420 ? 2 : 1;
-        const dd = new Date(t0 * 1000); dd.setDate(1); dd.setHours(0, 0, 0, 0); dd.setMonth(dd.getMonth() + 1);
-        for (; dd.getTime() / 1000 <= t1; dd.setMonth(dd.getMonth() + every)) ticks.push(dd.getTime() / 1000);
-      } else {
-        const every = o.range === "7d" ? 1 : W < 420 ? 10 : 5;
-        const dd = new Date(t0 * 1000); dd.setHours(24, 0, 0, 0);
-        for (; dd.getTime() / 1000 <= t1; dd.setDate(dd.getDate() + every)) ticks.push(dd.getTime() / 1000);
-      }
-    }
-    const tl = (t) => o.range === "24h" ? new Date(t * 1000).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })
-      : o.range === "7d" ? new Date(t * 1000).toLocaleDateString(lang, { weekday: "short" })
-        : o.range === "1y" ? new Date(t * 1000).toLocaleDateString(lang, { month: "short" })
-        : new Date(t * 1000).toLocaleDateString(lang, { day: "2-digit", month: "2-digit" });
-    const xt = ticks.map((t) => `<text class="st" x="${x(t).toFixed(1)}" y="${H - 5}" text-anchor="${x(t) > W - 24 ? "end" : "middle"}" style="font-size:11px">${tl(t)}</text>`).join("");
+    const xt = this._timeAxis(o, t0, t1, W, H, x);
     const bands = o.bands ? ((this._hp() || {}).iv || []).map(([a, b]) => {
       const s0 = Math.max(a, t0), s1 = Math.min(b, t1);
       return s1 > s0 ? `<rect x="${x(s0).toFixed(1)}" y="${pt}" width="${Math.max(1, x(s1) - x(s0)).toFixed(1)}" height="${H - pt - pb}" fill="#3fa660" opacity=".14"/>` : "";
@@ -80,6 +87,81 @@ export class ChartsMethods {
       <rect class="ov" x="${pl}" y="${pt}" width="${W - pl - pr}" height="${H - pt - pb}" fill="transparent"/></svg><div class="tip" style="display:none"></div></div>
       <div class="legend">${legend}${(o.phases || []).filter((ph) => ph.iv.length && !ph.noLegend).map((ph) => `<span><i style="background:${ph.color};opacity:.5"></i>${ph.legend || ph.label}</span>`).join("")}${showBands ? `<span><i style="background:#3fa660;opacity:.4"></i>${this._t("hp_runs")}</span>` : ""}${o.bypass && o.bypass.length ? `<span><i style="background:${BLUE};opacity:.4"></i>${this._t("bypass_open")}</span>` : ""}</div>
       <div class="hsts" style="--c:${o.energy ? 4 : 3}">${statHead}${statRows}</div>`;
+  }
+
+  // Several measurements one below the other (lanes) on one shared time axis, one crosshair and one tooltip.
+  // lanes: [{ h, axis, series: [{ label, short, color, pts, kind: "line" | "area", fmt, energy }], refs }]. A lane with an axis has a
+  // common scale with grid and numbers; a lane without one gives each curve a scale of its own (told apart by colour and name only).
+  _laneChart(lanes, o) {
+    const W = Math.max(300, (this.clientWidth || 680) - 80), pl = 42, pr = 10, pt = 8, pb = 22, gap = 8, lang = this._hass.language;
+    const t1 = Date.now() / 1000, t0 = t1 - RANGE_MS[o.range] / 1000;
+    const x = (t) => pl + ((t - t0) / (t1 - t0)) * (W - pl - pr);
+    const plot = lanes.reduce((n, l) => n + l.h, 0) + gap * (lanes.length - 1), H = pt + plot + pb;
+    const nf = (v) => v.toLocaleString(lang, { maximumFractionDigits: Math.abs(v) < 100 ? 1 : 0 });
+    let top = pt, grid = "", body = "", sep = "";
+    const flat = [];
+    lanes.forEach((lane, li) => {
+      const lt = top, bot = top + lane.h, all = lane.series.filter((s) => s.pts.length); // lt: the top of this lane, kept for the scale functions
+      if (li) sep += `<line x1="${pl}" x2="${W - pr}" y1="${(top - gap / 2).toFixed(1)}" y2="${(top - gap / 2).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".8"/>`;
+      let ys = null;
+      if (lane.axis) {
+        const vals = all.flatMap((s) => s.pts.map((p) => p[1])).concat((lane.refs || []).map((r) => r.v));
+        const mn = Math.min(...vals), mx = Math.max(...vals), raw = Math.max(1e-6, mx - mn) / (lane.h > 100 ? 3 : 2), p10 = 10 ** Math.floor(Math.log10(raw)), f = raw / p10;
+        const step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p10;
+        let lo = Math.floor(mn / step) * step, hi = Math.ceil(mx / step) * step;
+        if (hi - lo < step * 2) hi = lo + step * 2;
+        ys = (v) => lt + (1 - (v - lo) / (hi - lo)) * lane.h;
+        const dec = step < 1 ? 1 : 0;
+        for (let v = lo; v <= hi + step / 2; v += step) {
+          grid += `<line x1="${pl}" x2="${W - pr}" y1="${ys(v).toFixed(1)}" y2="${ys(v).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
+            <text class="st" x="${pl - 6}" y="${(ys(v) + 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${v.toLocaleString(lang, { minimumFractionDigits: dec, maximumFractionDigits: dec })}</text>`;
+        }
+        grid += (lane.refs || []).map((r) => `<line x1="${pl}" x2="${W - pr}" y1="${ys(r.v).toFixed(1)}" y2="${ys(r.v).toFixed(1)}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="4 4" opacity=".75"/>
+          <text class="st" x="${W - pr - 2}" y="${(ys(r.v) - 4 < lt + 9 ? ys(r.v) + 13 : ys(r.v) - 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${r.label}</text>`).join("");
+        lane.y = ys;
+      } else {
+        grid += `<line x1="${pl}" x2="${W - pr}" y1="${bot.toFixed(1)}" y2="${bot.toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>`;
+      }
+      all.forEach((s, k) => {
+        let y = ys;
+        if (!y) { // its own scale: from zero to a little above its own maximum
+          const mx = Math.max(1e-6, ...s.pts.map((p) => p[1])) * 1.12;
+          y = (v) => bot - (Math.max(0, v) / mx) * lane.h;
+          if (s.short) grid += `<text class="st" x="${pl - 6}" y="${(bot - 4 - k * 13).toFixed(1)}" text-anchor="end" style="font-size:11px;fill:${s.color}">${s.short}</text>`;
+        }
+        const pts = s.pts.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+        if (s.kind === "area" && s.pts.length > 1) {
+          body += `<polygon points="${x(s.pts[0][0]).toFixed(1)},${bot.toFixed(1)} ${pts} ${x(s.pts[s.pts.length - 1][0]).toFixed(1)},${bot.toFixed(1)}" fill="${s.color}" opacity=".35"/>`;
+        }
+        body += `<polyline fill="none" stroke="${s.color}" stroke-width="${s.kind === "area" ? 1.2 : 1.8}" stroke-linejoin="round" points="${pts}"/>`;
+        flat.push({ ...s, y });
+      });
+      top = bot + gap;
+    });
+    const phaseBands = (o.phases || []).map((ph) => ph.iv.map(([a, b]) => {
+      const s0 = Math.max(a, t0), s1 = Math.min(b, t1);
+      return s1 > s0 ? `<rect x="${x(s0).toFixed(1)}" y="${pt}" width="${Math.max(1, x(s1) - x(s0)).toFixed(1)}" height="${plot}" fill="${ph.color}" opacity=".18"/>` : "";
+    }).join("")).join("");
+    const legend = (o.phases || []).filter((ph) => ph.iv.length && !ph.noLegend).map((ph) => `<span><i style="background:${ph.color};opacity:.5"></i>${ph.legend || ph.label}</span>`).join("");
+    // min / max / mean per curve; the energy as the integral of a power curve
+    const extra = flat.some((s) => s.energy);
+    const rows = flat.map((s) => {
+      const v = s.pts.map((p) => p[1]);
+      let kwh = "";
+      if (extra) {
+        let wh = 0;
+        if (s.energy) for (let i = 1; i < s.pts.length; i++) wh += ((s.pts[i][1] + s.pts[i - 1][1]) / 2) * ((s.pts[i][0] - s.pts[i - 1][0]) / 3600);
+        kwh = `<span class="v">${s.energy ? `<b>${nf(wh / 1000)}</b> kWh` : ""}</span>`;
+      }
+      return `<div class="hst"><span class="n"><i style="background:${s.color}"></i>${s.label}</span><span class="v"><b>${s.fmt(Math.min(...v))}</b></span><span class="v"><b>${s.fmt(Math.max(...v))}</b></span><span class="v"><b>${s.fmt(v.reduce((a, b) => a + b, 0) / v.length)}</b></span>${kwh}</div>`;
+    }).join("");
+    const head = rows ? `<div class="hst hh"><span class="n"></span><span class="v">${this._t("st_min")}</span><span class="v">${this._t("st_max")}</span><span class="v">Ø</span>${extra ? '<span class="v">Σ</span>' : ""}</div>` : "";
+    this._cm = { W, H, pl, pr, pt, pb, t0, t1, lo: 0, hi: 0, series: flat, unit: "", range: o.range, x, y: (lanes[0] && lanes[0].y) || (() => pt), phases: o.phases || [] };
+    return `<div class="chw"><svg class="ch" style="max-width:100%;height:auto;touch-action:pan-y" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("history")}">
+      ${phaseBands}${grid}${sep}${body}${this._timeAxis(o, t0, t1, W, H, x)}<line class="xl" y1="${pt}" y2="${H - pb}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/><g class="xd"></g>
+      <rect class="ov" x="${pl}" y="${pt}" width="${W - pl - pr}" height="${plot}" fill="transparent"/></svg><div class="tip" style="display:none"></div></div>
+      <div class="legend">${legend}</div>
+      <div class="hsts" style="--c:${extra ? 4 : 3}">${head}${rows}</div>`;
   }
 
   // Hover / touch tooltip for bar charts and sparklines: elements with data-tip="title|value".
@@ -127,13 +209,13 @@ export class ChartsMethods {
       if (!rows.length) return hide();
       const fx = m.x(rows[0].p[0]);
       xl.setAttribute("x1", fx); xl.setAttribute("x2", fx); xl.style.display = "";
-      xd.innerHTML = rows.map(({ s, p }) => `<circle cx="${fx}" cy="${m.y(p[1])}" r="3.5" fill="${s.color}" stroke="var(--card-background-color)" stroke-width="1.5"/>`).join("");
+      xd.innerHTML = rows.map(({ s, p }) => `<circle cx="${fx}" cy="${(s.y || m.y)(p[1])}" r="3.5" fill="${s.color}" stroke="var(--card-background-color)" stroke-width="1.5"/>`).join("");
       const when = new Date(rows[0].p[0] * 1000);
       const wl = m.range === "24h" ? when.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })
         : m.range === "1y" ? when.toLocaleDateString(lang, { day: "2-digit", month: "2-digit", year: "numeric" })
           : when.toLocaleString(lang, { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
       const phase = (m.phases || []).find((ph) => ph.iv.some(([a, b]) => t >= a && t <= b));
-      tip.innerHTML = `<b>${wl}</b>${rows.map(({ s, p }) => `<div><i style="background:${s.color}"></i>${s.label} <b>${p[1].toLocaleString(lang, { maximumFractionDigits: 1 })}${m.unit}</b></div>`).join("")}${phase ? `<div><i style="background:${phase.color};opacity:.6"></i>${phase.label}</div>` : ""}`;
+      tip.innerHTML = `<b>${wl}</b>${rows.map(({ s, p }) => `<div><i style="background:${s.color}"></i>${s.label} <b>${s.fmt ? s.fmt(p[1]) : `${p[1].toLocaleString(lang, { maximumFractionDigits: 1 })}${m.unit}`}</b></div>`).join("")}${phase ? `<div><i style="background:${phase.color};opacity:.6"></i>${phase.label}</div>` : ""}`;
       tip.style.display = "block";
       const left = (fx / m.W) * r.width;
       tip.style.left = `${Math.max(0, Math.min(r.width - tip.offsetWidth, left + 12))}px`;
