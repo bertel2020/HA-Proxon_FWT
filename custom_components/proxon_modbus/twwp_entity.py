@@ -252,9 +252,10 @@ class TwwpSensorProblem(TwwpEntity, BinarySensorEntity):
 
 
 class TwwpRunningSensor(TwwpEntity, BinarySensorEntity):
-    """On while the heat pump draws power: whether it really runs, not only whether it is enabled."""
+    """On while the heat pump draws power: whether it really heats, not only whether it is enabled."""
 
-    _attr_device_class = BinarySensorDeviceClass.RUNNING
+    # No device class: "running" would show "Läuft" next to the name; "Heizt: Ein/Aus" reads better.
+    _attr_icon = "mdi:heat-wave"
     _attr_translation_key = "twwp_running"
 
     def __init__(self, entry, subentry, controller, power_entity: str) -> None:
