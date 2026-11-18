@@ -139,3 +139,39 @@ def test_parse_float_and_build_input(twwp_pure):
     assert parse("abc") is None and parse("nan") is None and parse("inf") is None
     inp = twwp_pure.build_input(lambda e: None, {"water_temp": "sensor.w"}, "off", twwp_pure.DEFAULT_TARGETS)
     assert inp.water is None and inp.has_brightness is False and inp.pv_threshold == 1500.0
+
+
+def test_control_can_be_switched_at_runtime(twwp_controller):
+    ctl, home = make(twwp_controller)
+    assert ctl.control is False
+    asyncio.run(ctl.async_run())
+    assert home.calls == []  # observing
+    asyncio.run(ctl.async_set_control(True))  # decides again right away and now switches
+    assert ctl.control is True
+    assert home.calls == [("switch.freigabe", "on"), ("switch.freigabe_pv", "on")]
+    asyncio.run(ctl.async_set_control(False))
+    assert ctl.control is False
+
+
+def test_control_is_saved_and_restored(twwp_controller):
+    store = FakeStore()
+    ctl, _ = make(twwp_controller, store=store)
+    asyncio.run(ctl.async_set_control(True))
+    assert store.saved[-1]["control"] is True
+
+    other, _ = make(twwp_controller, store=store)
+    store.data = store.saved[-1]
+    asyncio.run(other.async_load())
+    assert other.control is True
+
+    store.data = {"control": "yes"}  # not a bool: ignored, the config value stays
+    third, _ = make(twwp_controller, {"control": False}, store=store)
+    asyncio.run(third.async_load())
+    assert third.control is False
+
+
+def test_switches_lists_configured_enables(twwp_controller):
+    ctl, _ = make(twwp_controller)
+    assert ctl.switches == ["switch.freigabe", "switch.freigabe_pv"]
+    ctl, _ = make(twwp_controller, {"enable_pv_switch": None})
+    assert ctl.switches == ["switch.freigabe"]

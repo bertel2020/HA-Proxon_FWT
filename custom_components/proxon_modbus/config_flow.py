@@ -77,7 +77,6 @@ from .const import (
 )
 from .twwp import (
     CONF_BRIGHTNESS,
-    CONF_CONTROL,
     CONF_DAY_ABOVE,
     CONF_ENABLE_PV_SWITCH,
     CONF_ENABLE_SWITCH,
@@ -750,34 +749,17 @@ def _twwp_schema() -> vol.Schema:
             vol.Required(CONF_PV_MIN_OUTER, default=DEFAULT_PV_MIN_OUTER): number(-20, 30, 0.5, "°C"),
             vol.Required(CONF_NIGHT_BELOW, default=DEFAULT_NIGHT_BELOW): number(0, 100000, 1),
             vol.Required(CONF_DAY_ABOVE, default=DEFAULT_DAY_ABOVE): number(0, 100000, 1),
-            vol.Required(CONF_CONTROL, default=False): bool,
         }
     )
-
-
-def _active_automations(hass: HomeAssistant, entity_ids: list[str]) -> list[str]:
-    """Names of active automations that mention one of the entities (they would switch them too)."""
-    from homeassistant.components.automation import automations_with_entity
-
-    found: set[str] = set()
-    for entity_id in entity_ids:
-        for automation_id in automations_with_entity(hass, entity_id):
-            state = hass.states.get(automation_id)
-            if state is not None and state.state == "on":
-                found.add(state.name)
-    return sorted(found)
 
 
 class TwwpSubentryFlow(ConfigSubentryFlow):
     """Add or change a hot water heat pump (TWWP).
 
     The heat pump is not a Modbus device: its enable switches and sensors belong
-    to other integrations and are chosen here. While `control` is off the
-    controller only observes and reports what it would switch.
+    to other integrations and are chosen here. The controller starts in observe
+    mode; the "control" switch of the device lets it take over.
     """
-
-    def __init__(self) -> None:
-        self._confirmed: dict[str, Any] | None = None
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -792,29 +774,17 @@ class TwwpSubentryFlow(ConfigSubentryFlow):
     async def _async_step_form(
         self, step_id: str, user_input: dict[str, Any] | None
     ) -> SubentryFlowResult:
-        errors: dict[str, str] = {}
-        placeholders = {"automations": ""}
         if user_input is not None:
-            if user_input.get(CONF_CONTROL):
-                switches = [user_input[CONF_ENABLE_SWITCH], user_input[CONF_ENABLE_PV_SWITCH]]
-                automations = _active_automations(self.hass, switches)
-                # Two controllers on the same switches would overwrite each other every
-                # minute. Warn once; submitting the same form again goes through.
-                if automations and self._confirmed != user_input:
-                    self._confirmed = dict(user_input)
-                    errors["base"] = "parallel_automation"
-                    placeholders["automations"] = ", ".join(automations)
-            if not errors:
-                data = dict(user_input)
-                title = data.get(CONF_TWWP_NAME) or DEFAULT_TWWP_NAME
-                if self.source == SOURCE_RECONFIGURE:
-                    return self.async_update_and_abort(
-                        self._get_entry(),
-                        self._get_reconfigure_subentry(),
-                        title=title,
-                        data=data,
-                    )
-                return self.async_create_entry(title=title, data=data)
+            data = dict(user_input)
+            title = data.get(CONF_TWWP_NAME) or DEFAULT_TWWP_NAME
+            if self.source == SOURCE_RECONFIGURE:
+                return self.async_update_and_abort(
+                    self._get_entry(),
+                    self._get_reconfigure_subentry(),
+                    title=title,
+                    data=data,
+                )
+            return self.async_create_entry(title=title, data=data)
 
         schema = _twwp_schema()
         suggested = user_input
@@ -823,6 +793,4 @@ class TwwpSubentryFlow(ConfigSubentryFlow):
         return self.async_show_form(
             step_id=step_id,
             data_schema=self.add_suggested_values_to_schema(schema, suggested),
-            errors=errors,
-            description_placeholders=placeholders,
         )

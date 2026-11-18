@@ -44,6 +44,7 @@ class Store(Protocol):
 class TwwpState:
     """What the entities show."""
 
+    control: bool = False
     water: float | None = None
     program: str = PROGRAM_OFF
     pv_status: str = PV_NONE
@@ -73,11 +74,23 @@ class TwwpController:
         self._clock = clock
         self._lock = asyncio.Lock()
         self._listeners: list[Callable[[], None]] = []
-        self.state = TwwpState()
+        # The setup form no longer asks for it; a value in the config is only the starting point.
+        self.state = TwwpState(control=bool(config.get(CONF_CONTROL, False)))
 
     @property
     def control(self) -> bool:
-        return bool(self._config.get(CONF_CONTROL, False))
+        """True: the controller switches. False: it only observes and reports."""
+        return self.state.control
+
+    async def async_set_control(self, on: bool) -> None:
+        """Switch between observing and controlling, and decide again right away."""
+        self.state.control = bool(on)
+        await self.async_run()
+
+    @property
+    def switches(self) -> list[str]:
+        """The enable switches this controller operates."""
+        return [e for e in (self._config.get(CONF_ENABLE_SWITCH), self._config.get(CONF_ENABLE_PV_SWITCH)) if e]
 
     def add_listener(self, listener: Callable[[], None]) -> Callable[[], None]:
         self._listeners.append(listener)
@@ -92,6 +105,8 @@ class TwwpController:
         data = await self._store.async_load()
         if not isinstance(data, dict):
             return
+        if isinstance(data.get("control"), bool):
+            self.state.control = data["control"]
         if data.get("program") in PROGRAMS:
             self.state.program = data["program"]
         if data.get("pv_status") in PV_STATES:
@@ -106,6 +121,7 @@ class TwwpController:
     async def _async_save(self) -> None:
         await self._store.async_save(
             {
+                "control": self.state.control,
                 "program": self.state.program,
                 "pv_status": self.state.pv_status,
                 "targets": self.state.targets,

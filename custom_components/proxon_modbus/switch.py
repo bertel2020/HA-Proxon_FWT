@@ -17,6 +17,7 @@ from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import dt as dt_util
 
 from . import ProxonConfigEntry
+from .twwp_entity import twwp_switches
 from .const import (
     FAN_STAGE_OPTIONS,
     CONF_COOLING_AVAILABLE,
@@ -126,6 +127,8 @@ async def async_setup_entry(
         )
 
     async_add_entities(entities)
+    for subentry_id, twwp_entities in twwp_switches(entry):
+        async_add_entities(twwp_entities, config_subentry_id=subentry_id)
 
     entity_platform.async_get_current_platform().async_register_entity_service(
         "start_boost",

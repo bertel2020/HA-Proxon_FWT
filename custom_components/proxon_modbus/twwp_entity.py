@@ -11,9 +11,12 @@ from collections.abc import Iterator
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
 from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberMode
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.components.switch import SwitchEntity
 from homeassistant.components.water_heater import WaterHeaterEntity, WaterHeaterEntityFeature
 from homeassistant.config_entries import ConfigEntry, ConfigSubentry
 from homeassistant.const import ATTR_TEMPERATURE, EntityCategory, UnitOfTemperature
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity
 from homeassistant.util import dt as dt_util
@@ -216,6 +219,55 @@ class TwwpSensorProblem(TwwpEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         return self._controller.state.reason == REASON_SENSOR_UNAVAILABLE
+
+
+def _active_automations(hass: HomeAssistant, entity_ids: list[str]) -> list[str]:
+    """Names of active automations that mention one of the entities (they would switch them too)."""
+    from homeassistant.components.automation import automations_with_entity
+
+    found: set[str] = set()
+    for entity_id in entity_ids:
+        for automation_id in automations_with_entity(hass, entity_id):
+            state = hass.states.get(automation_id)
+            if state is not None and state.state == "on":
+                found.add(state.name)
+    return sorted(found)
+
+
+class TwwpControlSwitch(TwwpEntity, SwitchEntity):
+    """Off: the controller only observes. On: it switches the enable switches.
+
+    Turning it on is refused while an active automation (or blueprint) also
+    uses the enable switches, because two controllers would overwrite each other.
+    """
+
+    _attr_translation_key = "twwp_control"
+    _attr_icon = "mdi:robot"
+
+    def __init__(self, entry, subentry, controller) -> None:
+        super().__init__(entry, subentry, controller, "control")
+
+    @property
+    def is_on(self) -> bool:
+        return self._controller.control
+
+    async def async_turn_on(self, **kwargs) -> None:
+        automations = _active_automations(self.hass, self._controller.switches)
+        if automations:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="twwp_parallel_automation",
+                translation_placeholders={"automations": ", ".join(automations)},
+            )
+        await self._controller.async_set_control(True)
+
+    async def async_turn_off(self, **kwargs) -> None:
+        await self._controller.async_set_control(False)
+
+
+def twwp_switches(entry: ConfigEntry) -> Iterator[tuple[str, list]]:
+    for subentry, controller in twwp_subentries(entry):
+        yield subentry.subentry_id, [TwwpControlSwitch(entry, subentry, controller)]
 
 
 def twwp_sensors(entry: ConfigEntry) -> Iterator[tuple[str, list]]:

@@ -367,7 +367,8 @@
       "fan_stage_restore": { "name": "Restore fan stage after heat pump" },
       "fan_auto": { "name": "Fan auto mode" },
       "fan_intensive": { "name": "Intensive ventilation" },
-      "ptc_enable": { "name": "PTC element enabled" }
+      "ptc_enable": { "name": "PTC element enabled" },
+      "twwp_control": {"name": "Control heat pump"}
     },
     "button": {
       "filter_changed": { "name": "Filter changed" }
@@ -453,7 +454,8 @@
     "boost_unavailable": {"message": "Boost ventilation is not available in the current operating mode"},
     "change_not_allowed": {"message": "The unit currently does not allow this change ({flag})"},
     "ptc_unknown": {"message": "PTC enable state could not be read; try again shortly"},
-    "boost_wrong_switch": {"message": "start_boost only works on the boost ventilation switch"}
+    "boost_wrong_switch": {"message": "start_boost only works on the boost ventilation switch"},
+    "twwp_parallel_automation": {"message": "These active automations also use the enable switches: {automations}. Turn them off first."}
   },
   "config_subentries": {
     "twwp": {
@@ -465,7 +467,7 @@
       "step": {
         "user": {
           "title": "Hot water heat pump",
-          "description": "Controls the enable of a hot water heat pump by tank temperature, PV surplus and time of day. The heat pump is not a Modbus device: choose the switches and sensors of your own setup. Do not let an automation or blueprint switch the same enable switches while \"Switch the heat pump\" is on.",
+          "description": "Controls the enable of a hot water heat pump by tank temperature, PV surplus and time of day. The heat pump is not a Modbus device: choose the switches and sensors of your own setup. The controller starts in observe mode; the switch on the device lets it take over.",
           "data": {
             "name": "Name",
             "enable_switch": "Enable switch",
@@ -479,8 +481,7 @@
             "frost_below": "Frost limit",
             "pv_min_outer": "Minimum temperature for PV mode",
             "night_below": "Night below",
-            "day_above": "Day above",
-            "control": "Switch the heat pump (otherwise observe only)"
+            "day_above": "Day above"
           },
           "data_description": {
             "enable_switch": "Enable of the normal mode.",
@@ -489,13 +490,12 @@
             "pv_power_avg": "Both PV powers must be above the threshold.",
             "brightness": "Tells day from night. Without a sensor it is always day and there is no night shutdown.",
             "night_below": "Brightness value below which it is night.",
-            "day_above": "Brightness value above which it is day.",
-            "control": "Off: the controller only reports what it would switch (for comparing with an existing automation). On: it switches the two enable switches."
+            "day_above": "Brightness value above which it is day."
           }
         },
         "reconfigure": {
           "title": "Hot water heat pump",
-          "description": "Controls the enable of a hot water heat pump by tank temperature, PV surplus and time of day. The heat pump is not a Modbus device: choose the switches and sensors of your own setup. Do not let an automation or blueprint switch the same enable switches while \"Switch the heat pump\" is on.",
+          "description": "Controls the enable of a hot water heat pump by tank temperature, PV surplus and time of day. The heat pump is not a Modbus device: choose the switches and sensors of your own setup. The controller starts in observe mode; the switch on the device lets it take over.",
           "data": {
             "name": "Name",
             "enable_switch": "Enable switch",
@@ -509,8 +509,7 @@
             "frost_below": "Frost limit",
             "pv_min_outer": "Minimum temperature for PV mode",
             "night_below": "Night below",
-            "day_above": "Day above",
-            "control": "Switch the heat pump (otherwise observe only)"
+            "day_above": "Day above"
           },
           "data_description": {
             "enable_switch": "Enable of the normal mode.",
@@ -519,13 +518,9 @@
             "pv_power_avg": "Both PV powers must be above the threshold.",
             "brightness": "Tells day from night. Without a sensor it is always day and there is no night shutdown.",
             "night_below": "Brightness value below which it is night.",
-            "day_above": "Brightness value above which it is day.",
-            "control": "Off: the controller only reports what it would switch (for comparing with an existing automation). On: it switches the two enable switches."
+            "day_above": "Brightness value above which it is day."
           }
         }
-      },
-      "error": {
-        "parallel_automation": "These active automations also use the enable switches: {automations}. Turn them off first, or submit again to continue anyway."
       },
       "abort": {
         "reconfigure_successful": "The settings were updated."
