@@ -233,7 +233,7 @@ export class TwwpSectionsMethods {
       level = x(v) - lastX < 90 ? 1 - level : 0; lastX = x(v);
       return `<line x1="${x(v).toFixed(1)}" x2="${x(v).toFixed(1)}" y1="${level ? 16 : 31}" y2="52" stroke="var(--primary-text-color)" stroke-width="1.4"/><text x="${x(v).toFixed(1)}" y="${level ? 12 : 27}" text-anchor="middle" font-size="12" font-weight="500" fill="var(--primary-text-color)">${l}</text>`;
     }).join("");
-    const ticks = [30, 40, 50, 60, 65].map((v) => `<text x="${x(v).toFixed(1)}" y="76" text-anchor="middle" font-size="10" fill="var(--secondary-text-color)">${v}</text>`).join("");
+    const ticks = [30, 40, 50, 60, 65].map((v) => `<text x="${x(v).toFixed(1)}" y="76" text-anchor="middle" font-size="12" fill="var(--secondary-text-color)">${v}</text>`).join("");
     const right = w !== null && x(w) > W - 120;
     const pointer = w === null ? "" : `<path d="M${x(w).toFixed(1)} 50 L${(x(w) - 6).toFixed(1)} 60 L${(x(w) + 6).toFixed(1)} 60 Z" fill="${CORAL}"/><text x="${(x(w) + (right ? -10 : 10)).toFixed(1)}" y="62" text-anchor="${right ? "end" : "start"}" font-size="12" font-weight="500" fill="var(--primary-text-color)">${this._t("tw_now", this._fmt(w))}</text>`;
     const f = (v) => this._fmt(v, v % 1 ? 1 : 0);

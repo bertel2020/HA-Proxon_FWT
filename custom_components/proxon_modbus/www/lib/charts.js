@@ -23,7 +23,7 @@ export class ChartsMethods {
       : o.range === "7d" ? new Date(t * 1000).toLocaleDateString(lang, { weekday: "short" })
         : o.range === "1y" ? new Date(t * 1000).toLocaleDateString(lang, { month: "short" })
         : new Date(t * 1000).toLocaleDateString(lang, { day: "2-digit", month: "2-digit" });
-    const xt = ticks.map((t) => `<text class="st" x="${x(t).toFixed(1)}" y="${H - 5}" text-anchor="${x(t) > W - 24 ? "end" : "middle"}" style="font-size:11px">${tl(t)}</text>`).join("");
+    const xt = ticks.map((t) => `<text class="st" x="${x(t).toFixed(1)}" y="${H - 5}" text-anchor="${x(t) > W - 24 ? "end" : "middle"}" style="font-size:12px">${tl(t)}</text>`).join("");
     return xt;
   }
 
@@ -44,7 +44,7 @@ export class ChartsMethods {
     let grid = "";
     for (let v = lo; v <= hi + step / 2; v += step) {
       grid += `<line x1="${pl}" x2="${W - pr}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
-        <text class="st" x="${pl - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${v.toLocaleString(lang, { minimumFractionDigits: dec, maximumFractionDigits: dec })}</text>`;
+        <text class="st" x="${pl - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end" style="font-size:12px">${v.toLocaleString(lang, { minimumFractionDigits: dec, maximumFractionDigits: dec })}</text>`;
     }
     const xt = this._timeAxis(o, t0, t1, W, H, x);
     const bands = o.bands ? ((this._hp() || {}).iv || []).map(([a, b]) => {
@@ -63,7 +63,7 @@ export class ChartsMethods {
     // Reference lines (o.refs: [{ v, label }]), for example targets, dashed with their label at the right edge.
     // The label sits above its line, or below it when the line is at the top edge (it would be cut off there).
     const refLines = (o.refs || []).map((r) => `<line x1="${pl}" x2="${W - pr}" y1="${y(r.v).toFixed(1)}" y2="${y(r.v).toFixed(1)}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="4 4" opacity=".75"/>
-      <text class="st" x="${W - pr - 2}" y="${(y(r.v) - 4 < pt + 9 ? y(r.v) + 13 : y(r.v) - 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${r.label}</text>`).join("");
+      <text class="st" x="${W - pr - 2}" y="${(y(r.v) - 4 < pt + 9 ? y(r.v) + 13 : y(r.v) - 4).toFixed(1)}" text-anchor="end" style="font-size:12px">${r.label}</text>`).join("");
     const lines = series.map((s) => `<polyline fill="none" stroke="${s.color}" stroke-width="${s.prev ? 1.4 : 1.8}" ${s.prev ? 'stroke-dasharray="5 4" opacity=".55"' : ""} stroke-linejoin="round" points="${s.pts.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>`).join("");
     // curves with their own stat row are named there; the legend keeps only the rest (previous period, bands)
     const legend = series.filter((s) => s.prev || !s.pts.length).map((s) => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join("");
@@ -114,10 +114,10 @@ export class ChartsMethods {
         const dec = step < 1 ? 1 : 0;
         for (let v = lo; v <= hi + step / 2; v += step) {
           grid += `<line x1="${pl}" x2="${W - pr}" y1="${ys(v).toFixed(1)}" y2="${ys(v).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
-            <text class="st" x="${pl - 6}" y="${(ys(v) + 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${v.toLocaleString(lang, { minimumFractionDigits: dec, maximumFractionDigits: dec })}</text>`;
+            <text class="st" x="${pl - 6}" y="${(ys(v) + 4).toFixed(1)}" text-anchor="end" style="font-size:12px">${v.toLocaleString(lang, { minimumFractionDigits: dec, maximumFractionDigits: dec })}</text>`;
         }
         grid += (lane.refs || []).map((r) => `<line x1="${pl}" x2="${W - pr}" y1="${ys(r.v).toFixed(1)}" y2="${ys(r.v).toFixed(1)}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="4 4" opacity=".75"/>
-          <text class="st" x="${W - pr - 2}" y="${(ys(r.v) - 4 < lt + 9 ? ys(r.v) + 13 : ys(r.v) - 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${r.label}</text>`).join("");
+          <text class="st" x="${W - pr - 2}" y="${(ys(r.v) - 4 < lt + 9 ? ys(r.v) + 13 : ys(r.v) - 4).toFixed(1)}" text-anchor="end" style="font-size:12px">${r.label}</text>`).join("");
         lane.y = ys;
       } else {
         grid += `<line x1="${pl}" x2="${W - pr}" y1="${bot.toFixed(1)}" y2="${bot.toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>`;
@@ -127,7 +127,7 @@ export class ChartsMethods {
         if (!y) { // its own scale: from zero to a little above its own maximum
           const mx = Math.max(1e-6, ...s.pts.map((p) => p[1])) * 1.12;
           y = (v) => bot - (Math.max(0, v) / mx) * lane.h;
-          if (s.short) grid += `<text class="st" x="${pl - 6}" y="${(bot - 4 - k * 13).toFixed(1)}" text-anchor="end" style="font-size:11px;fill:${s.color}">${s.short}</text>`;
+          if (s.short) grid += `<text class="st" x="${pl - 6}" y="${(bot - 4 - k * 13).toFixed(1)}" text-anchor="end" style="font-size:12px;fill:${s.color}">${s.short}</text>`;
         }
         const pts = s.pts.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
         if (s.kind === "area" && s.pts.length > 1) {
@@ -251,10 +251,10 @@ export class ChartsMethods {
         ${f ? `<g><title>${this._t("y_filter")}</title><circle cx="${X(i).toFixed(1)}" cy="${H - pb}" r="4.5" fill="var(--card-background-color)" stroke="${CORAL}" stroke-width="1.6"/></g>` : ""}`;
     }).join("");
     const gl = [0, 1, 2, 3].map((i) => `<line x1="${pl}" x2="${W - pr}" y1="${(pt + ((H - pt - pb) * i) / 3).toFixed(1)}" y2="${(pt + ((H - pt - pb) * i) / 3).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".6"/>
-      <text class="st" x="${pl - 6}" y="${(pt + ((H - pt - pb) * i) / 3 + 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${max < 6 ? (max * (1 - i / 3)).toLocaleString(lang, { maximumFractionDigits: 1 }) : Math.round(max * (1 - i / 3))}</text>
-      ${outs.length ? `<text class="st" x="${W - pr + 6}" y="${(pt + ((H - pt - pb) * i) / 3 + 4).toFixed(1)}" style="font-size:11px">${Math.round(oHi - ((oHi - oLo) * i) / 3)}°</text>` : ""}`).join("");
+      <text class="st" x="${pl - 6}" y="${(pt + ((H - pt - pb) * i) / 3 + 4).toFixed(1)}" text-anchor="end" style="font-size:12px">${max < 6 ? (max * (1 - i / 3)).toLocaleString(lang, { maximumFractionDigits: 1 }) : Math.round(max * (1 - i / 3))}</text>
+      ${outs.length ? `<text class="st" x="${W - pr + 6}" y="${(pt + ((H - pt - pb) * i) / 3 + 4).toFixed(1)}" style="font-size:12px">${Math.round(oHi - ((oHi - oLo) * i) / 3)}°</text>` : ""}`).join("");
     const every = Math.ceil(data.length / (range === "1y" ? (W < 420 ? 6 : 12) : W < 420 ? 4 : 8));
-    const xt = data.map((m, i) => i % every === 0 ? `<text class="st" x="${X(i).toFixed(1)}" y="${H - 5}" text-anchor="middle" style="font-size:11px">${short(m.t)}</text>` : "").join("");
+    const xt = data.map((m, i) => i % every === 0 ? `<text class="st" x="${X(i).toFixed(1)}" y="${H - 5}" text-anchor="middle" style="font-size:12px">${short(m.t)}</text>` : "").join("");
     const pts = outs.length ? data.map((m, i) => m.out === undefined ? null : `${X(i).toFixed(1)},${Yo(m.out).toFixed(1)}`).filter(Boolean).join(" ") : "";
     const sum = vals.reduce((a, b) => a + b, 0), starts = data.reduce((a, m) => a + (m.starts || 0), 0);
     return `<div class="chw"><svg style="max-width:100%;height:auto" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t(label)}">${gl}${bars}
