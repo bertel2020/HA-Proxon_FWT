@@ -177,7 +177,7 @@ blueprint:
         ihn ausschaltet. 0 = keine Begrenzung.
         / After the enable switch was changed it stays on at least this many minutes before it is switched off.
         0 = no limit.
-      default: 0
+      default: 10
       selector:
         number:
           min: 0
@@ -191,7 +191,7 @@ blueprint:
         ihn wieder einschaltet. 0 = keine Begrenzung.
         / After it was switched off the enable switch stays off at least this many minutes before it is switched
         on again. 0 = no limit.
-      default: 0
+      default: 10
       selector:
         number:
           min: 0

@@ -84,7 +84,7 @@ HYST_STEP = 0.5
 MIN_BAND = 2.0  # K: below this total band the compressor may switch on and off in short intervals
 
 MAX_LOCK_MINUTES = 120
-DEFAULT_LOCK_MINUTES = 0.0  # off: nothing is held back
+DEFAULT_LOCK_MINUTES = 10.0  # 0 would switch the limit off
 DEFAULT_PV_THRESHOLD = 1500.0  # W
 DEFAULT_FROST_BELOW = 0.0  # degC
 DEFAULT_PV_MIN_OUTER = 5.0  # degC

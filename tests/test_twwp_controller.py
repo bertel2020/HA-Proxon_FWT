@@ -259,7 +259,7 @@ def test_minimum_pause_holds_the_switch_on_decision(twwp_controller):
 
 
 def test_no_lock_without_minutes_and_for_sensor_failure(twwp_controller):
-    ctl, home, now = make_timed(twwp_controller, {})
+    ctl, home, now = make_timed(twwp_controller, {"min_on_minutes": 0, "min_off_minutes": 0})
     asyncio.run(ctl.async_set_control(True))
     home.states["sensor.wasser"] = "62"
     asyncio.run(ctl.async_run())
@@ -289,3 +289,15 @@ def test_switch_state_is_saved_and_restored(twwp_controller):
     ctl2, _, _ = make_timed(twwp_controller, {"min_on_minutes": 10}, store=FakeStore(store.saved[-1]))
     asyncio.run(ctl2.async_load())
     assert ctl2.state.switch_state == "on" and ctl2.state.switch_since == 1000.0
+
+
+def test_lock_is_on_by_default(twwp_controller):
+    ctl, home, now = make_timed(twwp_controller, {})  # no minutes configured: 10 minutes each
+    asyncio.run(ctl.async_set_control(True))
+    home.states["sensor.wasser"] = "62"
+    now[0] = 1000 + 300
+    asyncio.run(ctl.async_run())
+    assert ctl.state.reason == "locked"
+    now[0] = 1000 + 601
+    asyncio.run(ctl.async_run())
+    assert ctl.state.reason == "pv_target_reached"

@@ -23,6 +23,7 @@ from .twwp import (
     CONF_MIN_OFF,
     CONF_MIN_ON,
     DEFAULT_HYSTERESIS,
+    DEFAULT_LOCK_MINUTES,
     DEFAULT_TARGETS,
     HYST_RANGE,
     PROGRAM_OFF,
@@ -185,8 +186,8 @@ class TwwpController:
             self.state.switch_state,
             self.state.switch_since,
             self._clock(),
-            float(self._config.get(CONF_MIN_ON) or 0),
-            float(self._config.get(CONF_MIN_OFF) or 0),
+            float(self._config.get(CONF_MIN_ON, DEFAULT_LOCK_MINUTES)),
+            float(self._config.get(CONF_MIN_OFF, DEFAULT_LOCK_MINUTES)),
         )
 
     async def async_run(self) -> TwwpDecision:
