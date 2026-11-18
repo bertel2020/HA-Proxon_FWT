@@ -136,3 +136,10 @@ def test_number_selector_config_has_no_empty_values(twwp):
     assert twwp.number_config(0, 100000, 1) == {"min": 0, "max": 100000, "step": 1}
     assert twwp.number_config(0, 20000, 100, "W") == {"min": 0, "max": 20000, "step": 100, "unit_of_measurement": "W"}
     assert None not in twwp.number_config(-20, 20, 0.5, None).values()
+
+
+def test_default_targets_lie_inside_the_target_range(twwp):
+    assert twwp.TARGET_MIN_C < twwp.TARGET_MAX_C and twwp.TARGET_STEP > 0
+    for value in twwp.DEFAULT_TARGETS.values():
+        assert twwp.TARGET_MIN_C <= value <= twwp.TARGET_MAX_C
+    assert twwp.DEFAULT_TARGETS[twwp.TARGET_MIN] < twwp.DEFAULT_TARGETS[twwp.TARGET_NORMAL] < twwp.DEFAULT_TARGETS[twwp.TARGET_PV]

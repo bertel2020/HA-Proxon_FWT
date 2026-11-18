@@ -28,15 +28,16 @@ from .twwp import (
     REASON_SENSOR_UNAVAILABLE,
     REASONS,
     SUBENTRY_TYPE_TWWP,
+    TARGET_MAX_C,
     TARGET_MIN,
+    TARGET_MIN_C,
     TARGET_NORMAL,
     TARGET_PV,
+    TARGET_STEP,
 )
 from .twwp_controller import TwwpController
 
 TWWP_MODEL = "TWWP - Trinkwasser-Wärmepumpe"
-MIN_TARGET = 20.0
-MAX_TARGET = 70.0
 
 
 def twwp_device_identifier(entry_id: str, subentry_id: str) -> tuple[str, str]:
@@ -82,9 +83,9 @@ class TwwpWaterHeater(TwwpEntity, WaterHeaterEntity):
     _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_supported_features = WaterHeaterEntityFeature.TARGET_TEMPERATURE
     _attr_operation_list = list(PROGRAMS)
-    _attr_min_temp = MIN_TARGET
-    _attr_max_temp = MAX_TARGET
-    _attr_target_temperature_step = 0.5
+    _attr_min_temp = TARGET_MIN_C
+    _attr_max_temp = TARGET_MAX_C
+    _attr_target_temperature_step = TARGET_STEP
 
     def __init__(self, entry, subentry, controller) -> None:
         super().__init__(entry, subentry, controller, "water_heater")
@@ -111,11 +112,10 @@ class TwwpTargetNumber(TwwpEntity, NumberEntity):
 
     _attr_device_class = NumberDeviceClass.TEMPERATURE
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
-    _attr_native_min_value = MIN_TARGET
-    _attr_native_max_value = MAX_TARGET
-    _attr_native_step = 0.5
-    _attr_mode = NumberMode.BOX
-    _attr_entity_category = EntityCategory.CONFIG
+    _attr_native_min_value = TARGET_MIN_C
+    _attr_native_max_value = TARGET_MAX_C
+    _attr_native_step = TARGET_STEP
+    _attr_mode = NumberMode.SLIDER
 
     def __init__(self, entry, subentry, controller, target: str) -> None:
         super().__init__(entry, subentry, controller, f"target_{target}")

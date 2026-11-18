@@ -126,9 +126,9 @@ const twEnt = (id, extra = {}, state = "1", attrs = {}) => {
 };
 twDevices.tw1 = { id: "tw1", name: "Warmwasser <TWWP>", via_device_id: "central", identifiers: [["proxon_modbus", "e1_twwp_SUB1"]] };
 twEnt("water_heater.tw", {}, "pv", { current_temperature: 54.2, temperature: 53 });
-twEnt("number.tw_normal", { translation_key: "twwp_target_normal" }, "53", { min: 20, max: 70, step: 0.5 });
-twEnt("number.tw_pv", { translation_key: "twwp_target_pv" }, "60", { min: 20, max: 70, step: 0.5 });
-twEnt("number.tw_min", { translation_key: "twwp_target_min" }, "42", { min: 20, max: 70, step: 0.5 });
+twEnt("number.tw_normal", { translation_key: "twwp_target_normal" }, "53", { min: 30, max: 70, step: 1 });
+twEnt("number.tw_pv", { translation_key: "twwp_target_pv" }, "60", { min: 30, max: 70, step: 1 });
+twEnt("number.tw_min", { translation_key: "twwp_target_min" }, "42", { min: 30, max: 70, step: 1 });
 twEnt("sensor.tw_program", { translation_key: "twwp_program" }, "pv");
 twEnt("sensor.tw_pv_status", { translation_key: "twwp_pv_status" }, "pv");
 twEnt("sensor.tw_reason", { translation_key: "twwp_reason" }, "pv", { control: false, last_run: new Date(Date.now() - 23000).toISOString(), last_error: "a <b>" });
@@ -187,11 +187,11 @@ test("the header shows the program, and the controls call the right services", a
   assert.deepEqual(calls[0], ["switch", "toggle", { entity_id: "switch.tw_control" }]);
   panel._click({ composedPath: () => [el("twstep", "number.tw_pv|1")] });
   panel._click({ composedPath: () => [el("twstep", "number.tw_pv|1")] });
-  assert.equal(panel._twTarget("number.tw_pv"), 61, "steps add up on the pending target");
+  assert.equal(panel._twTarget("number.tw_pv"), 62, "steps add up on the pending target (step 1)");
   await new Promise((r) => setTimeout(r, 700));
   const set = calls.filter((c) => c[1] === "set_value");
   assert.equal(set.length, 1, "written once");
-  assert.deepEqual(set[0], ["number", "set_value", { entity_id: "number.tw_pv", value: 61 }]);
+  assert.deepEqual(set[0], ["number", "set_value", { entity_id: "number.tw_pv", value: 62 }]);
 });
 
 test("the overview shows a hot water tile in the panel, not in the dashboard card, and flags a sensor problem", async () => {

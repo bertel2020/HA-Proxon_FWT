@@ -42,11 +42,11 @@ export class TwwpSectionsMethods {
 
   // The +/- steps add up on a pending target that is written once, shortly after the last click.
   _twBump(id, dir) {
-    const a = (this._state(id) || {}).attributes || {}, step = Number(a.step) || 0.5;
+    const a = (this._state(id) || {}).attributes || {}, step = Number(a.step) || 1;
     const pend = (this._twp = this._twp || {}), e = pend[id] || {};
     const cur = e.t ?? this._num(id);
     if (cur === null) return;
-    const t = Math.min(a.max ?? T_HI, Math.max(a.min ?? T_LO, Math.round((cur + dir * step) / step) * step));
+    const t = Math.min(a.max ?? 70, Math.max(a.min ?? 30, Math.round((cur + dir * step) / step) * step));
     if (e.t === t) return;
     clearTimeout(e.timer);
     const fire = () => {

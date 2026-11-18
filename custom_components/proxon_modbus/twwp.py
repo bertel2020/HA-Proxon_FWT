@@ -35,6 +35,9 @@ TARGET_NORMAL = "normal"
 TARGET_PV = "pv"
 TARGET_MIN = "min"
 DEFAULT_TARGETS = {TARGET_NORMAL: 50.0, TARGET_PV: 60.0, TARGET_MIN: 40.0}
+TARGET_MIN_C = 30.0  # range and step of the target temperatures (number entities, water heater)
+TARGET_MAX_C = 70.0
+TARGET_STEP = 1.0
 
 # Programs (internal keys; the entity translates them).
 PROGRAM_OFF = "off"
