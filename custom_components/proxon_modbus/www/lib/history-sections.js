@@ -26,20 +26,13 @@ export class HistorySectionsMethods {
     const rb = (v, l) => `<button class="vbtn ${range === v ? "a" : ""}" data-act="hrange" data-v="${v}">${l}</button>`;
     const chips = avail.length > 1 ? `<div class="mchips" role="group">${avail.map((m) => `<button class="vbtn ${m === metric ? "a" : ""}" data-act="metric" data-v="${m}">${this._icon(METRIC_META[m].icon)}${this._t(METRIC_META[m].label)}</button>`).join("")}</div>` : "";
     return `<ha-card><div class="h">${this._icon("mdi:chart-line")}${this._t("history")}
-      <span class="r rng"><button class="vbtn ${this._hcmp ? "a" : ""}" data-act="hcmp" aria-pressed="${!!this._hcmp}">${this._icon("mdi:compare-horizontal")}${this._t("prev_period")}</button>${this._isPanel ? "" : `${rb("24h", this._t("hist_24"))}${rb("7d", this._t("hist_7"))}${rb("30d", this._t("hist_30"))}${rb("1y", this._t("hist_365"))}`}</span></div>${chips}${body}</ha-card>`;
+      <span class="r rng"><button class="vbtn ${this._hcmp ? "a" : ""}" data-act="hcmp" aria-pressed="${!!this._hcmp}">${this._icon("mdi:compare-horizontal")}${this._t("prev_period")}</button>${(g => this._isPanel ? `<span class="rgrp" role="group">${g}</span>` : g)(`${rb("24h", this._t("hist_24"))}${rb("7d", this._t("hist_7"))}${rb("30d", this._t("hist_30"))}${rb("1y", this._t("hist_365"))}`)}</span></div>${chips}${body}</ha-card>`;
   }
 
   // When a cached history load last succeeded (ms), or 0.
   _hstamp(key) {
     const e = this._hc && this._hc[key];
     return e && e.v ? e.t : 0;
-  }
-
-  // One range switch for the whole history page.
-  _histBar() {
-    const range = this._range();
-    return `<div class="seg cmp" role="group" style="grid-template-columns:repeat(4,1fr)">${[["24h", "hist_24"], ["7d", "hist_7"], ["30d", "hist_30"], ["1y", "hist_365"]].map(([v, l]) =>
-      this._btn(`data-act="hrange" data-v="${v}" aria-pressed="${range === v}"`, range === v ? "a" : "", this._t(l))).join("")}</div>`;
   }
 
   // Header subtitle shared by the cards below the chart: the range and what one bar stands for.

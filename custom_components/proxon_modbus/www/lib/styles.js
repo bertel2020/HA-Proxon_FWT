@@ -363,6 +363,10 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .rsheet .rows .f { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--divider-color); font-size: 15px; }
 .rsheet .rows .f:first-child { border-top: 0; } .rsheet .rows .f span { color: var(--secondary-text-color); } .rsheet .rows .f b { font-weight: 500; }
 @media (max-width: 640px) { .rsheet .dring .ring { width: 190px; } }
+/* History range switch inside the card header: one segmented group. */
+.panel .rgrp { display: inline-flex; gap: 2px; padding: 2px; border-radius: 10px; background: var(--secondary-background-color); }
+.panel .rgrp .vbtn { border-color: transparent; background: transparent; }
+.panel .rgrp .vbtn.a { background: var(--card-background-color); box-shadow: 0 1px 3px #0002; }
 `;
 
 let SHEET; // one constructable stylesheet shared by every card/panel instead of a <style> per render
