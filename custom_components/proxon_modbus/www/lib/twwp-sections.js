@@ -161,29 +161,29 @@ export class TwwpSectionsMethods {
     const col = w === null ? "var(--divider-color)" : tn !== null && w >= tn ? CORAL : tm !== null && w >= tm ? AMBER : BLUE;
     const flow = heats ? (prog === "pv" ? GREEN : AMBER) : "var(--divider-color)";
     const rays = [0, 45, 90, 135, 180, 225, 270, 315].map((a) => `<line x1="58" y1="22" x2="58" y2="13" transform="rotate(${a} 58 64)"/>`).join("");
-    const svg = `<svg class="twhsvg ${heats ? "heat" : ""}" viewBox="0 0 440 180" role="img" aria-label="${this._t("tw_tank")} ${w === null ? "" : this._fmt(w) + "°"}">
-      <title>${this._t("tw_tank_note")}</title><defs><clipPath id="twc${i}"><rect x="0" y="0" width="150" height="156" rx="30"/></clipPath></defs>
+    const svg = `<svg class="twhsvg ${heats ? "heat" : ""}" viewBox="0 0 380 184" role="img" aria-label="${this._t("tw_tank")} ${w === null ? "" : this._fmt(w) + "°"}">
+      <title>${this._t("tw_tank_note")}</title><defs><clipPath id="twc${i}"><rect x="0" y="0" width="112" height="164" rx="26"/></clipPath></defs>
       <circle cx="58" cy="64" r="24" fill="${AMBER}" opacity="${pv !== null && pv > 200 ? 1 : 0.35}"/><g stroke="${AMBER}" stroke-width="2.5" stroke-linecap="round" opacity="${pv !== null && pv > 200 ? 1 : 0.35}">${rays}</g>
       ${pv === null ? "" : `<text x="58" y="124" text-anchor="middle" font-size="15" font-weight="500" fill="var(--primary-text-color)">${this._fmt(pv / 1000)} kW</text><text x="58" y="142" text-anchor="middle" font-size="11" fill="var(--secondary-text-color)">${this._t("tw_pv_power")}</text>`}
       <path class="twflow" d="M92 72 C 150 72, 180 66, 224 66" fill="none" stroke="${flow}" stroke-width="3"/>
       <path d="M214 60 L226 66 L214 72" fill="none" stroke="${flow}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
       ${heats ? `<text x="158" y="52" text-anchor="middle" font-size="12" fill="var(--secondary-text-color)">${this._fmt(pw, 0)} W</text>` : ""}
-      <g transform="translate(232,12)">
-        <rect width="150" height="156" rx="30" fill="var(--card-background-color)" stroke="var(--divider-color)" stroke-width="1.5"/>
+      <g transform="translate(232,10)">
+        <rect width="112" height="164" rx="26" fill="var(--card-background-color)" stroke="var(--divider-color)" stroke-width="1.5"/>
         <g clip-path="url(#twc${i})">
-          <rect x="0" y="80" width="150" height="76" fill="${col}" opacity=".42"/>
-          <rect x="12" y="96" width="8" height="50" rx="4" fill="#fff" opacity=".28"/>
-          <rect x="0" y="0" width="150" height="86" fill="var(--secondary-background-color)"/>
-          <rect x="0" y="84" width="150" height="4" fill="var(--divider-color)" opacity=".8"/>
+          <rect x="0" y="66" width="112" height="98" fill="${col}" opacity=".42"/>
+          <rect x="10" y="82" width="7" height="68" rx="3.5" fill="#fff" opacity=".28"/>
+          <rect x="0" y="0" width="112" height="70" fill="var(--secondary-background-color)"/>
+          <rect x="0" y="68" width="112" height="4" fill="var(--divider-color)" opacity=".8"/>
         </g>
-        <circle cx="48" cy="38" r="22" fill="none" stroke="var(--secondary-text-color)" stroke-width="1.6" opacity=".7"/>
-        <g class="fan" fill="var(--secondary-text-color)" opacity=".75">${[0, 120, 240].map((r) => `<ellipse cx="48" cy="26" rx="6" ry="11" transform="rotate(${r} 48 38)"/>`).join("")}<circle cx="48" cy="38" r="4" fill="var(--card-background-color)"/></g>
-        <g stroke="var(--secondary-text-color)" stroke-width="2.5" stroke-linecap="round" opacity=".5"><line x1="92" x2="128" y1="26" y2="26"/><line x1="92" x2="128" y1="38" y2="38"/><line x1="92" x2="128" y1="50" y2="50"/></g>
-        <circle cx="128" cy="68" r="4.5" fill="${heats ? GREEN : "var(--divider-color)"}"/>
-        <text x="48" y="78" font-size="11" text-anchor="middle" fill="var(--secondary-text-color)">${outer === null ? "" : this._fmt(outer) + "°"}</text>
-        <circle cx="22" cy="114" r="5" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="1.8"/>
-        <text x="84" y="122" text-anchor="middle" font-size="26" font-weight="500" fill="var(--primary-text-color)">${w === null ? "–" : this._fmt(w) + "°"}</text>
-        <text x="80" y="144" text-anchor="middle" font-size="11" fill="var(--secondary-text-color)">${this._t("tw_mp")}</text>
+        <circle cx="36" cy="32" r="18" fill="none" stroke="var(--secondary-text-color)" stroke-width="1.5" opacity=".7"/>
+        <g class="fan" fill="var(--secondary-text-color)" opacity=".75">${[0, 120, 240].map((r) => `<ellipse cx="36" cy="23" rx="5" ry="9" transform="rotate(${r} 36 32)"/>`).join("")}<circle cx="36" cy="32" r="3.5" fill="var(--card-background-color)"/></g>
+        <g stroke="var(--secondary-text-color)" stroke-width="2.5" stroke-linecap="round" opacity=".5"><line x1="64" x2="94" y1="22" y2="22"/><line x1="64" x2="94" y1="32" y2="32"/><line x1="64" x2="94" y1="42" y2="42"/></g>
+        <circle cx="92" cy="56" r="4" fill="${heats ? GREEN : "var(--divider-color)"}"/>
+        <text x="36" y="62" font-size="11" text-anchor="middle" fill="var(--secondary-text-color)">${outer === null ? "" : this._fmt(outer) + "°"}</text>
+        <circle cx="18" cy="112" r="5" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="1.8"/>
+        <text x="66" y="120" text-anchor="middle" font-size="24" font-weight="500" fill="var(--primary-text-color)">${w === null ? "–" : this._fmt(w) + "°"}</text>
+        <text x="62" y="142" text-anchor="middle" font-size="11" fill="var(--secondary-text-color)">${this._t("tw_mp")}</text>
       </g></svg>`;
     const chip = bad ? `<span class="chip r">${this._t("tw_problem")}</span>` : prog ? `<span class="chip ${prog === "pv" ? "g" : prog === "minimum" ? "w" : prog === "normal" ? "a" : ""}">${this._t(`tw_p_${prog}`)}</span>` : "";
     const tile = (label, value) => `<div class="twm"><small>${label}</small><b>${value}</b></div>`;

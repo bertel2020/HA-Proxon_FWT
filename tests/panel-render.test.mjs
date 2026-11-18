@@ -481,3 +481,16 @@ test("the scale shows 65 degrees although the targets stop at 60, so the PV swit
   assert.ok(scale.includes(">65</text>") && scale.includes(">60</text>") && !scale.includes(">70</text>"), "marks up to 65");
   assert.ok(html.includes("PV: heizt unter 57°, stoppt ab 61°"), "the stop point 61 lies on the scale");
 });
+
+test("the housing in the main picture is clearly taller than wide, and everything inside it lies inside", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = twHass;
+  const html = await render(panel, () => { panel._tab = "warm"; });
+  const m = /<rect width="(\d+)" height="(\d+)" rx="\d+" fill="var\(--card-background-color\)"/.exec(html);
+  assert.ok(m, "housing outline");
+  const [w, h] = [Number(m[1]), Number(m[2])];
+  assert.ok(h / w >= 1.3 && h / w <= 1.9, `aspect ${(h / w).toFixed(2)} looks like a standing unit`);
+  const vb = /viewBox="0 0 (\d+) (\d+)" role="img" aria-label="Speicher/.exec(html);
+  assert.ok(vb && Number(vb[2]) >= h + 10, "the picture is high enough for the housing");
+  assert.ok(Number(vb[1]) >= 232 + w, "and wide enough");
+});
