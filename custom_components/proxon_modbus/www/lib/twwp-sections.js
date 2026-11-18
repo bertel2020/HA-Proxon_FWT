@@ -161,18 +161,18 @@ export class TwwpSectionsMethods {
     const col = w === null ? "var(--divider-color)" : tn !== null && w >= tn ? CORAL : tm !== null && w >= tm ? AMBER : BLUE;
     const flow = heats ? (prog === "pv" ? GREEN : AMBER) : "var(--divider-color)";
     const rays = [0, 45, 90, 135, 180, 225, 270, 315].map((a) => `<line x1="58" y1="22" x2="58" y2="13" transform="rotate(${a} 58 64)"/>`).join("");
-    const svg = `<svg class="twhsvg ${heats ? "heat" : ""}" viewBox="0 0 440 200" role="img" aria-label="${this._t("tw_tank")} ${w === null ? "" : this._fmt(w) + "°"}">
-      <title>${this._t("tw_tank_note")}</title><defs><clipPath id="twc${i}"><rect x="0" y="0" width="150" height="176" rx="30"/></clipPath></defs>
+    const svg = `<svg class="twhsvg ${heats ? "heat" : ""}" viewBox="0 0 440 180" role="img" aria-label="${this._t("tw_tank")} ${w === null ? "" : this._fmt(w) + "°"}">
+      <title>${this._t("tw_tank_note")}</title><defs><clipPath id="twc${i}"><rect x="0" y="0" width="150" height="156" rx="30"/></clipPath></defs>
       <circle cx="58" cy="64" r="24" fill="${AMBER}" opacity="${pv !== null && pv > 200 ? 1 : 0.35}"/><g stroke="${AMBER}" stroke-width="2.5" stroke-linecap="round" opacity="${pv !== null && pv > 200 ? 1 : 0.35}">${rays}</g>
       ${pv === null ? "" : `<text x="58" y="124" text-anchor="middle" font-size="15" font-weight="500" fill="var(--primary-text-color)">${this._fmt(pv / 1000)} kW</text><text x="58" y="142" text-anchor="middle" font-size="11" fill="var(--secondary-text-color)">${this._t("tw_pv_power")}</text>`}
       <path class="twflow" d="M92 72 C 150 72, 180 66, 224 66" fill="none" stroke="${flow}" stroke-width="3"/>
       <path d="M214 60 L226 66 L214 72" fill="none" stroke="${flow}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
       ${heats ? `<text x="158" y="52" text-anchor="middle" font-size="12" fill="var(--secondary-text-color)">${this._fmt(pw, 0)} W</text>` : ""}
       <g transform="translate(232,12)">
-        <rect width="150" height="176" rx="30" fill="var(--card-background-color)" stroke="var(--divider-color)" stroke-width="1.5"/>
+        <rect width="150" height="156" rx="30" fill="var(--card-background-color)" stroke="var(--divider-color)" stroke-width="1.5"/>
         <g clip-path="url(#twc${i})">
-          <rect x="0" y="80" width="150" height="96" fill="${col}" opacity=".42"/>
-          <rect x="12" y="96" width="8" height="70" rx="4" fill="#fff" opacity=".28"/>
+          <rect x="0" y="80" width="150" height="76" fill="${col}" opacity=".42"/>
+          <rect x="12" y="96" width="8" height="50" rx="4" fill="#fff" opacity=".28"/>
           <rect x="0" y="0" width="150" height="86" fill="var(--secondary-background-color)"/>
           <rect x="0" y="84" width="150" height="4" fill="var(--divider-color)" opacity=".8"/>
         </g>
@@ -181,9 +181,9 @@ export class TwwpSectionsMethods {
         <g stroke="var(--secondary-text-color)" stroke-width="2.5" stroke-linecap="round" opacity=".5"><line x1="92" x2="128" y1="26" y2="26"/><line x1="92" x2="128" y1="38" y2="38"/><line x1="92" x2="128" y1="50" y2="50"/></g>
         <circle cx="128" cy="68" r="4.5" fill="${heats ? GREEN : "var(--divider-color)"}"/>
         <text x="48" y="78" font-size="11" text-anchor="middle" fill="var(--secondary-text-color)">${outer === null ? "" : this._fmt(outer) + "°"}</text>
-        <circle cx="22" cy="128" r="5" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="1.8"/>
-        <text x="84" y="136" text-anchor="middle" font-size="26" font-weight="500" fill="var(--primary-text-color)">${w === null ? "–" : this._fmt(w) + "°"}</text>
-        <text x="80" y="160" text-anchor="middle" font-size="11" fill="var(--secondary-text-color)">${this._t("tw_mp")}</text>
+        <circle cx="22" cy="114" r="5" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="1.8"/>
+        <text x="84" y="122" text-anchor="middle" font-size="26" font-weight="500" fill="var(--primary-text-color)">${w === null ? "–" : this._fmt(w) + "°"}</text>
+        <text x="80" y="144" text-anchor="middle" font-size="11" fill="var(--secondary-text-color)">${this._t("tw_mp")}</text>
       </g></svg>`;
     const chip = bad ? `<span class="chip r">${this._t("tw_problem")}</span>` : prog ? `<span class="chip ${prog === "pv" ? "g" : prog === "minimum" ? "w" : prog === "normal" ? "a" : ""}">${this._t(`tw_p_${prog}`)}</span>` : "";
     const tile = (label, value) => `<div class="twm"><small>${label}</small><b>${value}</b></div>`;
@@ -205,51 +205,58 @@ export class TwwpSectionsMethods {
       ${this._btn(`data-act="twstep" data-v="${id}|1" aria-label="+"`, "round", this._icon("mdi:plus"), down)}</span></div>`;
   }
 
-  // Usable width of a full-width card.
-  _twCardW() {
-    return (this.clientWidth || 900) - 32 - 32;
+  // Wide panel (a container of 1000 px or more): two columns, 2 : 1; narrow: one column.
+  _twWide() {
+    return (this.clientWidth || 900) - 32 >= 1000;
   }
 
-  // One scale from 30 to 70 degrees: the zones around the normal target, the three targets as marks, the pointer at the water
-  // temperature and brackets for the switching band of the normal and the PV target.
+  // Usable width of a card: all of it, or its share (of 2 : 1) of the wide layout.
+  _twCardW(share = 1) {
+    const total = (this.clientWidth || 900) - 32;
+    return (this._twWide() ? (total - 12) * share : total) - 32;
+  }
+
+  // One slim scale from 30 to 70 degrees: the zones around the normal target, the three targets as marks and the pointer at
+  // the water temperature. What the switching band means is said in one line below.
   _twScale(t) {
     const g = (k) => this._num(t.ents[k]), tn = g("twwp_target_normal"), tp = g("twwp_target_pv"), tm = g("twwp_target_min");
     const lo = g("twwp_hyst_low"), hi = g("twwp_hyst_high"), w = this._twWater(t);
     if (tn === null || tp === null || tm === null || lo === null || hi === null) return null;
-    const W = Math.max(320, Math.min(1300, this._twCardW())), pl = 24, y0 = 44;
+    const W = Math.max(300, Math.min(1300, this._twCardW(2 / 3))), pl = 22, y0 = 36, H = 80;
     const x = (v) => pl + ((Math.max(S_LO, Math.min(S_HI, v)) - S_LO) / (S_HI - S_LO)) * (W - 2 * pl);
     const bounds = [S_LO, tm, tn - lo, tn + hi, S_HI].reduce((o, v) => (o.push(Math.max(o.length ? o[o.length - 1] : S_LO, Math.min(S_HI, v))), o), []);
     const zones = [["tw_z_min", BLUE, .5], ["tw_z_heat", AMBER, .55], ["tw_z_hold", "#8a8f98", .45], ["tw_z_done", CORAL, .5]];
-    const bar = zones.map(([, c, op], k) => (bounds[k + 1] > bounds[k] ? `<rect x="${x(bounds[k]).toFixed(1)}" y="${y0}" width="${(x(bounds[k + 1]) - x(bounds[k])).toFixed(1)}" height="14" fill="${c}" opacity="${op}"/>` : "")).join("");
+    const bar = zones.map(([, c, op], k) => (bounds[k + 1] > bounds[k] ? `<rect x="${x(bounds[k]).toFixed(1)}" y="${y0}" width="${(x(bounds[k + 1]) - x(bounds[k])).toFixed(1)}" height="12" fill="${c}" opacity="${op}"/>` : "")).join("");
     const marks = [[tm, this._t("tw_ref_min", this._fmt(tm, 0))], [tn, this._t("tw_ref_n", this._fmt(tn, 0))], [tp, this._t("tw_pv_line", this._fmt(tp, 0))]].sort((m, n) => m[0] - n[0]);
     let lastX = -1e9, level = 0;
     const flags = marks.map(([v, l]) => {
-      level = x(v) - lastX < 84 ? 1 - level : 0; lastX = x(v);
-      return `<line x1="${x(v).toFixed(1)}" x2="${x(v).toFixed(1)}" y1="${level ? 22 : 36}" y2="66" stroke="var(--primary-text-color)" stroke-width="1.4"/><text x="${x(v).toFixed(1)}" y="${level ? 18 : 32}" text-anchor="middle" font-size="12" font-weight="500" fill="var(--primary-text-color)">${l}</text>`;
+      level = x(v) - lastX < 90 ? 1 - level : 0; lastX = x(v);
+      return `<line x1="${x(v).toFixed(1)}" x2="${x(v).toFixed(1)}" y1="${level ? 16 : 31}" y2="52" stroke="var(--primary-text-color)" stroke-width="1.4"/><text x="${x(v).toFixed(1)}" y="${level ? 12 : 27}" text-anchor="middle" font-size="12" font-weight="500" fill="var(--primary-text-color)">${l}</text>`;
     }).join("");
-    const ticks = [30, 40, 50, 60, 70].map((v) => `<text x="${x(v).toFixed(1)}" y="82" text-anchor="middle" font-size="10" fill="var(--secondary-text-color)">${v}</text>`).join("");
-    const pointer = w === null ? "" : `<path d="M${x(w).toFixed(1)} 60 L${(x(w) - 6).toFixed(1)} 70 L${(x(w) + 6).toFixed(1)} 70 Z" fill="${CORAL}"/><text x="${Math.max(48, Math.min(W - 48, x(w))).toFixed(1)}" y="98" text-anchor="middle" font-size="12" font-weight="500" fill="var(--primary-text-color)">${this._t("tw_now", this._fmt(w))}</text>`;
-    const bracket = (a, b, yy, text) => {
-      const xa = x(a), xb = x(b), cx = Math.max(W * 0.22, Math.min(W * 0.78, (xa + xb) / 2));
-      return `<path d="M${xa.toFixed(1)} ${yy} L${xa.toFixed(1)} ${yy + 6} L${xb.toFixed(1)} ${yy + 6} L${xb.toFixed(1)} ${yy}" fill="none" stroke="var(--secondary-text-color)" stroke-width="1.2"/><text x="${cx.toFixed(1)}" y="${yy + 22}" text-anchor="middle" font-size="11" fill="var(--secondary-text-color)">${text}</text>`;
-    };
+    const ticks = [30, 40, 50, 60, 70].map((v) => `<text x="${x(v).toFixed(1)}" y="76" text-anchor="middle" font-size="10" fill="var(--secondary-text-color)">${v}</text>`).join("");
+    const right = w !== null && x(w) > W - 120;
+    const pointer = w === null ? "" : `<path d="M${x(w).toFixed(1)} 50 L${(x(w) - 6).toFixed(1)} 60 L${(x(w) + 6).toFixed(1)} 60 Z" fill="${CORAL}"/><text x="${(x(w) + (right ? -10 : 10)).toFixed(1)}" y="62" text-anchor="${right ? "end" : "start"}" font-size="12" font-weight="500" fill="var(--primary-text-color)">${this._t("tw_now", this._fmt(w))}</text>`;
     const f = (v) => this._fmt(v, v % 1 ? 1 : 0);
-    const sameRow = x(tp - lo) - x(tn + hi) > 230; // the two bracket texts fit side by side
-    const br = bracket(tn - lo, tn + hi, 110, this._t("tw_br_n", f(tn - lo), f(tn + hi))) + bracket(tp - lo, tp + hi, sameRow ? 110 : 142, this._t("tw_br_pv", f(tp - lo), f(tp + hi)));
-    const H = sameRow ? 146 : 178;
+    const caption = `${this._t("tw_br_n", f(tn - lo), f(tn + hi))} · ${this._t("tw_br_pv", f(tp - lo), f(tp + hi))}`;
     const legend = zones.map(([k, c, op]) => `<span><i style="background:${c};opacity:${op + 0.15}"></i>${this._t(k)}</span>`).join("");
-    return { svg: `<div class="chw"><svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto" role="img" aria-label="${this._t("tw_targets")}">${bar}${flags}${ticks}${pointer}${br}</svg></div>`, legend };
+    return { svg: `<div class="chw"><svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto" role="img" aria-label="${this._t("tw_targets")}">${bar}${flags}${ticks}${pointer}</svg></div>`, legend, caption };
   }
 
-  // Targets in one row; the hysteresis is rarely changed, so it sits folded away behind a line that already says what it is.
+  // The scale with the switching thresholds said in words.
+  _twScaleCard(t) {
+    const scale = this._twScale(t);
+    if (!scale) return "";
+    return `<ha-card>${this._header("mdi:thermometer-lines", this._t("tw_scale"), `<span class="legend" style="margin:0">${scale.legend}</span>`)}${scale.svg}<div class="note" style="margin-top:2px">${scale.caption}</div></ha-card>`;
+  }
+
+  // The three targets as steppers; the hysteresis is rarely changed, so it sits folded away behind a line that says what it is.
   _twTargets(t) {
-    const lo = this._twTarget(t.ents.twwp_hyst_low), hi = this._twTarget(t.ents.twwp_hyst_high), scale = this._twScale(t);
+    const lo = this._twTarget(t.ents.twwp_hyst_low), hi = this._twTarget(t.ents.twwp_hyst_high);
     const group = (list, unit) => list.filter(([k]) => t.ents[k]).map(([k, l]) => this._twStepper(t.ents[k], this._t(l), unit)).join("");
     const warn = lo !== null && hi !== null && lo + hi < MIN_BAND, open = !!this._twHystOpen, f = (v) => this._fmt(v, v % 1 ? 1 : 0);
     const hyst = lo !== null && hi !== null ? `<div class="twhy"><button class="lnk twhyb" data-act="twhyst" aria-expanded="${open}">${this._icon(open ? "mdi:chevron-up" : "mdi:chevron-down")}${this._t("tw_hyst_h")} · ${this._t("tw_hyst_sum", f(lo), f(hi))}</button>
-      ${open ? `<div class="rows twsteps">${group(HYSTS, " K")}</div>` : ""}</div>` : "";
-    return `<ha-card>${this._header("mdi:tune-variant", this._t("tw_targets"), scale ? `<span class="legend" style="margin:0">${scale.legend}</span>` : "")}${scale ? scale.svg : ""}
-      <div class="rows twsteps">${group(TARGETS, "°")}</div>${hyst}
+      ${open ? `<div class="rows">${group(HYSTS, " K")}</div>` : ""}</div>` : "";
+    return `<ha-card>${this._header("mdi:tune-variant", this._t("tw_targets"))}<div class="rows">${group(TARGETS, "°")}</div>${hyst}
       ${warn ? `<div class="note" style="color:#c98400">${this._t("tw_hyst_warn")}</div>` : ""}</ha-card>`;
   }
 
@@ -374,7 +381,7 @@ export class TwwpSectionsMethods {
     const many = d.twwp.length > 1;
     return `<div class="stack">${d.twwp.map((t, i) => `${many ? `<h3 class="twname">${t.name}</h3>` : ""}
       <div class="twc"><div class="twgrid">
-        <div class="tw-hero">${this._twHero(t, i)}</div><div class="tw-scale">${this._twTargets(t)}</div>
+        <div class="tw-hero">${this._twHero(t, i)}</div><div class="tw-scale">${this._twScaleCard(t)}</div><div class="tw-set">${this._twTargets(t)}</div>
         <div class="tw-op">${this._twOperation(t)}</div>
         <div class="tw-hist">${this._twHistory(t)}</div></div></div>`).join("")}</div>`;
   }

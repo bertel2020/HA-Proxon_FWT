@@ -387,7 +387,7 @@ test("one Operation card: switch, PV status, enables and the last decision; no s
   assert.ok(op.includes("Letzte Entscheidung") && op.includes("PV-Überschuss: Start"), "last decision");
   assert.ok(op.includes("Geplante Schaltungen"), "planned switching is listed when there is one");
   assert.ok(!html.includes('class="twprog"') && !html.includes("Das Programm wählt der Regler"), "the program bar is gone");
-  assert.equal((html.match(/<ha-card>/g) || []).length, 4, "main picture, targets, operation, history");
+  assert.equal((html.match(/<ha-card>/g) || []).length, 5, "main picture, scale, targets, operation, history");
   const idle = { ...twHass, states: { ...twStates, "sensor.tw_planned": { ...twStates["sensor.tw_planned"], state: "0" } } };
   const p2 = new X.ProxonFwtPanel();
   p2.hass = idle;
@@ -399,8 +399,8 @@ test("the page is a grid: main picture and operation, scale and day, then the hi
   panel.hass = twHist;
   const html = await render(panel, () => { panel._tab = "warm"; });
   check(html);
-  const order = ["tw-hero", "tw-scale", "tw-op", "tw-hist"].map((c) => html.indexOf(`class="${c}"`));
-  assert.ok(order.every((v) => v > 0) && order.every((v, k) => k === 0 || v > order[k - 1]), "four areas in reading order for the narrow layout");
+  const order = ["tw-hero", "tw-scale", "tw-set", "tw-op", "tw-hist"].map((c) => html.indexOf(`class="${c}"`));
+  assert.ok(order.every((v) => v > 0) && order.every((v, k) => k === 0 || v > order[k - 1]), "five areas in reading order for the narrow layout");
   assert.ok(!html.includes("tw-day"), "the day card is gone");
   assert.ok(html.includes('class="twgrid"') && html.includes('class="twc"'));
   assert.ok(!html.includes("Ein Fühler in der Mitte des Speichers: Das Wasser ist einheitlich gefüllt.</div>"), "the explanation is a tooltip, not a text line");
@@ -410,11 +410,18 @@ test("the page is a grid: main picture and operation, scale and day, then the hi
   assert.match(css, /@container \(min-width: 1000px\)[\s\S]*\.tw-hero[\s\S]*\.tw-hist/);
 });
 
-test("the width of a full-width card is the panel width minus the paddings", () => {
+test("card widths: the full panel width when narrow, shares of 2 : 1 when wide", () => {
   const panel = new X.ProxonFwtPanel();
   panel.hass = hass;
+  panel.clientWidth = 700;
+  assert.equal(panel._twWide(), false);
+  assert.equal(panel._twCardW(), 700 - 64, "narrow: panel width minus paddings");
+  assert.equal(panel._twCardW(2 / 3), 700 - 64, "narrow: every card has the full width");
   panel.clientWidth = 1500;
-  assert.equal(panel._twCardW(), 1500 - 64, "a full-width card: panel width minus paddings");
+  assert.equal(panel._twWide(), true);
+  const two = panel._twCardW(2 / 3), one = panel._twCardW(1 / 3);
+  assert.ok(Math.abs(two - 2 * one - 32) < 1, "two thirds are twice one third (plus one padding)");
+  assert.ok(two < panel._twCardW(), "a column is narrower than the whole panel");
 });
 
 test("the history legend names how long each program ran in the shown range", async () => {

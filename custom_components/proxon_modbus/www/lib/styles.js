@@ -395,11 +395,9 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 @keyframes twdash { to { stroke-dashoffset: -13; } }
 @media (prefers-reduced-motion: reduce) { .twhsvg.heat .twflow, .twhsvg.heat .fan { animation: none; } }
 @keyframes twspin { to { transform: rotate(360deg); } }
-.twsteps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 28px; margin-top: 4px; }
 .twhy { margin-top: 6px; }
 .twhyb { display: inline-flex; align-items: center; gap: 4px; font: inherit; font-size: 12px; color: var(--secondary-text-color); background: none; border: 0; padding: 4px 0; cursor: pointer; text-align: left; }
 .twhyb:hover { color: var(--primary-text-color); } .twhyb ha-icon { --mdc-icon-size: 18px; }
-.twsteps .f { padding: 4px 0; }
 .twstp .round { width: 30px; height: 30px; min-width: 30px; }
 .twstp .round ha-icon { --mdc-icon-size: 16px; }
 .twc { container-type: inline-size; }
@@ -408,7 +406,7 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 @container (min-width: 1000px) {
   .twgrid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
   .tw-hero { grid-column: 1; grid-row: 1; } .tw-op { grid-column: 2; grid-row: 1; }
-  .tw-scale { grid-column: 1 / -1; grid-row: 2; }
+  .tw-scale { grid-column: 1; grid-row: 2; } .tw-set { grid-column: 2; grid-row: 2; }
   .tw-hist { grid-column: 1 / -1; grid-row: 3; }
 }
 `;

@@ -74,7 +74,7 @@ export const TEXT = {
     tw_tank: "Speicher",
     tw_top: "Wärmepumpe (Oberteil)",
     tw_pv_power: "PV-Leistung",
-    tw_targets: "Sollwerte und Schaltschwellen",
+    tw_targets: "Sollwerte",
     tw_t_normal: "Normalbetrieb",
     tw_t_pv: "PV-Betrieb",
     tw_t_min: "Minimum",
@@ -147,6 +147,7 @@ export const TEXT = {
     tw_pl_night: "Nachtabschaltung",
     tw_refs: "Sollwerte",
     tw_refs_tip: "Sollwerte als Linien in der Wasserkurve zeigen",
+    tw_scale: "Schaltschwellen",
   },
   en: {
     mode: "Operating mode", air: "Air paths", fan: "Ventilation", heatpump: "Heat pump",
@@ -222,7 +223,7 @@ export const TEXT = {
     tw_tank: "Tank",
     tw_top: "Heat pump (top)",
     tw_pv_power: "PV power",
-    tw_targets: "Targets and switching thresholds",
+    tw_targets: "Targets",
     tw_t_normal: "Normal operation",
     tw_t_pv: "PV operation",
     tw_t_min: "Minimum",
@@ -295,5 +296,6 @@ export const TEXT = {
     tw_pl_night: "Night shutdown",
     tw_refs: "Targets",
     tw_refs_tip: "Show the targets as lines in the water curve",
+    tw_scale: "Switching thresholds",
   },
 };
