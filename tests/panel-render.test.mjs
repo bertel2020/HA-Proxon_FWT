@@ -410,14 +410,11 @@ test("the page is a grid: main picture and operation, scale and day, then the hi
   assert.match(css, /@container \(min-width: 1000px\)[\s\S]*\.tw-hero[\s\S]*\.tw-hist/);
 });
 
-test("the width of the cards follows the layout", () => {
+test("the width of a full-width card is the panel width minus the paddings", () => {
   const panel = new X.ProxonFwtPanel();
   panel.hass = hass;
   panel.clientWidth = 1500;
-  assert.equal(panel._twWide(), true);
   assert.equal(panel._twCardW(), 1500 - 64, "a full-width card: panel width minus paddings");
-  panel.clientWidth = 700;
-  assert.equal(panel._twWide(), false);
 });
 
 test("the history legend names how long each program ran in the shown range", async () => {

@@ -4,7 +4,6 @@ const PHASE_COLOR = { pv: GREEN, normal: AMBER, minimum: CORAL, night: BLUE };
 const TARGETS = [["twwp_target_normal", "tw_t_normal"], ["twwp_target_pv", "tw_t_pv"], ["twwp_target_min", "tw_t_min"]];
 const HYSTS = [["twwp_hyst_low", "tw_h_low"], ["twwp_hyst_high", "tw_h_high"]];
 const MIN_BAND = 2; // K: below this the heat pump may switch on and off in short intervals
-const T_LO = 20, T_HI = 70; // the history scale; the number entities accept 30 to 70
 const S_LO = 30, S_HI = 70; // the target scale
 
 // The "Warmwasser" tab: hot water heat pump (TWWP) with tank, targets, program and the controller's last decision.
@@ -204,11 +203,6 @@ export class TwwpSectionsMethods {
       ${this._btn(`data-act="twstep" data-v="${id}|-1" aria-label="−"`, "round", this._icon("mdi:minus"), down)}
       <b>${v === null ? "–" : this._fmt(v, v % 1 ? 1 : 0) + unit}</b>
       ${this._btn(`data-act="twstep" data-v="${id}|1" aria-label="+"`, "round", this._icon("mdi:plus"), down)}</span></div>`;
-  }
-
-  // Wide panel: main picture and operation side by side (2 : 1), the scale and the history below; narrow: one column.
-  _twWide() {
-    return (this.clientWidth || 900) - 32 >= 1000;
   }
 
   // Usable width of a full-width card.

@@ -376,7 +376,6 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .twctl { border-top: 1px solid var(--divider-color); }
 .twctl.first { border-top: none; padding-top: 0; }
 .twctl small { display: block; font-size: 12px; color: var(--secondary-text-color); margin-top: 2px; }
-.twleg { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; margin-top: 6px; }
 .twname { margin: 4px 0 0; font-size: 15px; font-weight: 500; }
 .banner.i { background: color-mix(in srgb, var(--primary-color) 14%, transparent); color: var(--primary-color); }
 .banner.go { cursor: pointer; }
