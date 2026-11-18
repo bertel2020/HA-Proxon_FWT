@@ -339,9 +339,9 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .srow2 .ic { --mdc-icon-size: 20px; display: inline-flex; flex: none; } .srow2 .lb2 { min-width: 0; } .srow2 b { margin-left: auto; font-weight: 500; text-align: right; }
 .srow2.go { cursor: pointer; }
 /* History tab: the sections share one surface, separated by lines. */
-.panel .fl { background: var(--ha-card-background, var(--card-background-color)); border-radius: 12px; padding: 0 18px; box-shadow: var(--ha-card-box-shadow, none); }
-.panel .fl ha-card { background: none; box-shadow: none; border-radius: 0; padding: 16px 0; }
-.panel .fl ha-card + ha-card { border-top: 1px solid var(--divider-color); }
+.panel .hsurf { background: var(--ha-card-background, var(--card-background-color)); border-radius: 12px; padding: 0 18px; box-shadow: var(--ha-card-box-shadow, none); }
+.panel .hsurf ha-card { background: none; box-shadow: none; border-radius: 0; padding: 16px 0; }
+.panel .hsurf ha-card + ha-card { border-top: 1px solid var(--divider-color); }
 .panel .rsheet { background: var(--card-background-color); }
 .rsheet .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--divider-color); margin: 0 auto 12px; }
 .rsheet .dh { display: flex; align-items: flex-start; gap: 10px; }
