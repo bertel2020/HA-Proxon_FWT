@@ -145,6 +145,8 @@ export const TEXT = {
     tw_day_none: "Heute noch keine Programmdaten.",
     tw_en_val: "Normal: {0} · PV: {1}",
     tw_last: "Letzte Entscheidung",
+    tw_hyst_h: "Hysterese",
+    tw_hyst_sum: "heizt {0} K unter Soll, stoppt {1} K darüber",
   },
   en: {
     mode: "Operating mode", air: "Air paths", fan: "Ventilation", heatpump: "Heat pump",
@@ -291,5 +293,7 @@ export const TEXT = {
     tw_day_none: "No program data yet today.",
     tw_en_val: "Normal: {0} · PV: {1}",
     tw_last: "Last decision",
+    tw_hyst_h: "Hysteresis",
+    tw_hyst_sum: "heats {0} K below target, stops {1} K above",
   },
 };

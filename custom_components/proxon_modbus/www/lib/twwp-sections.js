@@ -252,12 +252,15 @@ export class TwwpSectionsMethods {
     return { svg: `<div class="chw"><svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto" role="img" aria-label="${this._t("tw_targets")}">${bar}${flags}${ticks}${pointer}${br}</svg></div>`, legend };
   }
 
+  // Targets in one row; the hysteresis is rarely changed, so it sits folded away behind a line that already says what it is.
   _twTargets(t) {
     const lo = this._twTarget(t.ents.twwp_hyst_low), hi = this._twTarget(t.ents.twwp_hyst_high), scale = this._twScale(t);
     const group = (list, unit) => list.filter(([k]) => t.ents[k]).map(([k, l]) => this._twStepper(t.ents[k], this._t(l), unit)).join("");
-    const warn = lo !== null && hi !== null && lo + hi < MIN_BAND;
+    const warn = lo !== null && hi !== null && lo + hi < MIN_BAND, open = !!this._twHystOpen, f = (v) => this._fmt(v, v % 1 ? 1 : 0);
+    const hyst = lo !== null && hi !== null ? `<div class="twhy"><button class="lnk twhyb" data-act="twhyst" aria-expanded="${open}">${this._icon(open ? "mdi:chevron-up" : "mdi:chevron-down")}${this._t("tw_hyst_h")} · ${this._t("tw_hyst_sum", f(lo), f(hi))}</button>
+      ${open ? `<div class="rows twsteps">${group(HYSTS, " K")}</div>` : ""}</div>` : "";
     return `<ha-card>${this._header("mdi:tune-variant", this._t("tw_targets"), scale ? `<span class="legend" style="margin:0">${scale.legend}</span>` : "")}${scale ? scale.svg : ""}
-      <div class="twsteps"><div class="rows">${group(TARGETS, "°")}</div><div class="rows">${group(HYSTS, " K")}</div></div>
+      <div class="rows twsteps">${group(TARGETS, "°")}</div>${hyst}
       ${warn ? `<div class="note" style="color:#c98400">${this._t("tw_hyst_warn")}</div>` : ""}</ha-card>`;
   }
 

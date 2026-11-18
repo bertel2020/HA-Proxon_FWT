@@ -239,7 +239,13 @@ test("the hysteresis is shown and editable, the note follows it, and a narrow ba
   panel.hass = twHass;
   const html = await render(panel, () => { panel._tab = "warm"; });
   check(html);
-  assert.ok(html.includes('data-v="number.tw_hlow|1"') && html.includes('data-v="number.tw_hhigh|-1"'), "steppers for both values");
+  assert.ok(!html.includes('data-v="number.tw_hlow|1"'), "folded away by default");
+  assert.ok(html.includes('data-act="twhyst"') && html.includes("Hysterese · heizt 3 K unter Soll, stoppt 1 K darüber") && html.includes('aria-expanded="false"'), "a line says what it is");
+  panel._click({ composedPath: () => [{ dataset: { act: "twhyst" } }] });
+  const open = await render(panel, () => { panel._tab = "warm"; });
+  assert.ok(open.includes('aria-expanded="true"') && open.includes('data-v="number.tw_hlow|1"') && open.includes('data-v="number.tw_hhigh|-1"'), "steppers for both values once opened");
+  panel._click({ composedPath: () => [{ dataset: { act: "twhyst" } }] });
+  assert.ok(!(await render(panel, () => { panel._tab = "warm"; })).includes('data-v="number.tw_hlow|1"'), "and folded again");
   assert.ok(html.includes("Normal: heizt unter 50°, stoppt ab 54°") && html.includes("PV: heizt unter 57°, stoppt ab 61°"), "brackets of the scale follow the values");
   assert.ok(!html.includes("kleiner als 2 K"), "the default band of 4 K is fine");
   const narrow = { ...twHass, states: { ...twStates, "number.tw_hlow": { ...twStates["number.tw_hlow"], state: "1" }, "number.tw_hhigh": { ...twStates["number.tw_hhigh"], state: "0.5" } } };
