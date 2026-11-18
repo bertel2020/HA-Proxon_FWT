@@ -247,8 +247,11 @@ async def async_setup_entry(
 
     room_names = entry.options.get(CONF_ROOM_NAMES, [])
     for i, room_name in enumerate(room_names):
-        if i == 0 or not room_name:
-            continue  # no mid-room sensor for the main room (register base starts at room 2); empty name = room slot not installed
+        if not room_name:
+            continue  # empty name = room slot not installed
+        entities.append(ProxonRoomTempSensor(coordinator, entry.entry_id, i, room_name))
+        if i == 0:
+            continue  # no mid-room sensor for the main room (register base starts at room 2)
         entities.append(
             ProxonRoomMidTempSensor(coordinator, entry.entry_id, i, room_name)
         )
@@ -441,6 +444,33 @@ class ProxonLastWriteErrorSensor(ProxonCentralEntity, SensorEntity):
             "occurred_at": self.coordinator.last_write_error_at,
             "error_count": self.coordinator.write_error_count,
         }
+
+
+class ProxonRoomTempSensor(ProxonRoomEntity, SensorEntity):
+    """Actual temperature of a room (register 150+n), same value as the
+    climate entity's current temperature, but usable as a plain sensor
+    (long-term statistics, history graphs, automations)."""
+
+    _blocks = frozenset({BLOCK_ROOMS})
+
+    _attr_device_class = SensorDeviceClass.TEMPERATURE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+    _attr_translation_key = "room_temperature"
+
+    def __init__(
+        self,
+        coordinator: ProxonModbusCoordinator,
+        entry_id: str,
+        room_index: int,
+        room_name: str,
+    ) -> None:
+        super().__init__(coordinator, entry_id, room_index, room_name, f"room_{room_index}_temp")
+
+    @property
+    def native_value(self) -> float | None:
+        room = self.coordinator.data.rooms.get(self._room_index)
+        return room.temperature if room else None
 
 
 class ProxonRoomMidTempSensor(ProxonRoomEntity, SensorEntity):

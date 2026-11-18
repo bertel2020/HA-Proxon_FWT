@@ -2,6 +2,11 @@
 
 *[🇬🇧 English version](CHANGELOG.en.md)*
 
+## Unveröffentlicht
+
+**Neu**
+- **Raumtemperatur als Sensor:** Jeder Raum bekommt einen Sensor `sensor.<raum>_raumtemperatur` mit der Ist-Temperatur (Register 150+n, dieselbe wie am Thermostat), mit Langzeitstatistik. Auch Raum 1, der bisher keinen Temperatur-Sensor hatte.
+
 ## 2.3.0 – 2026-11-17
 
 **Geändert**

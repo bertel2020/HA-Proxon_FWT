@@ -280,6 +280,7 @@
       "filter_age_days": { "name": "Alter Gerätefilter" },
       "filter_shutdown_days": { "name": "Tage bis Zwangsabschaltung" },
       "recirculation_filter_hours": { "name": "Betriebsstunden Umluftfilter" },
+      "room_temperature": { "name": "Raumtemperatur" },
       "mid_temperature": { "name": "Mittentemperatur" },
       "operating_mode_state": {
         "name": "Betriebsart (vollständiger Zustand)",
