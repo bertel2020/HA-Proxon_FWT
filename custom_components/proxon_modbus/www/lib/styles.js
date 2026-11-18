@@ -384,9 +384,9 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .banner .bgo ha-icon { --mdc-icon-size: 16px; }
 .twhero { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
 .twhsvg { width: min(100%, 440px); height: auto; flex: none; }
-.twside { flex: 1; min-width: 220px; }
+.twside { flex: 1; min-width: 220px; max-width: 520px; }
 .twmg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.twm { background: var(--secondary-background-color); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.twm { background: var(--secondary-background-color); border-radius: 10px; padding: 8px 12px; min-width: 0; }
 .twm small { display: block; font-size: 12px; color: var(--secondary-text-color); margin-bottom: 2px; }
 .twm b { font-size: 20px; font-weight: 500; }
 .twflow { stroke-dasharray: 7 6; }
@@ -396,10 +396,19 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 @keyframes twdash { to { stroke-dashoffset: -13; } }
 @media (prefers-reduced-motion: reduce) { .twhsvg.heat .twflow, .twhsvg.heat .fan { animation: none; } }
 @keyframes twspin { to { transform: rotate(360deg); } }
-.twsteps { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0 28px; margin-top: 4px; }
+.twsteps { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0 28px; margin-top: 4px; }
+.twsteps .f { padding: 4px 0; }
+.twstp .round { width: 30px; height: 30px; min-width: 30px; }
+.twstp .round ha-icon { --mdc-icon-size: 16px; }
 .twc { container-type: inline-size; }
-.twtwo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
-@container (max-width: 760px) { .twtwo { grid-template-columns: minmax(0, 1fr); } }
+
+.twgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
+@container (min-width: 1000px) {
+  .twgrid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .tw-hero { grid-column: 1; grid-row: 1; } .tw-op { grid-column: 2; grid-row: 1; }
+  .tw-scale { grid-column: 1; grid-row: 2; } .tw-day { grid-column: 2; grid-row: 2; }
+  .tw-hist { grid-column: 1 / -1; grid-row: 3; }
+}
 `;
 
 let SHEET; // one constructable stylesheet shared by every card/panel instead of a <style> per render

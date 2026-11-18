@@ -363,7 +363,7 @@ test("the target scale shows zones, marks, pointer and the switching band; the d
   for (const z of ["unter Minimum", "heizt", "halten", "Soll erreicht"]) assert.ok(html.includes(`${z}</span>`), `zone ${z}`);
   assert.ok(html.includes(">Heute<") && html.includes('aria-label="Heute"'), "day strip card");
   const sm = panel._twScale({ ents: {}, id: "tw1" });
-  assert.equal(sm, "", "without the numbers there is no scale");
+  assert.equal(sm, null, "without the numbers there is no scale");
   const nodata = new X.ProxonFwtPanel();
   nodata.hass = twHass; // no history: nothing for the day strip
   const none = await render(nodata, () => { nodata._tab = "warm"; });
@@ -386,4 +386,30 @@ test("one Operation card: switch, PV status, enables and the last decision; no s
   const p2 = new X.ProxonFwtPanel();
   p2.hass = idle;
   assert.ok(!(await render(p2, () => { p2._tab = "warm"; })).includes("Geplante Schaltungen"), "nothing planned: no row");
+});
+
+test("the page is a grid: main picture and operation, scale and day, then the history; legend swatches and compact steppers", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = twHist;
+  const html = await render(panel, () => { panel._tab = "warm"; });
+  check(html);
+  const order = ["tw-hero", "tw-scale", "tw-op", "tw-day", "tw-hist"].map((c) => html.indexOf(`class="${c}"`));
+  assert.ok(order.every((v) => v > 0) && order.every((v, k) => k === 0 || v > order[k - 1]), "five areas in reading order for the narrow layout");
+  assert.ok(html.includes('class="twgrid"') && html.includes('class="twc"'));
+  assert.ok(!html.includes("Ein Fühler in der Mitte des Speichers: Das Wasser ist einheitlich gefüllt.</div>"), "the explanation is a tooltip, not a text line");
+  assert.ok(html.includes("<title>Ein Fühler in der Mitte des Speichers"), "tooltip of the main picture");
+  assert.ok(html.includes('class="legend"') && html.includes("<i style=\"background:"), "legend with colour swatches (in the card header)");
+  const css = (await import("node:fs")).readFileSync(new URL("lib/styles.js", WWW), "utf8");
+  assert.match(css, /@container \(min-width: 1000px\)[\s\S]*\.tw-hero[\s\S]*\.tw-hist/);
+});
+
+test("the width of the cards follows the layout", () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = hass;
+  panel.clientWidth = 1500;
+  assert.equal(panel._twWide(), true);
+  assert.ok(panel._twCardW(2 / 3) < panel._twCardW(1), "the wide layout gives the scale two thirds");
+  panel.clientWidth = 700;
+  assert.equal(panel._twWide(), false);
+  assert.equal(panel._twCardW(2 / 3), panel._twCardW(1), "narrow: every card has the full width");
 });
