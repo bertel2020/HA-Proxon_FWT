@@ -78,6 +78,7 @@ export class InteractionMethods {
       case "hcmp": this._hcmp = !this._hcmp; this._update(); break;
       case "hrange": this._histRange = v; this._update(); break;
       case "metric": this._metric = v; this._update(); break;
+      case "twmetric": this._twMetric = v; this._update(); break;
       case "dismiss": this._dismissed = this._dismissed || {}; this._dismissed[v] = Date.now(); this._saveDismissed(); this._sig = ""; this._update(); break;
       case "undismiss": this._dismissed = {}; this._saveDismissed(); this._sig = ""; this._update(); break;
       case "kpi": this._metric = v; this._tab = "history"; this._sig = ""; this._update(); if (this.scrollIntoView) this.scrollIntoView({ block: "start" }); break;

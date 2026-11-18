@@ -83,16 +83,22 @@ for (const [id, state, a] of [["sensor.tw_water", "54.2", { unit_of_measurement:
 }
 const twSettings = [{ device_id: "central", twwp: [{ device_id: "tw1", water_temp: "sensor.tw_water", outer_temp: "sensor.tw_outer", pv_power: "sensor.tw_pv",
   power_entity: "sensor.tw_power", energy_entity: "sensor.tw_energy", enable_switch: "switch.freigabe", enable_pv_switch: "switch.freigabe_pv" }] }];
-const twHistory = () => {
-  const now = Date.now() / 1000, t = (h) => now - h * 3600, water = [], prog = [];
-  [[24, 44], [20, 41], [16, 45], [12, 52], [10, 50], [8, 47], [7, 52], [5, 58], [4, 60], [3, 58], [1, 55], [0, 54.2]].forEach(([h, v]) => water.push({ lu: t(h), s: String(v) }));
-  [[24, "off"], [18, "minimum"], [14, "normal"], [9, "off"], [7, "pv"], [2, "off"]].forEach(([h, s]) => prog.push({ lu: t(h), s }));
-  return { "sensor.tw_water": water, "sensor.tw_program": prog };
+const twHistory = (ids) => {
+  const now = Date.now() / 1000, t = (h) => now - h * 3600;
+  const rows = (pts) => pts.map(([h, v]) => ({ lu: t(h), s: String(v) }));
+  const all = {
+    "sensor.tw_water": rows([[24, 44], [20, 41], [16, 45], [12, 52], [10, 50], [8, 47], [7, 52], [5, 58], [4, 60], [3, 58], [1, 55], [0, 54.2]]),
+    "sensor.tw_program": rows([[24, "off"], [18, "minimum"], [14, "normal"], [9, "off"], [7, "pv"], [2, "off"]]),
+    "sensor.tw_power": rows([[24, 0], [18, 410], [16, 0], [14, 395], [11, 0], [7, 389], [3, 0]]),
+    "sensor.tw_pv": rows([[24, 0], [9, 1.2], [7, 2.8], [5, 2.5], [3, 0.4], [2, 0]]),
+    "sensor.tw_outer": rows([[24, 2], [12, 4], [8, 6], [0, 5.2]]),
+  };
+  return Object.fromEntries(ids.filter((i) => all[i]).map((i) => [i, all[i]]));
 };
 
 const hass = {
   language: "de", entities, states, devices,
-  callWS: async (m) => (m.type === "proxon_modbus/settings" ? twSettings : m.type === "history/history_during_period" && m.entity_ids.includes("sensor.tw_water") ? twHistory() : m.type === "frontend/get_user_data" ? { value: null } : {}),
+  callWS: async (m) => (m.type === "proxon_modbus/settings" ? twSettings : m.type === "history/history_during_period" && m.entity_ids.some((i) => i.startsWith("sensor.tw_")) ? twHistory(m.entity_ids) : m.type === "frontend/get_user_data" ? { value: null } : {}),
   callService: async (d, s, x) => { calls.push([d, s, x]); },
 };
 

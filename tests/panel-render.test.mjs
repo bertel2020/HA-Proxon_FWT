@@ -269,3 +269,55 @@ test("the history chart draws phase bands, reference lines and a legend for them
   const plain = panel._chart(series, { range: "24h", unit: "°" });
   assert.ok(!plain.includes("stroke-dasharray=\"4 4\"") && panel._cm.hi < 60, "without options the chart is unchanged");
 });
+
+// ---- hot water history card ---------------------------------------------------
+const twRows = (vals) => { const now = Date.now() / 1000; return vals.map(([h, s]) => ({ lu: now - h * 3600, s: String(s) })); };
+const twData = {
+  "sensor.tw_water": twRows([[24, 44], [18, 41], [12, 47], [8, 55], [4, 60], [1, 54.2]]),
+  "sensor.tw_power": twRows([[24, 0], [10, 389], [6, 0], [3, 400], [2, 0]]), // heats 4 h + 1 h
+  "sensor.tw_pv": twRows([[24, 0], [10, 2.5], [6, 0]]),
+  "sensor.tw_outer": twRows([[24, 3], [12, 6], [1, 5.2]]),
+  "sensor.tw_program": twRows([[24, "off"], [18, "minimum"], [14, "normal"], [9, "pv"], [5, "off"]]),
+};
+const twHist = { ...twHass, callWS: async (m) => {
+  if (m.type === "history/history_during_period") return Object.fromEntries(m.entity_ids.filter((i) => twData[i]).map((i) => [i, twData[i]]));
+  if (m.type === "recorder/statistics_during_period") return Object.fromEntries(m.statistic_ids.map((i) => [i, [1, 2, 3, 4].map((k) => ({ start: (Date.now() - k * 36e5 * 24) , mean: 40 + k }))]));
+  return twHass.callWS(m);
+} };
+
+test("the hot water history shows axes, targets, program phases and the heating time", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = twHist;
+  const html = await render(panel, () => { panel._tab = "warm"; });
+  check(html);
+  assert.ok(html.includes('class="ch"'), "the chart of the FWT history");
+  assert.ok(html.includes("Soll PV 60°") && html.includes("Soll 53°") && html.includes("Minimum 42°"), "target lines");
+  assert.ok(html.includes("PV-Betrieb</span>") && html.includes("Normalbetrieb</span>") && html.includes("Nachtabschaltung</span>") === false, "legend lists only phases that occurred");
+  assert.ok(html.includes("Heizzeit: 5 h 0 min"), "heating time from the power above 100 W");
+  assert.ok(html.includes('data-act="twmetric" data-v="power"') && html.includes('data-act="hrange"') && html.includes('data-act="hcmp"'), "chips, range and previous period");
+  assert.ok(html.includes("Min") && html.includes("Ø"), "min / max / mean");
+});
+
+test("the hot water history switches measurement and range", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = twHist;
+  await render(panel, () => { panel._tab = "warm"; });
+  panel._click({ composedPath: () => [{ dataset: { act: "twmetric", v: "power" } }] });
+  const power = await render(panel, () => { panel._tab = "warm"; });
+  assert.ok(power.includes("Σ") && power.includes(" W"), "power: unit and energy sum");
+  assert.ok(!power.includes("Soll PV 60°"), "no target lines on the power curve");
+  const month = await render(panel, () => { panel._tab = "warm"; panel._histRange = "30d"; });
+  check(month);
+  assert.ok(month.includes('class="ch"') && !month.includes("Heizzeit"), "statistics for long ranges, no heating time, no phases");
+  const prev = await render(panel, () => { panel._tab = "warm"; panel._histRange = "24h"; panel._hcmp = true; });
+  assert.ok(prev.includes("Vorzeitraum"), "previous period series");
+  panel._hcmp = false;
+});
+
+test("without any history the hot water card says so", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = twHass; // no history behind the websocket
+  const html = await render(panel, () => { panel._tab = "warm"; panel._histRange = "24h"; });
+  assert.ok(html.includes("Keine Verlaufsdaten.") && !html.includes('class="ch"'), "note instead of a chart");
+  check(html);
+});

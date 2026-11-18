@@ -1,4 +1,4 @@
-import { BLUE, CORAL, AMBER, GREEN, esc } from "./constants.js";
+import { BLUE, CORAL, AMBER, GREEN, RANGE_MS, esc } from "./constants.js";
 
 const PROGRAMS = ["off", "normal", "pv", "minimum", "night"];
 const PHASE_COLOR = { pv: GREEN, normal: AMBER, minimum: CORAL, night: BLUE };
@@ -195,47 +195,95 @@ export class TwwpSectionsMethods {
         ${at.last_error ? this._twRow(this._t("tw_err"), esc(at.last_error), `style="color:#db4437"`) : ""}</div></ha-card>`;
   }
 
-  // 24 h water temperature with the program phases as coloured bands, from the recorder history.
-  _twSpark(t) {
-    const c = this._twCfg(t), wid = c.water_temp || t.heater, pid = t.ents.twwp_program, tp = this._num(t.ents.twwp_target_pv);
-    const data = this._hget(`tw|${wid}|${pid}`, async () => {
-      const end = new Date(), start = new Date(end.getTime() - 864e5), ids = [wid, pid].filter(Boolean);
+  // Entity behind one measurement of the history card; `attr` marks the water_heater fallback (its attribute, no statistics).
+  _twMetrics(t) {
+    const c = this._twCfg(t);
+    return [
+      { k: "water", icon: "mdi:water-thermometer-outline", label: "tw_m_water", unit: "°", color: BLUE, id: c.water_temp || t.heater, attr: !c.water_temp },
+      { k: "power", icon: "mdi:flash", label: "power", unit: " W", color: AMBER, id: c.power_entity },
+      { k: "pv", icon: "mdi:weather-sunny", label: "tw_pv_power", unit: " W", color: GREEN, id: c.pv_power },
+      { k: "outer", icon: "mdi:thermometer", label: "tw_top", unit: "°", color: CORAL, id: c.outer_temp },
+    ].filter((m) => m.id);
+  }
+
+  // One curve over the shared history range. Short ranges come from the recorder history, long ones from the statistics;
+  // the heating time (power above 100 W) is added up from the raw points before they are thinned out.
+  async _twLoadSeries(m, range, prev) {
+    const ms = RANGE_MS[range], end = new Date(Date.now() - (prev ? ms : 0)), start = new Date(end.getTime() - ms), long = range === "30d" || range === "1y";
+    let pts;
+    if (long) {
+      if (m.attr) return [];
+      const res = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
+        statistic_ids: [m.id], period: range === "1y" ? "day" : "hour", types: ["mean"] });
+      pts = (res[m.id] || []).map((r) => [r.start / 1000, Number(r.mean)]);
+    } else {
       const res = await this._hass.callWS({ type: "history/history_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
-        entity_ids: ids, include_start_time_state: true, significant_changes_only: false });
-      const at = (p) => p.lu ?? Date.parse(p.last_updated) / 1000;
-      const pts = [], ph = [];
-      for (const p of res[wid] || []) {
-        const v = c.water_temp ? Number(p.s ?? p.state) : Number((p.a || p.attributes || {}).current_temperature);
-        if (!isNaN(at(p)) && !isNaN(v) && (p.s ?? p.state ?? "x") !== "unavailable") pts.push([at(p), v]);
-      }
-      for (const p of res[pid] || []) if (!isNaN(at(p))) ph.push([at(p), String(p.s ?? p.state)]);
-      return { pts: this.constructor._down(pts, 120), ph, t0: start.getTime() / 1000, t1: end.getTime() / 1000 };
-    });
-    if (data === undefined) return this._skel(84);
-    if (!data || data.pts.length < 2) return `<div class="note">${this._t("r_noh")}</div>`;
-    const W = Math.max(320, Math.min(1200, (this.clientWidth || 900) - 64)), H = 110, vals = data.pts.map((p) => p[1]).concat(tp === null ? [] : [tp]);
-    const lo = Math.min(...vals) - 1, hi = Math.max(...vals) + 1, y = (v) => H - ((v - lo) / (hi - lo)) * H;
-    const x = (s) => Math.max(0, Math.min(W, ((s - data.t0) / (data.t1 - data.t0)) * W));
-    const bands = data.ph.map(([s, st], k) => {
-      const e = k + 1 < data.ph.length ? data.ph[k + 1][0] : data.t1, col = PHASE_COLOR[st];
-      return col && e > s ? `<rect x="${x(s).toFixed(1)}" y="0" width="${Math.max(0, x(e) - x(s)).toFixed(1)}" height="${H}" fill="${col}" opacity=".16"/>` : "";
-    }).join("");
-    const line = data.pts.map((p) => `${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join(" ");
-    const last = data.pts[data.pts.length - 1], lang = this._hass.language, sw = W / data.pts.length;
-    const hits = data.pts.map((p) => `<rect x="${(x(p[0]) - sw / 2).toFixed(1)}" y="0" width="${sw.toFixed(1)}" height="${H}" fill="transparent" data-tip="${new Date(p[0] * 1000).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })}|${this._fmt(p[1])} °C"/>`).join("");
-    const legend = Object.entries(PHASE_COLOR).filter(([k]) => data.ph.some((p) => p[1] === k)).map(([k, col]) => `<span style="color:${col}">${this._t(`tw_p_${k}`)}</span>`).join("");
-    return `<div class="chw"><svg viewBox="0 0 ${W} ${H + 18}" style="width:100%;height:auto" role="img" aria-label="${this._t("tw_hist")}">${bands}
-      ${tp === null ? "" : `<line x1="0" x2="${W}" y1="${y(tp).toFixed(1)}" y2="${y(tp).toFixed(1)}" stroke="var(--secondary-text-color)" stroke-dasharray="4 4" opacity=".6"/><text x="${W}" y="${Math.max(10, y(tp) - 4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--secondary-text-color)">${this._t("tw_pv_line", this._fmt(tp, 0))}</text>`}
-      <polyline fill="none" stroke="${BLUE}" stroke-width="2.4" stroke-linejoin="round" points="${line}"/>
-      <circle cx="${x(last[0]).toFixed(1)}" cy="${y(last[1]).toFixed(1)}" r="4.5" fill="${BLUE}"/>
-      <text x="0" y="${H + 15}" font-size="11" fill="var(--secondary-text-color)">${this._t("r_ago")}</text><text x="${W}" y="${H + 15}" text-anchor="end" font-size="11" fill="var(--secondary-text-color)">${this._t("r_now")}</text>${hits}</svg><div class="tip" style="display:none"></div></div>
-      <div class="twleg">${legend}</div>`;
+        entity_ids: [m.id], minimal_response: !m.attr, no_attributes: !m.attr, significant_changes_only: false });
+      pts = (res[m.id] || []).map((p) => [p.lu ?? Date.parse(p.last_updated) / 1000, m.attr ? Number((p.a || p.attributes || {}).current_temperature) : Number(p.s ?? p.state)]);
+    }
+    pts = pts.filter(([t, v]) => !isNaN(t) && !isNaN(v));
+    if (m.unit === " W") { // a sensor may report kW or MW
+      const u = String(((this._state(m.id) || { attributes: {} }).attributes.unit_of_measurement) || "W").trim(), k = u === "kW" ? 1e3 : u === "MW" ? 1e6 : 1;
+      if (k !== 1) pts = pts.map(([t, v]) => [t, v * k]);
+    }
+    let heat = null;
+    if (m.k === "power" && !long) {
+      heat = 0;
+      pts.forEach(([t, v], i) => { if (v > 100) heat += (i + 1 < pts.length ? pts[i + 1][0] : end.getTime() / 1000) - t; });
+    }
+    let out = pts.length ? [{ label: this._t(m.label), color: m.color, pts: this.constructor._down(pts, 360) }] : [];
+    if (prev) out = out.map((x) => ({ ...x, prev: true, label: `${x.label} · ${this._t("prev_period")}`, pts: x.pts.map(([t, v]) => [t + ms / 1000, v]) }));
+    out.heat = heat;
+    return out;
+  }
+
+  // Program phases from the history of the program sensor (not kept as long-term statistics, so only for 24 h and 7 d).
+  async _twLoadPhases(pid, range) {
+    const end = new Date(), start = new Date(end.getTime() - RANGE_MS[range]);
+    const res = await this._hass.callWS({ type: "history/history_during_period", start_time: start.toISOString(), end_time: end.toISOString(),
+      entity_ids: [pid], minimal_response: true, no_attributes: true, significant_changes_only: false });
+    const rows = (res[pid] || []).map((p) => [p.lu ?? Date.parse(p.last_updated) / 1000, String(p.s ?? p.state)]).filter(([t]) => !isNaN(t));
+    const iv = {};
+    rows.forEach(([t, st], i) => { (iv[st] = iv[st] || []).push([t, i + 1 < rows.length ? rows[i + 1][0] : end.getTime() / 1000]); });
+    return ["pv", "normal", "minimum", "night"].map((k) => ({ iv: iv[k] || [], color: PHASE_COLOR[k], label: this._t(`tw_p_${k}`) }));
+  }
+
+  _twFmtDur(s) {
+    const m = Math.round(s / 60);
+    return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`;
+  }
+
+  // History card: same range and previous-period switch as the FWT history, one measurement at a time.
+  _twHistory(t) {
+    const metrics = this._twMetrics(t);
+    if (!metrics.length) return "";
+    const range = this._range(), m = metrics.find((x) => x.k === this._twMetric) || metrics[0], hist = range === "24h" || range === "7d";
+    const key = (x, prev) => `tws|${x.id}|${x.attr ? "a" : "s"}|${range}${prev ? "|prev" : ""}`;
+    let series = this._hget(key(m), () => this._twLoadSeries(m, range));
+    if (this._hcmp && series) {
+      const prev = this._hget(key(m, true), () => this._twLoadSeries(m, range, true));
+      if (prev) series = [...series, ...prev];
+    }
+    const pid = t.ents.twwp_program, phases = hist && pid ? this._hget(`twp|${pid}|${range}`, () => this._twLoadPhases(pid, range)) : null;
+    const pm = metrics.find((x) => x.k === "power"), ps = pm && hist ? this._hget(key(pm), () => this._twLoadSeries(pm, range)) : null;
+    const tv = (id) => this._num(id);
+    const refs = m.k === "water" ? [["twwp_target_pv", "tw_pv_line"], ["twwp_target_normal", "tw_ref_n"], ["twwp_target_min", "tw_ref_min"]]
+      .map(([e, l]) => ({ v: tv(t.ents[e]), label: this._t(l, this._fmt(tv(t.ents[e]), 0)) })).filter((r) => r.v !== null) : [];
+    let body;
+    if (series === undefined) body = this._skel(190);
+    else if (!series || !series.some((s) => s.pts.length > 1)) body = `<div class="note">${this._t(range === "30d" || range === "1y" ? "no_stats" : "no_history")}</div>`;
+    else body = this._chart(series, { range, unit: m.unit, bands: false, phases: Array.isArray(phases) ? phases : [], refs, energy: m.k === "power" });
+    const heat = ps && ps.heat != null && ps.heat > 0 ? `<div class="note">${this._t("tw_heat_time", this._twFmtDur(ps.heat))}</div>` : "";
+    const rb = (v, l) => `<button class="vbtn ${range === v ? "a" : ""}" data-act="hrange" data-v="${v}">${l}</button>`;
+    const chips = metrics.length > 1 ? `<div class="mchips" role="group">${metrics.map((x) => `<button class="vbtn ${x.k === m.k ? "a" : ""}" data-act="twmetric" data-v="${x.k}">${this._icon(x.icon)}${this._t(x.label)}</button>`).join("")}</div>` : "";
+    return `<ha-card><div class="h">${this._icon("mdi:chart-line")}${this._t("history")}
+      <span class="r rng"><button class="vbtn ${this._hcmp ? "a" : ""}" data-act="hcmp" aria-pressed="${!!this._hcmp}">${this._icon("mdi:compare-horizontal")}${this._t("prev_period")}</button><span class="rgrp" role="group">${rb("24h", this._t("hist_24"))}${rb("7d", this._t("hist_7"))}${rb("30d", this._t("hist_30"))}${rb("1y", this._t("hist_365"))}</span></span></div>${chips}${body}${heat}</ha-card>`;
   }
 
   _twTab(d) {
     const many = d.twwp.length > 1;
     return `<div class="stack">${d.twwp.map((t, i) => `${many ? `<h3 class="twname">${t.name}</h3>` : ""}
       <div class="ov"><div class="col">${this._twTank(t, i)}${this._twTargets(t)}</div><div class="col">${this._twOperation(t)}${this._twDecision(t)}</div></div>
-      <ha-card>${this._header("mdi:chart-line", this._t("tw_hist"), this._t("hist_24"))}${this._twSpark(t)}</ha-card>`).join("")}</div>`;
+      ${this._twHistory(t)}`).join("")}</div>`;
   }
 }
