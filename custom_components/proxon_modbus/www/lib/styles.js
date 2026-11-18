@@ -383,6 +383,10 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .twreason { font-size: 15px; font-weight: 500; margin-bottom: 8px; }
 .twleg { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; margin-top: 6px; }
 .twname { margin: 4px 0 0; font-size: 15px; font-weight: 500; }
+.banner.i { background: color-mix(in srgb, var(--primary-color) 14%, transparent); color: var(--primary-color); }
+.banner.go { cursor: pointer; }
+.banner .bgo { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 400; opacity: .8; white-space: nowrap; }
+.banner .bgo ha-icon { --mdc-icon-size: 16px; }
 `;
 
 let SHEET; // one constructable stylesheet shared by every card/panel instead of a <style> per render

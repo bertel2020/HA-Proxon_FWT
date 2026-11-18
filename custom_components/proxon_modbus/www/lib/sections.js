@@ -81,8 +81,10 @@ export class SectionsMethods {
     if (we && we.state !== "none" && weAt && Date.now() - weAt < WRITE_ERROR_SHOWN_MS) {
       out.push(["w", "mdi:pencil-off", `${this._t("write_error")}: ${esc(we.state)}`]);
     }
+    if (this._isPanel) out.push(...this._twAlerts(d));
     if (!out.length) return "";
-    return `<div class="alerts">${out.map(([k, i, t]) => `<div class="banner ${k}">${this._icon(i)}${t}</div>`).join("")}</div>`;
+    // A banner with a fourth entry opens that tab when clicked.
+    return `<div class="alerts">${out.map(([k, i, t, go]) => `<div class="banner ${k}${go ? " go" : ""}" ${go ? `data-act="tab" data-v="${go}" role="button" tabindex="0"` : ""}>${this._icon(i)}${t}${go ? `<span class="bgo">${this._t("tw_open")}${this._icon("mdi:chevron-right")}</span>` : ""}</div>`).join("")}</div>`;
   }
 
   _sec_kpi(d) {

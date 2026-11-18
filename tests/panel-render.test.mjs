@@ -215,3 +215,19 @@ test("the overview shows a hot water tile in the panel, not in the dashboard car
   const down = await render(p2, () => { p2._tab = "overview"; });
   assert.ok(down.includes("Sensorproblem") && down.includes("mdi:alert-outline"));
 });
+
+test("the overview flags a failed sensor, and a controller that only observes and would act differently", async () => {
+  const withState = (over) => ({ ...twHass, states: { ...twStates, ...Object.fromEntries(Object.entries(over).map(([k, v]) => [k, { ...twStates[k], state: v }])) } });
+  const banners = async (h, el = new X.ProxonFwtPanel()) => { el.hass = h; return (await render(el, () => { el._tab = "overview"; })); };
+  const obs = await banners(withState({})); // control off, 1 planned switching
+  assert.ok(obs.includes("würde 1 Schalter anders stellen") && obs.includes('class="banner i go"') && obs.includes('data-act="tab" data-v="warm"'));
+  check(obs);
+  assert.ok(!(await banners(withState({ "switch.tw_control": "on" }))).includes("beobachtet nur"), "controlling: no observe banner");
+  assert.ok(!(await banners(withState({ "sensor.tw_planned": "0" }))).includes("beobachtet nur"), "nothing planned: no banner");
+  assert.ok((await banners(withState({ "sensor.tw_planned": "3" }))).includes("würde 3 Schalter"));
+  const bad = await banners(withState({ "binary_sensor.tw_problem": "on" }));
+  assert.ok(bad.includes('class="banner r go"') && bad.includes("Sensor oder Sollwert nicht verfügbar") && !bad.includes("beobachtet nur"));
+  const card = new X.ProxonFwtCard();
+  card.setConfig({ sections: X.ALL_SECTIONS });
+  assert.ok(!(await banners(withState({ "binary_sensor.tw_problem": "on" }), card)).includes("Freigaben abgeschaltet"), "the dashboard card has no tabs, so no banner");
+});

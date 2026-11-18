@@ -78,6 +78,21 @@ export class TwwpSectionsMethods {
     }).join("");
   }
 
+  // Banners for the overview (panel only): a failed sensor, and a controller that only observes but would act differently.
+  _twAlerts(d) {
+    const out = [], many = d.twwp.length > 1;
+    for (const t of d.twwp) {
+      const name = many ? t.name : this._t("tab_warm"), ctl = t.ents.twwp_control;
+      if (this._on(t.ents.twwp_sensor_problem)) {
+        out.push(["r", "mdi:alert-outline", `${name}: ${this._t("tw_alert_problem")}`, "warm"]);
+      } else if (ctl && this._state(ctl) && this._state(ctl).state === "off") {
+        const n = this._num(t.ents.twwp_planned);
+        if (n !== null && n > 0) out.push(["i", "mdi:eye-outline", `${name}: ${this._t(n === 1 ? "tw_alert_obs_1" : "tw_alert_obs_n", String(n))}`, "warm"]);
+      }
+    }
+    return out;
+  }
+
   _twAge(iso) {
     const s = iso ? Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000)) : NaN;
     if (isNaN(s)) return "–";

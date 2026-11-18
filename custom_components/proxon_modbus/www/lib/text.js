@@ -120,6 +120,10 @@ export const TEXT = {
     tw_r_normal: "Unter dem Soll: heizen",
     tw_r_target_reached: "Soll erreicht",
     tw_r_none: "Nichts zu tun",
+    tw_alert_problem: "Sensor oder Sollwert nicht verfügbar, Freigaben abgeschaltet",
+    tw_alert_obs_1: "Der Regler beobachtet nur und würde 1 Schalter anders stellen",
+    tw_alert_obs_n: "Der Regler beobachtet nur und würde {0} Schalter anders stellen",
+    tw_open: "Warmwasser öffnen",
   },
   en: {
     mode: "Operating mode", air: "Air paths", fan: "Ventilation", heatpump: "Heat pump",
@@ -241,5 +245,9 @@ export const TEXT = {
     tw_r_normal: "Below the target: heating",
     tw_r_target_reached: "Target reached",
     tw_r_none: "Nothing to do",
+    tw_alert_problem: "Sensor or target unavailable, enables switched off",
+    tw_alert_obs_1: "The controller is only observing and would set 1 switch differently",
+    tw_alert_obs_n: "The controller is only observing and would set {0} switches differently",
+    tw_open: "Open hot water",
   },
 };
