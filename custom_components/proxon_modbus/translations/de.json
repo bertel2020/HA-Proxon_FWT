@@ -300,7 +300,44 @@
           "frost_protection": "Einfrierschutz",
           "commissioning": "Einregulierung"
         }
+      },
+    "twwp_program": {
+      "name": "Programm",
+      "state": {
+        "off": "Aus",
+        "normal": "Normalbetrieb",
+        "pv": "PV-Betrieb",
+        "minimum": "Minimumbetrieb",
+        "night": "Nachtabschaltung"
       }
+    },
+    "twwp_pv_status": {
+      "name": "PV-Status",
+      "state": {
+        "pv": "PV-Strom",
+        "no_pv": "Kein PV-Strom",
+        "too_cold": "Zu kalt"
+      }
+    },
+    "twwp_reason": {
+      "name": "Letzte Entscheidung",
+      "state": {
+        "sensor_unavailable": "Sensor nicht verfügbar",
+        "pv": "PV-Überschuss: Start",
+        "pv_target_reached": "PV-Soll erreicht",
+        "minimum_end": "Minimumbetrieb beendet",
+        "minimum": "Unter dem Minimum",
+        "night": "Nacht",
+        "night_end": "Nacht beendet",
+        "pv_end": "PV-Überschuss beendet",
+        "normal": "Unter dem Soll: heizen",
+        "target_reached": "Soll erreicht",
+        "none": "Nichts zu tun"
+      }
+    },
+    "twwp_planned": {
+      "name": "Geplante Schaltungen"
+    }
     },
     "binary_sensor": {
       "bypass_active": { "name": "Bypass aktiv" },
@@ -319,7 +356,10 @@
       "fan_stage_3_selectable": { "name": "Lüfterstufe 3 wählbar" },
       "fan_stage_4_selectable": { "name": "Lüfterstufe 4 wählbar" },
       "fan_auto_selectable": { "name": "Lüfterstufe Automatik wählbar" },
-      "intensive_ventilation_selectable": { "name": "Intensivlüftung wählbar" }
+      "intensive_ventilation_selectable": { "name": "Intensivlüftung wählbar" },
+    "twwp_sensor_problem": {
+      "name": "Sensorproblem"
+    }
     },
     "switch": {
       "cooling_enable": { "name": "Kühlung freigegeben" },
@@ -362,6 +402,28 @@
           "furnace": "Ofenbetrieb"
         }
       }
+    },
+    "water_heater": {
+      "twwp": {
+        "state": {
+          "off": "Aus",
+          "normal": "Normalbetrieb",
+          "pv": "PV-Betrieb",
+          "minimum": "Minimumbetrieb",
+          "night": "Nachtabschaltung"
+        }
+      }
+    },
+    "number": {
+      "twwp_target_normal": {
+        "name": "Solltemperatur"
+      },
+      "twwp_target_pv": {
+        "name": "Solltemperatur PV"
+      },
+      "twwp_target_min": {
+        "name": "Mindesttemperatur"
+      }
     }
   },
   "services": {
@@ -392,5 +454,82 @@
     "change_not_allowed": {"message": "Die Anlage erlaubt diese Änderung derzeit nicht ({flag})"},
     "ptc_unknown": {"message": "Der PTC-Freigabestatus konnte nicht gelesen werden; bitte gleich noch einmal versuchen"},
     "boost_wrong_switch": {"message": "start_boost funktioniert nur am Schalter für das Stoßlüften"}
+  },
+  "config_subentries": {
+    "twwp": {
+      "entry_type": "Trinkwasser-Wärmepumpe (TWWP)",
+      "initiate_flow": {
+        "user": "Trinkwasser-Wärmepumpe hinzufügen",
+        "reconfigure": "Trinkwasser-Wärmepumpe neu konfigurieren"
+      },
+      "step": {
+        "user": {
+          "title": "Trinkwasser-Wärmepumpe",
+          "description": "Regelt die Freigabe einer Trinkwasser-Wärmepumpe nach Wassertemperatur, PV-Überschuss und Tageszeit. Die Wärmepumpe ist kein Modbus-Gerät: Wähle die Schalter und Sensoren deiner Anlage. Eine Automation oder ein Blueprint darf nicht dieselben Freigabe-Schalter schalten, solange „Wärmepumpe schalten“ an ist.",
+          "data": {
+            "name": "Name",
+            "enable_switch": "Freigabe-Schalter",
+            "enable_pv_switch": "Freigabe-Schalter PV",
+            "water_temp": "Wassertemperatur",
+            "outer_temp": "Temperatur Oberteil",
+            "pv_power": "PV-Leistung aktuell",
+            "pv_power_avg": "PV-Leistung Mittelwert (15 min)",
+            "brightness": "Helligkeits-/Dämmerungssensor (optional)",
+            "pv_threshold": "PV-Schwelle",
+            "frost_below": "Frostgrenze",
+            "pv_min_outer": "Mindesttemperatur für PV-Betrieb",
+            "night_below": "Nacht unterhalb",
+            "day_above": "Tag oberhalb",
+            "control": "Wärmepumpe schalten (sonst nur beobachten)"
+          },
+          "data_description": {
+            "enable_switch": "Freigabe für den Normalbetrieb.",
+            "enable_pv_switch": "Zweite Freigabe für den PV-Betrieb.",
+            "outer_temp": "Frostschutz: Unter der Frostgrenze gilt der PV-Status „zu kalt“, der PV-Betrieb startet nur über der Mindesttemperatur.",
+            "pv_power_avg": "Beide PV-Leistungen müssen über der Schwelle liegen.",
+            "brightness": "Unterscheidet Tag und Nacht. Ohne Sensor ist immer Tag, und es gibt keine Nachtabschaltung.",
+            "night_below": "Helligkeitswert, unter dem es Nacht ist.",
+            "day_above": "Helligkeitswert, über dem es Tag ist.",
+            "control": "Aus: Der Regler meldet nur, was er schalten würde (zum Vergleich mit einer bestehenden Automation). An: Er schaltet die beiden Freigabe-Schalter."
+          }
+        },
+        "reconfigure": {
+          "title": "Trinkwasser-Wärmepumpe",
+          "description": "Regelt die Freigabe einer Trinkwasser-Wärmepumpe nach Wassertemperatur, PV-Überschuss und Tageszeit. Die Wärmepumpe ist kein Modbus-Gerät: Wähle die Schalter und Sensoren deiner Anlage. Eine Automation oder ein Blueprint darf nicht dieselben Freigabe-Schalter schalten, solange „Wärmepumpe schalten“ an ist.",
+          "data": {
+            "name": "Name",
+            "enable_switch": "Freigabe-Schalter",
+            "enable_pv_switch": "Freigabe-Schalter PV",
+            "water_temp": "Wassertemperatur",
+            "outer_temp": "Temperatur Oberteil",
+            "pv_power": "PV-Leistung aktuell",
+            "pv_power_avg": "PV-Leistung Mittelwert (15 min)",
+            "brightness": "Helligkeits-/Dämmerungssensor (optional)",
+            "pv_threshold": "PV-Schwelle",
+            "frost_below": "Frostgrenze",
+            "pv_min_outer": "Mindesttemperatur für PV-Betrieb",
+            "night_below": "Nacht unterhalb",
+            "day_above": "Tag oberhalb",
+            "control": "Wärmepumpe schalten (sonst nur beobachten)"
+          },
+          "data_description": {
+            "enable_switch": "Freigabe für den Normalbetrieb.",
+            "enable_pv_switch": "Zweite Freigabe für den PV-Betrieb.",
+            "outer_temp": "Frostschutz: Unter der Frostgrenze gilt der PV-Status „zu kalt“, der PV-Betrieb startet nur über der Mindesttemperatur.",
+            "pv_power_avg": "Beide PV-Leistungen müssen über der Schwelle liegen.",
+            "brightness": "Unterscheidet Tag und Nacht. Ohne Sensor ist immer Tag, und es gibt keine Nachtabschaltung.",
+            "night_below": "Helligkeitswert, unter dem es Nacht ist.",
+            "day_above": "Helligkeitswert, über dem es Tag ist.",
+            "control": "Aus: Der Regler meldet nur, was er schalten würde (zum Vergleich mit einer bestehenden Automation). An: Er schaltet die beiden Freigabe-Schalter."
+          }
+        }
+      },
+      "error": {
+        "parallel_automation": "Diese aktiven Automationen verwenden ebenfalls die Freigabe-Schalter: {automations}. Schalte sie zuerst ab, oder sende das Formular erneut, um trotzdem fortzufahren."
+      },
+      "abort": {
+        "reconfigure_successful": "Die Einstellungen wurden aktualisiert."
+      }
+    }
   }
 }

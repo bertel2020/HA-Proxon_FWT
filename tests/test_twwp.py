@@ -111,3 +111,21 @@ def test_decision_values_are_known_keys(twwp, make):
         d = twwp.decide(make(**kw))
         assert d.program in (None, *twwp.PROGRAMS)
         assert d.pv_status in (None, *twwp.PV_STATES)
+
+
+def test_reasons_list_is_complete(twwp):
+    constants = {v for k, v in vars(twwp).items() if k.startswith("REASON_") and isinstance(v, str)}
+    assert constants == set(twwp.REASONS)
+
+
+def test_entity_translations_cover_all_states(twwp):
+    import json
+    from pathlib import Path
+
+    pkg = Path(__file__).resolve().parents[1] / "custom_components" / "proxon_modbus"
+    for name in ("strings.json", "translations/en.json", "translations/de.json"):
+        entity = json.loads((pkg / name).read_text())["entity"]
+        assert set(entity["water_heater"]["twwp"]["state"]) == set(twwp.PROGRAMS)
+        assert set(entity["sensor"]["twwp_program"]["state"]) == set(twwp.PROGRAMS)
+        assert set(entity["sensor"]["twwp_pv_status"]["state"]) == set(twwp.PV_STATES)
+        assert set(entity["sensor"]["twwp_reason"]["state"]) == set(twwp.REASONS)

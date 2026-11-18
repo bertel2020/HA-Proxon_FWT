@@ -11,7 +11,9 @@ from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
+    ConfigSubentryFlow,
     OptionsFlow,
+    SubentryFlowResult,
 )
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
 from homeassistant.components.modbus import async_get_temporary_unit
@@ -72,6 +74,27 @@ from .const import (
     MAX_EXTERNAL_SENSORS,
     MAX_ROOMS,
     REG_DEVICE_DATA_BASE,
+)
+from .twwp import (
+    CONF_BRIGHTNESS,
+    CONF_CONTROL,
+    CONF_DAY_ABOVE,
+    CONF_ENABLE_PV_SWITCH,
+    CONF_ENABLE_SWITCH,
+    CONF_FROST_BELOW,
+    CONF_NIGHT_BELOW,
+    CONF_OUTER,
+    CONF_PV_MIN_OUTER,
+    CONF_PV_POWER,
+    CONF_PV_POWER_AVG,
+    CONF_PV_THRESHOLD,
+    CONF_WATER,
+    DEFAULT_DAY_ABOVE,
+    DEFAULT_FROST_BELOW,
+    DEFAULT_NIGHT_BELOW,
+    DEFAULT_PV_MIN_OUTER,
+    DEFAULT_PV_THRESHOLD,
+    SUBENTRY_TYPE_TWWP,
 )
 from .hub import ProxonModbusError, ProxonModbusHub
 
@@ -545,6 +568,13 @@ class ProxonModbusConfigFlow(ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(config_entry: ConfigEntry) -> ProxonModbusOptionsFlow:
         return ProxonModbusOptionsFlow()
 
+    @classmethod
+    @callback
+    def async_get_supported_subentry_types(
+        cls, config_entry: ConfigEntry
+    ) -> dict[str, type[ConfigSubentryFlow]]:
+        return {SUBENTRY_TYPE_TWWP: TwwpSubentryFlow}
+
 
 class ProxonModbusOptionsFlow(OptionsFlow):
     """Options flow: room count/names, external sensors, scan interval."""
@@ -675,4 +705,124 @@ class ProxonModbusOptionsFlow(OptionsFlow):
         return self.async_show_form(
             step_id="names",
             data_schema=_names_schema(self.hass, *counts, self.config_entry.options),
+        )
+
+
+CONF_TWWP_NAME = "name"
+DEFAULT_TWWP_NAME = "Trinkwasser-Wärmepumpe"
+
+
+def _twwp_schema() -> vol.Schema:
+    """Form of the hot water heat pump (TWWP): entities and thresholds."""
+    switch = selector.EntitySelector(selector.EntitySelectorConfig(domain="switch"))
+    temperature = selector.EntitySelector(
+        selector.EntitySelectorConfig(domain="sensor", device_class="temperature")
+    )
+    power = selector.EntitySelector(
+        selector.EntitySelectorConfig(domain="sensor", device_class="power")
+    )
+
+    def number(minimum: float, maximum: float, step: float, unit: str | None = None):
+        return selector.NumberSelector(
+            selector.NumberSelectorConfig(
+                min=minimum,
+                max=maximum,
+                step=step,
+                unit_of_measurement=unit,
+                mode=selector.NumberSelectorMode.BOX,
+            )
+        )
+
+    return vol.Schema(
+        {
+            vol.Required(CONF_TWWP_NAME, default=DEFAULT_TWWP_NAME): str,
+            vol.Required(CONF_ENABLE_SWITCH): switch,
+            vol.Required(CONF_ENABLE_PV_SWITCH): switch,
+            vol.Required(CONF_WATER): temperature,
+            vol.Required(CONF_OUTER): temperature,
+            vol.Required(CONF_PV_POWER): power,
+            vol.Required(CONF_PV_POWER_AVG): power,
+            vol.Optional(CONF_BRIGHTNESS): selector.EntitySelector(
+                selector.EntitySelectorConfig(domain="sensor")
+            ),
+            vol.Required(CONF_PV_THRESHOLD, default=DEFAULT_PV_THRESHOLD): number(0, 20000, 100, "W"),
+            vol.Required(CONF_FROST_BELOW, default=DEFAULT_FROST_BELOW): number(-20, 20, 0.5, "°C"),
+            vol.Required(CONF_PV_MIN_OUTER, default=DEFAULT_PV_MIN_OUTER): number(-20, 30, 0.5, "°C"),
+            vol.Required(CONF_NIGHT_BELOW, default=DEFAULT_NIGHT_BELOW): number(0, 100000, 1),
+            vol.Required(CONF_DAY_ABOVE, default=DEFAULT_DAY_ABOVE): number(0, 100000, 1),
+            vol.Required(CONF_CONTROL, default=False): bool,
+        }
+    )
+
+
+def _active_automations(hass: HomeAssistant, entity_ids: list[str]) -> list[str]:
+    """Names of active automations that mention one of the entities (they would switch them too)."""
+    from homeassistant.components.automation import automations_with_entity
+
+    found: set[str] = set()
+    for entity_id in entity_ids:
+        for automation_id in automations_with_entity(hass, entity_id):
+            state = hass.states.get(automation_id)
+            if state is not None and state.state == "on":
+                found.add(state.name)
+    return sorted(found)
+
+
+class TwwpSubentryFlow(ConfigSubentryFlow):
+    """Add or change a hot water heat pump (TWWP).
+
+    The heat pump is not a Modbus device: its enable switches and sensors belong
+    to other integrations and are chosen here. While `control` is off the
+    controller only observes and reports what it would switch.
+    """
+
+    def __init__(self) -> None:
+        self._confirmed: dict[str, Any] | None = None
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        return await self._async_step_form("user", user_input)
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        return await self._async_step_form("reconfigure", user_input)
+
+    async def _async_step_form(
+        self, step_id: str, user_input: dict[str, Any] | None
+    ) -> SubentryFlowResult:
+        errors: dict[str, str] = {}
+        placeholders = {"automations": ""}
+        if user_input is not None:
+            if user_input.get(CONF_CONTROL):
+                switches = [user_input[CONF_ENABLE_SWITCH], user_input[CONF_ENABLE_PV_SWITCH]]
+                automations = _active_automations(self.hass, switches)
+                # Two controllers on the same switches would overwrite each other every
+                # minute. Warn once; submitting the same form again goes through.
+                if automations and self._confirmed != user_input:
+                    self._confirmed = dict(user_input)
+                    errors["base"] = "parallel_automation"
+                    placeholders["automations"] = ", ".join(automations)
+            if not errors:
+                data = dict(user_input)
+                title = data.get(CONF_TWWP_NAME) or DEFAULT_TWWP_NAME
+                if self.source == SOURCE_RECONFIGURE:
+                    return self.async_update_and_abort(
+                        self._get_entry(),
+                        self._get_reconfigure_subentry(),
+                        title=title,
+                        data=data,
+                    )
+                return self.async_create_entry(title=title, data=data)
+
+        schema = _twwp_schema()
+        suggested = user_input
+        if suggested is None and self.source == SOURCE_RECONFIGURE:
+            suggested = dict(self._get_reconfigure_subentry().data)
+        return self.async_show_form(
+            step_id=step_id,
+            data_schema=self.add_suggested_values_to_schema(schema, suggested),
+            errors=errors,
+            description_placeholders=placeholders,
         )

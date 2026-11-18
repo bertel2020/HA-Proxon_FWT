@@ -300,7 +300,44 @@
           "frost_protection": "Frost protection",
           "commissioning": "Commissioning"
         }
+      },
+    "twwp_program": {
+      "name": "Program",
+      "state": {
+        "off": "Off",
+        "normal": "Normal operation",
+        "pv": "PV operation",
+        "minimum": "Minimum operation",
+        "night": "Night shutdown"
       }
+    },
+    "twwp_pv_status": {
+      "name": "PV status",
+      "state": {
+        "pv": "PV power available",
+        "no_pv": "No PV power",
+        "too_cold": "Too cold"
+      }
+    },
+    "twwp_reason": {
+      "name": "Last decision",
+      "state": {
+        "sensor_unavailable": "Sensor unavailable",
+        "pv": "PV surplus: start",
+        "pv_target_reached": "PV target reached",
+        "minimum_end": "Minimum operation ended",
+        "minimum": "Below the minimum",
+        "night": "Night",
+        "night_end": "Night ended",
+        "pv_end": "PV surplus ended",
+        "normal": "Below the target: heat",
+        "target_reached": "Target reached",
+        "none": "Nothing to do"
+      }
+    },
+    "twwp_planned": {
+      "name": "Planned switching"
+    }
     },
     "binary_sensor": {
       "bypass_active": { "name": "Bypass active" },
@@ -319,7 +356,10 @@
       "fan_stage_3_selectable": { "name": "Fan stage 3 selectable" },
       "fan_stage_4_selectable": { "name": "Fan stage 4 selectable" },
       "fan_auto_selectable": { "name": "Fan auto mode selectable" },
-      "intensive_ventilation_selectable": { "name": "Intensive ventilation selectable" }
+      "intensive_ventilation_selectable": { "name": "Intensive ventilation selectable" },
+    "twwp_sensor_problem": {
+      "name": "Sensor problem"
+    }
     },
     "switch": {
       "cooling_enable": { "name": "Cooling enabled" },
@@ -362,6 +402,28 @@
           "furnace": "Furnace mode"
         }
       }
+    },
+    "water_heater": {
+      "twwp": {
+        "state": {
+          "off": "Off",
+          "normal": "Normal operation",
+          "pv": "PV operation",
+          "minimum": "Minimum operation",
+          "night": "Night shutdown"
+        }
+      }
+    },
+    "number": {
+      "twwp_target_normal": {
+        "name": "Target temperature"
+      },
+      "twwp_target_pv": {
+        "name": "Target temperature PV"
+      },
+      "twwp_target_min": {
+        "name": "Minimum temperature"
+      }
     }
   },
   "services": {
@@ -392,5 +454,82 @@
     "change_not_allowed": {"message": "The unit currently does not allow this change ({flag})"},
     "ptc_unknown": {"message": "PTC enable state could not be read; try again shortly"},
     "boost_wrong_switch": {"message": "start_boost only works on the boost ventilation switch"}
+  },
+  "config_subentries": {
+    "twwp": {
+      "entry_type": "Hot water heat pump (TWWP)",
+      "initiate_flow": {
+        "user": "Add hot water heat pump",
+        "reconfigure": "Reconfigure hot water heat pump"
+      },
+      "step": {
+        "user": {
+          "title": "Hot water heat pump",
+          "description": "Controls the enable of a hot water heat pump by tank temperature, PV surplus and time of day. The heat pump is not a Modbus device: choose the switches and sensors of your own setup. Do not let an automation or blueprint switch the same enable switches while \"Switch the heat pump\" is on.",
+          "data": {
+            "name": "Name",
+            "enable_switch": "Enable switch",
+            "enable_pv_switch": "PV enable switch",
+            "water_temp": "Tank temperature",
+            "outer_temp": "Top unit temperature",
+            "pv_power": "Current PV power",
+            "pv_power_avg": "PV power average (15 min)",
+            "brightness": "Brightness / twilight sensor (optional)",
+            "pv_threshold": "PV threshold",
+            "frost_below": "Frost limit",
+            "pv_min_outer": "Minimum temperature for PV mode",
+            "night_below": "Night below",
+            "day_above": "Day above",
+            "control": "Switch the heat pump (otherwise observe only)"
+          },
+          "data_description": {
+            "enable_switch": "Enable of the normal mode.",
+            "enable_pv_switch": "Second enable for PV mode.",
+            "outer_temp": "Frost protection: below the frost limit the PV status is \"too cold\"; PV mode only starts above the minimum temperature.",
+            "pv_power_avg": "Both PV powers must be above the threshold.",
+            "brightness": "Tells day from night. Without a sensor it is always day and there is no night shutdown.",
+            "night_below": "Brightness value below which it is night.",
+            "day_above": "Brightness value above which it is day.",
+            "control": "Off: the controller only reports what it would switch (for comparing with an existing automation). On: it switches the two enable switches."
+          }
+        },
+        "reconfigure": {
+          "title": "Hot water heat pump",
+          "description": "Controls the enable of a hot water heat pump by tank temperature, PV surplus and time of day. The heat pump is not a Modbus device: choose the switches and sensors of your own setup. Do not let an automation or blueprint switch the same enable switches while \"Switch the heat pump\" is on.",
+          "data": {
+            "name": "Name",
+            "enable_switch": "Enable switch",
+            "enable_pv_switch": "PV enable switch",
+            "water_temp": "Tank temperature",
+            "outer_temp": "Top unit temperature",
+            "pv_power": "Current PV power",
+            "pv_power_avg": "PV power average (15 min)",
+            "brightness": "Brightness / twilight sensor (optional)",
+            "pv_threshold": "PV threshold",
+            "frost_below": "Frost limit",
+            "pv_min_outer": "Minimum temperature for PV mode",
+            "night_below": "Night below",
+            "day_above": "Day above",
+            "control": "Switch the heat pump (otherwise observe only)"
+          },
+          "data_description": {
+            "enable_switch": "Enable of the normal mode.",
+            "enable_pv_switch": "Second enable for PV mode.",
+            "outer_temp": "Frost protection: below the frost limit the PV status is \"too cold\"; PV mode only starts above the minimum temperature.",
+            "pv_power_avg": "Both PV powers must be above the threshold.",
+            "brightness": "Tells day from night. Without a sensor it is always day and there is no night shutdown.",
+            "night_below": "Brightness value below which it is night.",
+            "day_above": "Brightness value above which it is day.",
+            "control": "Off: the controller only reports what it would switch (for comparing with an existing automation). On: it switches the two enable switches."
+          }
+        }
+      },
+      "error": {
+        "parallel_automation": "These active automations also use the enable switches: {automations}. Turn them off first, or submit again to continue anyway."
+      },
+      "abort": {
+        "reconfigure_successful": "The settings were updated."
+      }
+    }
   }
 }

@@ -50,6 +50,7 @@ from .coordinator import (
     ProxonModbusCoordinator,
 )
 from .logic import RunStats, heat_recovery
+from .twwp_entity import twwp_sensors
 from .entity import ProxonCentralEntity, ProxonEntity, ProxonRoomEntity, central_device_info, room_device_info
 
 
@@ -310,6 +311,8 @@ async def async_setup_entry(
         )
 
     async_add_entities(entities)
+    for subentry_id, twwp_entities in twwp_sensors(entry):
+        async_add_entities(twwp_entities, config_subentry_id=subentry_id)
 
 
 @dataclass(frozen=True, kw_only=True)

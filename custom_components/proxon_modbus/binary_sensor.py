@@ -31,6 +31,7 @@ from .coordinator import (
     ProxonModbusCoordinator,
 )
 from .entity import ProxonCentralEntity, ProxonRoomEntity
+from .twwp_entity import twwp_binary_sensors
 
 # Surfaced separately (always visible, not a diagnostic-disabled flag) so
 # it's easy to spot what the device itself reports for cooling support -
@@ -136,6 +137,8 @@ async def async_setup_entry(
         )
 
     async_add_entities(entities)
+    for subentry_id, twwp_entities in twwp_binary_sensors(entry):
+        async_add_entities(twwp_entities, config_subentry_id=subentry_id)
 
 
 class ProxonBinarySensor(ProxonCentralEntity, BinarySensorEntity):

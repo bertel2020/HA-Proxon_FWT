@@ -4,8 +4,10 @@
 not needed (and not installed) for these unit tests, so the pure modules are
 loaded straight from their files.
 """
+import importlib
 import importlib.util
 import sys
+import types
 from pathlib import Path
 
 import pytest
@@ -43,3 +45,22 @@ def const():
 @pytest.fixture(scope="session")
 def twwp():
     return _load("twwp")
+
+
+@pytest.fixture(scope="session")
+def pure_package():
+    """The package folder as a package of its own, for pure modules that import each other relatively."""
+    pkg = types.ModuleType("proxon_pure")
+    pkg.__path__ = [str(PKG)]
+    sys.modules["proxon_pure"] = pkg
+    return pkg
+
+
+@pytest.fixture(scope="session")
+def twwp_pure(pure_package):
+    return importlib.import_module("proxon_pure.twwp")
+
+
+@pytest.fixture(scope="session")
+def twwp_controller(pure_package):
+    return importlib.import_module("proxon_pure.twwp_controller")

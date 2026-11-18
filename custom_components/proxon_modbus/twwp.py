@@ -9,7 +9,30 @@ wins, in the order of `decide`.
 """
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from typing import Any
+
+# Config subentry type and keys (entity ids and thresholds chosen in the setup).
+SUBENTRY_TYPE_TWWP = "twwp"
+CONF_ENABLE_SWITCH = "enable_switch"
+CONF_ENABLE_PV_SWITCH = "enable_pv_switch"
+CONF_WATER = "water_temp"
+CONF_OUTER = "outer_temp"
+CONF_PV_POWER = "pv_power"
+CONF_PV_POWER_AVG = "pv_power_avg"
+CONF_BRIGHTNESS = "brightness"
+CONF_PV_THRESHOLD = "pv_threshold"
+CONF_FROST_BELOW = "frost_below"
+CONF_PV_MIN_OUTER = "pv_min_outer"
+CONF_NIGHT_BELOW = "night_below"
+CONF_DAY_ABOVE = "day_above"
+CONF_CONTROL = "control"  # False: only observe and report what would be switched
+
+TARGET_NORMAL = "normal"
+TARGET_PV = "pv"
+TARGET_MIN = "min"
+DEFAULT_TARGETS = {TARGET_NORMAL: 50.0, TARGET_PV: 60.0, TARGET_MIN: 40.0}
 
 # Programs (internal keys; the entity translates them).
 PROGRAM_OFF = "off"
@@ -37,6 +60,11 @@ REASON_PV_END = "pv_end"
 REASON_NORMAL = "normal"
 REASON_TARGET_REACHED = "target_reached"
 REASON_NONE = "none"
+REASONS = (
+    REASON_SENSOR_UNAVAILABLE, REASON_PV, REASON_PV_TARGET_REACHED, REASON_MINIMUM_END,
+    REASON_MINIMUM, REASON_NIGHT, REASON_NIGHT_END, REASON_PV_END, REASON_NORMAL,
+    REASON_TARGET_REACHED, REASON_NONE,
+)
 
 HYSTERESIS_LOW = 3.0  # K below the target at which heating starts
 HYSTERESIS_HIGH = 1.0  # K above the target at which heating stops
@@ -169,3 +197,49 @@ def decide(inp: TwwpInput) -> TwwpDecision:
         return result(REASON_TARGET_REACHED, program=PROGRAM_OFF, enable=False)
 
     return result(REASON_NONE)
+
+
+def parse_float(raw: str | None) -> float | None:
+    """A state string as a number; None when missing, unknown, unavailable or not numeric."""
+    if raw is None or raw in ("unknown", "unavailable", ""):
+        return None
+    try:
+        value = float(raw)
+    except ValueError:
+        return None
+    return value if value == value and abs(value) != float("inf") else None
+
+
+def build_input(
+    read: Callable[[str], str | None],
+    config: Mapping[str, Any],
+    program: str,
+    targets: Mapping[str, float],
+) -> TwwpInput:
+    """Collect the readings for `decide` from the configured entities.
+
+    `read` returns an entity's state string (None if the entity does not exist).
+    """
+
+    def num(key: str) -> float | None:
+        entity = config.get(key)
+        return parse_float(read(entity)) if entity else None
+
+    brightness_entity = config.get(CONF_BRIGHTNESS)
+    return TwwpInput(
+        water=num(CONF_WATER),
+        outer=num(CONF_OUTER),
+        target_normal=targets.get(TARGET_NORMAL),
+        target_pv=targets.get(TARGET_PV),
+        target_min=targets.get(TARGET_MIN),
+        pv_power=num(CONF_PV_POWER),
+        pv_power_avg=num(CONF_PV_POWER_AVG),
+        brightness=num(CONF_BRIGHTNESS),
+        has_brightness=bool(brightness_entity),
+        program=program,
+        pv_threshold=config.get(CONF_PV_THRESHOLD, DEFAULT_PV_THRESHOLD),
+        frost_below=config.get(CONF_FROST_BELOW, DEFAULT_FROST_BELOW),
+        pv_min_outer=config.get(CONF_PV_MIN_OUTER, DEFAULT_PV_MIN_OUTER),
+        night_below=config.get(CONF_NIGHT_BELOW, DEFAULT_NIGHT_BELOW),
+        day_above=config.get(CONF_DAY_ABOVE, DEFAULT_DAY_ABOVE),
+    )

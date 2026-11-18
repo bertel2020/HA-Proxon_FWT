@@ -1,6 +1,7 @@
 """The Proxon FWT Modbus integration."""
 from __future__ import annotations
 
+from datetime import timedelta
 from pathlib import Path
 
 import voluptuous as vol
@@ -12,6 +13,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME, Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv, device_registry as dr, entity_platform, entity_registry as er
+from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
@@ -43,6 +45,9 @@ from .const import (
 from .coordinator import ProxonModbusCoordinator
 from .entity import central_device_info
 from .hub import ProxonModbusHub, params_from_entry_data
+from .twwp import SUBENTRY_TYPE_TWWP
+from .twwp_controller import RUN_INTERVAL, TwwpController
+from .twwp_entity import twwp_device_identifier
 
 PLATFORMS: list[Platform] = [
     Platform.CLIMATE,
@@ -51,6 +56,8 @@ PLATFORMS: list[Platform] = [
     Platform.SWITCH,
     Platform.SELECT,
     Platform.BUTTON,
+    Platform.NUMBER,
+    Platform.WATER_HEATER,
 ]
 
 ProxonConfigEntry = ConfigEntry[ProxonModbusCoordinator]
@@ -194,12 +201,56 @@ async def async_setup_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> bo
     entry.runtime_data = coordinator
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
+    # Before the platforms: the TWWP entities are created from the controllers.
+    await _async_setup_twwp(hass, entry, coordinator)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await _async_register_panel(hass)
     _remove_stale_room_devices(hass, entry)
     _remove_stale_entities(hass, entry)
     _apply_room_areas(hass, entry)
     return True
+
+
+async def _async_setup_twwp(
+    hass: HomeAssistant, entry: ProxonConfigEntry, coordinator: ProxonModbusCoordinator
+) -> None:
+    """Start one controller per hot water heat pump (TWWP) subentry.
+
+    The heat pump is not a Modbus device: its enable switches and sensors belong
+    to other integrations, chosen in the subentry. Each controller decides once a
+    minute; with `control` off it only reports what it would switch.
+    """
+
+    def read_state(entity_id: str) -> str | None:
+        state = hass.states.get(entity_id)
+        return state.state if state is not None else None
+
+    async def call_switch(entity_id: str, target: str) -> None:
+        await hass.services.async_call(
+            "switch", f"turn_{target}", {"entity_id": entity_id}, blocking=True
+        )
+
+    for subentry in entry.subentries.values():
+        if subentry.subentry_type != SUBENTRY_TYPE_TWWP:
+            continue
+        controller = TwwpController(
+            dict(subentry.data),
+            read_state,
+            call_switch,
+            Store(hass, 1, f"{DOMAIN}.{entry.entry_id}.twwp_{subentry.subentry_id}"),
+        )
+        await controller.async_load()
+        coordinator.twwp_controllers[subentry.subentry_id] = controller
+
+        async def _run(_now, controller=controller) -> None:
+            await controller.async_run()
+
+        entry.async_on_unload(
+            async_track_time_interval(hass, _run, timedelta(seconds=RUN_INTERVAL))
+        )
+        entry.async_create_background_task(
+            hass, controller.async_run(), f"{DOMAIN}_twwp_first_run"
+        )
 
 
 def _remove_stale_entities(hass: HomeAssistant, entry: ProxonConfigEntry) -> None:
@@ -221,11 +272,19 @@ def _remove_stale_entities(hass: HomeAssistant, entry: ProxonConfigEntry) -> Non
 def _remove_stale_room_devices(hass: HomeAssistant, entry: ProxonConfigEntry) -> None:
     """Remove devices of rooms that are no longer configured (room count
     reduced). Only devices belonging to this config entry are touched."""
-    keep = {(DOMAIN, entry.entry_id)} | {
-        (DOMAIN, f"{entry.entry_id}_room_{index}")
-        for index, name in enumerate(entry.options.get(CONF_ROOM_NAMES, []))
-        if name
-    }
+    keep = (
+        {(DOMAIN, entry.entry_id)}
+        | {
+            (DOMAIN, f"{entry.entry_id}_room_{index}")
+            for index, name in enumerate(entry.options.get(CONF_ROOM_NAMES, []))
+            if name
+        }
+        | {
+            twwp_device_identifier(entry.entry_id, subentry_id)
+            for subentry_id, subentry in entry.subentries.items()
+            if subentry.subentry_type == SUBENTRY_TYPE_TWWP
+        }
+    )
     registry = dr.async_get(hass)
     for device in dr.async_entries_for_config_entry(registry, entry.entry_id):
         if not device.identifiers & keep:
@@ -256,7 +315,10 @@ async def _async_update_listener(hass: HomeAssistant, entry: ProxonConfigEntry) 
 
 async def async_remove_entry(hass: HomeAssistant, entry: ProxonConfigEntry) -> None:
     """Delete the persisted statistics and boost state of a removed entry."""
-    for suffix in ("stats", "boost"):
+    suffixes = ["stats", "boost"] + [
+        f"twwp_{subentry_id}" for subentry_id in entry.subentries
+    ]
+    for suffix in suffixes:
         await Store(hass, 1, f"{DOMAIN}.{entry.entry_id}.{suffix}").async_remove()
     if not [e for e in hass.config_entries.async_entries(DOMAIN) if e.entry_id != entry.entry_id]:
         async_remove_panel(hass, PANEL_PATH)

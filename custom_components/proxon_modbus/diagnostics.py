@@ -41,6 +41,19 @@ async def async_get_config_entry_diagnostics(
                 else None
             ),
         },
+        "twwp": {
+            subentry_id: {
+                "control": controller.control,
+                "program": controller.state.program,
+                "pv_status": controller.state.pv_status,
+                "reason": controller.state.reason,
+                "targets": controller.state.targets,
+                "planned": controller.state.planned,
+                "last_error": controller.state.last_error,
+                "last_run": controller.state.last_run,
+            }
+            for subentry_id, controller in coordinator.twwp_controllers.items()
+        },
         "statistics": coordinator.stats.as_dict(),
         "failed_blocks": sorted(data.failed) if data else [],
         "data": (
