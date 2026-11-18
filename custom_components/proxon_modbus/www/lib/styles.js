@@ -408,6 +408,10 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
   .tw-hero { grid-column: 1; grid-row: 1; } .tw-op { grid-column: 2; grid-row: 1; }
   .tw-scale { grid-column: 1; grid-row: 2; } .tw-set { grid-column: 2; grid-row: 2; }
   .tw-hist { grid-column: 1 / -1; grid-row: 3; }
+  /* the two cards of a row are equally high, so no gap is left under the shorter one */
+  .twgrid { align-items: stretch; }
+  .tw-hero, .tw-op, .tw-scale, .tw-set { display: flex; }
+  .tw-hero > ha-card, .tw-op > ha-card, .tw-scale > ha-card, .tw-set > ha-card { flex: 1; min-width: 0; }
 }
 `;
 

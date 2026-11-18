@@ -453,3 +453,22 @@ test("the targets can be switched off in the water curve and then no longer stre
   assert.ok(!power.includes('data-act="twrefs"'), "only on the water curve");
   panel._twRefs = true; panel._twMetric = "water";
 });
+
+test("a reference line at the top edge gets its label below the line, so it is not cut off", () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = hass;
+  const now = Date.now() / 1000, h = 3600;
+  const series = [{ label: "Wasser", color: "#378ADD", pts: [[now - 20 * h, 41], [now - 1 * h, 52]] }];
+  const html = panel._chart(series, { range: "24h", unit: "°", refs: [{ v: 60, label: "Soll PV 60°" }, { v: 45, label: "Soll 45°" }] });
+  const y = (label) => Number(new RegExp(`y="([\\d.]+)"[^>]*>${label}</text>`).exec(html)[1]);
+  const line = (v) => panel._cm.y(v);
+  assert.ok(y("Soll PV 60°") > line(60), "top edge: label below its line");
+  assert.ok(y("Soll 45°") < line(45), "inside the chart: label above its line");
+  assert.ok(y("Soll PV 60°") > 0, "inside the picture");
+});
+
+test("the cards of a row in the wide hot water layout are stretched to the same height", async () => {
+  const css = (await import("node:fs")).readFileSync(new URL("lib/styles.js", WWW), "utf8");
+  assert.match(css, /\.twgrid \{ align-items: stretch; \}/);
+  assert.match(css, /\.tw-hero > ha-card[\s\S]*flex: 1/);
+});

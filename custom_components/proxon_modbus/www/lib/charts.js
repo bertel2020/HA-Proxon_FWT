@@ -54,8 +54,9 @@ export class ChartsMethods {
       return s1 > s0 ? `<rect x="${x(s0).toFixed(1)}" y="${pt}" width="${Math.max(1, x(s1) - x(s0)).toFixed(1)}" height="${H - pt - pb}" fill="${ph.color}" opacity=".2"/>` : "";
     }).join("")).join("");
     // Reference lines (o.refs: [{ v, label }]), for example targets, dashed with their label at the right edge.
+    // The label sits above its line, or below it when the line is at the top edge (it would be cut off there).
     const refLines = (o.refs || []).map((r) => `<line x1="${pl}" x2="${W - pr}" y1="${y(r.v).toFixed(1)}" y2="${y(r.v).toFixed(1)}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="4 4" opacity=".75"/>
-      <text class="st" x="${W - pr - 2}" y="${(y(r.v) - 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${r.label}</text>`).join("");
+      <text class="st" x="${W - pr - 2}" y="${(y(r.v) - 4 < pt + 9 ? y(r.v) + 13 : y(r.v) - 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${r.label}</text>`).join("");
     const lines = series.map((s) => `<polyline fill="none" stroke="${s.color}" stroke-width="${s.prev ? 1.4 : 1.8}" ${s.prev ? 'stroke-dasharray="5 4" opacity=".55"' : ""} stroke-linejoin="round" points="${s.pts.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>`).join("");
     // curves with their own stat row are named there; the legend keeps only the rest (previous period, bands)
     const legend = series.filter((s) => s.prev || !s.pts.length).map((s) => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join("");
