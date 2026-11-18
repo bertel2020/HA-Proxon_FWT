@@ -5,6 +5,9 @@
 ## 2.4.0 – 2026-11-18
 
 **Neu**
+- **Trinkwasser-Wärmepumpe (TWWP):** Neue Unterintegration, hinzufügen über „Trinkwasser-Wärmepumpe hinzufügen“ bei der Integration. Der Regler schaltet die Freigabe einer Trinkwasser-Wärmepumpe (kein Modbus-Gerät, du wählst die Schalter und Sensoren deiner Anlage) nach Wassertemperatur, PV-Überschuss und Tageszeit in den Programmen Normalbetrieb, PV-Betrieb, Minimumbetrieb und Nachtabschaltung. Er entscheidet jede Minute und startet im **Probelauf**: Er schaltet nichts und meldet, was er schalten würde. Mit dem Schalter „Regelung aktiv“ am Gerät übernimmt er die Steuerung; aktive Automationen, die dieselben Freigabe-Schalter nutzen, werden dabei gemeldet. Mindestlaufzeit und Mindestpause der Freigabe sind einstellbar (Standard 10 Minuten, 0 = aus).
+- **TWWP-Entitäten:** Ein Wasserheizer mit dem Programm als Betriebsart; die Zahlen „Solltemperatur“, „Solltemperatur PV“ und „Mindesttemperatur“ (30–60 °C, ganze Grad, Standard 50, 60 und 40 °C); „Hysterese Einschalten“ (1–10 K, Standard 3 K) und „Hysterese Ausschalten“ (0–5 K, Standard 1 K); die Sensoren „Programm“, „PV-Status“, „Letzte Entscheidung“ und „Geplante Schaltungen“; die Binär-Sensoren „Heizt“ (aus der Leistung der Wärmepumpe, wenn eine gewählt ist, ab 20 W) und „Sensorproblem“.
+- **Panel – Tab „Warmwasser“:** Zeigt je Wärmepumpe den Speicher mit Energiefluss und Status, eine Skala mit den Schaltschwellen, die Sollwerte als Schieberegler (die Hysterese ist eingeklappt) und einen Verlauf mit Programmen, Phasenbändern und Referenzlinien; die Ansicht „Alle“ ist voreingestellt. In der Übersicht gibt es bei den Kennzahlen eine Kachel „Warmwasser“ und Hinweise zur Regelung.
 - **Blueprint „Trinkwasser-Wärmepumpe mit PV-Überschuss“:** Regelt die Freigabe einer Trinkwasser-Wärmepumpe (TWWP) über zwei Schalter nach Wassertemperatur, PV-Überschuss und Tageszeit (PV-Betrieb, Normalbetrieb, Minimumbetrieb, Nachtabschaltung). Fällt ein Sensor aus, werden die Freigaben abgeschaltet. Unabhängig von Modbus und der Integration nutzbar; Hysterese einstellbar (Eingaben „Hysterese Einschalten/Ausschalten“). Optional mit Mindestlaufzeit und Mindestpause des Freigabe-Schalters (Eingaben „Mindestlaufzeit“ und „Mindestpause“, Standard 10 Minuten, 0 = aus).
 - **Raumtemperatur als Sensor:** Jeder Raum bekommt einen Sensor `sensor.<raum>_raumtemperatur` mit der Ist-Temperatur (Register 150+n, dieselbe wie am Thermostat), mit Langzeitstatistik. Auch Raum 1, der bisher keinen Temperatur-Sensor hatte.
 - **Solltemperatur als Diagnose-Sensor:** Je Raum ein Sensor `sensor.<raum>_solltemperatur_bestatigt` mit dem vom Gerät bestätigten Sollwert (Register 180+n), mit Langzeitstatistik.
@@ -12,6 +15,9 @@
 
 **Geändert**
 - **Icon der PTC-Freigabe:** Der Schalter „PTC-Element freigegeben“ zeigt einen Schalter (`mdi:toggle-switch-variant`) statt des Heizkörpers, den der Sensor „PTC-Element aktiv“ schon nutzt. Ein in der Oberfläche gesetzter eigener Icon bleibt erhalten.
+- **Panel – Verlauf:** Die Spuren haben je eine eigene Skala und teilen die Zeitachse. Die Zeitraumauswahl sitzt in der Kopfzeile der Verlaufskarte und lässt sich auch mobil bedienen.
+- **Panel – Darstellung:** Die Chips in der Kopfzeile sind gleich hoch, kleine Schriften sind überall 1 px größer.
+- **Optionen:** Der Energiezähler steht direkt unter dem Leistungssensor.
 
 ## 2.3.0 – 2026-11-17
 
