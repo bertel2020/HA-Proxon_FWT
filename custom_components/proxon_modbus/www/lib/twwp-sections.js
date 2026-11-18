@@ -105,46 +105,101 @@ export class TwwpSectionsMethods {
     return `<div class="f"><span>${label}</span><b ${extra}>${value}</b></div>`;
   }
 
-  // The unit is one housing: the heat pump head with fan and vents on top of the tank. The tank is filled evenly
-  // (one sensor in the middle cannot tell the layers apart); a slim scale beside it shows the water temperature
-  // and the three targets.
-  _twTank(t, i) {
-    const c = this._twCfg(t), w = this._twWater(t);
-    const tn = this._num(t.ents.twwp_target_normal), tp = this._num(t.ents.twwp_target_pv), tm = this._num(t.ents.twwp_target_min);
+  // Heating runs in a power curve: the total time above 100 W and, if it is heating at the end, since when.
+  _twRuns(pts, end) {
+    let heat = 0, run = null, since = null;
+    pts.forEach(([t, v], i) => {
+      const next = i + 1 < pts.length ? pts[i + 1][0] : end;
+      if (v > 100) { if (run === null) run = t; heat += next - t; } else run = null;
+    });
+    if (run !== null) since = run;
+    return { heat, since };
+  }
+
+  // Today (calendar day) of one heat pump: heating time, energy and the program phases, for the main picture and the day strip.
+  async _twLoadToday(t) {
+    const c = this._twCfg(t), now = new Date(), start = new Date(now.getFullYear(), now.getMonth(), now.getDate()), t0 = start.getTime() / 1000, t1 = now.getTime() / 1000;
+    const pid = t.ents.twwp_program, wid = c.power_entity, eid = c.energy_entity, ids = [wid, pid].filter(Boolean);
+    const out = { t0, t1, heat: null, since: null, kwh: null, phases: [] };
+    if (ids.length) {
+      const res = await this._hass.callWS({ type: "history/history_during_period", start_time: start.toISOString(), end_time: now.toISOString(),
+        entity_ids: ids, minimal_response: true, no_attributes: true, significant_changes_only: false });
+      // the state at midnight carries into the day; points before it are cut off
+      const clip = (rows) => { let carry = null; const keep = []; for (const r of rows) { if (r[0] < t0) carry = r; else keep.push(r); } return carry ? [[t0, carry[1]], ...keep] : keep; };
+      const rows = (id) => clip((res[id] || []).map((p) => [p.lu ?? Date.parse(p.last_updated) / 1000, p.s ?? p.state]).filter(([x]) => !isNaN(x)));
+      if (wid) {
+        const u = String(((this._state(wid) || { attributes: {} }).attributes.unit_of_measurement) || "W").trim(), k = u === "kW" ? 1e3 : u === "MW" ? 1e6 : 1;
+        const pts = rows(wid).map(([x, v]) => [x, Number(v) * k]).filter(([, v]) => !isNaN(v));
+        if (pts.length) {
+          const r = this._twRuns(pts, t1);
+          out.heat = r.heat; out.since = r.since;
+          if (!eid) { let wh = 0; pts.forEach(([x, v], i) => { wh += (v * ((i + 1 < pts.length ? pts[i + 1][0] : t1) - x)) / 3600; }); out.kwh = wh / 1000; }
+        }
+      }
+      if (pid) {
+        const pr = rows(pid);
+        out.phases = pr.map(([x, st], i) => ({ s: String(st), a: x, b: i + 1 < pr.length ? pr[i + 1][0] : t1 }));
+      }
+    }
+    if (eid) {
+      const res = await this._hass.callWS({ type: "recorder/statistics_during_period", start_time: start.toISOString(), end_time: now.toISOString(),
+        statistic_ids: [eid], period: "hour", types: ["change"] });
+      const u = String(((this._state(eid) || { attributes: {} }).attributes.unit_of_measurement) || "kWh").trim(), k = u === "Wh" ? 1e-3 : u === "MWh" ? 1e3 : 1;
+      const ch = (res[eid] || []).map((r) => Number(r.change)).filter((v) => !isNaN(v));
+      out.kwh = ch.length ? ch.reduce((x, y) => x + y, 0) * k : null;
+    }
+    return out;
+  }
+
+  _twToday(t) {
+    return this._hget(`twt|${t.id}|${new Date().toDateString()}`, () => this._twLoadToday(t));
+  }
+
+  // Main picture: the sun with the PV power, the flow into the unit, the unit as one housing and the status beside it.
+  // The tank is filled evenly (one sensor in the middle cannot tell the layers apart).
+  _twHero(t, i) {
+    const c = this._twCfg(t), w = this._twWater(t), today = this._twToday(t);
+    const tn = this._num(t.ents.twwp_target_normal), tm = this._num(t.ents.twwp_target_min);
     const pw = c.power_entity ? this._twPowerW(c.power_entity) : null, pv = c.pv_power ? this._twPowerW(c.pv_power) : null;
-    const heats = pw !== null && pw > 100;
-    const Y0 = 70, Y1 = 176, y = (v) => Y1 - Math.max(0, Math.min(1, (v - T_LO) / (T_HI - T_LO))) * (Y1 - Y0);
+    const heats = pw !== null && pw > 100, prog = this._ok(t.ents.twwp_program) ? this._state(t.ents.twwp_program).state : null;
+    const bad = this._on(t.ents.twwp_sensor_problem), outer = c.outer_temp ? this._num(c.outer_temp) : null;
     const col = w === null ? "var(--divider-color)" : tn !== null && w >= tn ? CORAL : tm !== null && w >= tm ? AMBER : BLUE;
-    const outer = c.outer_temp ? this._num(c.outer_temp) : null;
-    const tick = (v, l) => (v === null ? "" : `<line x1="124" x2="130" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="var(--secondary-text-color)"/><text x="133" y="${(y(v) + 3).toFixed(1)}" font-size="9" fill="var(--secondary-text-color)">${l}</text>`);
-    const svg = `<svg class="twtank ${heats ? "heat" : ""}" viewBox="0 0 160 190" role="img" aria-label="${this._t("tw_tank")} ${w === null ? "" : this._fmt(w) + "°"}">
-      <defs><clipPath id="twc${i}"><rect x="8" y="6" width="96" height="178" rx="22"/></clipPath></defs>
-      <rect x="8" y="6" width="96" height="178" rx="22" fill="var(--card-background-color)" stroke="var(--divider-color)" stroke-width="1.5"/>
-      <g clip-path="url(#twc${i})">
-        <rect x="8" y="${Y0 - 2}" width="96" height="${Y1 - Y0 + 10}" fill="${col}" opacity=".42"/>
-        <rect x="16" y="${Y0 + 6}" width="6" height="${Y1 - Y0 - 8}" rx="3" fill="#fff" opacity=".28"/>
-        <rect x="8" y="6" width="96" height="60" fill="var(--secondary-background-color)"/>
-        <rect x="8" y="64" width="96" height="4" fill="var(--divider-color)" opacity=".8"/>
-      </g>
-      <circle cx="40" cy="32" r="16" fill="none" stroke="var(--secondary-text-color)" stroke-width="1.4" opacity=".7"/>
-      <g class="fan" fill="var(--secondary-text-color)" opacity=".75">${[0, 120, 240].map((r) => `<ellipse cx="40" cy="24" rx="4.6" ry="8" transform="rotate(${r} 40 32)"/>`).join("")}<circle cx="40" cy="32" r="3" fill="var(--card-background-color)"/></g>
-      <g stroke="var(--secondary-text-color)" stroke-width="2" stroke-linecap="round" opacity=".5"><line x1="68" x2="92" y1="24" y2="24"/><line x1="68" x2="92" y1="32" y2="32"/><line x1="68" x2="92" y1="40" y2="40"/></g>
-      <circle cx="92" cy="52" r="3.4" fill="${heats ? GREEN : "var(--divider-color)"}"/>
-      <text x="40" y="58" font-size="10" text-anchor="middle" fill="var(--secondary-text-color)">${outer === null ? "" : this._fmt(outer) + "°"}</text>
-      <circle cx="22" cy="123" r="4.5" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="1.6"/>
-      <text x="62" y="130" text-anchor="middle" font-size="22" font-weight="500" fill="var(--primary-text-color)">${w === null ? "–" : this._fmt(w) + "°"}</text>
-      <line x1="120" x2="120" y1="${Y0}" y2="${Y1}" stroke="var(--divider-color)" stroke-width="3" stroke-linecap="round"/>
-      ${tick(tp, this._fmt(tp, 0))}${tick(tn, this._fmt(tn, 0))}${tick(tm, this._fmt(tm, 0))}
-      ${w === null ? "" : `<path d="M112 ${(y(w) - 5).toFixed(1)} L119 ${y(w).toFixed(1)} L112 ${(y(w) + 5).toFixed(1)} Z" fill="${col}"/>`}</svg>`;
-    const en = c.energy_entity && this._num(c.energy_entity) !== null ? `${this._fmt(this._num(c.energy_entity), 0)} ${(this._state(c.energy_entity).attributes.unit_of_measurement) || "kWh"}` : null;
-    const rows = [
-      outer !== null ? this._twRow(this._t("tw_top"), `${this._fmt(outer)}°`) : "",
-      pw !== null ? this._twRow(this._t("tw_hp"), heats ? `<span class="chip g">${this._t("tw_heats")}</span>` : this._t("tw_idle")) : "",
-      pw !== null ? this._twRow(this._t("power"), `${this._fmt(pw, 0)} W`) : "",
-      en ? this._twRow(this._t("tw_energy"), en) : "",
-      pv !== null ? this._twRow(this._t("tw_pv_power"), `${this._fmt(pv / 1000)} kW`) : "",
+    const flow = heats ? (prog === "pv" ? GREEN : AMBER) : "var(--divider-color)";
+    const rays = [0, 45, 90, 135, 180, 225, 270, 315].map((a) => `<line x1="58" y1="22" x2="58" y2="13" transform="rotate(${a} 58 64)"/>`).join("");
+    const svg = `<svg class="twhsvg ${heats ? "heat" : ""}" viewBox="0 0 440 250" role="img" aria-label="${this._t("tw_tank")} ${w === null ? "" : this._fmt(w) + "°"}">
+      <defs><clipPath id="twc${i}"><rect x="0" y="0" width="150" height="226" rx="30"/></clipPath></defs>
+      <circle cx="58" cy="64" r="24" fill="${AMBER}" opacity="${pv !== null && pv > 200 ? 1 : 0.35}"/><g stroke="${AMBER}" stroke-width="2.5" stroke-linecap="round" opacity="${pv !== null && pv > 200 ? 1 : 0.35}">${rays}</g>
+      ${pv === null ? "" : `<text x="58" y="124" text-anchor="middle" font-size="15" font-weight="500" fill="var(--primary-text-color)">${this._fmt(pv / 1000)} kW</text><text x="58" y="142" text-anchor="middle" font-size="11" fill="var(--secondary-text-color)">${this._t("tw_pv_power")}</text>`}
+      <path class="twflow" d="M92 72 C 150 72, 180 66, 224 66" fill="none" stroke="${flow}" stroke-width="3"/>
+      <path d="M214 60 L226 66 L214 72" fill="none" stroke="${flow}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      ${heats ? `<text x="158" y="52" text-anchor="middle" font-size="12" fill="var(--secondary-text-color)">${this._fmt(pw, 0)} W</text>` : ""}
+      <g transform="translate(232,12)">
+        <rect width="150" height="226" rx="30" fill="var(--card-background-color)" stroke="var(--divider-color)" stroke-width="1.5"/>
+        <g clip-path="url(#twc${i})">
+          <rect x="0" y="80" width="150" height="146" fill="${col}" opacity=".42"/>
+          <rect x="12" y="96" width="8" height="118" rx="4" fill="#fff" opacity=".28"/>
+          <rect x="0" y="0" width="150" height="86" fill="var(--secondary-background-color)"/>
+          <rect x="0" y="84" width="150" height="4" fill="var(--divider-color)" opacity=".8"/>
+        </g>
+        <circle cx="48" cy="38" r="22" fill="none" stroke="var(--secondary-text-color)" stroke-width="1.6" opacity=".7"/>
+        <g class="fan" fill="var(--secondary-text-color)" opacity=".75">${[0, 120, 240].map((r) => `<ellipse cx="48" cy="26" rx="6" ry="11" transform="rotate(${r} 48 38)"/>`).join("")}<circle cx="48" cy="38" r="4" fill="var(--card-background-color)"/></g>
+        <g stroke="var(--secondary-text-color)" stroke-width="2.5" stroke-linecap="round" opacity=".5"><line x1="92" x2="128" y1="26" y2="26"/><line x1="92" x2="128" y1="38" y2="38"/><line x1="92" x2="128" y1="50" y2="50"/></g>
+        <circle cx="128" cy="68" r="4.5" fill="${heats ? GREEN : "var(--divider-color)"}"/>
+        <text x="48" y="78" font-size="11" text-anchor="middle" fill="var(--secondary-text-color)">${outer === null ? "" : this._fmt(outer) + "°"}</text>
+        <circle cx="22" cy="154" r="5" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="1.8"/>
+        <text x="84" y="162" text-anchor="middle" font-size="26" font-weight="500" fill="var(--primary-text-color)">${w === null ? "–" : this._fmt(w) + "°"}</text>
+        <text x="80" y="186" text-anchor="middle" font-size="11" fill="var(--secondary-text-color)">${this._t("tw_mp")}</text>
+      </g></svg>`;
+    const chip = bad ? `<span class="chip r">${this._t("tw_problem")}</span>` : prog ? `<span class="chip ${prog === "pv" ? "g" : prog === "minimum" ? "w" : prog === "normal" ? "a" : ""}">${this._t(`tw_p_${prog}`)}</span>` : "";
+    const tile = (label, value) => `<div class="twm"><small>${label}</small><b>${value}</b></div>`;
+    const since = heats && today && today.since != null ? this._twFmtDur(Math.max(0, Date.now() / 1000 - today.since)) : null;
+    const tiles = [
+      pw !== null ? tile(this._t(heats ? "tw_since" : "tw_hp"), heats ? (since || "–") : this._t("tw_idle")) : "",
+      pw !== null ? tile(this._t("power"), `${this._fmt(pw, 0)} W`) : "",
+      today && today.kwh != null ? tile(this._t("tw_today_e"), `${this._fmt(today.kwh)} kWh`) : "",
+      today && today.heat != null ? tile(this._t("tw_today_h"), this._twFmtDur(today.heat)) : "",
     ].join("");
-    return `<ha-card>${this._header("mdi:water-thermometer-outline", this._t("tw_tank"))}<div class="twtk">${svg}<div class="rows twrows">${rows}</div></div>
+    return `<ha-card>${this._header("mdi:water-boiler", this._t("tw_tank"), chip)}<div class="twhero">${svg}<div class="twside"><div class="twmg">${tiles}</div></div></div>
       <div class="note">${this._t("tw_tank_note")}</div></ha-card>`;
   }
 
@@ -226,11 +281,7 @@ export class TwwpSectionsMethods {
       const u = String(((this._state(m.id) || { attributes: {} }).attributes.unit_of_measurement) || "W").trim(), k = u === "kW" ? 1e3 : u === "MW" ? 1e6 : 1;
       if (k !== 1) pts = pts.map(([t, v]) => [t, v * k]);
     }
-    let heat = null;
-    if (m.k === "power" && !long) {
-      heat = 0;
-      pts.forEach(([t, v], i) => { if (v > 100) heat += (i + 1 < pts.length ? pts[i + 1][0] : end.getTime() / 1000) - t; });
-    }
+    const heat = m.k === "power" && !long ? this._twRuns(pts, end.getTime() / 1000).heat : null;
     let out = pts.length ? [{ label: this._t(m.label), color: m.color, pts: this.constructor._down(pts, 360) }] : [];
     if (prev) out = out.map((x) => ({ ...x, prev: true, label: `${x.label} · ${this._t("prev_period")}`, pts: x.pts.map(([t, v]) => [t + ms / 1000, v]) }));
     out.heat = heat;
@@ -283,7 +334,8 @@ export class TwwpSectionsMethods {
   _twTab(d) {
     const many = d.twwp.length > 1;
     return `<div class="stack">${d.twwp.map((t, i) => `${many ? `<h3 class="twname">${t.name}</h3>` : ""}
-      <div class="ov"><div class="col">${this._twTank(t, i)}${this._twTargets(t)}</div><div class="col">${this._twOperation(t)}${this._twDecision(t)}</div></div>
+      ${this._twHero(t, i)}
+      <div class="ov"><div class="col">${this._twTargets(t)}</div><div class="col">${this._twOperation(t)}${this._twDecision(t)}</div></div>
       ${this._twHistory(t)}`).join("")}</div>`;
   }
 }

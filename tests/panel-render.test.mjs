@@ -157,7 +157,7 @@ test("the hot water tab appears only with a heat pump, and renders without undef
   const html = await render(panel, () => { panel._tab = "warm"; });
   check(html);
   assert.ok(html.includes('data-v="warm"') && html.includes("Warmwasser"));
-  assert.ok(html.includes("54,2°") && html.includes("389 W") && html.includes("2,5 kW") && html.includes("5.605 kWh"));
+  assert.ok(html.includes("54,2°") && html.includes("389 W") && html.includes("2,5 kW") && html.includes("Messpunkt Mitte"), "main picture: water, power, PV");
   assert.ok(html.includes('data-act="twstep"') && html.includes('data-act="twctl"'));
   assert.ok(html.includes("PV-Überschuss: Start") && html.includes("vor 2"));
   assert.ok(html.includes("switch.freigabe → an"), "planned switching is listed");
@@ -281,7 +281,7 @@ const twData = {
 };
 const twHist = { ...twHass, callWS: async (m) => {
   if (m.type === "history/history_during_period") return Object.fromEntries(m.entity_ids.filter((i) => twData[i]).map((i) => [i, twData[i]]));
-  if (m.type === "recorder/statistics_during_period") return Object.fromEntries(m.statistic_ids.map((i) => [i, [1, 2, 3, 4].map((k) => ({ start: (Date.now() - k * 36e5 * 24) , mean: 40 + k }))]));
+  if (m.type === "recorder/statistics_during_period") return Object.fromEntries(m.statistic_ids.map((i) => [i, [1, 2, 3, 4].map((k) => ({ start: (Date.now() - k * 36e5 * 24) , mean: 40 + k, change: 0.5 }))]));
   return twHass.callWS(m);
 } };
 
@@ -308,7 +308,7 @@ test("the hot water history switches measurement and range", async () => {
   assert.ok(!power.includes("Soll PV 60°"), "no target lines on the power curve");
   const month = await render(panel, () => { panel._tab = "warm"; panel._histRange = "30d"; });
   check(month);
-  assert.ok(month.includes('class="ch"') && !month.includes("Heizzeit"), "statistics for long ranges, no heating time, no phases");
+  assert.ok(month.includes('class="ch"') && !month.includes("Heizzeit:"), "statistics for long ranges, no heating time under the chart, no phases");
   const prev = await render(panel, () => { panel._tab = "warm"; panel._histRange = "24h"; panel._hcmp = true; });
   assert.ok(prev.includes("Vorzeitraum"), "previous period series");
   panel._hcmp = false;
@@ -326,4 +326,29 @@ test("an icon inside a header chip stays small, so all chips are equally high", 
   const fs = await import("node:fs");
   const css = fs.readFileSync(new URL("lib/styles.js", WWW), "utf8");
   assert.match(css, /\.hchip ha-icon \{ --mdc-icon-size: 16px;/);
+});
+
+test("the main picture shows status, power, today's energy and heating time, and the flow only while heating", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = twHist;
+  const html = await render(panel, () => { panel._tab = "warm"; });
+  check(html);
+  assert.ok(html.includes('class="twhsvg heat"'), "heating: the flow and the fan are animated");
+  assert.ok(html.includes("Heizt seit") && html.includes("Energie heute") && html.includes("Heizzeit heute"), "tiles");
+  assert.ok(html.includes(">PV</span>") && html.includes('class="chip g"'), "program chip in the card header");
+  const idle = { ...twHist, states: { ...twStates, "sensor.tw_power": { ...twStates["sensor.tw_power"], state: "0" } } };
+  const p2 = new X.ProxonFwtPanel();
+  p2.hass = idle;
+  const rest = await render(p2, () => { p2._tab = "warm"; });
+  assert.ok(rest.includes('class="twhsvg "') && rest.includes("<b>bereit</b>"), "idle: no animation, tile says bereit");
+  assert.ok(!rest.includes("Heizt seit"));
+});
+
+test("heating runs are added up from the power curve", () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = hass;
+  assert.deepEqual(panel._twRuns([[0, 0], [100, 389], [200, 0], [300, 400]], 400), { heat: 200, since: 300 });
+  assert.deepEqual(panel._twRuns([[0, 389], [100, 0]], 150), { heat: 100, since: null });
+  assert.deepEqual(panel._twRuns([], 10), { heat: 0, since: null });
+  assert.deepEqual(panel._twRuns([[0, 100], [10, 100.5]], 20), { heat: 10, since: 10 }, "exactly 100 W does not count as heating");
 });

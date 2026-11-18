@@ -368,8 +368,6 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .panel .rgrp { display: inline-flex; gap: 2px; padding: 2px; border-radius: 10px; background: var(--secondary-background-color); }
 .panel .rgrp .vbtn { border-color: transparent; background: transparent; }
 .panel .rgrp .vbtn.a { background: var(--card-background-color); box-shadow: 0 1px 3px #0002; }
-.twtk { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
-.twrows { flex: 1; min-width: 160px; }
 .rows .f, .twctl { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid var(--divider-color); font-size: 13px; }
 .rows .f:first-child { border-top: none; }
 .rows .f > span:first-child { color: var(--secondary-text-color); }
@@ -387,11 +385,20 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .banner.go { cursor: pointer; }
 .banner .bgo { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 400; opacity: .8; white-space: nowrap; }
 .banner .bgo ha-icon { --mdc-icon-size: 16px; }
-.twtank { width: 180px; height: auto; flex: none; }
-.twtank .fan { transform-box: fill-box; transform-origin: center; }
-.twtank.heat .fan { animation: twspin 1.4s linear infinite; }
+.twhero { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+.twhsvg { width: min(100%, 440px); height: auto; flex: none; }
+.twside { flex: 1; min-width: 220px; }
+.twmg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.twm { background: var(--secondary-background-color); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.twm small { display: block; font-size: 12px; color: var(--secondary-text-color); margin-bottom: 2px; }
+.twm b { font-size: 20px; font-weight: 500; }
+.twflow { stroke-dasharray: 7 6; }
+.twhsvg.heat .twflow { animation: twdash 1s linear infinite; }
+.twhsvg .fan { transform-box: fill-box; transform-origin: center; }
+.twhsvg.heat .fan { animation: twspin 1.4s linear infinite; }
+@keyframes twdash { to { stroke-dashoffset: -13; } }
+@media (prefers-reduced-motion: reduce) { .twhsvg.heat .twflow, .twhsvg.heat .fan { animation: none; } }
 @keyframes twspin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .twtank.heat .fan { animation: none; } }
 `;
 
 let SHEET; // one constructable stylesheet shared by every card/panel instead of a <style> per render
