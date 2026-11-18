@@ -151,7 +151,7 @@ def decide(inp: TwwpInput) -> TwwpDecision:
         return TwwpDecision(
             REASON_SENSOR_UNAVAILABLE,
             program=PROGRAM_OFF,
-            enable=False,
+            enable=True,
             enable_pv=False,
         )
 

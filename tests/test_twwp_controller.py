@@ -77,12 +77,12 @@ def test_control_mode_switches_and_stops_repeating(twwp_controller):
     assert len(home.calls) == 2 and ctl.state.planned == []
 
 
-def test_failsafe_switches_off(twwp_controller):
+def test_failsafe_leaves_the_heat_pump_to_itself(twwp_controller):
     ctl, home = make(twwp_controller, {"control": True},
-                     {**STATES, "switch.freigabe": "on", "sensor.wasser": "unavailable"})
+                     {**STATES, "switch.freigabe": "off", "switch.freigabe_pv": "on", "sensor.wasser": "unavailable"})
     asyncio.run(ctl.async_run())
     assert ctl.state.reason == "sensor_unavailable" and ctl.state.program == "off"
-    assert home.calls == [("switch.freigabe", "off")]
+    assert home.calls == [("switch.freigabe", "on"), ("switch.freigabe_pv", "off")]
 
 
 def test_one_failing_switch_does_not_stop_the_other(twwp_controller):
@@ -269,7 +269,7 @@ def test_no_lock_without_minutes_and_for_sensor_failure(twwp_controller):
     home2.calls.clear()
     home2.states["sensor.wasser"] = "unavailable"
     asyncio.run(ctl2.async_run())
-    assert ctl2.state.reason == "sensor_unavailable" and ("switch.freigabe", "off") in home2.calls  # fail-safe is never held
+    assert ctl2.state.reason == "sensor_unavailable" and ("switch.freigabe_pv", "off") in home2.calls  # fail-safe is never held
 
 
 def test_foreign_switch_change_starts_the_lock(twwp_controller):

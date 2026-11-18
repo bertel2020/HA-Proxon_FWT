@@ -237,7 +237,7 @@ class TwwpPlannedSensor(TwwpEntity, SensorEntity):
 
 
 class TwwpSensorProblem(TwwpEntity, BinarySensorEntity):
-    """A temperature sensor or target is unavailable: the enables are switched off."""
+    """A temperature sensor or target is unavailable: normal enable on, PV enable off (the heat pump regulates itself)."""
 
     _attr_device_class = BinarySensorDeviceClass.PROBLEM
     _attr_translation_key = "twwp_sensor_problem"

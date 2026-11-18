@@ -92,7 +92,7 @@ def test_minimum_does_not_replace_normal_or_pv(twwp, make):
 def test_failsafe_when_a_value_is_missing(twwp, make, field):
     d = twwp.decide(make(**{field: None}))
     assert (d.reason, d.program, d.enable, d.enable_pv, d.pv_status) == (
-        twwp.REASON_SENSOR_UNAVAILABLE, twwp.PROGRAM_OFF, False, False, None)
+        twwp.REASON_SENSOR_UNAVAILABLE, twwp.PROGRAM_OFF, True, False, None)
 
 
 def test_without_brightness_sensor_it_is_always_day(twwp, make):

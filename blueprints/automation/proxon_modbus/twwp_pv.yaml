@@ -7,8 +7,8 @@ blueprint:
     Programme: PV-Betrieb (Überschuss nutzen, höheres Soll), Normalbetrieb
     (tagsüber bis zum Soll), Minimumbetrieb (hält die Mindesttemperatur, auch
     nachts) und Nachtabschaltung. Die Regelung läuft jede Minute und beim
-    Ändern der Sollwerte. Fällt ein Temperatursensor aus, werden beide
-    Freigaben sicherheitshalber abgeschaltet. Dieselbe Regelung gibt es in der
+    Ändern der Sollwerte. Fällt ein Temperatursensor aus, bleibt die
+    normale Freigabe an und die PV-Freigabe geht aus: die Wärmepumpe regelt dann selbst. Dieselbe Regelung gibt es in der
     Proxon-Integration als Unterintegration (Gerät „Trinkwasser-Wärmepumpe“);
     beide dürfen nicht dieselben Freigabe-Schalter bedienen.
 
@@ -27,7 +27,7 @@ blueprint:
     surplus, higher target), normal mode (daytime up to the target), minimum
     mode (keeps the minimum temperature, also at night) and night shutdown.
     It runs every minute and when a target changes. If a temperature sensor
-    fails, both enables are switched off for safety. The same control exists in
+    fails, the normal enable stays on and the PV enable goes off: the heat pump then regulates itself. The same control exists in
     the Proxon integration as a sub-integration (device "Hot water heat pump");
     the two must not drive the same enable switches.
 
@@ -306,22 +306,24 @@ variables:
 
 actions:
   # 1. Fällt ein Sensor oder Sollwert aus, ist nichts sicher berechenbar:
-  #    Freigaben aus und Programm „Aus“, dann den Lauf beenden.
+  #    Normale Freigabe an, PV-Freigabe aus (die Wärmepumpe regelt selbst),
+  #    Programm „Aus“, dann den Lauf beenden.
   - if:
       - condition: template
         value_template: "{{ not sensors_ok }}"
     then:
+      - action: switch.turn_on
+        target:
+          entity_id: !input enable_switch
       - action: switch.turn_off
         target:
-          entity_id:
-            - !input enable_switch
-            - !input enable_pv_switch
+          entity_id: !input enable_pv_switch
       - action: input_select.select_option
         target:
           entity_id: !input program
         data:
           option: Aus
-      - stop: Sensor oder Sollwert nicht verfügbar, Freigaben abgeschaltet
+      - stop: Sensor oder Sollwert nicht verfügbar, Wärmepumpe regelt selbst
         error: false
 
   # 2. PV-Status aktualisieren.
