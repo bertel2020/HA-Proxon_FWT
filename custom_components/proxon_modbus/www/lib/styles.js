@@ -367,7 +367,14 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 /* History range switch inside the card header: one segmented group. */
 .panel .rgrp { display: inline-flex; gap: 2px; padding: 2px; border-radius: 10px; background: var(--secondary-background-color); }
 .panel .rgrp .vbtn { border-color: transparent; background: transparent; }
-.panel .rgrp .vbtn.a { background: var(--card-background-color); box-shadow: 0 1px 3px #0002; }
+.panel .rgrp .vbtn.a { background: var(--card-background-color); box-shadow: 0 1px 3px #0002; color: var(--primary-text-color); font-weight: 500; }
+@media (max-width: 640px) {
+  .panel .h .r.rng { grid-template-columns: minmax(0, 1fr); }
+  .panel .h .r.rng .rgrp { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-row: 1; }
+  .panel .h .r.rng .rgrp .vbtn { padding: 6px 2px; justify-content: center; white-space: nowrap; }
+  .panel .h .r.rng .vbtn[data-act="hcmp"] { grid-row: 2; }
+  .hst .n { white-space: normal; overflow: visible; line-height: 1.2; }
+}
 .rows .f, .twctl { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid var(--divider-color); font-size: 13px; }
 .rows .f:first-child { border-top: none; }
 .rows .f > span:first-child { color: var(--secondary-text-color); }
