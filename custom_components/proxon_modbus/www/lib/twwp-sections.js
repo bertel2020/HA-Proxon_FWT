@@ -3,6 +3,8 @@ import { BLUE, CORAL, AMBER, GREEN, esc } from "./constants.js";
 const PROGRAMS = ["off", "normal", "pv", "minimum", "night"];
 const PHASE_COLOR = { pv: GREEN, normal: AMBER, minimum: CORAL, night: BLUE };
 const TARGETS = [["twwp_target_normal", "tw_t_normal"], ["twwp_target_pv", "tw_t_pv"], ["twwp_target_min", "tw_t_min"]];
+const HYSTS = [["twwp_hyst_low", "tw_h_low"], ["twwp_hyst_high", "tw_h_high"]];
+const MIN_BAND = 2; // K: below this the heat pump may switch on and off in short intervals
 const T_LO = 20, T_HI = 70; // the tank graphic and the number entities share this range
 
 // The "Warmwasser" tab: hot water heat pump (TWWP) with tank, targets, program and the controller's last decision.
@@ -146,17 +148,22 @@ export class TwwpSectionsMethods {
       <div class="note">${this._t("tw_tank_note")}</div></ha-card>`;
   }
 
-  _twStepper(id, label) {
+  _twStepper(id, label, unit = "°") {
     const down = !this._ok(id), v = this._twTarget(id);
     return `<div class="f"><span>${label}</span><span class="twstp">
       ${this._btn(`data-act="twstep" data-v="${id}|-1" aria-label="−"`, "round", this._icon("mdi:minus"), down)}
-      <b>${v === null ? "–" : this._fmt(v, v % 1 ? 1 : 0) + "°"}</b>
+      <b>${v === null ? "–" : this._fmt(v, v % 1 ? 1 : 0) + unit}</b>
       ${this._btn(`data-act="twstep" data-v="${id}|1" aria-label="+"`, "round", this._icon("mdi:plus"), down)}</span></div>`;
   }
 
   _twTargets(t) {
+    const lo = this._twTarget(t.ents.twwp_hyst_low), hi = this._twTarget(t.ents.twwp_hyst_high);
+    const hyst = HYSTS.filter(([k]) => t.ents[k]);
+    const warn = lo !== null && hi !== null && lo + hi < MIN_BAND;
     return `<ha-card>${this._header("mdi:tune-variant", this._t("tw_targets"))}<div class="rows">${TARGETS.map(([k, l]) => (t.ents[k] ? this._twStepper(t.ents[k], this._t(l)) : "")).join("")}</div>
-      <div class="note">${this._t("tw_hyst")}</div></ha-card>`;
+      ${hyst.length ? `<div class="lbl2">${this._t("tw_hyst_h")}</div><div class="rows">${hyst.map(([k, l]) => this._twStepper(t.ents[k], this._t(l), " K")).join("")}</div>` : ""}
+      <div class="note">${lo !== null && hi !== null ? this._t("tw_hyst", this._fmt(lo, lo % 1 ? 1 : 0), this._fmt(hi, hi % 1 ? 1 : 0)) : ""}</div>
+      ${warn ? `<div class="note" style="color:#c98400">${this._t("tw_hyst_warn")}</div>` : ""}</ha-card>`;
   }
 
   // The program is chosen by the controller, so it is only shown; the switch lets the controller take over.

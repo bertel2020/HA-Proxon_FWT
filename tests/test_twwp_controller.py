@@ -175,3 +175,31 @@ def test_switches_lists_configured_enables(twwp_controller):
     assert ctl.switches == ["switch.freigabe", "switch.freigabe_pv"]
     ctl, _ = make(twwp_controller, {"enable_pv_switch": None})
     assert ctl.switches == ["switch.freigabe"]
+
+
+def test_hysteresis_changes_the_decision_and_is_kept_inside_its_range(twwp_controller):
+    states = {**STATES, "sensor.pv": "0", "sensor.pv_avg": "0", "sensor.wasser": "49"}
+    ctl, _ = make(twwp_controller, states=states)
+    asyncio.run(ctl.async_run())
+    assert ctl.state.reason == "none"  # 49 > 50 - 3
+    asyncio.run(ctl.async_set_hysteresis("low", 0.2))  # clamped to the range minimum, 1 K
+    assert ctl.state.hysteresis["low"] == 1.0 and ctl.state.reason == "normal"  # 49 <= 50 - 1
+    asyncio.run(ctl.async_set_hysteresis("high", 99))
+    assert ctl.state.hysteresis["high"] == 5.0
+    with pytest.raises(KeyError):
+        asyncio.run(ctl.async_set_hysteresis("nope", 1))
+
+
+def test_hysteresis_is_saved_and_restored(twwp_controller):
+    store = FakeStore()
+    ctl, _ = make(twwp_controller, store=store)
+    asyncio.run(ctl.async_set_hysteresis("high", 2))
+    assert store.saved[-1]["hysteresis"] == {"low": 3.0, "high": 2.0}
+    other, _ = make(twwp_controller, store=store)
+    store.data = {"hysteresis": {"low": 4, "high": "x"}}
+    asyncio.run(other.async_load())
+    assert other.state.hysteresis == {"low": 4.0, "high": 1.0}  # bad values keep the default
+    third, _ = make(twwp_controller, store=store)
+    store.data = {"hysteresis": {"low": 99}}  # outside the range: ignored
+    asyncio.run(third.async_load())
+    assert third.state.hysteresis["low"] == 3.0

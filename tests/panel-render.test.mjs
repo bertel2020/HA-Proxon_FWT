@@ -129,6 +129,8 @@ twEnt("water_heater.tw", {}, "pv", { current_temperature: 54.2, temperature: 53 
 twEnt("number.tw_normal", { translation_key: "twwp_target_normal" }, "53", { min: 30, max: 70, step: 1 });
 twEnt("number.tw_pv", { translation_key: "twwp_target_pv" }, "60", { min: 30, max: 70, step: 1 });
 twEnt("number.tw_min", { translation_key: "twwp_target_min" }, "42", { min: 30, max: 70, step: 1 });
+twEnt("number.tw_hlow", { translation_key: "twwp_hyst_low" }, "3", { min: 1, max: 10, step: 0.5 });
+twEnt("number.tw_hhigh", { translation_key: "twwp_hyst_high" }, "1", { min: 0, max: 5, step: 0.5 });
 twEnt("sensor.tw_program", { translation_key: "twwp_program" }, "pv");
 twEnt("sensor.tw_pv_status", { translation_key: "twwp_pv_status" }, "pv");
 twEnt("sensor.tw_reason", { translation_key: "twwp_reason" }, "pv", { control: false, last_run: new Date(Date.now() - 23000).toISOString(), last_error: "a <b>" });
@@ -230,4 +232,23 @@ test("the overview flags a failed sensor, and a controller that only observes an
   const card = new X.ProxonFwtCard();
   card.setConfig({ sections: X.ALL_SECTIONS });
   assert.ok(!(await banners(withState({ "binary_sensor.tw_problem": "on" }), card)).includes("Freigaben abgeschaltet"), "the dashboard card has no tabs, so no banner");
+});
+
+test("the hysteresis is shown and editable, the note follows it, and a narrow band is flagged", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = twHass;
+  const html = await render(panel, () => { panel._tab = "warm"; });
+  check(html);
+  assert.ok(html.includes('data-v="number.tw_hlow|1"') && html.includes('data-v="number.tw_hhigh|-1"'), "steppers for both values");
+  assert.ok(html.includes("3 K") && html.includes("Heizt unter Soll − 3 K und stoppt bei Soll + 1 K."), "note with the current values");
+  assert.ok(!html.includes("kleiner als 2 K"), "the default band of 4 K is fine");
+  const narrow = { ...twHass, states: { ...twStates, "number.tw_hlow": { ...twStates["number.tw_hlow"], state: "1" }, "number.tw_hhigh": { ...twStates["number.tw_hhigh"], state: "0.5" } } };
+  const p2 = new X.ProxonFwtPanel();
+  p2.hass = narrow;
+  const warn = await render(p2, () => { p2._tab = "warm"; });
+  assert.ok(warn.includes("kleiner als 2 K") && warn.includes("Soll + 0,5 K"));
+  calls.length = 0;
+  panel._click({ composedPath: () => [{ dataset: { act: "twstep", v: "number.tw_hlow|1" } }] });
+  await new Promise((r) => setTimeout(r, 700));
+  assert.deepEqual(calls.find((c) => c[1] === "set_value"), ["number", "set_value", { entity_id: "number.tw_hlow", value: 3.5 }], "steps by the entity's own step (0.5)");
 });

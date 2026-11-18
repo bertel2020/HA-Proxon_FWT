@@ -143,3 +143,26 @@ def test_default_targets_lie_inside_the_target_range(twwp):
     for value in twwp.DEFAULT_TARGETS.values():
         assert twwp.TARGET_MIN_C <= value <= twwp.TARGET_MAX_C
     assert twwp.DEFAULT_TARGETS[twwp.TARGET_MIN] < twwp.DEFAULT_TARGETS[twwp.TARGET_NORMAL] < twwp.DEFAULT_TARGETS[twwp.TARGET_PV]
+
+
+def test_hysteresis_is_configurable(twwp, make):
+    no_pv = dict(pv_power=0.0, pv_power_avg=0.0)
+    # default: heats at target - 3 (50), stops at target + 1 (54)
+    assert twwp.decide(make(water=51.0, **no_pv)).reason == twwp.REASON_NONE
+    assert twwp.decide(make(water=51.0, hyst_low=1.5, **no_pv)).reason == twwp.REASON_NORMAL  # 51 <= 53 - 1.5
+    assert twwp.decide(make(water=54.0, **no_pv)).reason == twwp.REASON_TARGET_REACHED
+    assert twwp.decide(make(water=54.0, hyst_high=2.0, **no_pv)).reason == twwp.REASON_NONE  # stops at 55
+    assert twwp.decide(make(water=53.0, hyst_high=0.0, **no_pv)).reason == twwp.REASON_TARGET_REACHED  # exactly at the target
+    # the PV band uses the same values
+    assert twwp.decide(make(water=58.0)).reason != twwp.REASON_PV  # 58 > 60 - 3
+    assert twwp.decide(make(water=58.0, hyst_low=2.0)).reason == twwp.REASON_PV  # 58 <= 60 - 2
+    # the minimum program ends this far above its target
+    ended = twwp.decide(make(program=twwp.PROGRAM_MINIMUM, water=44.0, brightness=100.0, hyst_low=2.0, pv_power=0.0, pv_power_avg=0.0))
+    assert ended.reason == twwp.REASON_MINIMUM_END  # 44 >= 42 + 2
+
+
+def test_hysteresis_defaults_and_ranges(twwp):
+    assert twwp.DEFAULT_HYSTERESIS == {twwp.HYST_LOW: 3.0, twwp.HYST_HIGH: 1.0}
+    for key, (low, high) in twwp.HYST_RANGE.items():
+        assert low <= twwp.DEFAULT_HYSTERESIS[key] <= high
+    assert sum(twwp.DEFAULT_HYSTERESIS.values()) >= twwp.MIN_BAND

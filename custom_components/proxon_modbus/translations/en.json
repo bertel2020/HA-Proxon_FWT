@@ -424,7 +424,9 @@
       },
       "twwp_target_min": {
         "name": "Minimum temperature"
-      }
+      },
+      "twwp_hyst_low": {"name": "Hysteresis start (below target)"},
+      "twwp_hyst_high": {"name": "Hysteresis stop (above target)"}
     }
   },
   "services": {

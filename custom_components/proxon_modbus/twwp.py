@@ -71,9 +71,14 @@ REASONS = (
     REASON_TARGET_REACHED, REASON_NONE,
 )
 
-HYSTERESIS_LOW = 3.0  # K below the target at which heating starts
-HYSTERESIS_HIGH = 1.0  # K above the target at which heating stops
-MINIMUM_END_OFFSET = 3.0  # K above the minimum at which the minimum program ends
+HYSTERESIS_LOW = 3.0  # K below the target at which heating starts (default); also the minimum program ends this far above its target
+HYSTERESIS_HIGH = 1.0  # K above the target at which heating stops (default)
+HYST_LOW = "low"
+HYST_HIGH = "high"
+DEFAULT_HYSTERESIS = {HYST_LOW: HYSTERESIS_LOW, HYST_HIGH: HYSTERESIS_HIGH}
+HYST_RANGE = {HYST_LOW: (1.0, 10.0), HYST_HIGH: (0.0, 5.0)}  # K, the values the entities accept
+HYST_STEP = 0.5
+MIN_BAND = 2.0  # K: below this total band the compressor may switch on and off in short intervals
 
 DEFAULT_PV_THRESHOLD = 1500.0  # W
 DEFAULT_FROST_BELOW = 0.0  # degC
@@ -101,6 +106,8 @@ class TwwpInput:
     pv_min_outer: float = DEFAULT_PV_MIN_OUTER
     night_below: float = DEFAULT_NIGHT_BELOW
     day_above: float = DEFAULT_DAY_ABOVE
+    hyst_low: float = HYSTERESIS_LOW
+    hyst_high: float = HYSTERESIS_HIGH
 
 
 @dataclass(frozen=True)
@@ -159,17 +166,17 @@ def decide(inp: TwwpInput) -> TwwpDecision:
     if (
         inp.outer is not None
         and inp.outer > inp.pv_min_outer
-        and water <= inp.target_pv - HYSTERESIS_LOW
+        and water <= inp.target_pv - inp.hyst_low
         and status == PV_AVAILABLE
     ):
         return result(REASON_PV, program=PROGRAM_PV, enable=True, enable_pv=True)
 
-    if program == PROGRAM_PV and water >= inp.target_pv + HYSTERESIS_HIGH:
+    if program == PROGRAM_PV and water >= inp.target_pv + inp.hyst_high:
         return result(
             REASON_PV_TARGET_REACHED, program=PROGRAM_OFF, enable=False, enable_pv=False
         )
 
-    if program == PROGRAM_MINIMUM and water >= inp.target_min + MINIMUM_END_OFFSET:
+    if program == PROGRAM_MINIMUM and water >= inp.target_min + inp.hyst_low:
         return result(REASON_MINIMUM_END, program=PROGRAM_OFF, enable=False)
 
     if water < inp.target_min and program not in (PROGRAM_NORMAL, PROGRAM_PV):
@@ -193,12 +200,12 @@ def decide(inp: TwwpInput) -> TwwpDecision:
             REASON_PV_END, program=PROGRAM_NORMAL, enable=True, enable_pv=False
         )
 
-    if water <= inp.target_normal - HYSTERESIS_LOW and is_day and program != PROGRAM_PV:
+    if water <= inp.target_normal - inp.hyst_low and is_day and program != PROGRAM_PV:
         return result(
             REASON_NORMAL, program=PROGRAM_NORMAL, enable=True, enable_pv=False
         )
 
-    if water >= inp.target_normal + HYSTERESIS_HIGH and program != PROGRAM_PV:
+    if water >= inp.target_normal + inp.hyst_high and program != PROGRAM_PV:
         return result(REASON_TARGET_REACHED, program=PROGRAM_OFF, enable=False)
 
     return result(REASON_NONE)
@@ -220,6 +227,7 @@ def build_input(
     config: Mapping[str, Any],
     program: str,
     targets: Mapping[str, float],
+    hysteresis: Mapping[str, float] | None = None,
 ) -> TwwpInput:
     """Collect the readings for `decide` from the configured entities.
 
@@ -247,6 +255,8 @@ def build_input(
         pv_min_outer=config.get(CONF_PV_MIN_OUTER, DEFAULT_PV_MIN_OUTER),
         night_below=config.get(CONF_NIGHT_BELOW, DEFAULT_NIGHT_BELOW),
         day_above=config.get(CONF_DAY_ABOVE, DEFAULT_DAY_ABOVE),
+        hyst_low=(hysteresis or {}).get(HYST_LOW, HYSTERESIS_LOW),
+        hyst_high=(hysteresis or {}).get(HYST_HIGH, HYSTERESIS_HIGH),
     )
 
 

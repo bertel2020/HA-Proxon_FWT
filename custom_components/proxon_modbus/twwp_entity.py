@@ -23,6 +23,10 @@ from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, MANUFACTURER
 from .twwp import (
+    HYST_HIGH,
+    HYST_LOW,
+    HYST_RANGE,
+    HYST_STEP,
     PROGRAMS,
     PV_STATES,
     REASON_SENSOR_UNAVAILABLE,
@@ -131,6 +135,28 @@ class TwwpTargetNumber(TwwpEntity, NumberEntity):
 
 
 TARGETS = (TARGET_NORMAL, TARGET_PV, TARGET_MIN)
+HYSTERESES = (HYST_LOW, HYST_HIGH)
+
+
+class TwwpHysteresisNumber(TwwpEntity, NumberEntity):
+    """How far below the target heating starts, and how far above it stops (in K)."""
+
+    _attr_native_unit_of_measurement = "K"  # no device class: a temperature class would convert K to °C
+    _attr_native_step = HYST_STEP
+    _attr_mode = NumberMode.SLIDER
+
+    def __init__(self, entry, subentry, controller, key: str) -> None:
+        super().__init__(entry, subentry, controller, f"hyst_{key}")
+        self._key = key
+        self._attr_translation_key = f"twwp_hyst_{key}"
+        self._attr_native_min_value, self._attr_native_max_value = HYST_RANGE[key]
+
+    @property
+    def native_value(self) -> float:
+        return self._controller.state.hysteresis[self._key]
+
+    async def async_set_native_value(self, value: float) -> None:
+        await self._controller.async_set_hysteresis(self._key, value)
 
 
 class TwwpProgramSensor(TwwpEntity, SensorEntity):

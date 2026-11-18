@@ -20,7 +20,9 @@ from .twwp import (
     CONF_CONTROL,
     CONF_ENABLE_PV_SWITCH,
     CONF_ENABLE_SWITCH,
+    DEFAULT_HYSTERESIS,
     DEFAULT_TARGETS,
+    HYST_RANGE,
     PROGRAM_OFF,
     PROGRAMS,
     PV_NONE,
@@ -49,6 +51,7 @@ class TwwpState:
     program: str = PROGRAM_OFF
     pv_status: str = PV_NONE
     targets: dict[str, float] = field(default_factory=lambda: dict(DEFAULT_TARGETS))
+    hysteresis: dict[str, float] = field(default_factory=lambda: dict(DEFAULT_HYSTERESIS))
     reason: str | None = None
     last_run: float | None = None
     last_error: str | None = None
@@ -117,6 +120,12 @@ class TwwpController:
                 value = saved.get(key)
                 if isinstance(value, (int, float)) and not isinstance(value, bool):
                     self.state.targets[key] = float(value)
+        saved_h = data.get("hysteresis")
+        if isinstance(saved_h, dict):
+            for key, (low, high) in HYST_RANGE.items():
+                value = saved_h.get(key)
+                if isinstance(value, (int, float)) and not isinstance(value, bool) and low <= value <= high:
+                    self.state.hysteresis[key] = float(value)
 
     async def _async_save(self) -> None:
         await self._store.async_save(
@@ -125,6 +134,7 @@ class TwwpController:
                 "program": self.state.program,
                 "pv_status": self.state.pv_status,
                 "targets": self.state.targets,
+                "hysteresis": self.state.hysteresis,
             }
         )
 
@@ -135,10 +145,18 @@ class TwwpController:
         self.state.targets[key] = float(value)
         await self.async_run()
 
+    async def async_set_hysteresis(self, key: str, value: float) -> None:
+        """Change the start or stop band (kept inside the range the entity accepts) and decide again."""
+        if key not in HYST_RANGE:
+            raise KeyError(key)
+        low, high = HYST_RANGE[key]
+        self.state.hysteresis[key] = min(high, max(low, float(value)))
+        await self.async_run()
+
     async def async_run(self) -> TwwpDecision:
         """Decide once and apply the decision (if control is on)."""
         async with self._lock:
-            inp = build_input(self._read, self._config, self.state.program, self.state.targets)
+            inp = build_input(self._read, self._config, self.state.program, self.state.targets, self.state.hysteresis)
             decision = decide(inp)
             state = self.state
             state.reason = decision.reason

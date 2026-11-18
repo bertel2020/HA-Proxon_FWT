@@ -424,7 +424,9 @@
       },
       "twwp_target_min": {
         "name": "Mindesttemperatur"
-      }
+      },
+      "twwp_hyst_low": {"name": "Hysterese Einschalten (unter Soll)"},
+      "twwp_hyst_high": {"name": "Hysterese Ausschalten (über Soll)"}
     }
   },
   "services": {

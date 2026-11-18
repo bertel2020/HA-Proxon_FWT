@@ -69,6 +69,8 @@ roomData.forEach(([name, cur, tgt, co2, rf, ptc], i) => {
 devices.tw1 = { id: "tw1", name: "Trinkwasser-Wärmepumpe", via_device_id: "central", identifiers: [["proxon_modbus", "e1_twwp_SUB1"]] };
 ent("water_heater.tw", "tw1", {}, "pv", { current_temperature: 54.2, temperature: 53 });
 for (const [k, v] of [["normal", 53], ["pv", 60], ["min", 42]]) ent(`number.tw_${k}`, "tw1", { translation_key: `twwp_target_${k}` }, String(v), { min: 30, max: 70, step: 1 });
+ent("number.tw_hlow", "tw1", { translation_key: "twwp_hyst_low" }, "3", { min: 1, max: 10, step: 0.5 });
+ent("number.tw_hhigh", "tw1", { translation_key: "twwp_hyst_high" }, "1", { min: 0, max: 5, step: 0.5 });
 ent("sensor.tw_program", "tw1", { translation_key: "twwp_program" }, "pv");
 ent("sensor.tw_pv_status", "tw1", { translation_key: "twwp_pv_status" }, "pv");
 ent("sensor.tw_reason", "tw1", { translation_key: "twwp_reason" }, "pv", { control: false, last_run: new Date(Date.now() - 23000).toISOString(), last_error: null });
