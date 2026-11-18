@@ -403,7 +403,7 @@ export class TwwpSectionsMethods {
     const on = this._twRefsOn(), tgt = all || m.k === "water" ? `<button class="vbtn" style="margin-left:auto;${on ? "background:var(--primary-color);color:var(--text-primary-color,#fff)" : ""}" data-act="twrefs" aria-pressed="${on}" title="${this._t("tw_refs_tip")}">${this._icon("mdi:target")}${this._t("tw_refs")}</button>` : "";
     const chip = (k, icon, label) => `<button class="vbtn ${(all ? k === "all" : k === m.k) ? "a" : ""}" data-act="twmetric" data-v="${k}">${this._icon(icon)}${label}</button>`;
     const chips = metrics.length > 1 || tgt ? `<div class="mchips" role="group">${metrics.length > 1 ? chip("all", "mdi:chart-multiple", this._t("tw_all")) + metrics.map((x) => chip(x.k, x.icon, this._t(x.label))).join("") : ""}${tgt}</div>` : "";
-    const prev = `<button class="vbtn ${this._hcmp && !all ? "a" : ""}" data-act="hcmp" aria-pressed="${!!this._hcmp && !all}" ${all ? `disabled title="${this._t("tw_all_noprev")}"` : ""}>${this._icon("mdi:compare-horizontal")}${this._t("prev_period")}</button>`;
+    const prev = `<button class="vbtn ${this._hcmp && !all ? "a" : ""}" data-act="twcmp" data-v="${all ? metrics[0].k : ""}" aria-pressed="${!!this._hcmp && !all}">${this._icon("mdi:compare-horizontal")}${this._t("prev_period")}</button>`;
     return `<ha-card><div class="h">${this._icon("mdi:chart-line")}${this._t("history")}
       <span class="r rng">${prev}<span class="rgrp" role="group">${rb("24h", this._t("hist_24"))}${rb("7d", this._t("hist_7"))}${rb("30d", this._t("hist_30"))}${rb("1y", this._t("hist_365"))}</span></span></div>${chips}${body}${heat}</ha-card>`;
   }

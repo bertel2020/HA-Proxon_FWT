@@ -80,6 +80,7 @@ export class InteractionMethods {
       case "metric": this._metric = v; this._update(); break;
       case "twrefs": this._twRefs = !this._twRefsOn(); try { localStorage.setItem("proxon_fwt_twrefs", this._twRefs ? "1" : "0"); } catch (e) { /* ignore */ } this._sig = ""; this._update(); break;
       case "twhyst": this._twHystOpen = !this._twHystOpen; this._sig = ""; this._update(); break;
+      case "twcmp": if (v) { this._twMetric = v; this._hcmp = true; } else this._hcmp = !this._hcmp; this._update(); break;
       case "twmetric": this._twMetric = v; this._update(); break;
       case "dismiss": this._dismissed = this._dismissed || {}; this._dismissed[v] = Date.now(); this._saveDismissed(); this._sig = ""; this._update(); break;
       case "undismiss": this._dismissed = {}; this._saveDismissed(); this._sig = ""; this._update(); break;

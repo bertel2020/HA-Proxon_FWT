@@ -301,7 +301,7 @@ test("the hot water history shows axes, targets, program phases and the heating 
   const lg = html.slice(html.indexOf('class="legend"', html.indexOf('class="ch"')));
   assert.ok(lg.includes("PV-Betrieb ") && lg.includes("Normalbetrieb ") && !lg.includes("Nachtabschaltung"), "legend lists only phases that occurred");
   assert.ok(html.includes("Heizzeit: 5 h 0 min"), "heating time from the power above 100 W");
-  assert.ok(html.includes('data-act="twmetric" data-v="power"') && html.includes('data-act="hrange"') && html.includes('data-act="hcmp"'), "chips, range and previous period");
+  assert.ok(html.includes('data-act="twmetric" data-v="power"') && html.includes('data-act="hrange"') && html.includes('data-act="twcmp"'), "chips, range and previous period");
   assert.ok(html.includes("Min") && html.includes("Ø"), "min / max / mean");
 });
 
@@ -541,14 +541,14 @@ test("the hot water history starts with 'All' in lanes, the chip comes first, an
   const chart = html.slice(html.indexOf('class="ch"'));
   assert.ok(chart.includes("Soll PV 60°") && chart.includes("PV-Betrieb ab 5°"), "targets in the water lane, the PV limit in the air lane");
   assert.ok(chart.includes("<polygon") && chart.includes(">WP</text>") && chart.includes(">PV</text>"), "power lane with the PV area");
-  assert.ok(/data-act="hcmp"[^>]*disabled/.test(html), "no previous period in the lane view");
+  assert.ok(/data-act="twcmp" data-v="[a-z_]+"/.test(html) && !/data-act="twcmp"[^>]*disabled/.test(html), "previous period in the lane view switches to the first measurement");
   const model = panel._cm;
   assert.equal(model.series.length, 4, "four curves with crosshair data");
   // one measurement
   panel._click({ composedPath: () => [{ dataset: { act: "twmetric", v: "water" } }] });
   const water = await render(panel, () => { panel._tab = "warm"; });
   assert.ok(/class="vbtn a" data-act="twmetric" data-v="water"/.test(water) && !water.slice(water.indexOf('class="ch"')).includes(">WP</text>"), "single measurement: the normal chart");
-  assert.ok(!/data-act="hcmp"[^>]*disabled/.test(water), "previous period available again");
+  assert.ok(/data-act="twcmp" data-v=""/.test(water), "previous period toggles in a single view");
   panel._click({ composedPath: () => [{ dataset: { act: "twmetric", v: "all" } }] });
   assert.ok(/class="vbtn a" data-act="twmetric" data-v="all"/.test(await render(panel, () => { panel._tab = "warm"; })), "and back to 'All'");
 });
