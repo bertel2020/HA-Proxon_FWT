@@ -86,7 +86,7 @@ Two kinds of devices are created: a **central device** ("Proxon FWT" by default)
 - **`climate.<room>`** — current temperature (register `150+n`), target temperature (read from `180+n`, written to the separate write-only register `200+n`). The settable range follows the device: room 1 (Wohnen) directly 18–30 °C, every other room its mid temperature ±3 °C (whole degrees, within 18–30 °C; without a mid temperature 18–30 °C applies). The mode only reflects the room's PTC element: "Heat" while it is enabled (register 302), otherwise "Off"; changing it sets the PTC enable (register 301). The action shows "Heating" while the PTC element is running (register 300), otherwise "Idle" or "Off".
 - **`binary_sensor.*`** — PTC element active (current **state**, register 300).
 - **`switch.*`** — PTC element enabled (**enable**, registers 301/302).
-- **`sensor.*`** — room temperature (actual temperature, same as the thermostat's `current_temperature` but as a sensor with long-term statistics) setpoint (confirmed, diagnostic) and mid-room temperature (rooms 2–N, control-panel readback).
+- **`sensor.*`** — room temperature (actual temperature, same as the thermostat's `current_temperature` but as a sensor with long-term statistics) setpoint (confirmed, diagnostic; with the attributes `last_sent`, `last_sent_at` and `write_status` = `pending`/`confirmed`/`not_applied`) and mid-room temperature (rooms 2–N, control-panel readback).
 - Optionally, one or more **CO₂/humidity sensors**, if assigned to this room from the options flow's names step.
 
 A full table of every entity with a description is further down under [All entities in detail](#all-entities-in-detail).
@@ -145,7 +145,7 @@ The tables below assume the default device name **"Proxon FWT"** (→ `proxon_fw
 | Recirculation filter operating hours | `sensor.proxon_fwt_recirculation_filter_operating_hours` | Only present if a recirculation filter is set in the options |
 | Heat pump runtime today / total | `sensor.proxon_fwt_heat_pump_runtime_today`, `…_total` | Heat pump runtime in hours, counted by the integration (the total with long-term statistics) |
 | Heat pump starts today / total | `sensor.proxon_fwt_heat_pump_starts_today`, `…_total` | Number of compressor starts |
-| Last write error | `sensor.proxon_fwt_last_write_error` | Diagnostic: most recent failed write (register, value, reason) |
+| Last write error | `sensor.proxon_fwt_last_write_error` | Diagnostic: most recent failed write (register, value, reason). Attributes `last_not_applied`, `last_not_applied_at`, `not_applied_count`: writes the unit accepted but did not confirm within 30 s |
 | *(custom name)* | `sensor.proxon_fwt_<name>` | CO₂ sensor(s), in ppm, if configured and not assigned to a room (register 350+n) |
 | *(custom name)* | `sensor.proxon_fwt_<name>` | Humidity sensor(s), in % RH, if configured and not assigned to a room (register 360+n) |
 

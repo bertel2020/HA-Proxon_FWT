@@ -267,3 +267,33 @@ def test_boost_end_is_retried_when_function_block_unreadable(coord):
     with pytest.raises(Exception):
         run(c.async_end_boost())
     assert c.boost.active  # not given up: retried later
+
+
+def test_write_check_confirms_and_flags_each_kind_of_write(coord):
+    c, hub = make(coord)
+    c.data.rooms = {0: coord.RoomData(index=0), 1: coord.RoomData(index=1)}
+    run(c.async_set_room_setpoint(1, 22.4))  # whole degrees go to the unit
+    run(c.async_write_register(coord.REG_FAN_STAGE_WRITE, 3))
+    run(c.async_set_ptc_enable(0, True))
+    assert (coord.REG_ROOM_SETPOINT_WRITE_BASE + 1, 22) in hub.writes
+
+    data = coord.ProxonData(rooms={0: coord.RoomData(index=0), 1: coord.RoomData(index=1, setpoint=22.0)},
+                            function_block={"fan_stage_read": 1}, ptc_enable_mask=0b01)
+    c._check_writes(data)  # setpoint and PTC confirmed, the fan stage is still on its old value
+    assert c.write_tracker.pending() == [coord.REG_FAN_STAGE_WRITE]
+    assert c.last_not_applied is None
+
+    c.write_tracker._writes[coord.REG_FAN_STAGE_WRITE]["at"] -= 60  # deadline passed
+    c._check_writes(data)
+    assert c.write_tracker.pending() == []
+    assert "Register %d" % coord.REG_FAN_STAGE_WRITE in c.last_not_applied
+    assert c.write_tracker.not_applied_count == 1
+
+
+def test_write_check_gives_no_verdict_while_the_block_is_unreadable(coord):
+    c, hub = make(coord)
+    c.data.rooms = {0: coord.RoomData(index=0)}
+    run(c.async_write_register(coord.REG_OPERATING_MODE_WRITE, 2))
+    c.write_tracker._writes[coord.REG_OPERATING_MODE_WRITE]["at"] -= 60
+    c._check_writes(coord.ProxonData(rooms={}, failed={coord.BLOCK_FUNCTION}))  # function block not read
+    assert c.write_tracker.pending() == [coord.REG_OPERATING_MODE_WRITE]

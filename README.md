@@ -88,7 +88,7 @@ Es werden zwei Arten von Geräten angelegt: ein **zentrales Gerät** (standardm�
 - **`climate.<raum>`** — aktuelle Temperatur (Register `150+n`), Solltemperatur (gelesen von `180+n`, geschrieben auf das separate, nur schreibbare Register `200+n`). Der einstellbare Bereich folgt dem Gerät: Raum 1 (Wohnen) direkt 18–30 °C, alle anderen Räume ihre Mittentemperatur ±3 °C (ganze Grad, innerhalb 18–30 °C; fehlt die Mittentemperatur, gilt 18–30 °C). Die Betriebsart zeigt nur das PTC-Element des Raums: „Heizen“, solange es freigegeben ist (Register 302), sonst „Aus“; das Umschalten setzt die PTC-Freigabe (Register 301). Die Aktion zeigt „Heizt“, solange das PTC-Element läuft (Register 300), sonst „Leerlauf“ bzw. „Aus“.
 - **`binary_sensor.*`** — PTC-Element aktiv (aktueller **Zustand**, Register 300).
 - **`switch.*`** — PTC-Element freigegeben (**Freigabe**, Register 301/302).
-- **`sensor.*`** — Raumtemperatur (Ist-Temperatur, wie `current_temperature` des Thermostats, aber als Sensor mit Langzeitstatistik) Solltemperatur (bestätigt, Diagnose) und Mittentemperatur (Raum 2–N, Rückmeldung vom Bedienteil).
+- **`sensor.*`** — Raumtemperatur (Ist-Temperatur, wie `current_temperature` des Thermostats, aber als Sensor mit Langzeitstatistik) Solltemperatur (bestätigt, Diagnose; mit den Attributen `last_sent`, `last_sent_at` und `write_status` = `pending`/`confirmed`/`not_applied`) und Mittentemperatur (Raum 2–N, Rückmeldung vom Bedienteil).
 - Optional auch ein oder mehrere **CO₂-/Feuchtesensoren**, wenn ihnen im Options-Flow (Namen-Schritt) dieser Raum zugewiesen wurde.
 
 Eine vollständige Liste aller Entities mit Beschreibung steht weiter unten unter [Alle Entities im Detail](#alle-entities-im-detail).
@@ -147,7 +147,7 @@ Die Tabellen unten gehen vom Standard-Gerätenamen **"Proxon FWT"** (→ `proxon
 | Betriebsstunden Umluftfilter | `sensor.proxon_fwt_betriebsstunden_umluftfilter` | Nur vorhanden, wenn in den Optionen ein Umluftfilter angegeben ist |
 | Wärmepumpe Laufzeit heute / gesamt | `sensor.proxon_fwt_warmepumpe_laufzeit_heute`, `…_gesamt` | Laufzeit der Wärmepumpe in Stunden, von der Integration gezählt (Gesamtwert mit Langzeitstatistik) |
 | Wärmepumpe Starts heute / gesamt | `sensor.proxon_fwt_warmepumpe_starts_heute`, `…_gesamt` | Anzahl der Verdichterstarts |
-| Letzter Schreibfehler | `sensor.proxon_fwt_letzter_schreibfehler` | Diagnose: zuletzt fehlgeschlagener Schreibbefehl (Register, Wert, Grund) |
+| Letzter Schreibfehler | `sensor.proxon_fwt_letzter_schreibfehler` | Diagnose: zuletzt fehlgeschlagener Schreibbefehl (Register, Wert, Grund). Attribute `last_not_applied`, `last_not_applied_at`, `not_applied_count`: Schreibvorgänge, die das Gerät angenommen, aber nicht innerhalb von 30 s bestätigt hat |
 | *(benutzerdefinierter Name)* | `sensor.proxon_fwt_<name>` | CO₂-Sensor(en) in ppm, sofern konfiguriert und keinem Raum zugeordnet (Register 350+n) |
 | *(benutzerdefinierter Name)* | `sensor.proxon_fwt_<name>` | Feuchtesensor(en) in % rel. Feuchte, sofern konfiguriert und keinem Raum zugeordnet (Register 360+n) |
 

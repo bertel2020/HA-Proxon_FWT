@@ -24,7 +24,6 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from . import ProxonConfigEntry
 from .const import (
     CONF_ROOM_NAMES,
-    REG_ROOM_SETPOINT_WRITE_BASE,
     ROOM_SETPOINT_MAX,
     ROOM_SETPOINT_MID_SPAN,
     ROOM_SETPOINT_MIN,
@@ -138,8 +137,7 @@ class ProxonRoomClimate(ProxonRoomEntity, ClimateEntity):
         temperature = kwargs.get(ATTR_TEMPERATURE)
         if temperature is None:
             return
-        register = REG_ROOM_SETPOINT_WRITE_BASE + self._room_index
-        await self.coordinator.async_write_register(register, round(temperature))
+        await self.coordinator.async_set_room_setpoint(self._room_index, temperature)
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Enable (HEAT) or disable (OFF) the room's PTC element."""

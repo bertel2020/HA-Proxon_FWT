@@ -52,6 +52,7 @@ from .const import (
     REG_RF_BASE,
     REG_ROOM_MID_TEMP_BASE,
     REG_ROOM_SETPOINT_READ_BASE,
+    REG_ROOM_SETPOINT_WRITE_BASE,
     REG_ROOM_TEMP_BASE,
     REG_TEMP_COMPRESSOR,
     REG_TEMP_CONDENSER,
@@ -67,7 +68,7 @@ from .const import (
     REFRESH_COOLDOWN,
     WRITE_SETTLE_DELAY,
 )
-from .logic import Boost, FanStageTracker, RunStats, boost_kind
+from .logic import Boost, FanStageTracker, RunStats, WriteTracker, boost_kind
 from .hub import ProxonModbusError, ProxonModbusHub, bit, decode_int16, set_bit
 
 _LOGGER = logging.getLogger(__name__)
@@ -87,6 +88,16 @@ BLOCK_MESSAGES = "messages"
 BLOCK_CO2 = "co2"
 BLOCK_HUMIDITY = "humidity"
 
+
+MAX_ROOMS = 16
+# Write register -> key of the register in the function block that reports the value the unit actually uses.
+WRITE_READBACK = {
+    REG_COOLING_ENABLE_WRITE: "cooling_enable_read",
+    REG_FAN_STAGE_WRITE: "fan_stage_read",
+    REG_FAN_AUTO_WRITE: "fan_auto_read",
+    REG_FAN_INTENSIVE_WRITE: "fan_intensive_read",
+    REG_OPERATING_MODE_WRITE: "operating_mode_read",
+}
 
 STATS_SAVE_INTERVAL = 300  # seconds between statistics writes
 BOOST_END_MAX_RETRIES = 5  # one retry per minute, then the boost is given up
@@ -162,6 +173,10 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
         self.fan_stage_restored_at: datetime | None = None
         # Persisted heat pump / filter statistics.
         self.stats = RunStats()
+        # Written values, checked against what the unit reports back (see WriteTracker).
+        self.write_tracker = WriteTracker()
+        self.last_not_applied: str | None = None
+        self.last_not_applied_at: datetime | None = None
         self._store: Store = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}.stats")
         # Boost ventilation (Stoßlüften) with automatic return to the previous state.
         self.boost = Boost()
@@ -193,6 +208,7 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
         if BLOCK_PTC not in data.failed:
             self._ptc_pending = None  # fresh data from the unit replaces any locally assumed mask
         self._set_issue("connection_lost", False)
+        self._check_writes(data)
         # The unit's fan stage is deliberately changed during a boost, including the refresh
         # that follows the very write which starts it (boost.active is only set afterwards).
         if not self.boost.active and not self._boost_lock.locked():
@@ -435,6 +451,32 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
             await self.async_write_register(REG_PTC_ENABLE_WRITE, new_mask)
             self._ptc_pending = new_mask
 
+    async def async_set_room_setpoint(self, room_index: int, temperature: float) -> None:
+        await self.async_write_register(REG_ROOM_SETPOINT_WRITE_BASE + room_index, round(temperature))
+
+    def _readback(self, data: ProxonData, address: int) -> float | None:
+        """The value the unit reports for a write register (None: unknown, e.g. its block could not be read)."""
+        room_index = address - REG_ROOM_SETPOINT_WRITE_BASE
+        if 0 <= room_index < MAX_ROOMS:
+            room = data.rooms.get(room_index)
+            return room.setpoint if room else None
+        if address == REG_PTC_ENABLE_WRITE:
+            return data.ptc_enable_mask
+        key = WRITE_READBACK.get(address)
+        return data.function_block.get(key) if key else None
+
+    def _check_writes(self, data: ProxonData) -> None:
+        now = time.monotonic()
+        for address in self.write_tracker.pending():
+            if self.write_tracker.check(address, self._readback(data, address), now) != "not_applied":
+                continue
+            last = self.write_tracker.state(address)
+            self.last_not_applied = (
+                f"Register {address}: sent {last['sent']}, the unit still reports {last['confirmed']}"
+            )
+            self.last_not_applied_at = dt_util.utcnow()
+            _LOGGER.warning("%s (after %d s)", self.last_not_applied, WriteTracker.TIMEOUT)
+
     async def async_write_register(self, address: int, value: int) -> None:
         """Write a "Soll" register, then refresh once the device has had a
         moment to apply it and reflect the change in its "Ist" register."""
@@ -451,6 +493,7 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
             raise
         self._write_fail_streak = 0
         self._set_issue("write_failing", False)
+        self.write_tracker.sent(address, value, time.monotonic(), dt_util.utcnow())
         await asyncio.sleep(WRITE_SETTLE_DELAY)
         await self.async_request_refresh()
 

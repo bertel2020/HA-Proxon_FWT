@@ -67,6 +67,57 @@ class FanStageTracker:
         return None
 
 
+class WriteTracker:
+    """Check whether a value written to the unit was applied.
+
+    Every "Soll" register has a matching "Ist" register (the room setpoint
+    200+n is confirmed by 180+n, 305..313 by 306..314, PTC 301 by 302). The
+    value sent is remembered per write register and compared with what the
+    unit reports on the following polls. The write counts as applied once the
+    two match, and as not applied when they still differ after `TIMEOUT`
+    seconds (the unit may have rejected, clamped or overridden it). Only the
+    last write to a register counts, and a change made at the unit after the
+    confirmation is not looked at.
+    """
+
+    TIMEOUT = 30  # seconds the unit gets to confirm a written value
+    TOLERANCE = 0.5  # the write registers take whole numbers
+
+    def __init__(self) -> None:
+        self._writes: dict[int, dict[str, Any]] = {}
+        self.not_applied_count = 0
+
+    def sent(self, key: int, value: float, now: float, stamp: Any = None) -> None:
+        """Remember a value just written to register `key` (`now`: monotonic seconds, `stamp`: shown to the user)."""
+        self._writes[key] = {"sent": value, "at": now, "stamp": stamp, "status": "pending", "confirmed": None}
+
+    def pending(self) -> list[int]:
+        """Write registers still waiting for a verdict."""
+        return [key for key, entry in self._writes.items() if entry["status"] == "pending"]
+
+    def check(self, key: int, confirmed: float | None, now: float) -> str | None:
+        """Compare with the value the unit reports; return "confirmed" or "not_applied" when the verdict is new."""
+        entry = self._writes.get(key)
+        if entry is None or entry["status"] != "pending" or confirmed is None:
+            return None
+        entry["confirmed"] = confirmed
+        if abs(confirmed - entry["sent"]) < self.TOLERANCE:
+            entry["status"] = "confirmed"
+        elif now - entry["at"] >= self.TIMEOUT:
+            entry["status"] = "not_applied"
+            self.not_applied_count += 1
+        else:
+            return None
+        return entry["status"]
+
+    def state(self, key: int) -> dict[str, Any] | None:
+        """Last write to `key`: sent value, time, status and the value last seen from the unit."""
+        entry = self._writes.get(key)
+        if entry is None:
+            return None
+        return {"sent": entry["sent"], "stamp": entry["stamp"], "status": entry["status"], "confirmed": entry["confirmed"]}
+
+
 def boost_kind(capabilities: dict[str, bool], function_block: dict[str, Any]) -> str | None:
     """How a boost (Stoßlüften) can be done right now: "intensive", "stage" (stage 4) or None."""
     if capabilities.get("intensive_ventilation_selectable"):

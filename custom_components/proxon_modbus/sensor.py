@@ -4,6 +4,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -37,6 +38,7 @@ from .const import (
     CONF_ROOM_NAMES,
     OPERATING_MODE_READ_ONLY_STATES,
     OPERATING_MODE_WRITE_OPTIONS,
+    REG_ROOM_SETPOINT_WRITE_BASE,
 )
 from .coordinator import (
     BLOCK_CO2,
@@ -444,6 +446,9 @@ class ProxonLastWriteErrorSensor(ProxonCentralEntity, SensorEntity):
         return {
             "occurred_at": self.coordinator.last_write_error_at,
             "error_count": self.coordinator.write_error_count,
+            "last_not_applied": self.coordinator.last_not_applied,
+            "last_not_applied_at": self.coordinator.last_not_applied_at,
+            "not_applied_count": self.coordinator.write_tracker.not_applied_count,
         }
 
 
@@ -495,6 +500,14 @@ class ProxonRoomSetpointSensor(ProxonRoomEntity, SensorEntity):
         room_name: str,
     ) -> None:
         super().__init__(coordinator, entry_id, room_index, room_name, f"room_{room_index}_setpoint")
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """The last setpoint written from Home Assistant and whether the unit applied it."""
+        last = self.coordinator.write_tracker.state(REG_ROOM_SETPOINT_WRITE_BASE + self._room_index)
+        if last is None:
+            return None
+        return {"last_sent": last["sent"], "last_sent_at": last["stamp"], "write_status": last["status"]}
 
     @property
     def native_value(self) -> float | None:

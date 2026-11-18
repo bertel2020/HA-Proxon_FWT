@@ -7,6 +7,7 @@
 **Neu**
 - **Raumtemperatur als Sensor:** Jeder Raum bekommt einen Sensor `sensor.<raum>_raumtemperatur` mit der Ist-Temperatur (Register 150+n, dieselbe wie am Thermostat), mit Langzeitstatistik. Auch Raum 1, der bisher keinen Temperatur-Sensor hatte.
 - **Solltemperatur als Diagnose-Sensor:** Je Raum ein Sensor `sensor.<raum>_solltemperatur_bestatigt` mit dem vom Gerät bestätigten Sollwert (Register 180+n), mit Langzeitstatistik.
+- **Schreibkontrolle:** Jeder geschriebene Wert (Solltemperatur, PTC-Freigabe, Kühlen, Lüfterstufe, Lüfterautomatik, Intensivlüftung, Betriebsart) wird gemerkt und mit dem Wert verglichen, den das Gerät zurückmeldet. Bestätigt es ihn nicht innerhalb von 30 Sekunden, steht eine Warnung im Log, und der Sensor „Letzter Schreibfehler“ zeigt dazu die Attribute `last_not_applied`, `last_not_applied_at` und `not_applied_count`. Der Solltemperatur-Sensor jedes Raums zeigt `last_sent`, `last_sent_at` und `write_status` (`pending`, `confirmed`, `not_applied`). Das Gerät kann einen Wert auch bewusst abweichend setzen (zum Beispiel eine Lüfterstufe bei aktiver Automatik), dann erscheint ebenfalls die Warnung.
 
 ## 2.3.0 – 2026-11-17
 
