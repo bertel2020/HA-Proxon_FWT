@@ -160,7 +160,7 @@ export class TwwpSectionsMethods {
     });
     if (data === undefined) return this._skel(84);
     if (!data || data.pts.length < 2) return `<div class="note">${this._t("r_noh")}</div>`;
-    const W = 300, H = 70, vals = data.pts.map((p) => p[1]).concat(tp === null ? [] : [tp]);
+    const W = Math.max(320, Math.min(1200, (this.clientWidth || 900) - 64)), H = 110, vals = data.pts.map((p) => p[1]).concat(tp === null ? [] : [tp]);
     const lo = Math.min(...vals) - 1, hi = Math.max(...vals) + 1, y = (v) => H - ((v - lo) / (hi - lo)) * H;
     const x = (s) => Math.max(0, Math.min(W, ((s - data.t0) / (data.t1 - data.t0)) * W));
     const bands = data.ph.map(([s, st], k) => {
@@ -171,11 +171,11 @@ export class TwwpSectionsMethods {
     const last = data.pts[data.pts.length - 1], lang = this._hass.language, sw = W / data.pts.length;
     const hits = data.pts.map((p) => `<rect x="${(x(p[0]) - sw / 2).toFixed(1)}" y="0" width="${sw.toFixed(1)}" height="${H}" fill="transparent" data-tip="${new Date(p[0] * 1000).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })}|${this._fmt(p[1])} °C"/>`).join("");
     const legend = Object.entries(PHASE_COLOR).filter(([k]) => data.ph.some((p) => p[1] === k)).map(([k, col]) => `<span style="color:${col}">${this._t(`tw_p_${k}`)}</span>`).join("");
-    return `<div class="chw"><svg viewBox="0 0 ${W} ${H + 14}" style="width:100%;height:auto" role="img" aria-label="${this._t("tw_hist")}">${bands}
-      ${tp === null ? "" : `<line x1="0" x2="${W}" y1="${y(tp).toFixed(1)}" y2="${y(tp).toFixed(1)}" stroke="var(--secondary-text-color)" stroke-dasharray="4 4" opacity=".6"/><text x="${W}" y="${Math.max(10, y(tp) - 4).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--secondary-text-color)">${this._t("tw_pv_line", this._fmt(tp, 0))}</text>`}
-      <polyline fill="none" stroke="${BLUE}" stroke-width="2.2" stroke-linejoin="round" points="${line}"/>
-      <circle cx="${x(last[0]).toFixed(1)}" cy="${y(last[1]).toFixed(1)}" r="4" fill="${BLUE}"/>
-      <text x="0" y="${H + 12}" font-size="10" fill="var(--secondary-text-color)">${this._t("r_ago")}</text><text x="${W}" y="${H + 12}" text-anchor="end" font-size="10" fill="var(--secondary-text-color)">${this._t("r_now")}</text>${hits}</svg><div class="tip" style="display:none"></div></div>
+    return `<div class="chw"><svg viewBox="0 0 ${W} ${H + 18}" style="width:100%;height:auto" role="img" aria-label="${this._t("tw_hist")}">${bands}
+      ${tp === null ? "" : `<line x1="0" x2="${W}" y1="${y(tp).toFixed(1)}" y2="${y(tp).toFixed(1)}" stroke="var(--secondary-text-color)" stroke-dasharray="4 4" opacity=".6"/><text x="${W}" y="${Math.max(10, y(tp) - 4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--secondary-text-color)">${this._t("tw_pv_line", this._fmt(tp, 0))}</text>`}
+      <polyline fill="none" stroke="${BLUE}" stroke-width="2.4" stroke-linejoin="round" points="${line}"/>
+      <circle cx="${x(last[0]).toFixed(1)}" cy="${y(last[1]).toFixed(1)}" r="4.5" fill="${BLUE}"/>
+      <text x="0" y="${H + 15}" font-size="11" fill="var(--secondary-text-color)">${this._t("r_ago")}</text><text x="${W}" y="${H + 15}" text-anchor="end" font-size="11" fill="var(--secondary-text-color)">${this._t("r_now")}</text>${hits}</svg><div class="tip" style="display:none"></div></div>
       <div class="twleg">${legend}</div>`;
   }
 
