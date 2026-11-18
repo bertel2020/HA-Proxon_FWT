@@ -203,3 +203,18 @@ def test_hysteresis_is_saved_and_restored(twwp_controller):
     store.data = {"hysteresis": {"low": 99}}  # outside the range: ignored
     asyncio.run(third.async_load())
     assert third.state.hysteresis["low"] == 3.0
+
+
+def test_targets_are_kept_inside_their_range(twwp_controller, twwp_pure):
+    lo, hi = twwp_pure.TARGET_MIN_C, twwp_pure.TARGET_MAX_C
+    assert hi == 65.0
+    ctl, _ = make(twwp_controller)
+    asyncio.run(ctl.async_set_target("pv", 99))
+    assert ctl.state.targets["pv"] == hi
+    asyncio.run(ctl.async_set_target("min", 5))
+    assert ctl.state.targets["min"] == lo
+    # values saved while the range was wider (up to 70) are brought back
+    store = FakeStore({"targets": {"normal": 70, "pv": 66.5, "min": 20}})
+    other, _ = make(twwp_controller, store=store)
+    asyncio.run(other.async_load())
+    assert other.state.targets == {"normal": hi, "pv": hi, "min": lo}

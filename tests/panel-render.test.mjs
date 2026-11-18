@@ -126,9 +126,9 @@ const twEnt = (id, extra = {}, state = "1", attrs = {}) => {
 };
 twDevices.tw1 = { id: "tw1", name: "Warmwasser <TWWP>", via_device_id: "central", identifiers: [["proxon_modbus", "e1_twwp_SUB1"]] };
 twEnt("water_heater.tw", {}, "pv", { current_temperature: 54.2, temperature: 53 });
-twEnt("number.tw_normal", { translation_key: "twwp_target_normal" }, "53", { min: 30, max: 70, step: 1 });
-twEnt("number.tw_pv", { translation_key: "twwp_target_pv" }, "60", { min: 30, max: 70, step: 1 });
-twEnt("number.tw_min", { translation_key: "twwp_target_min" }, "42", { min: 30, max: 70, step: 1 });
+twEnt("number.tw_normal", { translation_key: "twwp_target_normal" }, "53", { min: 30, max: 65, step: 1 });
+twEnt("number.tw_pv", { translation_key: "twwp_target_pv" }, "60", { min: 30, max: 65, step: 1 });
+twEnt("number.tw_min", { translation_key: "twwp_target_min" }, "42", { min: 30, max: 65, step: 1 });
 twEnt("number.tw_hlow", { translation_key: "twwp_hyst_low" }, "3", { min: 1, max: 10, step: 0.5 });
 twEnt("number.tw_hhigh", { translation_key: "twwp_hyst_high" }, "1", { min: 0, max: 5, step: 0.5 });
 twEnt("sensor.tw_program", { translation_key: "twwp_program" }, "pv");

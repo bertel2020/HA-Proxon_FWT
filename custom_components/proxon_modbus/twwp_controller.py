@@ -27,6 +27,8 @@ from .twwp import (
     PROGRAMS,
     PV_NONE,
     PV_STATES,
+    TARGET_MAX_C,
+    TARGET_MIN_C,
     TwwpDecision,
     build_input,
     decide,
@@ -119,7 +121,7 @@ class TwwpController:
             for key in self.state.targets:
                 value = saved.get(key)
                 if isinstance(value, (int, float)) and not isinstance(value, bool):
-                    self.state.targets[key] = float(value)
+                    self.state.targets[key] = min(TARGET_MAX_C, max(TARGET_MIN_C, float(value)))
         saved_h = data.get("hysteresis")
         if isinstance(saved_h, dict):
             for key, (low, high) in HYST_RANGE.items():
@@ -142,7 +144,7 @@ class TwwpController:
         """Change a target temperature and decide again."""
         if key not in self.state.targets:
             raise KeyError(key)
-        self.state.targets[key] = float(value)
+        self.state.targets[key] = min(TARGET_MAX_C, max(TARGET_MIN_C, float(value)))
         await self.async_run()
 
     async def async_set_hysteresis(self, key: str, value: float) -> None:
