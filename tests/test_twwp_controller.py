@@ -218,3 +218,74 @@ def test_targets_are_kept_inside_their_range(twwp_controller, twwp_pure):
     other, _ = make(twwp_controller, store=store)
     asyncio.run(other.async_load())
     assert other.state.targets == {"normal": hi, "pv": hi, "min": lo}
+
+
+def make_timed(twwp_controller, config, states=None, store=None):
+    home = Home(states or STATES)
+    now = [1000.0]
+    ctl = twwp_controller.TwwpController(
+        {**CONFIG, **config}, home.read, home.call, store or FakeStore(), clock=lambda: now[0]
+    )
+    return ctl, home, now
+
+
+def test_minimum_run_time_holds_the_switch_off_decision(twwp_controller):
+    ctl, home, now = make_timed(twwp_controller, {"min_on_minutes": 10})
+    asyncio.run(ctl.async_set_control(True))  # PV: both switches on at t=1000
+    assert home.calls == [("switch.freigabe", "on"), ("switch.freigabe_pv", "on")]
+    home.states["sensor.pv"] = home.states["sensor.pv_avg"] = "0"  # cloud: PV ends -> normal program wants to go on
+    home.states["sensor.wasser"] = "62"  # PV target reached: wants everything off
+    home.calls.clear()
+    now[0] = 1000 + 599
+    asyncio.run(ctl.async_run())
+    assert home.calls == [] and ctl.state.reason == "locked" and ctl.state.program == "pv"
+    now[0] = 1000 + 601
+    asyncio.run(ctl.async_run())
+    assert ("switch.freigabe", "off") in home.calls and ctl.state.reason == "pv_target_reached"
+
+
+def test_minimum_pause_holds_the_switch_on_decision(twwp_controller):
+    ctl, home, now = make_timed(twwp_controller, {"min_off_minutes": 5}, states={**STATES, "switch.freigabe": "on", "sensor.wasser": "62"})
+    asyncio.run(ctl.async_set_control(True))  # first sighting: no known change, target reached -> off at t=1000
+    assert home.calls == [("switch.freigabe", "off")]
+    home.states["sensor.wasser"] = "30"  # now it wants to heat again
+    home.calls.clear()
+    now[0] = 1000 + 200
+    asyncio.run(ctl.async_run())
+    assert home.calls == [] and ctl.state.reason == "locked"
+    now[0] = 1000 + 301
+    asyncio.run(ctl.async_run())
+    assert ("switch.freigabe", "on") in home.calls
+
+
+def test_no_lock_without_minutes_and_for_sensor_failure(twwp_controller):
+    ctl, home, now = make_timed(twwp_controller, {})
+    asyncio.run(ctl.async_set_control(True))
+    home.states["sensor.wasser"] = "62"
+    asyncio.run(ctl.async_run())
+    assert ctl.state.reason == "pv_target_reached"  # nothing held back
+    ctl2, home2, _ = make_timed(twwp_controller, {"min_on_minutes": 60, "min_off_minutes": 60})
+    asyncio.run(ctl2.async_set_control(True))
+    home2.calls.clear()
+    home2.states["sensor.wasser"] = "unavailable"
+    asyncio.run(ctl2.async_run())
+    assert ctl2.state.reason == "sensor_unavailable" and ("switch.freigabe", "off") in home2.calls  # fail-safe is never held
+
+
+def test_foreign_switch_change_starts_the_lock(twwp_controller):
+    ctl, home, now = make_timed(twwp_controller, {"min_on_minutes": 10}, states={**STATES, "sensor.pv": "0", "sensor.pv_avg": "0", "sensor.wasser": "62"})
+    asyncio.run(ctl.async_run())  # observes "off" first
+    now[0] = 2000
+    home.states["switch.freigabe"] = "on"  # somebody else switched it on
+    now[0] = 2060
+    asyncio.run(ctl.async_run())
+    assert ctl.state.reason == "locked" and ctl.state.switch_since == 2060
+
+
+def test_switch_state_is_saved_and_restored(twwp_controller):
+    store = FakeStore()
+    ctl, home, now = make_timed(twwp_controller, {"min_on_minutes": 10}, store=store)
+    asyncio.run(ctl.async_set_control(True))
+    ctl2, _, _ = make_timed(twwp_controller, {"min_on_minutes": 10}, store=FakeStore(store.saved[-1]))
+    asyncio.run(ctl2.async_load())
+    assert ctl2.state.switch_state == "on" and ctl2.state.switch_since == 1000.0

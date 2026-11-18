@@ -332,6 +332,7 @@
         "pv_end": "PV-Überschuss beendet",
         "normal": "Unter dem Soll: heizen",
         "target_reached": "Soll erreicht",
+        "locked": "Gesperrt: Mindestlauf- oder Pausenzeit",
         "none": "Nichts zu tun"
       }
     },
@@ -485,7 +486,9 @@
             "frost_below": "Frostgrenze",
             "pv_min_outer": "Mindesttemperatur für PV-Betrieb",
             "night_below": "Nacht unterhalb",
-            "day_above": "Tag oberhalb"
+            "day_above": "Tag oberhalb",
+            "min_on_minutes": "Mindestlaufzeit",
+            "min_off_minutes": "Mindestpause"
           },
           "data_description": {
             "enable_switch": "Freigabe für den Normalbetrieb.",
@@ -495,6 +498,8 @@
             "brightness": "Unterscheidet Tag und Nacht. Ohne Sensor ist immer Tag, und es gibt keine Nachtabschaltung.",
             "night_below": "Helligkeitswert, unter dem es Nacht ist.",
             "day_above": "Helligkeitswert, über dem es Tag ist.",
+            "min_on_minutes": "Nach einem Schalten läuft die Wärmepumpe mindestens so viele Minuten, bevor sie ausgeschaltet wird. 0 = keine Begrenzung.",
+            "min_off_minutes": "Nach einem Schalten bleibt die Wärmepumpe mindestens so viele Minuten aus, bevor sie wieder eingeschaltet wird. 0 = keine Begrenzung.",
             "power_entity": "Wird nur im Seitenpanel angezeigt.",
             "energy_entity": "Wird nur im Seitenpanel angezeigt."
           }
@@ -517,7 +522,9 @@
             "frost_below": "Frostgrenze",
             "pv_min_outer": "Mindesttemperatur für PV-Betrieb",
             "night_below": "Nacht unterhalb",
-            "day_above": "Tag oberhalb"
+            "day_above": "Tag oberhalb",
+            "min_on_minutes": "Mindestlaufzeit",
+            "min_off_minutes": "Mindestpause"
           },
           "data_description": {
             "enable_switch": "Freigabe für den Normalbetrieb.",
@@ -527,6 +534,8 @@
             "brightness": "Unterscheidet Tag und Nacht. Ohne Sensor ist immer Tag, und es gibt keine Nachtabschaltung.",
             "night_below": "Helligkeitswert, unter dem es Nacht ist.",
             "day_above": "Helligkeitswert, über dem es Tag ist.",
+            "min_on_minutes": "Nach einem Schalten läuft die Wärmepumpe mindestens so viele Minuten, bevor sie ausgeschaltet wird. 0 = keine Begrenzung.",
+            "min_off_minutes": "Nach einem Schalten bleibt die Wärmepumpe mindestens so viele Minuten aus, bevor sie wieder eingeschaltet wird. 0 = keine Begrenzung.",
             "power_entity": "Wird nur im Seitenpanel angezeigt.",
             "energy_entity": "Wird nur im Seitenpanel angezeigt."
           }

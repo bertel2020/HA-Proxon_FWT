@@ -79,6 +79,10 @@ from .twwp import (
     CONF_BRIGHTNESS,
     CONF_DAY_ABOVE,
     CONF_ENERGY_ENTITY as CONF_TWWP_ENERGY,
+    CONF_MIN_OFF as CONF_TWWP_MIN_OFF,
+    CONF_MIN_ON as CONF_TWWP_MIN_ON,
+    DEFAULT_LOCK_MINUTES,
+    MAX_LOCK_MINUTES,
     CONF_POWER_ENTITY as CONF_TWWP_POWER,
     CONF_ENABLE_PV_SWITCH,
     CONF_ENABLE_SWITCH,
@@ -752,6 +756,8 @@ def _twwp_schema() -> vol.Schema:
             vol.Required(CONF_PV_MIN_OUTER, default=DEFAULT_PV_MIN_OUTER): number(-20, 30, 0.5, "°C"),
             vol.Required(CONF_NIGHT_BELOW, default=DEFAULT_NIGHT_BELOW): number(0, 100000, 1),
             vol.Required(CONF_DAY_ABOVE, default=DEFAULT_DAY_ABOVE): number(0, 100000, 1),
+            vol.Required(CONF_TWWP_MIN_ON, default=DEFAULT_LOCK_MINUTES): number(0, MAX_LOCK_MINUTES, 1, "min"),
+            vol.Required(CONF_TWWP_MIN_OFF, default=DEFAULT_LOCK_MINUTES): number(0, MAX_LOCK_MINUTES, 1, "min"),
         }
     )
 

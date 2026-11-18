@@ -332,6 +332,7 @@
         "pv_end": "PV surplus ended",
         "normal": "Below the target: heat",
         "target_reached": "Target reached",
+        "locked": "Locked: minimum run or pause time",
         "none": "Nothing to do"
       }
     },
@@ -485,7 +486,9 @@
             "frost_below": "Frost limit",
             "pv_min_outer": "Minimum temperature for PV mode",
             "night_below": "Night below",
-            "day_above": "Day above"
+            "day_above": "Day above",
+            "min_on_minutes": "Minimum run time",
+            "min_off_minutes": "Minimum pause"
           },
           "data_description": {
             "enable_switch": "Enable of the normal mode.",
@@ -495,6 +498,8 @@
             "brightness": "Tells day from night. Without a sensor it is always day and there is no night shutdown.",
             "night_below": "Brightness value below which it is night.",
             "day_above": "Brightness value above which it is day.",
+            "min_on_minutes": "After a switch change the heat pump runs at least this many minutes before it is switched off. 0 = no limit.",
+            "min_off_minutes": "After a switch change the heat pump stays off at least this many minutes before it is switched on again. 0 = no limit.",
             "power_entity": "Only shown in the side panel.",
             "energy_entity": "Only shown in the side panel."
           }
@@ -517,7 +522,9 @@
             "frost_below": "Frost limit",
             "pv_min_outer": "Minimum temperature for PV mode",
             "night_below": "Night below",
-            "day_above": "Day above"
+            "day_above": "Day above",
+            "min_on_minutes": "Minimum run time",
+            "min_off_minutes": "Minimum pause"
           },
           "data_description": {
             "enable_switch": "Enable of the normal mode.",
@@ -527,6 +534,8 @@
             "brightness": "Tells day from night. Without a sensor it is always day and there is no night shutdown.",
             "night_below": "Brightness value below which it is night.",
             "day_above": "Brightness value above which it is day.",
+            "min_on_minutes": "After a switch change the heat pump runs at least this many minutes before it is switched off. 0 = no limit.",
+            "min_off_minutes": "After a switch change the heat pump stays off at least this many minutes before it is switched on again. 0 = no limit.",
             "power_entity": "Only shown in the side panel.",
             "energy_entity": "Only shown in the side panel."
           }

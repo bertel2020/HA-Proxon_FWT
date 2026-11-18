@@ -29,6 +29,8 @@ CONF_FROST_BELOW = "frost_below"
 CONF_PV_MIN_OUTER = "pv_min_outer"
 CONF_NIGHT_BELOW = "night_below"
 CONF_DAY_ABOVE = "day_above"
+CONF_MIN_ON = "min_on_minutes"  # minimum run time after switching on (0 = none)
+CONF_MIN_OFF = "min_off_minutes"  # minimum pause after switching off (0 = none)
 CONF_CONTROL = "control"  # False: dry run, only report what would be switched
 
 TARGET_NORMAL = "normal"
@@ -65,10 +67,11 @@ REASON_PV_END = "pv_end"
 REASON_NORMAL = "normal"
 REASON_TARGET_REACHED = "target_reached"
 REASON_NONE = "none"
+REASON_LOCKED = "locked"  # a decision was held back by the minimum run or pause time
 REASONS = (
     REASON_SENSOR_UNAVAILABLE, REASON_PV, REASON_PV_TARGET_REACHED, REASON_MINIMUM_END,
     REASON_MINIMUM, REASON_NIGHT, REASON_NIGHT_END, REASON_PV_END, REASON_NORMAL,
-    REASON_TARGET_REACHED, REASON_NONE,
+    REASON_TARGET_REACHED, REASON_NONE, REASON_LOCKED,
 )
 
 HYSTERESIS_LOW = 3.0  # K below the target at which heating starts (default); also the minimum program ends this far above its target
@@ -80,6 +83,8 @@ HYST_RANGE = {HYST_LOW: (1.0, 10.0), HYST_HIGH: (0.0, 5.0)}  # K, the values the
 HYST_STEP = 0.5
 MIN_BAND = 2.0  # K: below this total band the compressor may switch on and off in short intervals
 
+MAX_LOCK_MINUTES = 120
+DEFAULT_LOCK_MINUTES = 0.0  # off: nothing is held back
 DEFAULT_PV_THRESHOLD = 1500.0  # W
 DEFAULT_FROST_BELOW = 0.0  # degC
 DEFAULT_PV_MIN_OUTER = 5.0  # degC
@@ -209,6 +214,21 @@ def decide(inp: TwwpInput) -> TwwpDecision:
         return result(REASON_TARGET_REACHED, program=PROGRAM_OFF, enable=False)
 
     return result(REASON_NONE)
+
+
+def lock_active(
+    switch_state: str | None, since: float | None, now: float, min_on: float, min_off: float
+) -> bool:
+    """True while the enable switch was changed so recently that it must not change again.
+
+    A switch that is on must run `min_on` minutes, one that is off must stay off `min_off`
+    minutes; both counted from the last change of the switch, whoever made it. Without a
+    known change time (first start) or with an unknown switch state nothing is held back.
+    """
+    if switch_state not in ("on", "off") or since is None:
+        return False
+    minutes = min_on if switch_state == "on" else min_off
+    return minutes > 0 and now - since < minutes * 60
 
 
 def parse_float(raw: str | None) -> float | None:

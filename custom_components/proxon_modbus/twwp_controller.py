@@ -20,6 +20,8 @@ from .twwp import (
     CONF_CONTROL,
     CONF_ENABLE_PV_SWITCH,
     CONF_ENABLE_SWITCH,
+    CONF_MIN_OFF,
+    CONF_MIN_ON,
     DEFAULT_HYSTERESIS,
     DEFAULT_TARGETS,
     HYST_RANGE,
@@ -27,11 +29,15 @@ from .twwp import (
     PROGRAMS,
     PV_NONE,
     PV_STATES,
+    REASON_LOCKED,
+    REASON_NONE,
+    REASON_SENSOR_UNAVAILABLE,
     TARGET_MAX_C,
     TARGET_MIN_C,
     TwwpDecision,
     build_input,
     decide,
+    lock_active,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -59,6 +65,9 @@ class TwwpState:
     last_error: str | None = None
     # Switches the decision wants in another state than they are in now: [(entity_id, "on"|"off")].
     planned: list[tuple[str, str]] = field(default_factory=list)
+    # Last seen state of the main enable switch and when it changed (for the minimum run/pause time).
+    switch_state: str | None = None
+    switch_since: float | None = None
 
 
 class TwwpController:
@@ -116,6 +125,11 @@ class TwwpController:
             self.state.program = data["program"]
         if data.get("pv_status") in PV_STATES:
             self.state.pv_status = data["pv_status"]
+        if data.get("switch_state") in ("on", "off"):
+            self.state.switch_state = data["switch_state"]
+            since = data.get("switch_since")
+            if isinstance(since, (int, float)) and not isinstance(since, bool):
+                self.state.switch_since = float(since)
         saved = data.get("targets")
         if isinstance(saved, dict):
             for key in self.state.targets:
@@ -137,6 +151,8 @@ class TwwpController:
                 "pv_status": self.state.pv_status,
                 "targets": self.state.targets,
                 "hysteresis": self.state.hysteresis,
+                "switch_state": self.state.switch_state,
+                "switch_since": self.state.switch_since,
             }
         )
 
@@ -155,12 +171,34 @@ class TwwpController:
         self.state.hysteresis[key] = min(high, max(low, float(value)))
         await self.async_run()
 
+    def _observe_switch(self) -> None:
+        """Note when the main enable switch changed, also when somebody else changed it."""
+        entity = self._config.get(CONF_ENABLE_SWITCH)
+        current = self._read(entity) if entity else None
+        if current in ("on", "off") and current != self.state.switch_state:
+            # The first sighting has no known change time: nothing is held back then.
+            self.state.switch_since = self._clock() if self.state.switch_state is not None else None
+            self.state.switch_state = current
+
+    def _locked(self) -> bool:
+        return lock_active(
+            self.state.switch_state,
+            self.state.switch_since,
+            self._clock(),
+            float(self._config.get(CONF_MIN_ON) or 0),
+            float(self._config.get(CONF_MIN_OFF) or 0),
+        )
+
     async def async_run(self) -> TwwpDecision:
         """Decide once and apply the decision (if control is on)."""
         async with self._lock:
             inp = build_input(self._read, self._config, self.state.program, self.state.targets, self.state.hysteresis)
             decision = decide(inp)
             state = self.state
+            self._observe_switch()
+            if decision.reason != REASON_SENSOR_UNAVAILABLE and decision.reason != REASON_NONE and self._locked():
+                # Held back: neither program nor switches change; the PV status is still tracked.
+                decision = TwwpDecision(REASON_LOCKED, pv_status=decision.pv_status)
             state.reason = decision.reason
             state.water = inp.water
             state.last_run = self._clock()
@@ -184,6 +222,8 @@ class TwwpController:
                 for entity, target in state.planned:
                     try:
                         await self._call(entity, target)
+                        if entity == self._config.get(CONF_ENABLE_SWITCH):
+                            state.switch_state, state.switch_since = target, self._clock()
                     except Exception as err:  # noqa: BLE001 - one failing switch must not stop the controller
                         error = f"{entity}: {err}"
                         _LOGGER.warning("TWWP: switching %s %s failed: %s", entity, target, err)
