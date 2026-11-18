@@ -96,6 +96,7 @@ from .twwp import (
     DEFAULT_PV_MIN_OUTER,
     DEFAULT_PV_THRESHOLD,
     SUBENTRY_TYPE_TWWP,
+    number_config,
 )
 from .hub import ProxonModbusError, ProxonModbusHub
 
@@ -726,11 +727,7 @@ def _twwp_schema() -> vol.Schema:
     def number(minimum: float, maximum: float, step: float, unit: str | None = None):
         return selector.NumberSelector(
             selector.NumberSelectorConfig(
-                min=minimum,
-                max=maximum,
-                step=step,
-                unit_of_measurement=unit,
-                mode=selector.NumberSelectorMode.BOX,
+                **number_config(minimum, maximum, step, unit), mode=selector.NumberSelectorMode.BOX
             )
         )
 

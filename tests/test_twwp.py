@@ -129,3 +129,10 @@ def test_entity_translations_cover_all_states(twwp):
         assert set(entity["sensor"]["twwp_program"]["state"]) == set(twwp.PROGRAMS)
         assert set(entity["sensor"]["twwp_pv_status"]["state"]) == set(twwp.PV_STATES)
         assert set(entity["sensor"]["twwp_reason"]["state"]) == set(twwp.REASONS)
+
+
+def test_number_selector_config_has_no_empty_values(twwp):
+    # unit_of_measurement=None made the TWWP form fail to open ("400: Bad Request")
+    assert twwp.number_config(0, 100000, 1) == {"min": 0, "max": 100000, "step": 1}
+    assert twwp.number_config(0, 20000, 100, "W") == {"min": 0, "max": 20000, "step": 100, "unit_of_measurement": "W"}
+    assert None not in twwp.number_config(-20, 20, 0.5, None).values()

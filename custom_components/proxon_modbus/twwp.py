@@ -245,3 +245,15 @@ def build_input(
         night_below=config.get(CONF_NIGHT_BELOW, DEFAULT_NIGHT_BELOW),
         day_above=config.get(CONF_DAY_ABOVE, DEFAULT_DAY_ABOVE),
     )
+
+
+def number_config(minimum: float, maximum: float, step: float, unit: str | None = None) -> dict[str, Any]:
+    """Options of a number selector without empty values.
+
+    Home Assistant rejects `unit_of_measurement=None`: the form then fails to
+    open with only "400: Bad Request" in the browser and nothing in the log.
+    """
+    config: dict[str, Any] = {"min": minimum, "max": maximum, "step": step}
+    if unit:
+        config["unit_of_measurement"] = unit
+    return config

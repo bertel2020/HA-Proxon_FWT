@@ -79,7 +79,7 @@ class TwwpWaterHeater(TwwpEntity, WaterHeaterEntity):
 
     _attr_name = None
     _attr_translation_key = "twwp"
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_supported_features = WaterHeaterEntityFeature.TARGET_TEMPERATURE
     _attr_operation_list = list(PROGRAMS)
     _attr_min_temp = MIN_TARGET
@@ -90,11 +90,11 @@ class TwwpWaterHeater(TwwpEntity, WaterHeaterEntity):
         super().__init__(entry, subentry, controller, "water_heater")
 
     @property
-    def current_temperature(self) -> float | None:
+    def native_current_temperature(self) -> float | None:
         return self._controller.state.water
 
     @property
-    def target_temperature(self) -> float:
+    def native_target_temperature(self) -> float:
         return self._controller.state.targets[TARGET_NORMAL]
 
     @property
