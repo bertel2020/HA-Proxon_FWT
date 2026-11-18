@@ -321,3 +321,9 @@ test("without any history the hot water card says so", async () => {
   assert.ok(html.includes("Keine Verlaufsdaten.") && !html.includes('class="ch"'), "note instead of a chart");
   check(html);
 });
+
+test("an icon inside a header chip stays small, so all chips are equally high", async () => {
+  const fs = await import("node:fs");
+  const css = fs.readFileSync(new URL("lib/styles.js", WWW), "utf8");
+  assert.match(css, /\.hchip ha-icon \{ --mdc-icon-size: 16px;/);
+});

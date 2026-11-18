@@ -159,6 +159,7 @@ svg .sh { font-size: 13px; font-weight: 500; }
   border: 1px solid var(--divider-color); color: var(--primary-text-color); }
 .hchip.s { font-weight: 500; background: color-mix(in srgb, var(--dc) 14%, transparent); border-color: color-mix(in srgb, var(--dc) 38%, transparent); }
 .hchip.m { font-weight: 500; background: color-mix(in srgb, var(--primary-text-color) 7%, transparent); border-color: color-mix(in srgb, var(--primary-text-color) 18%, transparent); }
+.hchip ha-icon { --mdc-icon-size: 16px; flex: none; } /* the default 24px icon made the program chip taller than its neighbours */
 .hchip small { font-size: 12px; font-weight: 400; color: var(--secondary-text-color); }
 .hchip small::before { content: "·"; margin-right: 7px; opacity: .6; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dc, #8a8f98); flex: none; }
