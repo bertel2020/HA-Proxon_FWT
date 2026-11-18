@@ -369,3 +369,21 @@ test("the target scale shows zones, marks, pointer and the switching band; the d
   const none = await render(nodata, () => { nodata._tab = "warm"; });
   assert.ok(none.includes("Heute noch keine Programmdaten.") && none.includes("jetzt 54,2°"));
 });
+
+test("one Operation card: switch, PV status, enables and the last decision; no separate program bar or decision card", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = twHass;
+  const html = await render(panel, () => { panel._tab = "warm"; });
+  check(html);
+  const op = html.slice(html.indexOf("Regelung aktiv"));
+  assert.ok(op.includes("Probelauf: Entscheidungen werden nur angezeigt") && op.includes('data-act="twctl"'), "dry-run switch");
+  assert.ok(op.includes("Normal: an · PV: aus"), "both enables in one row");
+  assert.ok(op.includes("Letzte Entscheidung") && op.includes("PV-Überschuss: Start"), "last decision");
+  assert.ok(op.includes("Geplante Schaltungen"), "planned switching is listed when there is one");
+  assert.ok(!html.includes('class="twprog"') && !html.includes("Das Programm wählt der Regler"), "the program bar is gone");
+  assert.equal((html.match(/<ha-card>/g) || []).length, 5, "main picture, targets, day, operation, history");
+  const idle = { ...twHass, states: { ...twStates, "sensor.tw_planned": { ...twStates["sensor.tw_planned"], state: "0" } } };
+  const p2 = new X.ProxonFwtPanel();
+  p2.hass = idle;
+  assert.ok(!(await render(p2, () => { p2._tab = "warm"; })).includes("Geplante Schaltungen"), "nothing planned: no row");
+});

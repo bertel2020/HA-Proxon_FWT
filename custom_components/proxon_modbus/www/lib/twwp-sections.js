@@ -1,6 +1,5 @@
 import { BLUE, CORAL, AMBER, GREEN, RANGE_MS, esc } from "./constants.js";
 
-const PROGRAMS = ["off", "normal", "pv", "minimum", "night"];
 const PHASE_COLOR = { pv: GREEN, normal: AMBER, minimum: CORAL, night: BLUE };
 const TARGETS = [["twwp_target_normal", "tw_t_normal"], ["twwp_target_pv", "tw_t_pv"], ["twwp_target_min", "tw_t_min"]];
 const HYSTS = [["twwp_hyst_low", "tw_h_low"], ["twwp_hyst_high", "tw_h_high"]];
@@ -271,32 +270,24 @@ export class TwwpSectionsMethods {
     return `<ha-card>${this._header("mdi:calendar-clock-outline", this._t("tw_day"))}${body}</ha-card>`;
   }
 
-  // The program is chosen by the controller, so it is only shown; the switch lets the controller take over.
+  // Operation: whether the controller switches (or only runs dry), the PV status, the enables and the last decision.
+  // The program itself is shown in the card header of the main picture and in the day strip.
   _twOperation(t) {
-    const c = this._twCfg(t), prog = this._ok(t.ents.twwp_program) ? this._state(t.ents.twwp_program).state : null;
-    const segs = PROGRAMS.map((p) => `<span class="${p === prog ? "a" : ""}" style="--mc:${PHASE_COLOR[p] || "var(--secondary-text-color)"}">${this._t(`tw_p_${p}`)}</span>`).join("");
-    const ctl = t.ents.twwp_control, ctlOn = this._on(ctl);
+    const c = this._twCfg(t), ctl = t.ents.twwp_control, ctlOn = this._on(ctl);
     const pvs = this._ok(t.ents.twwp_pv_status) ? this._state(t.ents.twwp_pv_status).state : null;
-    const en = (id, label) => (id && this._state(id) ? this._twRow(label, this._t(this._on(id) ? "tw_on" : "tw_off")) : "");
+    const r = t.ents.twwp_reason, rs = this._state(r), at = (rs && rs.attributes) || {}, ok = this._ok(r);
+    const pl = t.ents.twwp_planned, plN = this._num(pl), bad = this._on(t.ents.twwp_sensor_problem);
+    const sw = pl && this._state(pl) ? Object.entries(this._state(pl).attributes.switches || {}).map(([e, v]) => `${esc(e)} → ${this._t(v === "on" ? "tw_on" : "tw_off")}`).join("<br>") : "";
+    const known = (id) => (id && this._state(id) ? this._t(this._on(id) ? "tw_on" : "tw_off") : null);
+    const en = known(c.enable_switch) !== null ? this._twRow(this._t("tw_en"), this._t("tw_en_val", known(c.enable_switch), known(c.enable_pv_switch) || "–")) : "";
     return `<ha-card>${this._header("mdi:cog-outline", this._t("tw_op"))}
-      <div class="lbl2">${this._t("tw_program")}</div><div class="twprog" role="img" aria-label="${this._t("tw_program")}: ${prog ? this._t(`tw_p_${prog}`) : "–"}">${segs}</div>
-      <div class="note">${this._t("tw_prog_note")}</div>
-      ${ctl ? `<div class="f twctl"><div><b>${this._t("tw_ctl")}</b><small>${this._t(ctlOn ? "tw_ctl_on" : "tw_ctl_off")}</small></div>
+      ${ctl ? `<div class="f twctl first"><div><b>${this._t("tw_ctl")}</b><small>${this._t(ctlOn ? "tw_ctl_on" : "tw_ctl_off")}</small></div>
         <ha-switch data-act="twctl" data-v="${ctl}" ${ctlOn ? "checked" : ""} ${this._ok(ctl) ? "" : "disabled"}></ha-switch></div>` : ""}
       <div class="rows">${pvs ? this._twRow(this._t("tw_pvstatus"), `<span class="chip ${pvs === "pv" ? "g" : pvs === "too_cold" ? "w" : ""}">${this._t(`tw_pv_${pvs}`)}</span>`) : ""}
-        ${en(c.enable_switch, this._t("tw_en"))}${en(c.enable_pv_switch, this._t("tw_en_pv"))}</div></ha-card>`;
-  }
-
-  _twDecision(t) {
-    const r = t.ents.twwp_reason, rs = this._state(r), at = (rs && rs.attributes) || {};
-    const pl = t.ents.twwp_planned, plN = this._num(pl);
-    const prob = t.ents.twwp_sensor_problem, bad = this._on(prob);
-    const ok = this._ok(r);
-    const sw = pl && this._state(pl) ? Object.entries(this._state(pl).attributes.switches || {}).map(([e, v]) => `${esc(e)} → ${this._t(v === "on" ? "tw_on" : "tw_off")}`).join("<br>") : "";
-    return `<ha-card>${this._header("mdi:stethoscope", this._t("tw_dec"), ok ? this._twAge(at.last_run) : "")}
-      <div class="twreason">${ok ? this._t(`tw_r_${rs.state}`) : "–"}</div>
-      <div class="rows">${plN !== null ? this._twRow(this._t("tw_planned"), String(plN)) : ""}${sw ? `<div class="note">${sw}</div>` : ""}
-        ${prob ? this._twRow(this._t("tw_problem"), this._t(bad ? "tw_yes" : "tw_no"), bad ? `style="color:#db4437"` : "") : ""}
+        ${en}
+        ${ok ? `<div class="f"><span>${this._t("tw_last")}<small class="lb"> · ${this._twAge(at.last_run)}</small></span><b>${this._t(`tw_r_${rs.state}`)}</b></div>` : ""}
+        ${plN !== null && plN > 0 ? this._twRow(this._t("tw_planned"), String(plN)) : ""}${sw && plN > 0 ? `<div class="note">${sw}</div>` : ""}
+        ${bad ? this._twRow(this._t("tw_problem"), this._t("tw_yes"), `style="color:#db4437"`) : ""}
         ${at.last_error ? this._twRow(this._t("tw_err"), esc(at.last_error), `style="color:#db4437"`) : ""}</div></ha-card>`;
   }
 
@@ -386,7 +377,7 @@ export class TwwpSectionsMethods {
     return `<div class="stack">${d.twwp.map((t, i) => `${many ? `<h3 class="twname">${t.name}</h3>` : ""}
       ${this._twHero(t, i)}
       ${this._twTargets(t)}
-      <div class="twc"><div class="twtwo">${this._twDay(t)}<div class="col">${this._twOperation(t)}${this._twDecision(t)}</div></div></div>
+      <div class="twc"><div class="twtwo">${this._twDay(t)}${this._twOperation(t)}</div></div>
       ${this._twHistory(t)}`).join("")}</div>`;
   }
 }

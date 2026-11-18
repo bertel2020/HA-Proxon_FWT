@@ -373,12 +373,9 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .rows .f > span:first-child { color: var(--secondary-text-color); }
 .twstp { display: inline-flex; align-items: center; gap: 8px; }
 .twstp b { min-width: 46px; text-align: center; font-weight: 500; }
-.twprog { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; background: var(--secondary-background-color); border-radius: 12px; padding: 4px; border: 1px solid var(--pbd); }
-.twprog span { text-align: center; font-size: 12px; padding: 7px 2px; border-radius: 9px; color: var(--secondary-text-color); overflow: hidden; text-overflow: ellipsis; }
-.twprog span.a { background: var(--card-background-color); box-shadow: 0 1px 3px #0002; color: var(--mc, var(--primary-text-color)); font-weight: 600; }
-.twctl { margin-top: 10px; border-top: 1px solid var(--divider-color); }
+.twctl { border-top: 1px solid var(--divider-color); }
+.twctl.first { border-top: none; padding-top: 0; }
 .twctl small { display: block; font-size: 12px; color: var(--secondary-text-color); margin-top: 2px; }
-.twreason { font-size: 15px; font-weight: 500; margin-bottom: 8px; }
 .twleg { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; margin-top: 6px; }
 .twname { margin: 4px 0 0; font-size: 15px; font-weight: 500; }
 .banner.i { background: color-mix(in srgb, var(--primary-color) 14%, transparent); color: var(--primary-color); }
