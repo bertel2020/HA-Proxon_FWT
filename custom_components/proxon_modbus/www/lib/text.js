@@ -144,6 +144,10 @@ export const TEXT = {
     tw_last: "Letzte Entscheidung",
     tw_hyst_h: "Hysterese",
     tw_hyst_sum: "heizt {0} K unter Soll, stoppt {1} K darüber",
+    tw_pl_pv: "PV-Betrieb",
+    tw_pl_normal: "Normalbetrieb",
+    tw_pl_minimum: "Minimumbetrieb",
+    tw_pl_night: "Nachtabschaltung",
   },
   en: {
     mode: "Operating mode", air: "Air paths", fan: "Ventilation", heatpump: "Heat pump",
@@ -289,5 +293,9 @@ export const TEXT = {
     tw_last: "Last decision",
     tw_hyst_h: "Hysteresis",
     tw_hyst_sum: "heats {0} K below target, stops {1} K above",
+    tw_pl_pv: "PV mode",
+    tw_pl_normal: "Normal mode",
+    tw_pl_minimum: "Minimum mode",
+    tw_pl_night: "Night shutdown",
   },
 };

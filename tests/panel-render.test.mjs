@@ -299,7 +299,7 @@ test("the hot water history shows axes, targets, program phases and the heating 
   assert.ok(html.includes('class="ch"'), "the chart of the FWT history");
   assert.ok(html.includes("Soll PV 60°") && html.includes("Soll 53°") && html.includes("Minimum 42°"), "target lines");
   const lg = html.slice(html.indexOf('class="legend"', html.indexOf('class="ch"')));
-  assert.ok(lg.includes("PV ") && lg.includes("Normal ") && !lg.includes("Nacht"), "legend lists only phases that occurred");
+  assert.ok(lg.includes("PV-Betrieb ") && lg.includes("Normalbetrieb ") && !lg.includes("Nachtabschaltung"), "legend lists only phases that occurred");
   assert.ok(html.includes("Heizzeit: 5 h 0 min"), "heating time from the power above 100 W");
   assert.ok(html.includes('data-act="twmetric" data-v="power"') && html.includes('data-act="hrange"') && html.includes('data-act="hcmp"'), "chips, range and previous period");
   assert.ok(html.includes("Min") && html.includes("Ø"), "min / max / mean");
@@ -427,8 +427,8 @@ test("the history legend names how long each program ran in the shown range", as
   check(html);
   // twData programs: minimum 18 h to 14 h ago (4 h), normal 14 h to 9 h (5 h), pv 9 h to 5 h (4 h), off after that
   const legend = html.slice(html.indexOf('class="legend"', html.indexOf('class="ch"')));
-  assert.ok(legend.includes("PV 4 h 0 min") && legend.includes("Normal 5 h 0 min") && legend.includes("Minimum 4 h 0 min"), "time per program");
-  assert.ok(!legend.includes("Nacht"), "a program that did not run is not listed");
+  assert.ok(legend.includes("PV-Betrieb 4 h 0 min") && legend.includes("Normalbetrieb 5 h 0 min") && legend.includes("Minimumbetrieb 4 h 0 min"), "time per program, with the long names");
+  assert.ok(!legend.includes("Nachtabschaltung"), "a program that did not run is not listed");
   // the tooltip names only the program, without the duration
-  assert.deepEqual(panel._cm.phases.map((p) => p.label).sort(), ["Minimum", "Nacht", "Normal", "PV"]);
+  assert.deepEqual(panel._cm.phases.map((p) => p.label).sort(), ["Minimumbetrieb", "Nachtabschaltung", "Normalbetrieb", "PV-Betrieb"]);
 });
