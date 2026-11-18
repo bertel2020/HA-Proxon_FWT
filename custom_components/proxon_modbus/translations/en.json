@@ -360,6 +360,9 @@
       "intensive_ventilation_selectable": { "name": "Intensive ventilation selectable" },
     "twwp_sensor_problem": {
       "name": "Sensor problem"
+    },
+    "twwp_running": {
+      "name": "Running"
     }
     },
     "switch": {

@@ -83,6 +83,7 @@ HYST_RANGE = {HYST_LOW: (1.0, 10.0), HYST_HIGH: (0.0, 5.0)}  # K, the values the
 HYST_STEP = 0.5
 MIN_BAND = 2.0  # K: below this total band the compressor may switch on and off in short intervals
 
+RUNNING_ABOVE_W = 20.0  # the heat pump counts as running above this power (standby draws a few W at most)
 MAX_LOCK_MINUTES = 120
 DEFAULT_LOCK_MINUTES = 10.0  # 0 would switch the limit off
 DEFAULT_PV_THRESHOLD = 1500.0  # W
