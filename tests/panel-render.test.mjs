@@ -193,3 +193,25 @@ test("the header shows the program, and the controls call the right services", a
   assert.equal(set.length, 1, "written once");
   assert.deepEqual(set[0], ["number", "set_value", { entity_id: "number.tw_pv", value: 61 }]);
 });
+
+test("the overview shows a hot water tile in the panel, not in the dashboard card, and flags a sensor problem", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = twHass;
+  const html = await render(panel, () => { panel._tab = "overview"; });
+  const tile = html.slice(html.indexOf('data-v="warm" role="button"'));
+  assert.ok(html.includes('data-act="tab" data-v="warm" role="button"'), "tile opens the Hot water tab");
+  assert.ok(tile.includes("54,2°") && tile.includes(">PV<"), "temperature and program");
+  check(html);
+  const plain = new X.ProxonFwtPanel();
+  plain.hass = hass;
+  assert.ok(!(await render(plain, () => { plain._tab = "overview"; })).includes('data-v="warm"'), "no heat pump: no tile");
+  const card = new X.ProxonFwtCard();
+  card.setConfig({ sections: X.ALL_SECTIONS });
+  card.hass = twHass;
+  assert.ok(!(await render(card, () => {})).includes('data-v="warm"'), "the card has no tabs");
+  const bad = { ...twHass, states: { ...twStates, "binary_sensor.tw_problem": { ...twStates["binary_sensor.tw_problem"], state: "on" } } };
+  const p2 = new X.ProxonFwtPanel();
+  p2.hass = bad;
+  const down = await render(p2, () => { p2._tab = "overview"; });
+  assert.ok(down.includes("Sensorproblem") && down.includes("mdi:alert-outline"));
+});

@@ -65,6 +65,19 @@ export class TwwpSectionsMethods {
     return `<span class="hchip m">${this._icon("mdi:water-boiler")}${this._t(`tw_p_${this._state(id).state}`)}</span>`;
   }
 
+  // Overview tile (panel only): water temperature and program of each heat pump; a click opens the Hot water tab.
+  _twKpi(d) {
+    const many = d.twwp.length > 1;
+    return d.twwp.map((t) => {
+      const w = this._twWater(t), prog = this._ok(t.ents.twwp_program) ? this._state(t.ents.twwp_program).state : null;
+      const bad = this._on(t.ents.twwp_sensor_problem);
+      const col = bad ? "#db4437" : PHASE_COLOR[prog] || "var(--secondary-text-color)";
+      const sub = bad ? this._t("tw_problem") : prog ? this._t(`tw_p_${prog}`) : "";
+      return `<div class="k go" style="--kc:${col}" data-act="tab" data-v="warm" role="button" tabindex="0"><div class="ic">${this._icon(bad ? "mdi:alert-outline" : "mdi:water-boiler")}</div>
+        <div><div class="lb">${many ? t.name : this._t("tab_warm")}</div><div class="v">${w === null ? "–" : `${this._fmt(w)}°`}</div><div class="lb">${sub}</div></div></div>`;
+    }).join("");
+  }
+
   _twAge(iso) {
     const s = iso ? Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000)) : NaN;
     if (isNaN(s)) return "–";
