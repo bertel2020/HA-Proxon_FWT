@@ -273,13 +273,14 @@ The **heat recovery rate** (also available as a "Heat recovery rate" sensor with
 
 ## Blueprints
 
-Three automation blueprints are in [`blueprints/automation/proxon_modbus`](blueprints/automation/proxon_modbus):
+Four automation blueprints are in [`blueprints/automation/proxon_modbus`](blueprints/automation/proxon_modbus):
 
 | Blueprint | Import | Purpose |
 |---|---|---|
 | CO₂-controlled intensive ventilation | [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/co2_intensive_ventilation.yaml) | Switch to Comfort mode and turn on intensive ventilation when CO₂ is high; afterwards turn it off and restore the previous operating mode. The unit only offers intensive ventilation in Comfort mode. |
 | Report maintenance and faults | [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/maintenance_alert.yaml) | Notification (your choice) on filter replacement or system error. |
 | Night fan stage setback | [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/night_setback.yaml) | Lower fan stage at night, the normal one in the morning (Eco summer/winter only, fan auto off). |
+| Hot water heat pump with PV surplus | [![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/twwp_pv.yaml) | Controls the enable of a hot water heat pump (TWWP) by tank temperature, PV surplus and time of day (PV, normal, minimum mode, night shutdown); switches off if a sensor fails. Independent of Modbus: the heat pump is only driven through two enable switches. |
 
 ## Register map
 

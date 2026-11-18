@@ -275,13 +275,14 @@ Die **Rückwärmzahl** (auch als Sensor `Rückwärmzahl` mit Langzeitstatistik v
 
 ## Blueprints
 
-Drei Automatisierungs-Vorlagen liegen unter [`blueprints/automation/proxon_modbus`](blueprints/automation/proxon_modbus):
+Vier Automatisierungs-Vorlagen liegen unter [`blueprints/automation/proxon_modbus`](blueprints/automation/proxon_modbus):
 
 | Blueprint | Import | Zweck |
 |---|---|---|
 | CO₂-gesteuerte Intensivlüftung | [![Blueprint importieren](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/co2_intensive_ventilation.yaml) | Bei hohem CO₂-Wert in den Komfort-Modus wechseln und die Intensivlüftung einschalten; danach Intensivlüftung aus und vorherige Betriebsart wiederherstellen. Die Intensivlüftung gibt es am Gerät nur im Komfort-Modus. |
 | Wartung und Störung melden | [![Blueprint importieren](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/maintenance_alert.yaml) | Benachrichtigung (frei wählbar) bei Filterwechsel oder Systemfehler. |
 | Nachtabsenkung der Lüfterstufe | [![Blueprint importieren](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/night_setback.yaml) | Nachts eine niedrigere Lüfterstufe, morgens wieder die normale (nur Eco Sommer/Winter, Lüfter-Automatik aus). |
+| Trinkwasser-Wärmepumpe mit PV-Überschuss | [![Blueprint importieren](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/twwp_pv.yaml) | Regelt die Freigabe einer Trinkwasser-Wärmepumpe (TWWP) nach Wassertemperatur, PV-Überschuss und Tageszeit (PV-Betrieb, Normalbetrieb, Minimumbetrieb, Nachtabschaltung); schaltet bei ausgefallenem Sensor ab. Unabhängig von Modbus: Die TWWP wird nur über zwei Freigabe-Schalter gesteuert. |
 
 ## Registerbelegung
 

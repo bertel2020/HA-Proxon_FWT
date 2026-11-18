@@ -1,0 +1,419 @@
+blueprint:
+  name: Trinkwasser-Wärmepumpe mit PV-Überschuss / Hot water heat pump with PV surplus
+  description: >-
+    Regelt die Freigabe einer Trinkwasser-Wärmepumpe (TWWP) nach Wassertemperatur,
+    PV-Überschuss und Tageszeit. Die Wärmepumpe selbst wird nur über zwei
+    Freigabe-Schalter (normal und PV) gesteuert, sie braucht kein Modbus.
+    Programme: PV-Betrieb (Überschuss nutzen, höheres Soll), Normalbetrieb
+    (tagsüber bis zum Soll), Minimumbetrieb (hält die Mindesttemperatur, auch
+    nachts) und Nachtabschaltung. Die Regelung läuft jede Minute und beim
+    Ändern der Sollwerte. Fällt ein Temperatursensor aus, werden beide
+    Freigaben sicherheitshalber abgeschaltet.
+
+
+    Das Programm und der PV-Status werden in zwei Auswahl-Helfern (input_select)
+    geführt, die du vorher anlegst und die genau diese Optionen haben müssen:
+
+    Programm: Aus, Normalbetrieb, PV-Betrieb, Minimumbetrieb, Nachtabschaltung.
+
+    PV-Status: PV-Strom, kein PV-Strom, zu kalt.
+
+
+    Controls the enable of a hot water heat pump (TWWP) by tank temperature,
+    PV surplus and time of day. The heat pump is only driven through two enable
+    switches (normal and PV); it needs no Modbus. Programs - PV mode (use the
+    surplus, higher target), normal mode (daytime up to the target), minimum
+    mode (keeps the minimum temperature, also at night) and night shutdown.
+    It runs every minute and when a target changes. If a temperature sensor
+    fails, both enables are switched off for safety.
+
+
+    Program and PV status are kept in two select helpers (input_select) that you
+    create beforehand and that must have exactly these options (the option
+    names are German and fixed):
+
+    Program - Aus, Normalbetrieb, PV-Betrieb, Minimumbetrieb, Nachtabschaltung.
+
+    PV status - PV-Strom, kein PV-Strom, zu kalt.
+  domain: automation
+  source_url: https://github.com/bertel2020/HA-Proxon_FWT/blob/main/blueprints/automation/proxon_modbus/twwp_pv.yaml
+  input:
+    enable_switch:
+      name: Freigabe / Enable
+      description: Freigabe-Schalter der Wärmepumpe (Normalbetrieb). / Enable switch of the heat pump (normal mode).
+      selector:
+        entity:
+          domain: switch
+    enable_pv_switch:
+      name: Freigabe PV / PV enable
+      description: Zweiter Freigabe-Schalter für den PV-Betrieb. / Second enable switch for PV mode.
+      selector:
+        entity:
+          domain: switch
+    water_temp:
+      name: Wassertemperatur / Tank temperature
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
+    outer_temp:
+      name: Temperatur Oberteil / Top unit temperature
+      description: >-
+        Temperatur am Oberteil der Wärmepumpe (Frostschutz). Unter der
+        Frostgrenze steht der PV-Status auf „zu kalt“, unter der Mindest-
+        temperatur startet kein PV-Betrieb.
+        / Temperature at the top of the heat pump (frost protection). Below the
+        frost limit the PV status is "zu kalt", below the minimum temperature
+        PV mode does not start.
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
+    frost_below:
+      name: Frostgrenze / Frost limit
+      description: Unter diesem Wert steht der PV-Status auf „zu kalt“. / Below this the PV status is "zu kalt".
+      default: 0
+      selector:
+        number:
+          min: -20
+          max: 20
+          step: 0.5
+          unit_of_measurement: °C
+    pv_min_outer:
+      name: Mindesttemperatur für PV-Betrieb / Minimum temperature for PV mode
+      description: Der PV-Betrieb startet nur über diesem Wert am Oberteil. / PV mode only starts above this value at the top unit.
+      default: 5
+      selector:
+        number:
+          min: -20
+          max: 30
+          step: 0.5
+          unit_of_measurement: °C
+    pv_power:
+      name: PV-Leistung aktuell / Current PV power
+      selector:
+        entity:
+          domain: sensor
+          device_class: power
+    pv_power_avg:
+      name: PV-Leistung Mittelwert (15 min) / PV power average (15 min)
+      description: Beide Leistungen müssen über der Schwelle liegen. / Both powers must be above the threshold.
+      selector:
+        entity:
+          domain: sensor
+          device_class: power
+    pv_threshold:
+      name: PV-Schwelle / PV threshold
+      default: 1500
+      selector:
+        number:
+          min: 0
+          max: 20000
+          step: 100
+          unit_of_measurement: W
+    brightness:
+      name: Helligkeit / Dämmerung (optional) / Brightness (optional)
+      description: >-
+        Sensor für Tag und Nacht, zum Beispiel die Dämmerung einer Wetterstation.
+        Ohne Sensor gibt es keine Nachtabschaltung, es ist immer Tag.
+        / Sensor for day and night, for example the twilight value of a weather
+        station. Without a sensor there is no night shutdown, it is always day.
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+    night_below:
+      name: Nacht unterhalb / Night below
+      default: 500
+      selector:
+        number:
+          min: 0
+          max: 100000
+          mode: box
+    day_above:
+      name: Tag oberhalb / Day above
+      default: 950
+      selector:
+        number:
+          min: 0
+          max: 100000
+          mode: box
+    target_normal:
+      name: Soll Normalbetrieb / Target normal
+      selector:
+        entity:
+          domain: input_number
+    target_pv:
+      name: Soll PV-Betrieb / Target PV
+      selector:
+        entity:
+          domain: input_number
+    target_min:
+      name: Soll Minimum / Target minimum
+      selector:
+        entity:
+          domain: input_number
+    program:
+      name: Programm / Program
+      description: >-
+        Auswahl-Helfer mit den Optionen Aus, Normalbetrieb, PV-Betrieb,
+        Minimumbetrieb, Nachtabschaltung. / Select helper with the options listed above.
+      selector:
+        entity:
+          domain: input_select
+    pv_status:
+      name: PV-Status / PV status
+      description: >-
+        Auswahl-Helfer mit den Optionen PV-Strom, kein PV-Strom, zu kalt.
+        / Select helper with the options listed above.
+      selector:
+        entity:
+          domain: input_select
+
+mode: queued
+max: 3
+max_exceeded: silent
+
+triggers:
+  - trigger: time_pattern
+    minutes: /1
+  - trigger: state
+    entity_id:
+      - !input target_normal
+      - !input target_pv
+      - !input target_min
+
+variables:
+  # Eingaben zuerst binden, dann damit rechnen (!input geht nicht in Templates).
+  enable_id: !input enable_switch
+  enable_pv_id: !input enable_pv_switch
+  water_id: !input water_temp
+  outer_id: !input outer_temp
+  frost_below: !input frost_below
+  pv_min_outer: !input pv_min_outer
+  pv_id: !input pv_power
+  pv_avg_id: !input pv_power_avg
+  pv_threshold: !input pv_threshold
+  brightness_id: !input brightness
+  night_below: !input night_below
+  day_above: !input day_above
+  target_normal_id: !input target_normal
+  target_pv_id: !input target_pv
+  target_min_id: !input target_min
+  program_id: !input program
+  pv_status_id: !input pv_status
+
+  # Messwerte. float(none) liefert none, wenn der Sensor nicht verfügbar ist.
+  water: "{{ states(water_id) | float(none) }}"
+  outer: "{{ states(outer_id) | float(none) }}"
+  t_normal: "{{ states(target_normal_id) | float(none) }}"
+  t_pv: "{{ states(target_pv_id) | float(none) }}"
+  t_min: "{{ states(target_min_id) | float(none) }}"
+  sensors_ok: >-
+    {{ water is not none and t_normal is not none
+       and t_pv is not none and t_min is not none }}
+  program: "{{ states(program_id) }}"
+
+  # PV-Status wird bei jedem Lauf neu bestimmt und bei Änderung in den Helfer
+  # geschrieben. Die folgenden Zweige rechnen mit dem neuen Wert, nicht mit dem
+  # Helfer, der erst nach dem Schreiben nachzieht.
+  pv_status_new: >-
+    {% if outer is not none and outer < frost_below %}zu kalt
+    {%- elif states(pv_id) | float(0) > pv_threshold
+             and states(pv_avg_id) | float(0) > pv_threshold %}PV-Strom
+    {%- else %}kein PV-Strom{% endif %}
+
+  # Tag und Nacht. Ohne Sensor ist immer Tag, mit nicht verfügbarem Sensor
+  # weder Tag noch Nacht (die Programme bleiben, wie sie sind).
+  brightness: >-
+    {{ states(brightness_id) | float(none) if brightness_id else none }}
+  is_night: >-
+    {{ brightness is not none and brightness < night_below }}
+  is_day: >-
+    {{ (not brightness_id) or (brightness is not none and brightness > day_above) }}
+
+actions:
+  # 1. Fällt ein Sensor oder Sollwert aus, ist nichts sicher berechenbar:
+  #    Freigaben aus und Programm „Aus“, dann den Lauf beenden.
+  - if:
+      - condition: template
+        value_template: "{{ not sensors_ok }}"
+    then:
+      - action: switch.turn_off
+        target:
+          entity_id:
+            - !input enable_switch
+            - !input enable_pv_switch
+      - action: input_select.select_option
+        target:
+          entity_id: !input program
+        data:
+          option: Aus
+      - stop: Sensor oder Sollwert nicht verfügbar, Freigaben abgeschaltet
+        error: false
+
+  # 2. PV-Status aktualisieren.
+  - if:
+      - condition: template
+        value_template: "{{ states(pv_status_id) != pv_status_new }}"
+    then:
+      - action: input_select.select_option
+        target:
+          entity_id: !input pv_status
+        data:
+          option: "{{ pv_status_new }}"
+
+  # 3. Programm wählen. Der erste passende Zweig gewinnt, die Reihenfolge ist
+  #    die der bisherigen Automation.
+  - choose:
+      - alias: PV-Betrieb
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ outer is not none and outer > pv_min_outer
+                 and water <= t_pv - 3
+                 and pv_status_new == 'PV-Strom' }}
+        sequence:
+          - action: input_select.select_option
+            target:
+              entity_id: !input program
+            data:
+              option: PV-Betrieb
+          - action: switch.turn_on
+            target:
+              entity_id:
+                - !input enable_switch
+                - !input enable_pv_switch
+
+      - alias: Soll PV erreicht
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ program == 'PV-Betrieb' and water >= t_pv + 1 }}
+        sequence:
+          - action: input_select.select_option
+            target:
+              entity_id: !input program
+            data:
+              option: Aus
+          - action: switch.turn_off
+            target:
+              entity_id:
+                - !input enable_switch
+                - !input enable_pv_switch
+
+      - alias: Minimumbetrieb beenden
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ program == 'Minimumbetrieb' and water >= t_min + 3 }}
+        sequence:
+          - action: input_select.select_option
+            target:
+              entity_id: !input program
+            data:
+              option: Aus
+          - action: switch.turn_off
+            target:
+              entity_id: !input enable_switch
+
+      - alias: Minimumbetrieb
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ water < t_min
+                 and program not in ['Normalbetrieb', 'PV-Betrieb'] }}
+        sequence:
+          - action: input_select.select_option
+            target:
+              entity_id: !input program
+            data:
+              option: Minimumbetrieb
+          - action: switch.turn_on
+            target:
+              entity_id: !input enable_switch
+
+      - alias: Nachtabschaltung
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ water >= t_min and is_night and program != 'Minimumbetrieb' }}
+        sequence:
+          - action: input_select.select_option
+            target:
+              entity_id: !input program
+            data:
+              option: Nachtabschaltung
+          - action: switch.turn_off
+            target:
+              entity_id:
+                - !input enable_switch
+                - !input enable_pv_switch
+
+      - alias: Nachtabschaltung beenden
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ brightness is not none and brightness > day_above
+                 and program == 'Nachtabschaltung' }}
+        sequence:
+          - action: input_select.select_option
+            target:
+              entity_id: !input program
+            data:
+              option: Aus
+          - action: switch.turn_off
+            target:
+              entity_id: !input enable_switch
+
+      - alias: PV-Betrieb beenden, Normalbetrieb
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ program == 'PV-Betrieb'
+                 and pv_status_new in ['kein PV-Strom', 'zu kalt'] }}
+        sequence:
+          - action: switch.turn_off
+            target:
+              entity_id: !input enable_pv_switch
+          - action: switch.turn_on
+            target:
+              entity_id: !input enable_switch
+          - action: input_select.select_option
+            target:
+              entity_id: !input program
+            data:
+              option: Normalbetrieb
+
+      - alias: Normalbetrieb
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ water <= t_normal - 3 and is_day and program != 'PV-Betrieb' }}
+        sequence:
+          - action: input_select.select_option
+            target:
+              entity_id: !input program
+            data:
+              option: Normalbetrieb
+          - action: switch.turn_on
+            target:
+              entity_id: !input enable_switch
+          - action: switch.turn_off
+            target:
+              entity_id: !input enable_pv_switch
+
+      - alias: Soll erreicht
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ water >= t_normal + 1 and program != 'PV-Betrieb' }}
+        sequence:
+          - action: input_select.select_option
+            target:
+              entity_id: !input program
+            data:
+              option: Aus
+          - action: switch.turn_off
+            target:
+              entity_id: !input enable_switch
