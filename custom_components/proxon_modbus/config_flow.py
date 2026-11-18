@@ -760,8 +760,8 @@ class TwwpSubentryFlow(ConfigSubentryFlow):
     """Add or change a hot water heat pump (TWWP).
 
     The heat pump is not a Modbus device: its enable switches and sensors belong
-    to other integrations and are chosen here. The controller starts in observe
-    mode; the "control" switch of the device lets it take over.
+    to other integrations and are chosen here. The controller starts in dry
+    run mode; the "Control active" switch of the device lets it take over.
     """
 
     async def async_step_user(

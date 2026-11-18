@@ -29,7 +29,7 @@ CONF_FROST_BELOW = "frost_below"
 CONF_PV_MIN_OUTER = "pv_min_outer"
 CONF_NIGHT_BELOW = "night_below"
 CONF_DAY_ABOVE = "day_above"
-CONF_CONTROL = "control"  # False: only observe and report what would be switched
+CONF_CONTROL = "control"  # False: dry run, only report what would be switched
 
 TARGET_NORMAL = "normal"
 TARGET_PV = "pv"

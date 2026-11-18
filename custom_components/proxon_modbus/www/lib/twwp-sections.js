@@ -80,7 +80,7 @@ export class TwwpSectionsMethods {
     }).join("");
   }
 
-  // Banners for the overview (panel only): a failed sensor, and a controller that only observes but would act differently.
+  // Banners for the overview (panel only): a failed sensor, and a controller in dry run that would act differently.
   _twAlerts(d) {
     const out = [], many = d.twwp.length > 1;
     for (const t of d.twwp) {

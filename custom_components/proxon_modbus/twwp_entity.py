@@ -213,7 +213,7 @@ class TwwpReasonSensor(TwwpEntity, SensorEntity):
 class TwwpPlannedSensor(TwwpEntity, SensorEntity):
     """How many enable switches the controller wants in another state than they are in now.
 
-    In observe mode this is the difference to the existing automation.
+    In dry-run mode this is the difference to the existing automation.
     """
 
     _attr_translation_key = "twwp_planned"
@@ -261,7 +261,7 @@ def _active_automations(hass: HomeAssistant, entity_ids: list[str]) -> list[str]
 
 
 class TwwpControlSwitch(TwwpEntity, SwitchEntity):
-    """Off: the controller only observes. On: it switches the enable switches.
+    """Off: dry run, the controller only reports. On: it switches the enable switches.
 
     Turning it on is refused while an active automation (or blueprint) also
     uses the enable switches, because two controllers would overwrite each other.

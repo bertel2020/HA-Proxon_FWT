@@ -3,7 +3,7 @@
 Free of Home Assistant imports: the readings, the switch calls and the storage
 are passed in, so the controller can be unit tested with plain pytest.
 
-In observe mode (`control` off, the default) nothing is switched. The
+In dry-run mode (`control` off, the default) nothing is switched. The
 controller keeps its own state and reports what it would switch, so it can run
 next to an existing automation and be compared with it before it takes over.
 """
@@ -82,11 +82,11 @@ class TwwpController:
 
     @property
     def control(self) -> bool:
-        """True: the controller switches. False: it only observes and reports."""
+        """True: the controller switches. False: dry run, it only reports what it would switch."""
         return self.state.control
 
     async def async_set_control(self, on: bool) -> None:
-        """Switch between observing and controlling, and decide again right away."""
+        """Switch between dry run and controlling, and decide again right away."""
         self.state.control = bool(on)
         await self.async_run()
 

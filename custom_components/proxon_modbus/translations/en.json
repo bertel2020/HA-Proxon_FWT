@@ -368,7 +368,7 @@
       "fan_auto": { "name": "Fan auto mode" },
       "fan_intensive": { "name": "Intensive ventilation" },
       "ptc_enable": { "name": "PTC element enabled" },
-      "twwp_control": {"name": "Control heat pump"}
+      "twwp_control": {"name": "Control active"}
     },
     "button": {
       "filter_changed": { "name": "Filter changed" }
@@ -469,7 +469,7 @@
       "step": {
         "user": {
           "title": "Hot water heat pump",
-          "description": "Controls the enable of a hot water heat pump by tank temperature, PV surplus and time of day. The heat pump is not a Modbus device: choose the switches and sensors of your own setup. The controller starts in observe mode; the switch on the device lets it take over.",
+          "description": "Controls the enable of a hot water heat pump by tank temperature, PV surplus and time of day. The heat pump is not a Modbus device: choose the switches and sensors of your own setup. The controller starts in dry-run mode; the “Control active” switch on the device lets it take over.",
           "data": {
             "name": "Name",
             "enable_switch": "Enable switch",
@@ -501,7 +501,7 @@
         },
         "reconfigure": {
           "title": "Hot water heat pump",
-          "description": "Controls the enable of a hot water heat pump by tank temperature, PV surplus and time of day. The heat pump is not a Modbus device: choose the switches and sensors of your own setup. The controller starts in observe mode; the switch on the device lets it take over.",
+          "description": "Controls the enable of a hot water heat pump by tank temperature, PV surplus and time of day. The heat pump is not a Modbus device: choose the switches and sensors of your own setup. The controller starts in dry-run mode; the “Control active” switch on the device lets it take over.",
           "data": {
             "name": "Name",
             "enable_switch": "Enable switch",

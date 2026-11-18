@@ -368,7 +368,7 @@
       "fan_auto": { "name": "Lüfter-Automatik" },
       "fan_intensive": { "name": "Intensivlüftung" },
       "ptc_enable": { "name": "PTC-Element freigegeben" },
-      "twwp_control": {"name": "Wärmepumpe schalten"}
+      "twwp_control": {"name": "Regelung aktiv"}
     },
     "button": {
       "filter_changed": { "name": "Filter getauscht" }
@@ -469,7 +469,7 @@
       "step": {
         "user": {
           "title": "Trinkwasser-Wärmepumpe",
-          "description": "Regelt die Freigabe einer Trinkwasser-Wärmepumpe nach Wassertemperatur, PV-Überschuss und Tageszeit. Die Wärmepumpe ist kein Modbus-Gerät: Wähle die Schalter und Sensoren deiner Anlage. Der Regler startet im Beobachtermodus; mit dem Schalter am Gerät übernimmt er die Steuerung.",
+          "description": "Regelt die Freigabe einer Trinkwasser-Wärmepumpe nach Wassertemperatur, PV-Überschuss und Tageszeit. Die Wärmepumpe ist kein Modbus-Gerät: Wähle die Schalter und Sensoren deiner Anlage. Der Regler startet im Probelauf; mit dem Schalter „Regelung aktiv“ am Gerät übernimmt er die Steuerung.",
           "data": {
             "name": "Name",
             "enable_switch": "Freigabe-Schalter",
@@ -501,7 +501,7 @@
         },
         "reconfigure": {
           "title": "Trinkwasser-Wärmepumpe",
-          "description": "Regelt die Freigabe einer Trinkwasser-Wärmepumpe nach Wassertemperatur, PV-Überschuss und Tageszeit. Die Wärmepumpe ist kein Modbus-Gerät: Wähle die Schalter und Sensoren deiner Anlage. Der Regler startet im Beobachtermodus; mit dem Schalter am Gerät übernimmt er die Steuerung.",
+          "description": "Regelt die Freigabe einer Trinkwasser-Wärmepumpe nach Wassertemperatur, PV-Überschuss und Tageszeit. Die Wärmepumpe ist kein Modbus-Gerät: Wähle die Schalter und Sensoren deiner Anlage. Der Regler startet im Probelauf; mit dem Schalter „Regelung aktiv“ am Gerät übernimmt er die Steuerung.",
           "data": {
             "name": "Name",
             "enable_switch": "Freigabe-Schalter",
