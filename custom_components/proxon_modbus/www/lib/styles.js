@@ -368,7 +368,6 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .panel .rgrp .vbtn { border-color: transparent; background: transparent; }
 .panel .rgrp .vbtn.a { background: var(--card-background-color); box-shadow: 0 1px 3px #0002; }
 .twtk { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
-.twtank { width: 130px; height: auto; flex: none; }
 .twrows { flex: 1; min-width: 160px; }
 .rows .f, .twctl { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid var(--divider-color); font-size: 13px; }
 .rows .f:first-child { border-top: none; }
@@ -387,6 +386,11 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .banner.go { cursor: pointer; }
 .banner .bgo { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 400; opacity: .8; white-space: nowrap; }
 .banner .bgo ha-icon { --mdc-icon-size: 16px; }
+.twtank { width: 180px; height: auto; flex: none; }
+.twtank .fan { transform-box: fill-box; transform-origin: center; }
+.twtank.heat .fan { animation: twspin 1.4s linear infinite; }
+@keyframes twspin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .twtank.heat .fan { animation: none; } }
 `;
 
 let SHEET; // one constructable stylesheet shared by every card/panel instead of a <style> per render

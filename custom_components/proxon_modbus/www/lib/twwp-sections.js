@@ -103,29 +103,47 @@ export class TwwpSectionsMethods {
     return `<div class="f"><span>${label}</span><b ${extra}>${value}</b></div>`;
   }
 
-  // Tank: the fill level shows the water temperature between 20 and 70 degrees, dashed marks are the targets.
+  // The unit is one housing: the heat pump head with fan and vents on top of the tank. The tank is filled evenly
+  // (one sensor in the middle cannot tell the layers apart); a slim scale beside it shows the water temperature
+  // and the three targets.
   _twTank(t, i) {
     const c = this._twCfg(t), w = this._twWater(t);
     const tn = this._num(t.ents.twwp_target_normal), tp = this._num(t.ents.twwp_target_pv), tm = this._num(t.ents.twwp_target_min);
-    const y = (v) => 161 - Math.max(0, Math.min(1, (v - T_LO) / (T_HI - T_LO))) * 152;
-    const col = w === null ? "var(--divider-color)" : tn !== null && w >= tn ? CORAL : tm !== null && w >= tm ? AMBER : BLUE;
-    const fill = w === null ? "" : `<rect x="23" y="${y(w).toFixed(1)}" width="74" height="${(161 - y(w)).toFixed(1)}" fill="${col}" opacity=".5"/>`;
-    const mark = (v, l) => (v === null ? "" : `<line x1="23" x2="97" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="var(--secondary-text-color)" stroke-dasharray="3 3" opacity=".7"/><text x="100" y="${(y(v) + 3).toFixed(1)}" font-size="9" fill="var(--secondary-text-color)">${l}</text>`);
-    const svg = `<svg class="twtank" viewBox="0 0 130 170" role="img" aria-label="${this._t("tw_tank")} ${w === null ? "" : this._fmt(w) + "°"}">
-      <defs><clipPath id="twc${i}"><rect x="23" y="9" width="74" height="152" rx="15"/></clipPath></defs>
-      <rect x="22" y="8" width="76" height="154" rx="16" fill="none" stroke="var(--divider-color)" stroke-width="1.5"/>
-      <g clip-path="url(#twc${i})">${fill}</g>${mark(tn, this._fmt(tn, 0))}${mark(tp, this._fmt(tp, 0))}${mark(tm, this._fmt(tm, 0))}
-      <text x="60" y="${w === null ? 90 : Math.max(30, Math.min(150, y(w) - 8)).toFixed(1)}" text-anchor="middle" font-size="22" font-weight="500" fill="var(--primary-text-color)">${w === null ? "–" : this._fmt(w) + "°"}</text></svg>`;
     const pw = c.power_entity ? this._twPowerW(c.power_entity) : null, pv = c.pv_power ? this._twPowerW(c.pv_power) : null;
+    const heats = pw !== null && pw > 100;
+    const Y0 = 70, Y1 = 176, y = (v) => Y1 - Math.max(0, Math.min(1, (v - T_LO) / (T_HI - T_LO))) * (Y1 - Y0);
+    const col = w === null ? "var(--divider-color)" : tn !== null && w >= tn ? CORAL : tm !== null && w >= tm ? AMBER : BLUE;
+    const outer = c.outer_temp ? this._num(c.outer_temp) : null;
+    const tick = (v, l) => (v === null ? "" : `<line x1="124" x2="130" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="var(--secondary-text-color)"/><text x="133" y="${(y(v) + 3).toFixed(1)}" font-size="9" fill="var(--secondary-text-color)">${l}</text>`);
+    const svg = `<svg class="twtank ${heats ? "heat" : ""}" viewBox="0 0 160 190" role="img" aria-label="${this._t("tw_tank")} ${w === null ? "" : this._fmt(w) + "°"}">
+      <defs><clipPath id="twc${i}"><rect x="8" y="6" width="96" height="178" rx="22"/></clipPath></defs>
+      <rect x="8" y="6" width="96" height="178" rx="22" fill="var(--card-background-color)" stroke="var(--divider-color)" stroke-width="1.5"/>
+      <g clip-path="url(#twc${i})">
+        <rect x="8" y="${Y0 - 2}" width="96" height="${Y1 - Y0 + 10}" fill="${col}" opacity=".42"/>
+        <rect x="16" y="${Y0 + 6}" width="6" height="${Y1 - Y0 - 8}" rx="3" fill="#fff" opacity=".28"/>
+        <rect x="8" y="6" width="96" height="60" fill="var(--secondary-background-color)"/>
+        <rect x="8" y="64" width="96" height="4" fill="var(--divider-color)" opacity=".8"/>
+      </g>
+      <circle cx="40" cy="32" r="16" fill="none" stroke="var(--secondary-text-color)" stroke-width="1.4" opacity=".7"/>
+      <g class="fan" fill="var(--secondary-text-color)" opacity=".75">${[0, 120, 240].map((r) => `<ellipse cx="40" cy="24" rx="4.6" ry="8" transform="rotate(${r} 40 32)"/>`).join("")}<circle cx="40" cy="32" r="3" fill="var(--card-background-color)"/></g>
+      <g stroke="var(--secondary-text-color)" stroke-width="2" stroke-linecap="round" opacity=".5"><line x1="68" x2="92" y1="24" y2="24"/><line x1="68" x2="92" y1="32" y2="32"/><line x1="68" x2="92" y1="40" y2="40"/></g>
+      <circle cx="92" cy="52" r="3.4" fill="${heats ? GREEN : "var(--divider-color)"}"/>
+      <text x="40" y="58" font-size="10" text-anchor="middle" fill="var(--secondary-text-color)">${outer === null ? "" : this._fmt(outer) + "°"}</text>
+      <circle cx="22" cy="123" r="4.5" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="1.6"/>
+      <text x="62" y="130" text-anchor="middle" font-size="22" font-weight="500" fill="var(--primary-text-color)">${w === null ? "–" : this._fmt(w) + "°"}</text>
+      <line x1="120" x2="120" y1="${Y0}" y2="${Y1}" stroke="var(--divider-color)" stroke-width="3" stroke-linecap="round"/>
+      ${tick(tp, this._fmt(tp, 0))}${tick(tn, this._fmt(tn, 0))}${tick(tm, this._fmt(tm, 0))}
+      ${w === null ? "" : `<path d="M112 ${(y(w) - 5).toFixed(1)} L119 ${y(w).toFixed(1)} L112 ${(y(w) + 5).toFixed(1)} Z" fill="${col}"/>`}</svg>`;
     const en = c.energy_entity && this._num(c.energy_entity) !== null ? `${this._fmt(this._num(c.energy_entity), 0)} ${(this._state(c.energy_entity).attributes.unit_of_measurement) || "kWh"}` : null;
-    const outer = c.outer_temp ? this._temp(c.outer_temp) : null;
     const rows = [
-      outer ? this._twRow(this._t("tw_top"), outer) : "",
+      outer !== null ? this._twRow(this._t("tw_top"), `${this._fmt(outer)}°`) : "",
+      pw !== null ? this._twRow(this._t("tw_hp"), heats ? `<span class="chip g">${this._t("tw_heats")}</span>` : this._t("tw_idle")) : "",
       pw !== null ? this._twRow(this._t("power"), `${this._fmt(pw, 0)} W`) : "",
       en ? this._twRow(this._t("tw_energy"), en) : "",
       pv !== null ? this._twRow(this._t("tw_pv_power"), `${this._fmt(pv / 1000)} kW`) : "",
     ].join("");
-    return `<ha-card>${this._header("mdi:water-thermometer-outline", this._t("tw_tank"))}<div class="twtk">${svg}<div class="rows twrows">${rows}</div></div></ha-card>`;
+    return `<ha-card>${this._header("mdi:water-thermometer-outline", this._t("tw_tank"))}<div class="twtk">${svg}<div class="rows twrows">${rows}</div></div>
+      <div class="note">${this._t("tw_tank_note")}</div></ha-card>`;
   }
 
   _twStepper(id, label) {
