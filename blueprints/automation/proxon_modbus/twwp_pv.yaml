@@ -8,7 +8,9 @@ blueprint:
     (tagsüber bis zum Soll), Minimumbetrieb (hält die Mindesttemperatur, auch
     nachts) und Nachtabschaltung. Die Regelung läuft jede Minute und beim
     Ändern der Sollwerte. Fällt ein Temperatursensor aus, werden beide
-    Freigaben sicherheitshalber abgeschaltet.
+    Freigaben sicherheitshalber abgeschaltet. Dieselbe Regelung gibt es in der
+    Proxon-Integration als Unterintegration (Gerät „Trinkwasser-Wärmepumpe“);
+    beide dürfen nicht dieselben Freigabe-Schalter bedienen.
 
 
     Das Programm und der PV-Status werden in zwei Auswahl-Helfern (input_select)
@@ -25,7 +27,9 @@ blueprint:
     surplus, higher target), normal mode (daytime up to the target), minimum
     mode (keeps the minimum temperature, also at night) and night shutdown.
     It runs every minute and when a target changes. If a temperature sensor
-    fails, both enables are switched off for safety.
+    fails, both enables are switched off for safety. The same control exists in
+    the Proxon integration as a sub-integration (device "Hot water heat pump");
+    the two must not drive the same enable switches.
 
 
     Program and PV status are kept in two select helpers (input_select) that you
@@ -138,6 +142,34 @@ blueprint:
           min: 0
           max: 100000
           mode: box
+    hyst_low:
+      name: Hysterese Einschalten / Start hysteresis
+      description: >-
+        Heizen beginnt, wenn die Wassertemperatur um so viele Kelvin unter dem Soll liegt. Der Minimumbetrieb
+        endet um denselben Wert über seinem Minimum.
+        / Heating starts when the tank is this many kelvin below the target. The minimum program ends this far
+        above its minimum.
+      default: 3
+      selector:
+        number:
+          min: 1
+          max: 10
+          step: 0.5
+          unit_of_measurement: K
+    hyst_high:
+      name: Hysterese Ausschalten / Stop hysteresis
+      description: >-
+        Heizen endet, wenn die Wassertemperatur um so viele Kelvin über dem Soll liegt. Zusammen mit dem
+        Einschalt-Wert sollte die Spanne mindestens 2 K betragen, sonst schaltet die Wärmepumpe oft ein und aus.
+        / Heating stops when the tank is this many kelvin above the target. Together with the start value the band
+        should be at least 2 K, otherwise the heat pump switches on and off often.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 5
+          step: 0.5
+          unit_of_measurement: K
     target_normal:
       name: Soll Normalbetrieb / Target normal
       selector:
@@ -197,6 +229,8 @@ variables:
   brightness_id: !input brightness
   night_below: !input night_below
   day_above: !input day_above
+  hyst_low: !input hyst_low
+  hyst_high: !input hyst_high
   target_normal_id: !input target_normal
   target_pv_id: !input target_pv
   target_min_id: !input target_min
@@ -271,7 +305,7 @@ actions:
           - condition: template
             value_template: >-
               {{ outer is not none and outer > pv_min_outer
-                 and water <= t_pv - 3
+                 and water <= t_pv - hyst_low
                  and pv_status_new == 'PV-Strom' }}
         sequence:
           - action: input_select.select_option
@@ -289,7 +323,7 @@ actions:
         conditions:
           - condition: template
             value_template: >-
-              {{ program == 'PV-Betrieb' and water >= t_pv + 1 }}
+              {{ program == 'PV-Betrieb' and water >= t_pv + hyst_high }}
         sequence:
           - action: input_select.select_option
             target:
@@ -306,7 +340,7 @@ actions:
         conditions:
           - condition: template
             value_template: >-
-              {{ program == 'Minimumbetrieb' and water >= t_min + 3 }}
+              {{ program == 'Minimumbetrieb' and water >= t_min + hyst_low }}
         sequence:
           - action: input_select.select_option
             target:
@@ -389,7 +423,7 @@ actions:
         conditions:
           - condition: template
             value_template: >-
-              {{ water <= t_normal - 3 and is_day and program != 'PV-Betrieb' }}
+              {{ water <= t_normal - hyst_low and is_day and program != 'PV-Betrieb' }}
         sequence:
           - action: input_select.select_option
             target:
@@ -407,7 +441,7 @@ actions:
         conditions:
           - condition: template
             value_template: >-
-              {{ water >= t_normal + 1 and program != 'PV-Betrieb' }}
+              {{ water >= t_normal + hyst_high and program != 'PV-Betrieb' }}
         sequence:
           - action: input_select.select_option
             target:
