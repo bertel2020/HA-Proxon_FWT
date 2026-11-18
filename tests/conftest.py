@@ -5,6 +5,7 @@ not needed (and not installed) for these unit tests, so the pure modules are
 loaded straight from their files.
 """
 import importlib.util
+import sys
 from pathlib import Path
 
 import pytest
@@ -24,6 +25,7 @@ PKG = Path(__file__).resolve().parents[1] / "custom_components" / "proxon_modbus
 def _load(name: str):
     spec = importlib.util.spec_from_file_location(f"proxon_{name}", PKG / f"{name}.py")
     module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module  # dataclasses look their module up here
     spec.loader.exec_module(module)
     return module
 
@@ -36,3 +38,8 @@ def logic():
 @pytest.fixture(scope="session")
 def const():
     return _load("const")
+
+
+@pytest.fixture(scope="session")
+def twwp():
+    return _load("twwp")
