@@ -4,6 +4,7 @@ Renders the blueprint's templates (with a minimal stand-in for Home Assistant's 
 for many random situations and compares program, enables and PV status with `twwp.decide`.
 """
 import random
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -45,11 +46,26 @@ def _float(value, default=jinja2.utils.missing):
         return default
 
 
-def _evaluate(bp, inputs, states):
-    """(branch alias or 'none' or 'failsafe', new pv status) of the blueprint for these inputs and states."""
+NOW = datetime(2026, 11, 18, 12, 0, tzinfo=timezone.utc)
+
+
+class _States:
+    """Stand-in for Home Assistant's `states`: callable and subscriptable."""
+
+    def __init__(self, values, age_s=0):
+        self._values, self._age = values, age_s
+
+    def __call__(self, entity):
+        return self._values.get(entity, "unavailable")
+
+    def __getitem__(self, entity):
+        return type("S", (), {"last_changed": NOW - timedelta(seconds=self._age)})()
+
+
+def _context(bp, inputs, states, age_s=0):
     env = jinja2.Environment()
     env.filters["float"] = _float
-    ctx = {"states": lambda entity: states.get(entity, "unavailable")}
+    ctx = {"states": _States(states, age_s), "now": lambda: NOW, "as_timestamp": lambda value: value.timestamp()}
     for key, raw in bp["variables"].items():
         value = inputs[raw[2:-2]] if isinstance(raw, str) and raw.startswith("<<") else raw
         if isinstance(value, str) and "{" in value:
@@ -61,6 +77,12 @@ def _evaluate(bp, inputs, states):
                 except ValueError:
                     pass
         ctx[key] = value
+    return env, ctx
+
+
+def _evaluate(bp, inputs, states):
+    """(branch alias or 'none' or 'failsafe', new pv status) of the blueprint for these inputs and states."""
+    env, ctx = _context(bp, inputs, states)
     if not ctx["sensors_ok"]:
         return "failsafe", None
     for branch in next(a for a in bp["actions"] if "choose" in a)["choose"]:
@@ -91,7 +113,8 @@ def test_blueprint_decides_like_the_controller(twwp, bp):
             states["br"] = "unavailable" if br is None else str(br)
         states["prog"] = PROGRAM[program]
         inputs = {**ENTITY, "brightness": "br" if has_br else "", "frost_below": 0, "pv_min_outer": 5, "pv_threshold": 1500,
-                  "night_below": 500, "day_above": 950, "hyst_low": low, "hyst_high": high}
+                  "night_below": 500, "day_above": 950, "hyst_low": low, "hyst_high": high,
+                  "min_on_minutes": 0, "min_off_minutes": 0}
         alias, pvs = _evaluate(bp, inputs, states)
         want = twwp.decide(twwp.TwwpInput(water=water, outer=outer, target_normal=tn, target_pv=tp, target_min=tm,
                                           pv_power=pv, pv_power_avg=pva, brightness=br if has_br else None, has_brightness=has_br,
@@ -103,3 +126,27 @@ def test_blueprint_decides_like_the_controller(twwp, bp):
             assert pvs == PV_STATUS[want.pv_status], ctx
         seen.add(reason)
     assert seen >= {"pv", "pv_target_reached", "minimum_end", "minimum", "night", "night_end", "pv_end", "normal", "target_reached", "none", "sensor_unavailable"}, seen
+
+
+def test_blueprint_lock_matches_the_controller(twwp, bp):
+    """The blueprint's `locked` equals `twwp.lock_active` for the same switch state, age and minutes."""
+    rng = random.Random(7)
+    seen = set()
+    for _ in range(400):
+        state = rng.choice(["on", "off", "unavailable", "unknown"])
+        min_on, min_off = rng.choice([0, 1, 5, 10]), rng.choice([0, 1, 5, 10])
+        age = rng.choice([0, 30, 59, 60, 299, 300, 301, 599, 600, 601, 3600])
+        inputs = {**ENTITY, "frost_below": 0, "pv_min_outer": 5, "pv_threshold": 1500, "night_below": 500, "day_above": 950,
+                  "hyst_low": 3, "hyst_high": 1, "min_on_minutes": min_on, "min_off_minutes": min_off}
+        _, ctx = _context(bp, inputs, {"sw": state}, age_s=age)
+        want = twwp.lock_active(state, NOW.timestamp() - age, NOW.timestamp(), min_on, min_off)
+        assert bool(ctx["locked"]) is want, (state, min_on, min_off, age)
+        seen.add(want)
+    assert seen == {True, False}
+
+
+def test_blueprint_stops_when_locked(bp):
+    steps = bp["actions"]
+    locked = next(a for a in steps if "if" in a and a["if"][0]["value_template"] == "{{ locked }}")
+    assert "stop" in locked["then"][0]
+    assert steps.index(locked) < steps.index(next(a for a in steps if "choose" in a))

@@ -170,6 +170,34 @@ blueprint:
           max: 5
           step: 0.5
           unit_of_measurement: K
+    min_on_minutes:
+      name: Mindestlaufzeit / Minimum run time
+      description: >-
+        Nach einem Schalten des Freigabe-Schalters bleibt er mindestens so viele Minuten an, bevor die Regelung
+        ihn ausschaltet. 0 = keine Begrenzung.
+        / After the enable switch was changed it stays on at least this many minutes before it is switched off.
+        0 = no limit.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 120
+          step: 1
+          unit_of_measurement: min
+    min_off_minutes:
+      name: Mindestpause / Minimum pause
+      description: >-
+        Nach dem Ausschalten bleibt der Freigabe-Schalter mindestens so viele Minuten aus, bevor die Regelung
+        ihn wieder einschaltet. 0 = keine Begrenzung.
+        / After it was switched off the enable switch stays off at least this many minutes before it is switched
+        on again. 0 = no limit.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 120
+          step: 1
+          unit_of_measurement: min
     target_normal:
       name: Soll Normalbetrieb / Target normal
       selector:
@@ -231,6 +259,8 @@ variables:
   day_above: !input day_above
   hyst_low: !input hyst_low
   hyst_high: !input hyst_high
+  min_on: !input min_on_minutes
+  min_off: !input min_off_minutes
   target_normal_id: !input target_normal
   target_pv_id: !input target_pv
   target_min_id: !input target_min
@@ -247,6 +277,14 @@ variables:
     {{ water is not none and t_normal is not none
        and t_pv is not none and t_min is not none }}
   program: "{{ states(program_id) }}"
+
+  # Mindestlauf- und Pausenzeit: gezählt ab der letzten Änderung des Freigabe-Schalters.
+  enable_state: "{{ states(enable_id) }}"
+  lock_minutes: >-
+    {{ min_on if enable_state == 'on' else (min_off if enable_state == 'off' else 0) }}
+  locked: >-
+    {{ lock_minutes | float(0) > 0
+       and as_timestamp(now()) - as_timestamp(states[enable_id].last_changed) < lock_minutes | float(0) * 60 }}
 
   # PV-Status wird bei jedem Lauf neu bestimmt und bei Änderung in den Helfer
   # geschrieben. Die folgenden Zweige rechnen mit dem neuen Wert, nicht mit dem
@@ -297,7 +335,16 @@ actions:
         data:
           option: "{{ pv_status_new }}"
 
-  # 3. Programm wählen. Der erste passende Zweig gewinnt, die Reihenfolge ist
+  # 3. Mindestlauf-/Pausenzeit: kurz nach einem Schalten bleibt alles, wie es ist.
+  #    Nur der Fehlerfall (Sensor ausgefallen) und die PV-Statusführung laufen vorher.
+  - if:
+      - condition: template
+        value_template: "{{ locked }}"
+    then:
+      - stop: Mindestlauf- oder Pausenzeit läuft
+        error: false
+
+  # 4. Programm wählen. Der erste passende Zweig gewinnt, die Reihenfolge ist
   #    die der bisherigen Automation.
   - choose:
       - alias: PV-Betrieb
