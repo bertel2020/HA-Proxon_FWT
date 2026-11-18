@@ -64,7 +64,7 @@ class ProxonRoomClimate(ProxonRoomEntity, ClimateEntity):
 
     _blocks = frozenset({BLOCK_ROOMS})
     _attr_name = None
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_target_temperature_step = 1
 
@@ -124,12 +124,12 @@ class ProxonRoomClimate(ProxonRoomEntity, ClimateEntity):
         return self._setpoint_limits()[1]
 
     @property
-    def current_temperature(self) -> float | None:
+    def native_current_temperature(self) -> float | None:
         room = self.coordinator.data.rooms.get(self._room_index)
         return room.temperature if room else None
 
     @property
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         room = self.coordinator.data.rooms.get(self._room_index)
         return room.setpoint if room else None
 
