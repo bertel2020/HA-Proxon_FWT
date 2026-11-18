@@ -6,6 +6,7 @@
 
 **New**
 - **Room temperature as a sensor:** Every room gets a `sensor.<room>_room_temperature` with its actual temperature (register 150+n, same as on the thermostat), with long-term statistics. This includes room 1, which had no temperature sensor before.
+- **Setpoint as a diagnostic sensor:** One `sensor.<room>_setpoint_confirmed` per room with the setpoint confirmed by the device (register 180+n), with long-term statistics.
 
 ## 2.3.0 – 2026-11-17
 

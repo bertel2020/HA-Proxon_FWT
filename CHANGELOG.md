@@ -6,6 +6,7 @@
 
 **Neu**
 - **Raumtemperatur als Sensor:** Jeder Raum bekommt einen Sensor `sensor.<raum>_raumtemperatur` mit der Ist-Temperatur (Register 150+n, dieselbe wie am Thermostat), mit Langzeitstatistik. Auch Raum 1, der bisher keinen Temperatur-Sensor hatte.
+- **Solltemperatur als Diagnose-Sensor:** Je Raum ein Sensor `sensor.<raum>_solltemperatur_bestatigt` mit dem vom Gerät bestätigten Sollwert (Register 180+n), mit Langzeitstatistik.
 
 ## 2.3.0 – 2026-11-17
 

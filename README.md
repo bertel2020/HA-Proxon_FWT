@@ -88,7 +88,7 @@ Es werden zwei Arten von Geräten angelegt: ein **zentrales Gerät** (standardm�
 - **`climate.<raum>`** — aktuelle Temperatur (Register `150+n`), Solltemperatur (gelesen von `180+n`, geschrieben auf das separate, nur schreibbare Register `200+n`). Der einstellbare Bereich folgt dem Gerät: Raum 1 (Wohnen) direkt 18–30 °C, alle anderen Räume ihre Mittentemperatur ±3 °C (ganze Grad, innerhalb 18–30 °C; fehlt die Mittentemperatur, gilt 18–30 °C). Die Betriebsart zeigt nur das PTC-Element des Raums: „Heizen“, solange es freigegeben ist (Register 302), sonst „Aus“; das Umschalten setzt die PTC-Freigabe (Register 301). Die Aktion zeigt „Heizt“, solange das PTC-Element läuft (Register 300), sonst „Leerlauf“ bzw. „Aus“.
 - **`binary_sensor.*`** — PTC-Element aktiv (aktueller **Zustand**, Register 300).
 - **`switch.*`** — PTC-Element freigegeben (**Freigabe**, Register 301/302).
-- **`sensor.*`** — Raumtemperatur (Ist-Temperatur, wie `current_temperature` des Thermostats, aber als Sensor mit Langzeitstatistik) und Mittentemperatur (Raum 2–N, Rückmeldung vom Bedienteil).
+- **`sensor.*`** — Raumtemperatur (Ist-Temperatur, wie `current_temperature` des Thermostats, aber als Sensor mit Langzeitstatistik) Solltemperatur (bestätigt, Diagnose) und Mittentemperatur (Raum 2–N, Rückmeldung vom Bedienteil).
 - Optional auch ein oder mehrere **CO₂-/Feuchtesensoren**, wenn ihnen im Options-Flow (Namen-Schritt) dieser Raum zugewiesen wurde.
 
 Eine vollständige Liste aller Entities mit Beschreibung steht weiter unten unter [Alle Entities im Detail](#alle-entities-im-detail).
@@ -204,6 +204,7 @@ Die Tabellen unten gehen vom Standard-Gerätenamen **"Proxon FWT"** (→ `proxon
 | PTC-Element aktiv | `binary_sensor.wohnen_ptc_element_aktiv` | Aktueller **Zustand** der elektrischen Zusatzheizung dieses Raums (Register 300, Bit n) |
 | PTC-Element freigegeben | `switch.wohnen_ptc_element_freigegeben` | **Freigabe** der elektrischen Zusatzheizung dieses Raums (Register 301 schreiben / 302 lesen, Bit n) |
 | Raumtemperatur | `sensor.wohnen_raumtemperatur` | Ist-Temperatur des Raums (Register 150+n), dieselbe wie am Thermostat |
+| Solltemperatur (bestätigt) | `sensor.wohnen_solltemperatur_bestatigt` | Diagnose: vom Gerät bestätigter Sollwert (Register 180+n), derselbe wie am Thermostat |
 | Mittentemperatur | `sensor.wohnen_mittentemperatur` | Rückmeldung vom Bedienteil des Raums (Register 220+n, nur Raum 2–N) |
 | *(benutzerdefinierter Name)* | `sensor.wohnen_<name>` | CO₂- bzw. Feuchtesensor, wenn diesem Raum im Options-Flow zugewiesen |
 

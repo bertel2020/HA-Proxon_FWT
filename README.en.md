@@ -86,7 +86,7 @@ Two kinds of devices are created: a **central device** ("Proxon FWT" by default)
 - **`climate.<room>`** — current temperature (register `150+n`), target temperature (read from `180+n`, written to the separate write-only register `200+n`). The settable range follows the device: room 1 (Wohnen) directly 18–30 °C, every other room its mid temperature ±3 °C (whole degrees, within 18–30 °C; without a mid temperature 18–30 °C applies). The mode only reflects the room's PTC element: "Heat" while it is enabled (register 302), otherwise "Off"; changing it sets the PTC enable (register 301). The action shows "Heating" while the PTC element is running (register 300), otherwise "Idle" or "Off".
 - **`binary_sensor.*`** — PTC element active (current **state**, register 300).
 - **`switch.*`** — PTC element enabled (**enable**, registers 301/302).
-- **`sensor.*`** — room temperature (actual temperature, same as the thermostat's `current_temperature` but as a sensor with long-term statistics) and mid-room temperature (rooms 2–N, control-panel readback).
+- **`sensor.*`** — room temperature (actual temperature, same as the thermostat's `current_temperature` but as a sensor with long-term statistics) setpoint (confirmed, diagnostic) and mid-room temperature (rooms 2–N, control-panel readback).
 - Optionally, one or more **CO₂/humidity sensors**, if assigned to this room from the options flow's names step.
 
 A full table of every entity with a description is further down under [All entities in detail](#all-entities-in-detail).
@@ -202,6 +202,7 @@ The tables below assume the default device name **"Proxon FWT"** (→ `proxon_fw
 | PTC element active | `binary_sensor.wohnen_ptc_element_active` | Current **state** of this room's electric reheater element (register 300, bit n) |
 | PTC element enabled | `switch.wohnen_ptc_element_enabled` | **Enable** for this room's electric reheater element (register 301 write / 302 read, bit n) |
 | Room temperature | `sensor.wohnen_room_temperature` | Actual temperature of the room (register 150+n), same as on the thermostat |
+| Setpoint (confirmed) | `sensor.wohnen_setpoint_confirmed` | Diagnostic: setpoint confirmed by the device (register 180+n), same as on the thermostat |
 | Mid-room temperature | `sensor.wohnen_mid_room_temperature` | Readback from the room's control panel (register 220+n, rooms 2-N only) |
 | *(custom name)* | `sensor.wohnen_<name>` | CO₂ or humidity sensor, if assigned to this room from the options flow |
 

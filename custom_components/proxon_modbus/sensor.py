@@ -250,6 +250,7 @@ async def async_setup_entry(
         if not room_name:
             continue  # empty name = room slot not installed
         entities.append(ProxonRoomTempSensor(coordinator, entry.entry_id, i, room_name))
+        entities.append(ProxonRoomSetpointSensor(coordinator, entry.entry_id, i, room_name))
         if i == 0:
             continue  # no mid-room sensor for the main room (register base starts at room 2)
         entities.append(
@@ -471,6 +472,34 @@ class ProxonRoomTempSensor(ProxonRoomEntity, SensorEntity):
     def native_value(self) -> float | None:
         room = self.coordinator.data.rooms.get(self._room_index)
         return room.temperature if room else None
+
+
+class ProxonRoomSetpointSensor(ProxonRoomEntity, SensorEntity):
+    """Setpoint as confirmed by the device (register 180+n), same value as
+    the climate entity's target temperature. Diagnostic, to compare against
+    the actual temperature in history graphs."""
+
+    _blocks = frozenset({BLOCK_ROOMS})
+
+    _attr_device_class = SensorDeviceClass.TEMPERATURE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_translation_key = "room_setpoint"
+
+    def __init__(
+        self,
+        coordinator: ProxonModbusCoordinator,
+        entry_id: str,
+        room_index: int,
+        room_name: str,
+    ) -> None:
+        super().__init__(coordinator, entry_id, room_index, room_name, f"room_{room_index}_setpoint")
+
+    @property
+    def native_value(self) -> float | None:
+        room = self.coordinator.data.rooms.get(self._room_index)
+        return room.setpoint if room else None
 
 
 class ProxonRoomMidTempSensor(ProxonRoomEntity, SensorEntity):
