@@ -343,38 +343,69 @@ export class TwwpSectionsMethods {
     return this._twRefs;
   }
 
-  // History card: same range and previous-period switch as the FWT history, one measurement at a time.
+  // The curves of all measurements one below the other on one time axis: water with the targets, power (with the PV power as an
+  // area behind it, each on a scale of its own) and the air at the top of the unit with the limit for PV mode.
+  _twLanes(t, loaded, refsOn) {
+    const c = this._twCfg(t), nf = (v) => this._fmt(v, Math.abs(v) < 100 ? 1 : 0), deg = (v) => `${nf(v)}°`;
+    const watt = (v) => (v >= 1000 ? `${this._fmt(v / 1000)} kW` : `${this._fmt(v, 0)} W`);
+    const first = (k) => { const e = loaded.find((x) => x.m.k === k); return e && e.s && e.s[0] && e.s[0].pts.length > 1 ? e.s[0] : null; };
+    const water = first("water"), power = first("power"), pv = first("pv"), air = first("outer"), tv = (id) => this._num(id);
+    const refs = refsOn ? [["twwp_target_pv", "tw_pv_line"], ["twwp_target_normal", "tw_ref_n"], ["twwp_target_min", "tw_ref_min"]]
+      .map(([e, l]) => ({ v: tv(t.ents[e]), label: this._t(l, this._fmt(tv(t.ents[e]), 0)) })).filter((r) => r.v !== null) : [];
+    const limit = Number(c.pv_min_outer ?? 5);
+    return [
+      water && { h: 150, axis: true, series: [{ ...water, kind: "line", fmt: deg }], refs },
+      (power || pv) && { h: 90, axis: false, series: [
+        pv && { ...pv, kind: "area", color: AMBER, short: this._t("tw_short_pv"), fmt: watt },
+        power && { ...power, kind: "line", color: "#7e57c2", short: this._t("tw_short_hp"), fmt: watt, energy: true }].filter(Boolean) },
+      air && { h: 56, axis: true, series: [{ ...air, kind: "line", fmt: deg }], refs: [{ v: limit, label: this._t("tw_ref_outer", this._fmt(limit, 0)) }] },
+    ].filter(Boolean);
+  }
+
+  // History card: same range and previous-period switch as the FWT history. "All" (the default) shows every measurement in lanes,
+  // the other chips show one measurement with its key figures.
   _twHistory(t) {
     const metrics = this._twMetrics(t);
     if (!metrics.length) return "";
-    const range = this._range(), m = metrics.find((x) => x.k === this._twMetric) || metrics[0], hist = range === "24h" || range === "7d";
+    const range = this._range(), hist = range === "24h" || range === "7d";
+    const all = metrics.length > 1 && (this._twMetric === undefined || this._twMetric === "all" || !metrics.some((x) => x.k === this._twMetric));
+    const m = all ? null : metrics.find((x) => x.k === this._twMetric) || metrics[0];
     const key = (x, prev) => `tws|${x.id}|${x.attr ? "a" : "s"}|${range}${prev ? "|prev" : ""}`;
-    let series = this._hget(key(m), () => this._twLoadSeries(m, range));
-    if (this._hcmp && series) {
-      const prev = this._hget(key(m, true), () => this._twLoadSeries(m, range, true));
-      if (prev) series = [...series, ...prev];
-    }
-    const pid = t.ents.twwp_program, loaded = hist && pid ? this._hget(`twp|${pid}|${range}`, () => this._twLoadPhases(pid, range)) : null;
+    const pid = t.ents.twwp_program, loadedPh = hist && pid ? this._hget(`twp|${pid}|${range}`, () => this._twLoadPhases(pid, range)) : null;
     // the legend names how long each program ran in the shown range
     const t1 = Date.now() / 1000, t0 = t1 - RANGE_MS[range] / 1000;
-    const phases = Array.isArray(loaded) ? loaded.map((ph) => {
+    const phases = Array.isArray(loadedPh) ? loadedPh.map((ph) => {
       const sec = ph.iv.reduce((n, [a, b]) => n + Math.max(0, Math.min(b, t1) - Math.max(a, t0)), 0);
       return { ...ph, legend: `${ph.label} ${this._twFmtDur(sec)}`, noLegend: sec < 60 };
     }) : [];
     const pm = metrics.find((x) => x.k === "power"), ps = pm && hist ? this._hget(key(pm), () => this._twLoadSeries(pm, range)) : null;
-    const tv = (id) => this._num(id);
-    const refs = m.k === "water" && this._twRefsOn() ? [["twwp_target_pv", "tw_pv_line"], ["twwp_target_normal", "tw_ref_n"], ["twwp_target_min", "tw_ref_min"]]
-      .map(([e, l]) => ({ v: tv(t.ents[e]), label: this._t(l, this._fmt(tv(t.ents[e]), 0)) })).filter((r) => r.v !== null) : [];
+    const emptyNote = `<div class="note">${this._t(range === "30d" || range === "1y" ? "no_stats" : "no_history")}</div>`;
     let body;
-    if (series === undefined) body = this._skel(190);
-    else if (!series || !series.some((s) => s.pts.length > 1)) body = `<div class="note">${this._t(range === "30d" || range === "1y" ? "no_stats" : "no_history")}</div>`;
-    else body = this._chart(series, { range, unit: m.unit, bands: false, phases, refs, energy: m.k === "power" });
+    if (all) {
+      const loaded = metrics.map((x) => ({ m: x, s: this._hget(key(x), () => this._twLoadSeries(x, range)) }));
+      const lanes = loaded.some((e) => e.s === undefined) ? undefined : this._twLanes(t, loaded, this._twRefsOn());
+      body = lanes === undefined ? this._skel(260) : lanes.length ? this._laneChart(lanes, { range, phases }) : emptyNote;
+    } else {
+      let series = this._hget(key(m), () => this._twLoadSeries(m, range));
+      if (this._hcmp && series) {
+        const prev = this._hget(key(m, true), () => this._twLoadSeries(m, range, true));
+        if (prev) series = [...series, ...prev];
+      }
+      const tv = (id) => this._num(id);
+      const refs = m.k === "water" && this._twRefsOn() ? [["twwp_target_pv", "tw_pv_line"], ["twwp_target_normal", "tw_ref_n"], ["twwp_target_min", "tw_ref_min"]]
+        .map(([e, l]) => ({ v: tv(t.ents[e]), label: this._t(l, this._fmt(tv(t.ents[e]), 0)) })).filter((r) => r.v !== null) : [];
+      if (series === undefined) body = this._skel(190);
+      else if (!series || !series.some((s) => s.pts.length > 1)) body = emptyNote;
+      else body = this._chart(series, { range, unit: m.unit, bands: false, phases, refs, energy: m.k === "power" });
+    }
     const heat = ps && ps.heat != null && ps.heat > 0 ? `<div class="note">${this._t("tw_heat_time", this._twFmtDur(ps.heat))}</div>` : "";
     const rb = (v, l) => `<button class="vbtn ${range === v ? "a" : ""}" data-act="hrange" data-v="${v}">${l}</button>`;
-    const on = this._twRefsOn(), tgt = m.k === "water" ? `<button class="vbtn" style="margin-left:auto;${on ? "background:var(--primary-color);color:var(--text-primary-color,#fff)" : ""}" data-act="twrefs" aria-pressed="${on}" title="${this._t("tw_refs_tip")}">${this._icon("mdi:target")}${this._t("tw_refs")}</button>` : "";
-    const chips = metrics.length > 1 || tgt ? `<div class="mchips" role="group">${metrics.length > 1 ? metrics.map((x) => `<button class="vbtn ${x.k === m.k ? "a" : ""}" data-act="twmetric" data-v="${x.k}">${this._icon(x.icon)}${this._t(x.label)}</button>`).join("") : ""}${tgt}</div>` : "";
+    const on = this._twRefsOn(), tgt = all || m.k === "water" ? `<button class="vbtn" style="margin-left:auto;${on ? "background:var(--primary-color);color:var(--text-primary-color,#fff)" : ""}" data-act="twrefs" aria-pressed="${on}" title="${this._t("tw_refs_tip")}">${this._icon("mdi:target")}${this._t("tw_refs")}</button>` : "";
+    const chip = (k, icon, label) => `<button class="vbtn ${(all ? k === "all" : k === m.k) ? "a" : ""}" data-act="twmetric" data-v="${k}">${this._icon(icon)}${label}</button>`;
+    const chips = metrics.length > 1 || tgt ? `<div class="mchips" role="group">${metrics.length > 1 ? chip("all", "mdi:chart-multiple", this._t("tw_all")) + metrics.map((x) => chip(x.k, x.icon, this._t(x.label))).join("") : ""}${tgt}</div>` : "";
+    const prev = `<button class="vbtn ${this._hcmp && !all ? "a" : ""}" data-act="hcmp" aria-pressed="${!!this._hcmp && !all}" ${all ? `disabled title="${this._t("tw_all_noprev")}"` : ""}>${this._icon("mdi:compare-horizontal")}${this._t("prev_period")}</button>`;
     return `<ha-card><div class="h">${this._icon("mdi:chart-line")}${this._t("history")}
-      <span class="r rng"><button class="vbtn ${this._hcmp ? "a" : ""}" data-act="hcmp" aria-pressed="${!!this._hcmp}">${this._icon("mdi:compare-horizontal")}${this._t("prev_period")}</button><span class="rgrp" role="group">${rb("24h", this._t("hist_24"))}${rb("7d", this._t("hist_7"))}${rb("30d", this._t("hist_30"))}${rb("1y", this._t("hist_365"))}</span></span></div>${chips}${body}${heat}</ha-card>`;
+      <span class="r rng">${prev}<span class="rgrp" role="group">${rb("24h", this._t("hist_24"))}${rb("7d", this._t("hist_7"))}${rb("30d", this._t("hist_30"))}${rb("1y", this._t("hist_365"))}</span></span></div>${chips}${body}${heat}</ha-card>`;
   }
 
   _twTab(d) {

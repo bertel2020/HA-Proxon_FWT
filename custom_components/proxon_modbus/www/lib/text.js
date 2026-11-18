@@ -148,6 +148,11 @@ export const TEXT = {
     tw_refs: "Sollwerte",
     tw_refs_tip: "Sollwerte als Linien in der Wasserkurve zeigen",
     tw_scale: "Schaltschwellen",
+    tw_all: "Alle",
+    tw_ref_outer: "PV-Betrieb ab {0}°",
+    tw_all_noprev: "Den Vorzeitraum gibt es nur bei einer einzelnen Größe",
+    tw_short_pv: "PV",
+    tw_short_hp: "WP",
   },
   en: {
     mode: "Operating mode", air: "Air paths", fan: "Ventilation", heatpump: "Heat pump",
@@ -297,5 +302,10 @@ export const TEXT = {
     tw_refs: "Targets",
     tw_refs_tip: "Show the targets as lines in the water curve",
     tw_scale: "Switching thresholds",
+    tw_all: "All",
+    tw_ref_outer: "PV mode from {0}°",
+    tw_all_noprev: "The previous period is only available for a single measurement",
+    tw_short_pv: "PV",
+    tw_short_hp: "HP",
   },
 };

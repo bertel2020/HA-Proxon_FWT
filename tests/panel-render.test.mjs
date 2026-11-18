@@ -528,3 +528,45 @@ test("the lane chart stacks measurements on one time axis, each lane with its ow
   assert.ok(pv.y(3000) < pv.y(0) && power.y(400) < power.y(0), "each curve rises with its own scale");
   assert.ok(Math.abs(pv.y(3000) - (power.y(400))) < 20, "both curves of the unlabelled lane fill the lane height, whatever their units");
 });
+
+test("the hot water history starts with 'All' in lanes, the chip comes first, and a single measurement is one click away", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = twHist;
+  panel._twMetric = undefined;
+  const html = await render(panel, () => { panel._tab = "warm"; panel._histRange = "24h"; panel._hcmp = false; });
+  check(html);
+  const chips = [...html.matchAll(/data-act="twmetric" data-v="(\w+)"/g)].map((x) => x[1]);
+  assert.deepEqual(chips, ["all", "water", "power", "pv", "outer"], "'All' first, then the single measurements");
+  assert.ok(/class="vbtn a" data-act="twmetric" data-v="all"/.test(html), "'All' is selected by default");
+  const chart = html.slice(html.indexOf('class="ch"'));
+  assert.ok(chart.includes("Soll PV 60°") && chart.includes("PV-Betrieb ab 5°"), "targets in the water lane, the PV limit in the air lane");
+  assert.ok(chart.includes("<polygon") && chart.includes(">WP</text>") && chart.includes(">PV</text>"), "power lane with the PV area");
+  assert.ok(/data-act="hcmp"[^>]*disabled/.test(html), "no previous period in the lane view");
+  const model = panel._cm;
+  assert.equal(model.series.length, 4, "four curves with crosshair data");
+  // one measurement
+  panel._click({ composedPath: () => [{ dataset: { act: "twmetric", v: "water" } }] });
+  const water = await render(panel, () => { panel._tab = "warm"; });
+  assert.ok(/class="vbtn a" data-act="twmetric" data-v="water"/.test(water) && !water.slice(water.indexOf('class="ch"')).includes(">WP</text>"), "single measurement: the normal chart");
+  assert.ok(!/data-act="hcmp"[^>]*disabled/.test(water), "previous period available again");
+  panel._click({ composedPath: () => [{ dataset: { act: "twmetric", v: "all" } }] });
+  assert.ok(/class="vbtn a" data-act="twmetric" data-v="all"/.test(await render(panel, () => { panel._tab = "warm"; })), "and back to 'All'");
+});
+
+test("the lane view honours the targets switch, the range and the configured PV limit", async () => {
+  const settings = [{ ...twSettings[0], twwp: [{ ...twSettings[0].twwp[0], pv_min_outer: 7 }] }];
+  const hass7 = { ...twHist, callWS: async (m) => (m.type === "proxon_modbus/settings" ? settings : twHist.callWS(m)) };
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = hass7;
+  panel._twMetric = "all"; panel._twRefs = true;
+  const on = await render(panel, () => { panel._tab = "warm"; panel._histRange = "24h"; });
+  assert.ok(on.includes("PV-Betrieb ab 7°"), "limit from the settings");
+  panel._click({ composedPath: () => [{ dataset: { act: "twrefs" } }] });
+  const off = await render(panel, () => { panel._tab = "warm"; });
+  assert.ok(!off.slice(off.indexOf('class="ch"')).includes("Soll PV 60°"), "targets switched off in the water lane");
+  assert.ok(off.slice(off.indexOf('class="ch"')).includes("PV-Betrieb ab 7°"), "the PV limit stays");
+  const month = await render(panel, () => { panel._tab = "warm"; panel._histRange = "30d"; });
+  check(month);
+  assert.ok(month.includes('class="ch"') && !month.includes("Heizzeit:"), "statistics: lanes without program bands");
+  panel._twRefs = true; panel._histRange = "24h"; panel._twMetric = undefined;
+});
