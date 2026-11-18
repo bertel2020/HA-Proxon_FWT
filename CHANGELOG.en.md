@@ -2,7 +2,7 @@
 
 *[🇩🇪 Deutsche Version](CHANGELOG.md)*
 
-## Unreleased
+## 2.4.0 – 2026-11-18
 
 **New**
 - **Blueprint "Hot water heat pump with PV surplus":** Controls the enable of a hot water heat pump (TWWP) through two switches by tank temperature, PV surplus and time of day (PV, normal, minimum mode, night shutdown). If a sensor fails the enables are switched off. Usable independently of Modbus and of the integration; hysteresis adjustable (inputs "Start/Stop hysteresis"). Optional minimum run time and minimum pause of the enable switch (inputs "Minimum run time" and "Minimum pause", default 10 minutes, 0 = off).

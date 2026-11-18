@@ -2,7 +2,7 @@
 
 *[🇬🇧 English version](CHANGELOG.en.md)*
 
-## Unveröffentlicht
+## 2.4.0 – 2026-11-18
 
 **Neu**
 - **Blueprint „Trinkwasser-Wärmepumpe mit PV-Überschuss“:** Regelt die Freigabe einer Trinkwasser-Wärmepumpe (TWWP) über zwei Schalter nach Wassertemperatur, PV-Überschuss und Tageszeit (PV-Betrieb, Normalbetrieb, Minimumbetrieb, Nachtabschaltung). Fällt ein Sensor aus, werden die Freigaben abgeschaltet. Unabhängig von Modbus und der Integration nutzbar; Hysterese einstellbar (Eingaben „Hysterese Einschalten/Ausschalten“). Optional mit Mindestlaufzeit und Mindestpause des Freigabe-Schalters (Eingaben „Mindestlaufzeit“ und „Mindestpause“, Standard 10 Minuten, 0 = aus).
