@@ -432,3 +432,20 @@ test("the history legend names how long each program ran in the shown range", as
   // the tooltip names only the program, without the duration
   assert.deepEqual(panel._cm.phases.map((p) => p.label).sort(), ["Minimumbetrieb", "Nachtabschaltung", "Normalbetrieb", "PV-Betrieb"]);
 });
+
+test("the targets can be switched off in the water curve and then no longer stretch its scale", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = twHist;
+  const chartPart = (html) => html.slice(html.indexOf('class="ch"'));
+  const on = await render(panel, () => { panel._tab = "warm"; panel._histRange = "24h"; });
+  assert.ok(on.includes('data-act="twrefs"') && on.includes('aria-pressed="true"'), "button, pressed by default");
+  assert.ok(chartPart(on).includes("Soll PV 60°"), "targets drawn");
+  const hiOn = panel._cm.hi;
+  panel._click({ composedPath: () => [{ dataset: { act: "twrefs" } }] });
+  const off = await render(panel, () => { panel._tab = "warm"; });
+  assert.ok(off.includes('aria-pressed="false"') && !chartPart(off).includes("Soll PV 60°"), "lines gone");
+  assert.ok(panel._cm.hi <= hiOn, "the scale no longer includes the targets");
+  const power = await render(panel, () => { panel._twMetric = "power"; panel._tab = "warm"; });
+  assert.ok(!power.includes('data-act="twrefs"'), "only on the water curve");
+  panel._twRefs = true; panel._twMetric = "water";
+});

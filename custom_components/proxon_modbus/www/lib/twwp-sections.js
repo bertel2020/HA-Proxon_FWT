@@ -334,6 +334,14 @@ export class TwwpSectionsMethods {
     return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`;
   }
 
+  // Whether the targets are drawn into the water curve; kept in the browser because it is a matter of taste.
+  _twRefsOn() {
+    if (this._twRefs === undefined) {
+      try { this._twRefs = localStorage.getItem("proxon_fwt_twrefs") !== "0"; } catch (e) { this._twRefs = true; }
+    }
+    return this._twRefs;
+  }
+
   // History card: same range and previous-period switch as the FWT history, one measurement at a time.
   _twHistory(t) {
     const metrics = this._twMetrics(t);
@@ -354,7 +362,7 @@ export class TwwpSectionsMethods {
     }) : [];
     const pm = metrics.find((x) => x.k === "power"), ps = pm && hist ? this._hget(key(pm), () => this._twLoadSeries(pm, range)) : null;
     const tv = (id) => this._num(id);
-    const refs = m.k === "water" ? [["twwp_target_pv", "tw_pv_line"], ["twwp_target_normal", "tw_ref_n"], ["twwp_target_min", "tw_ref_min"]]
+    const refs = m.k === "water" && this._twRefsOn() ? [["twwp_target_pv", "tw_pv_line"], ["twwp_target_normal", "tw_ref_n"], ["twwp_target_min", "tw_ref_min"]]
       .map(([e, l]) => ({ v: tv(t.ents[e]), label: this._t(l, this._fmt(tv(t.ents[e]), 0)) })).filter((r) => r.v !== null) : [];
     let body;
     if (series === undefined) body = this._skel(190);
@@ -362,7 +370,8 @@ export class TwwpSectionsMethods {
     else body = this._chart(series, { range, unit: m.unit, bands: false, phases, refs, energy: m.k === "power" });
     const heat = ps && ps.heat != null && ps.heat > 0 ? `<div class="note">${this._t("tw_heat_time", this._twFmtDur(ps.heat))}</div>` : "";
     const rb = (v, l) => `<button class="vbtn ${range === v ? "a" : ""}" data-act="hrange" data-v="${v}">${l}</button>`;
-    const chips = metrics.length > 1 ? `<div class="mchips" role="group">${metrics.map((x) => `<button class="vbtn ${x.k === m.k ? "a" : ""}" data-act="twmetric" data-v="${x.k}">${this._icon(x.icon)}${this._t(x.label)}</button>`).join("")}</div>` : "";
+    const on = this._twRefsOn(), tgt = m.k === "water" ? `<button class="vbtn" style="margin-left:auto;${on ? "background:var(--primary-color);color:var(--text-primary-color,#fff)" : ""}" data-act="twrefs" aria-pressed="${on}" title="${this._t("tw_refs_tip")}">${this._icon("mdi:target")}${this._t("tw_refs")}</button>` : "";
+    const chips = metrics.length > 1 || tgt ? `<div class="mchips" role="group">${metrics.length > 1 ? metrics.map((x) => `<button class="vbtn ${x.k === m.k ? "a" : ""}" data-act="twmetric" data-v="${x.k}">${this._icon(x.icon)}${this._t(x.label)}</button>`).join("") : ""}${tgt}</div>` : "";
     return `<ha-card><div class="h">${this._icon("mdi:chart-line")}${this._t("history")}
       <span class="r rng"><button class="vbtn ${this._hcmp ? "a" : ""}" data-act="hcmp" aria-pressed="${!!this._hcmp}">${this._icon("mdi:compare-horizontal")}${this._t("prev_period")}</button><span class="rgrp" role="group">${rb("24h", this._t("hist_24"))}${rb("7d", this._t("hist_7"))}${rb("30d", this._t("hist_30"))}${rb("1y", this._t("hist_365"))}</span></span></div>${chips}${body}${heat}</ha-card>`;
   }

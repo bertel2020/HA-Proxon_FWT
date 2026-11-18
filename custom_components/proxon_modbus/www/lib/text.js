@@ -148,6 +148,8 @@ export const TEXT = {
     tw_pl_normal: "Normalbetrieb",
     tw_pl_minimum: "Minimumbetrieb",
     tw_pl_night: "Nachtabschaltung",
+    tw_refs: "Sollwerte",
+    tw_refs_tip: "Sollwerte als Linien in der Wasserkurve zeigen",
   },
   en: {
     mode: "Operating mode", air: "Air paths", fan: "Ventilation", heatpump: "Heat pump",
@@ -297,5 +299,7 @@ export const TEXT = {
     tw_pl_normal: "Normal mode",
     tw_pl_minimum: "Minimum mode",
     tw_pl_night: "Night shutdown",
+    tw_refs: "Targets",
+    tw_refs_tip: "Show the targets as lines in the water curve",
   },
 };
