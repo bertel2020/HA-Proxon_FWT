@@ -8,7 +8,7 @@ export class ChartsMethods {
     const lang = this._hass.language;
     const ms = RANGE_MS[o.range] / 1000;
     const t1 = Date.now() / 1000, t0 = t1 - ms;
-    const vals = series.flatMap((s) => s.pts.map((p) => p[1]));
+    const vals = series.flatMap((s) => s.pts.map((p) => p[1])).concat((o.refs || []).map((r) => r.v)); // reference lines are part of the scale
     let mn = Math.min(...vals), mx = Math.max(...vals);
     const raw = Math.max(1e-6, mx - mn) / 3, p10 = 10 ** Math.floor(Math.log10(raw)), f = raw / p10;
     const step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p10;
@@ -48,6 +48,14 @@ export class ChartsMethods {
       const s0 = Math.max(a, t0), s1 = Math.min(b, t1);
       return s1 > s0 ? `<rect x="${x(s0).toFixed(1)}" y="${pt}" width="${Math.max(1, x(s1) - x(s0)).toFixed(1)}" height="${H - pt - pb}" fill="${BLUE}" opacity=".13"/>` : "";
     }).join("");
+    // Phases (o.phases: [{ iv: [[from, to]], color, label }]) as coloured bands behind the curves.
+    const phaseBands = (o.phases || []).map((ph) => ph.iv.map(([a, b]) => {
+      const s0 = Math.max(a, t0), s1 = Math.min(b, t1);
+      return s1 > s0 ? `<rect x="${x(s0).toFixed(1)}" y="${pt}" width="${Math.max(1, x(s1) - x(s0)).toFixed(1)}" height="${H - pt - pb}" fill="${ph.color}" opacity=".2"/>` : "";
+    }).join("")).join("");
+    // Reference lines (o.refs: [{ v, label }]), for example targets, dashed with their label at the right edge.
+    const refLines = (o.refs || []).map((r) => `<line x1="${pl}" x2="${W - pr}" y1="${y(r.v).toFixed(1)}" y2="${y(r.v).toFixed(1)}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="4 4" opacity=".75"/>
+      <text class="st" x="${W - pr - 2}" y="${(y(r.v) - 4).toFixed(1)}" text-anchor="end" style="font-size:11px">${r.label}</text>`).join("");
     const lines = series.map((s) => `<polyline fill="none" stroke="${s.color}" stroke-width="${s.prev ? 1.4 : 1.8}" ${s.prev ? 'stroke-dasharray="5 4" opacity=".55"' : ""} stroke-linejoin="round" points="${s.pts.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>`).join("");
     // curves with their own stat row are named there; the legend keeps only the rest (previous period, bands)
     const legend = series.filter((s) => s.prev || !s.pts.length).map((s) => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join("");
@@ -65,11 +73,11 @@ export class ChartsMethods {
       return `<div class="hst"><span class="n"><i style="background:${s.color}"></i>${s.label}</span><span class="v"><b>${nf(Math.min(...v))}</b>${o.unit}</span><span class="v"><b>${nf(Math.max(...v))}</b>${o.unit}</span><span class="v"><b>${nf(v.reduce((a, b) => a + b, 0) / v.length)}</b>${o.unit}</span>${kwh}</div>`;
     }).join("");
     const statHead = statRows ? `<div class="hst hh"><span class="n"></span><span class="v">${this._t("st_min")}</span><span class="v">${this._t("st_max")}</span><span class="v">Ø</span>${o.energy ? '<span class="v">Σ</span>' : ""}</div>` : "";
-    this._cm = { W, H, pl, pr, pt, pb, t0, t1, lo, hi, series, unit: o.unit, range: o.range, x, y };
+    this._cm = { W, H, pl, pr, pt, pb, t0, t1, lo, hi, series, unit: o.unit, range: o.range, x, y, phases: o.phases || [] };
     return `<div class="chw"><svg class="ch" style="max-width:100%;height:auto;touch-action:pan-y" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("history")}">
-      ${bands}${byBands}${grid}${lines}${xt}<line class="xl" y1="${pt}" y2="${H - pb}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/><g class="xd"></g>
+      ${bands}${byBands}${phaseBands}${grid}${refLines}${lines}${xt}<line class="xl" y1="${pt}" y2="${H - pb}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/><g class="xd"></g>
       <rect class="ov" x="${pl}" y="${pt}" width="${W - pl - pr}" height="${H - pt - pb}" fill="transparent"/></svg><div class="tip" style="display:none"></div></div>
-      <div class="legend">${legend}${showBands ? `<span><i style="background:#3fa660;opacity:.4"></i>${this._t("hp_runs")}</span>` : ""}${o.bypass && o.bypass.length ? `<span><i style="background:${BLUE};opacity:.4"></i>${this._t("bypass_open")}</span>` : ""}</div>
+      <div class="legend">${legend}${(o.phases || []).filter((ph) => ph.iv.length).map((ph) => `<span><i style="background:${ph.color};opacity:.5"></i>${ph.label}</span>`).join("")}${showBands ? `<span><i style="background:#3fa660;opacity:.4"></i>${this._t("hp_runs")}</span>` : ""}${o.bypass && o.bypass.length ? `<span><i style="background:${BLUE};opacity:.4"></i>${this._t("bypass_open")}</span>` : ""}</div>
       <div class="hsts" style="--c:${o.energy ? 4 : 3}">${statHead}${statRows}</div>`;
   }
 
@@ -123,7 +131,8 @@ export class ChartsMethods {
       const wl = m.range === "24h" ? when.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })
         : m.range === "1y" ? when.toLocaleDateString(lang, { day: "2-digit", month: "2-digit", year: "numeric" })
           : when.toLocaleString(lang, { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-      tip.innerHTML = `<b>${wl}</b>${rows.map(({ s, p }) => `<div><i style="background:${s.color}"></i>${s.label} <b>${p[1].toLocaleString(lang, { maximumFractionDigits: 1 })}${m.unit}</b></div>`).join("")}`;
+      const phase = (m.phases || []).find((ph) => ph.iv.some(([a, b]) => t >= a && t <= b));
+      tip.innerHTML = `<b>${wl}</b>${rows.map(({ s, p }) => `<div><i style="background:${s.color}"></i>${s.label} <b>${p[1].toLocaleString(lang, { maximumFractionDigits: 1 })}${m.unit}</b></div>`).join("")}${phase ? `<div><i style="background:${phase.color};opacity:.6"></i>${phase.label}</div>` : ""}`;
       tip.style.display = "block";
       const left = (fx / m.W) * r.width;
       tip.style.left = `${Math.max(0, Math.min(r.width - tip.offsetWidth, left + 12))}px`;

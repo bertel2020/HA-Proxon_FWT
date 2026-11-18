@@ -252,3 +252,20 @@ test("the hysteresis is shown and editable, the note follows it, and a narrow ba
   await new Promise((r) => setTimeout(r, 700));
   assert.deepEqual(calls.find((c) => c[1] === "set_value"), ["number", "set_value", { entity_id: "number.tw_hlow", value: 3.5 }], "steps by the entity's own step (0.5)");
 });
+
+test("the history chart draws phase bands, reference lines and a legend for them, and keeps them in its scale", () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = hass;
+  const now = Date.now() / 1000, h = 3600;
+  const series = [{ label: "Wasser", color: "#378ADD", pts: [[now - 20 * h, 41], [now - 10 * h, 47], [now - 1 * h, 52]] }];
+  const phases = [{ iv: [[now - 12 * h, now - 8 * h]], color: "#3fa660", label: "PV-Betrieb" }, { iv: [], color: "#D85A30", label: "Minimum" }];
+  const html = panel._chart(series, { range: "24h", unit: "°", phases, refs: [{ v: 60, label: "Soll PV 60°" }] });
+  assert.ok(html.includes('fill="#3fa660" opacity=".2"'), "band for the phase");
+  assert.ok(html.includes("Soll PV 60°") && html.includes('stroke-dasharray="4 4"'), "reference line with its label");
+  assert.ok(html.includes("PV-Betrieb</span>") && !html.includes("Minimum</span>"), "legend only for phases that occur");
+  assert.ok(panel._cm.hi >= 60, "the reference value is inside the axis");
+  assert.deepEqual(panel._cm.phases, phases);
+  assert.ok(!html.includes("NaN") && !html.includes("undefined"));
+  const plain = panel._chart(series, { range: "24h", unit: "°" });
+  assert.ok(!plain.includes("stroke-dasharray=\"4 4\"") && panel._cm.hi < 60, "without options the chart is unchanged");
+});
