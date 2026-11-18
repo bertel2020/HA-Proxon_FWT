@@ -472,3 +472,12 @@ test("the cards of a row in the wide hot water layout are stretched to the same 
   assert.match(css, /\.twgrid \{ align-items: stretch; \}/);
   assert.match(css, /\.tw-hero > ha-card[\s\S]*flex: 1/);
 });
+
+test("the scale shows 65 degrees although the targets stop at 60, so the PV switching band above 60 is visible", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = twHass;
+  const html = await render(panel, () => { panel._tab = "warm"; });
+  const scale = html.slice(html.indexOf('aria-label="Sollwerte"'));
+  assert.ok(scale.includes(">65</text>") && scale.includes(">60</text>") && !scale.includes(">70</text>"), "marks up to 65");
+  assert.ok(html.includes("PV: heizt unter 57°, stoppt ab 61°"), "the stop point 61 lies on the scale");
+});
