@@ -2,6 +2,11 @@
 
 *[🇬🇧 English version](CHANGELOG.en.md)*
 
+## 2.4.3 – 2026-11-20
+
+**Korrigiert**
+- Der Sensor „Heizt“ der Warmwasser-Wärmepumpe lief mit einem Listener außerhalb des Event-Loops und warf bei jeder Leistungsänderung einen Fehler. Er aktualisiert sich jetzt sofort.
+
 ## 2.4.2 – 2026-11-18
 
 **Geändert**

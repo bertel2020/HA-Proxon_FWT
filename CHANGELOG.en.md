@@ -2,6 +2,11 @@
 
 *[🇩🇪 Deutsche Version](CHANGELOG.md)*
 
+## 2.4.3 – 2026-11-20
+
+**Fixed**
+- The hot water heat pump "Heating" sensor used a state listener that ran outside the event loop and raised an error on every power change. It now updates immediately.
+
 ## 2.4.2 – 2026-11-18
 
 **Changed**
