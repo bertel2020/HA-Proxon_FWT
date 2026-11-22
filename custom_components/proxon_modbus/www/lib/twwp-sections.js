@@ -188,6 +188,7 @@ export class TwwpSectionsMethods {
       <g transform="translate(232,10)">
         <rect width="112" height="200" rx="28" fill="var(--card-background-color)" stroke="var(--divider-color)" stroke-width="1.5"/>
         <g clip-path="url(#twc${i})">
+          <rect x="0" y="70" width="112" height="130" fill="var(--secondary-background-color)" opacity=".55"/>
           <rect x="0" y="${lvl.toFixed(1)}" width="112" height="${(200 - lvl).toFixed(1)}" fill="${col}" opacity=".42"/>
           <rect x="10" y="${(lvl + 14).toFixed(1)}" width="7" height="${Math.max(0, 200 - lvl - 40).toFixed(1)}" rx="3.5" fill="#fff" opacity=".28"/>
           <rect x="0" y="0" width="112" height="70" fill="var(--secondary-background-color)"/>

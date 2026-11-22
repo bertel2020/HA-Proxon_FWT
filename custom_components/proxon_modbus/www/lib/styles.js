@@ -63,7 +63,7 @@ ha-card { padding: 14px 16px; display: block; border: 1px solid var(--ha-card-bo
 .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
 @container (max-width: 900px) { .kpi { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @container (max-width: 640px) { .kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@container (max-width: 520px) { .kpi .ic { width: 30px; height: 30px; } .kpi .k { gap: 8px; } }
+@container (max-width: 520px) { .kpi .ic { width: 28px; height: 28px; } .kpi .k { gap: 6px; } .kpi .v { font-size: 20px; white-space: nowrap; } .kpi .v small { font-size: 12px; } .kpi .lb { font-size: 12px; } }
 .kpi .k { display: flex; gap: 10px; align-items: flex-start; min-width: 0; } /* top-aligned: label and value sit at the same height in every tile, with or without a sparkline or sub line */
 .kpi .k > div:last-child { min-width: 0; }
 .kpi .k.go { cursor: pointer; border-radius: 12px; } .kpi .k.go:hover .ic { filter: brightness(.95); outline: 1px solid color-mix(in srgb, var(--kc) 50%, transparent); }
