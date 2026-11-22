@@ -328,6 +328,11 @@ export class ProxonFwtBase extends HTMLElement {
     return [rs.filter((r) => this._on(r.ents.ptc_active)).length, rs.length, rs.filter((r) => r.ents.ptc_enable && this._on(r.ents.ptc_enable)).length];
   }
 
+  // Wraps a value so that a click opens the more-info dialog of its entity (tag "g" inside an SVG).
+  _lk(id, inner, tag = "span") {
+    return id ? `<${tag} class="lk" role="button" tabindex="0" data-act="more" data-v="${id}">${inner}</${tag}>` : inner;
+  }
+
   _on(id) {
     const s = this._state(id);
     return !!s && s.state === "on";

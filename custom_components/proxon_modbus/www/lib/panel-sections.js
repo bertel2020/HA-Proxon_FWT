@@ -24,24 +24,25 @@ export class PanelSectionsMethods {
   // Overview status block: one quiet row per topic (icon, label, value). The heat pump state stays in the header chips, the fan stage in the controls.
   _sec_status(d) {
     const c = d.central, rows = [];
-    const row = (icon, col, label, value, go = "") => `<div class="srow2 ${go ? "go" : ""}" ${go ? `role="button" tabindex="0" data-act="tab" data-v="${go}"` : ""}>
-      <span class="ic" style="color:${col}">${this._icon(icon)}</span><span class="lb2">${label}</span><b style="color:${col}">${value}</b></div>`;
+    // The row opens its tab; the value opens the entity (a row without a tab opens the entity as a whole).
+    const row = (icon, col, label, value, go = "", id = "") => `<div class="srow2 ${go ? "go" : ""}" ${go ? `role="button" tabindex="0" data-act="tab" data-v="${go}"` : id ? `role="button" tabindex="0" data-act="more" data-v="${id}"` : ""}>
+      <span class="ic" style="color:${col}">${this._icon(icon)}</span><span class="lb2">${label}</span>${id && go ? this._lk(id, `<b style="color:${col}">${value}</b>`) : `<b style="color:${col}">${value}</b>`}</div>`;
     const MUTED = "var(--primary-text-color)", WARN = "#c98400", BADC = "#db4437";
     if (this._ok(c.error_system)) {
       const bad = this._on(c.error_system);
-      rows.push(row(bad ? "mdi:alert-circle-outline" : "mdi:check-circle-outline", bad ? BADC : GREEN, this._t("error"), this._t(bad ? "has_error" : "no_error"), bad ? "diag" : ""));
+      rows.push(row(bad ? "mdi:alert-circle-outline" : "mdi:check-circle-outline", bad ? BADC : GREEN, this._t("error"), this._t(bad ? "has_error" : "no_error"), bad ? "diag" : "", c.error_system));
     }
     const f = this._filterInfo(c);
     if (this._ok(c.filter_device) || f.known) {
-      rows.push(row("mdi:air-filter", f.due ? WARN : GREEN, this._t("filter_device"), this._t(f.due ? "change_due" : "ok"), "diag"));
+      rows.push(row("mdi:air-filter", f.due ? WARN : GREEN, this._t("filter_device"), this._t(f.due ? "change_due" : "ok"), "diag", c.filter_device));
     }
     if (c.mode_change_possible && this._ok(c.mode_change_possible)) {
       const ok = this._on(c.mode_change_possible);
-      rows.push(row("mdi:swap-horizontal", MUTED, this._t("mode_change"), this._t(ok ? "possible" : "not_possible")));
+      rows.push(row("mdi:swap-horizontal", MUTED, this._t("mode_change"), this._t(ok ? "possible" : "not_possible"), "", c.mode_change_possible));
     }
     if (c.bypass_active && this._ok(c.bypass_active)) {
       const open = this._on(c.bypass_active), txt = this._t(open ? "bypass_open" : "bypass_closed");
-      rows.push(row("mdi:routes", open ? BLUE : MUTED, txt.replace(/\s*\(.*\)$/, ""), ""));
+      rows.push(row("mdi:routes", open ? BLUE : MUTED, txt.replace(/\s*\(.*\)$/, ""), "", "", c.bypass_active));
     }
     const ptc = d.rooms.filter((r) => this._on(r.ents.ptc_active)).length;
     const ptcEna = d.rooms.filter((r) => r.ents.ptc_enable && this._on(r.ents.ptc_enable)).length;
@@ -55,20 +56,20 @@ export class PanelSectionsMethods {
     if (f.due) {
       const near = f.left !== null && f.left <= 7;
       out.push({ key: "filter_now", lvl: near ? "r" : "w", icon: "mdi:air-filter", title: this._t("ins_filter_now", this._t("filter_device")),
-        text: f.left !== null ? this._t("ins_shutdown_d", this._days(f.left)) : this._t("ins_filter_now_d"), tab: "diag", go: "go_maint" });
+        text: f.left !== null ? this._t("ins_shutdown_d", this._days(f.left)) : this._t("ins_filter_now_d"), tab: "diag", go: "go_maint", ent: c.filter_device });
     } else if (f.known && f.age >= f.iv - 14) {
       out.push({ key: "filter_soon", lvl: "w", icon: "mdi:air-filter", title: this._t("ins_filter_soon", this._t("filter_device")),
-        text: this._t("ins_filter_soon_d", String(Math.round(f.age)), String(f.iv)), tab: "diag", go: "go_maint" });
+        text: this._t("ins_filter_soon_d", String(Math.round(f.age)), String(f.iv)), tab: "diag", go: "go_maint", ent: c.filter_age_days });
     }
     if (this._recirc() && this._on(c.filter_recirculation)) {
-      out.push({ key: "filter_recirc", lvl: "w", icon: "mdi:air-filter", title: this._t("ins_filter_now", this._t("filter_recirc")), text: this._t("ins_filter_now_d"), tab: "diag", go: "go_maint" });
+      out.push({ key: "filter_recirc", lvl: "w", icon: "mdi:air-filter", title: this._t("ins_filter_now", this._t("filter_recirc")), text: this._t("ins_filter_now_d"), tab: "diag", go: "go_maint", ent: c.filter_recirculation });
     }
     const starts = this._num(c.hp_starts_today);
-    if (starts !== null && starts >= 8) out.push({ key: "cycle", lvl: "i", icon: "mdi:repeat", title: this._t("ins_cycle_t"), text: this._t("ins_cycle_d", String(Math.round(starts))), tab: "history", go: "go_hist" });
+    if (starts !== null && starts >= 8) out.push({ key: "cycle", lvl: "i", icon: "mdi:repeat", title: this._t("ins_cycle_t"), text: this._t("ins_cycle_d", String(Math.round(starts))), tab: "history", go: "go_hist", ent: c.hp_starts_today });
     const eff = this._efficiency();
-    if (eff !== null && eff < 75 && !this._on(c.bypass_active)) out.push({ key: "eff", lvl: "w", icon: "mdi:percent-circle-outline", title: this._t("ins_eff_t"), text: this._t("ins_eff_d", String(eff)), tab: "diag", go: "go_diag" });
+    if (eff !== null && eff < 75 && !this._on(c.bypass_active)) out.push({ key: "eff", lvl: "w", icon: "mdi:percent-circle-outline", title: this._t("ins_eff_t"), text: this._t("ins_eff_d", String(eff)), tab: "diag", go: "go_diag", ent: c.heat_recovery });
     const hi = d.rooms.map((r) => ({ r, v: this._num(r.co2) })).filter((x) => x.v !== null && x.v > 1000).sort((a, b) => b.v - a.v)[0];
-    if (hi) out.push({ key: "co2", lvl: "w", icon: "mdi:molecule-co2", title: this._t("ins_co2_t"), text: this._t("ins_co2_d", hi.r.name, String(Math.round(hi.v))), tab: "rooms", go: "tab_rooms" });
+    if (hi) out.push({ key: "co2", lvl: "w", icon: "mdi:molecule-co2", title: this._t("ins_co2_t"), text: this._t("ins_co2_d", hi.r.name, String(Math.round(hi.v))), tab: "rooms", go: "tab_rooms", ent: hi.r.co2 });
     if (!out.length) {
       const bits = [eff !== null ? this._t("ins_ok_eff", String(eff)) : "", this._t("ins_ok_d")].filter(Boolean).join(" ");
       out.push({ lvl: "o", icon: "mdi:check-circle-outline", title: this._t("ins_ok_t"), text: bits });

@@ -215,19 +215,19 @@ export class SectionsMethods {
       return `<path class="duct" d="${p}" stroke="${col}"/><path class="refr ${on ? "rgo" : ""}" d="${p}" stroke="${col}"/>`; };
     const stops = (a) => a.map(([o, col]) => `<stop offset="${o}" stop-color="${col}"/>`).join("");
     const pill = (cx, cy, label, id) => { const col = tone(id);
-      return `<rect x="${X(cx) - 42}" y="${cy - 22}" width="84" height="44" rx="11" fill="color-mix(in srgb, ${col} 13%, var(--card-background-color))" stroke="color-mix(in srgb, ${col} 55%, transparent)"/>
-        <text class="st nh" x="${X(cx)}" y="${cy - 5}" text-anchor="middle">${label}</text><text class="sh" x="${X(cx)}" y="${cy + 14}" text-anchor="middle">${T(id) || "–"}</text>`; };
-    const coil = (cx, col, label, id) => `<rect x="${X(cx) - 8}" y="123" width="16" height="44" rx="5" fill="color-mix(in srgb, ${col} 28%, var(--card-background-color))" stroke="${col}" stroke-width="1.3"/>
-      <text class="st" x="${X(cx)}" y="112" text-anchor="middle">${label}${T(id) ? " " + T(id) : ""}</text>`;
+      return this._lk(id, `<rect x="${X(cx) - 42}" y="${cy - 22}" width="84" height="44" rx="11" fill="color-mix(in srgb, ${col} 13%, var(--card-background-color))" stroke="color-mix(in srgb, ${col} 55%, transparent)"/>
+        <text class="st nh" x="${X(cx)}" y="${cy - 5}" text-anchor="middle">${label}</text><text class="sh" x="${X(cx)}" y="${cy + 14}" text-anchor="middle">${T(id) || "–"}</text>`, "g"); };
+    const coil = (cx, col, label, id) => this._lk(id, `<rect x="${X(cx) - 8}" y="123" width="16" height="44" rx="5" fill="color-mix(in srgb, ${col} 28%, var(--card-background-color))" stroke="${col}" stroke-width="1.3"/>
+      <text class="st" x="${X(cx)}" y="112" text-anchor="middle">${label}${T(id) ? " " + T(id) : ""}</text>`, "g");
     // Both fans sit upstream of the exchanger (fresh-air fan after the preheater, extract fan in the extract stream).
-    const fan = (cx, rp) => {
+    const fan = (cx, rp, id) => {
       const sp = rp ? Math.max(0.35, 1.5 - rp / 1600) : 1;
       const blades = [0, 120, 240].map((a) => `<path transform="rotate(${a})" d="M0 0C5 -2 11 -7 8 -13C3 -13 -2 -7 0 0Z" fill="var(--secondary-text-color)"/>`).join("");
-      return `<circle cx="${X(cx)}" cy="75" r="17" fill="var(--card-background-color)" stroke="var(--pbd)" stroke-width="1.5"/>
+      return this._lk(id, `<circle cx="${X(cx)}" cy="75" r="17" fill="var(--card-background-color)" stroke="var(--pbd)" stroke-width="1.5"/>
         <g transform="translate(${X(cx)} 75)"><g class="${run && rp ? "rot" : ""}" style="--fan:${sp.toFixed(2)}s">${blades}</g><circle r="2.6" fill="var(--card-background-color)" stroke="var(--secondary-text-color)"/></g>
-        <text class="st" x="${X(cx)}" y="48" text-anchor="middle">${rp === null ? "" : rp.toLocaleString(this._hass.language) + " rpm"}</text>`; };
-    const probe = (cx, cy, ty, txt, id, col) => T(id) ? `<circle cx="${X(cx)}" cy="${cy}" r="4" fill="${col}" stroke="var(--card-background-color)" stroke-width="1.8"/>
-      <text class="st" x="${X(cx)}" y="${ty}" text-anchor="middle">${txt} ${T(id)}</text>` : "";
+        <text class="st" x="${X(cx)}" y="48" text-anchor="middle">${rp === null ? "" : rp.toLocaleString(this._hass.language) + " rpm"}</text>`, "g"); };
+    const probe = (cx, cy, ty, txt, id, col) => T(id) ? this._lk(id, `<circle cx="${X(cx)}" cy="${cy}" r="4" fill="${col}" stroke="var(--card-background-color)" stroke-width="1.8"/>
+      <text class="st" x="${X(cx)}" y="${ty}" text-anchor="middle">${txt} ${T(id)}</text>`, "g") : "";
     const preheat = c.temp_post_preheat && this._ok(c.temp_post_preheat)
       ? `<rect x="${X(150) - 8}" y="61" width="16" height="28" rx="5" fill="color-mix(in srgb, ${CORAL} 25%, var(--card-background-color))" stroke="${CORAL}" stroke-width="1.3"/>
          <path d="M${X(150) - 4} 66L${X(150) + 4} 71L${X(150) - 4} 76L${X(150) + 4} 81" fill="none" stroke="${CORAL}" stroke-width="1.2"/>` : "";
@@ -260,21 +260,21 @@ export class SectionsMethods {
       <polygon points="${[[354, 305], [340, 296], [326, 305], [340, 314]].map(([x, y]) => `${X(x)},${y}`).join(" ")}" fill="var(--card-background-color)" stroke="${hp ? ring : IDLE}" stroke-width="1.5" stroke-linejoin="round"/>
       ${cool ? coil(190, CORAL, this._t("cond_s"), c.temp_condenser) + coil(490, BLUE, this._t("evap_s"), c.temp_evaporator)
         : coil(190, hp ? BLUE : MILD, this._t("evap_s"), c.temp_evaporator) + coil(490, hp ? CORAL : MILD, this._t("cond_s"), c.temp_condenser)}
-      ${preheat}${fan(215, rpmS)}${fan(500, rpmE)}
+      ${preheat}${fan(215, rpmS, c.fan_speed_supply)}${fan(500, rpmE, c.fan_speed_extract)}
       ${probe(190, 75, 32, this._t("post_preheat_s"), c.temp_post_preheat, BLUE)}${probe(cool ? 428 : 252, 145, 166, this._t("pre_evap_s"), c.temp_pre_evaporator, BLUE)}${probe(cool ? 252 : 428, 145, 166, this._t("pre_cond_s"), c.temp_pre_condenser, CORAL)}
-      <circle cx="${X(340)}" cy="110" r="23" fill="var(--card-background-color)" stroke="var(--pbd)"/>
+      ${this._lk(c.heat_recovery, `<circle cx="${X(340)}" cy="110" r="23" fill="var(--card-background-color)" stroke="var(--pbd)"/>
       <text class="sh" x="${X(340)}" y="110" text-anchor="middle" style="font-size:14px">${bypass ? this._t("bypass_short") : eff !== null && run ? eff + " %" : "–"}</text>
-      <text class="st nh" x="${X(340)}" y="124" text-anchor="middle" style="font-size:10px">${bypass ? this._t("open_s") : this._t("wrg_s")}</text>
+      <text class="st nh" x="${X(340)}" y="124" text-anchor="middle" style="font-size:10px">${bypass ? this._t("open_s") : this._t("wrg_s")}</text>`, "g")}
       <text class="st" x="${X(340)}" y="198" text-anchor="middle">${this._t("exchanger")}</text>
       <g class="hot" data-act="tab" data-v="diag" role="button" tabindex="0" aria-label="${this._t("tip_comp")}"><title>${this._t("tip_comp")}</title>
         ${hp ? `<circle class="ripple" cx="${X(340)}" cy="245" r="31" fill="none" stroke="${ring}" stroke-width="2"/>` : ""}
         <circle cx="${X(340)}" cy="245" r="31" fill="var(--card-background-color)" stroke="var(--pbd)" stroke-width="3.5"/>
         ${hp && frac > 0 ? `<circle cx="${X(340)}" cy="245" r="31" fill="none" stroke="${ring}" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="${(circ * frac).toFixed(1)} ${circ.toFixed(1)}" transform="rotate(-90 ${X(340)} 245)"/>` : ""}
         <text class="sh" x="${X(340)}" y="243" text-anchor="middle">${!hp ? this._t("off_s") : rpm === null ? "–" : rpm.toLocaleString(this._hass.language)}</text>${hp ? `<text class="st nh" x="${X(340)}" y="258" text-anchor="middle">rpm</text>` : ""}</g>
-      <text class="st" x="${X(340)}" y="291" text-anchor="middle">${this._t("compressor")}${T(c.temp_compressor) ? " " + T(c.temp_compressor) : ""}</text>
+      ${this._lk(c.temp_compressor, `<text class="st" x="${X(340)}" y="291" text-anchor="middle">${this._t("compressor")}${T(c.temp_compressor) ? " " + T(c.temp_compressor) : ""}</text>`, "g")}
       ${pill(48, 75, this._t("fresh"), c.temp_fresh_air)}${pill(48, 145, this._t("exhaust"), c.temp_exhaust_air)}
       ${pill(632, 75, this._t("extract"), c.temp_extract_air)}${pill(632, 145, this._t("supply"), c.temp_supply_air)}
-      ${outdoor ? `<text class="sh nh" x="${X(48)}" y="38" text-anchor="middle">${this._t("outside")} ${outdoor}</text>` : ""}</svg>`;
+      ${outdoor ? this._lk(this._outdoorId(), `<text class="sh nh" x="${X(48)}" y="38" text-anchor="middle">${this._t("outside")} ${outdoor}</text>`, "g") : ""}</svg>`;
     const heating = this._on(c.heat_pump_heating) || cool;
     const chips = `${c.bypass_active && this._ok(c.bypass_active) ? `<span class="chip ${bypass ? "a" : ""}">${this._icon("mdi:routes")}${this._t(bypass ? "bypass_open" : "bypass_closed")}</span>` : ""}
       ${c.heat_pump_heating ? `<span class="chip ${cool ? "a" : heating ? "g" : ""}">${this._icon(cool ? "mdi:snowflake" : heating ? "mdi:fire" : "mdi:pause")}${this._t(cool ? "hp_cooling" : heating ? "hp_heating" : "hp_idle")}</span>` : ""}`;
@@ -297,7 +297,7 @@ export class SectionsMethods {
       const v = this._num(id);
       if (v === null) return "";
       const pct = Math.min(100, Math.round((v / (this._config.max_fan_rpm || 3000)) * 100));
-      return `<div class="row first">${this._icon(icon)}${label} ${v.toLocaleString(this._hass.language)} rpm<span class="bar"><i style="width:${pct}%"></i></span></div>`;
+      return `<div class="row first lk" role="button" tabindex="0" data-act="more" data-v="${id}">${this._icon(icon)}${label} ${v.toLocaleString(this._hass.language)} rpm<span class="bar"><i style="width:${pct}%"></i></span></div>`;
     };
     const sw = (id, label, icon, act) => id ? `<div class="row">${this._icon(icon)}${label}<span class="sp">
       <ha-switch data-act="${act}" ${this._on(id) ? "checked" : ""} ${this._ok(id) ? "" : "disabled"}></ha-switch></span></div>` : "";
@@ -338,7 +338,7 @@ export class SectionsMethods {
       fanHtml = `<div class="lbl2">${this._t("fan_stage_l")}${!f.stageOk && c.fan_stage ? `<span class="tag">${this._t("fan_note")}</span>` : ""}</div>
         <div class="seg cmp fs" style="grid-template-columns:repeat(6,1fr)">${buttons}</div>`;
     }
-    const rpm = (id, ic) => this._num(id) === null ? "" : `<span>${this._icon(ic, 'class="info"')} ${this._num(id).toLocaleString(this._hass.language)}</span>`;
+    const rpm = (id, ic) => this._num(id) === null ? "" : this._lk(id, `${this._icon(ic, 'class="info"')} ${this._num(id).toLocaleString(this._hass.language)}`);
     const rp = rpm(c.fan_speed_supply, "mdi:arrow-top-right") + rpm(c.fan_speed_extract, "mdi:arrow-bottom-left");
     const intensive = c.fan_intensive ? `<span class="tg">${this._t("intensive")}<ha-switch data-act="intensive" ${this._on(c.fan_intensive) ? "checked" : ""} ${this._ok(c.fan_intensive) ? "" : "disabled"}></ha-switch></span>` : "";
     const inline = rp || intensive ? `<div class="oinline">${rp ? `<span class="rp">${rp}<span>rpm</span></span>` : ""}${intensive}</div>` : "";

@@ -60,7 +60,7 @@ export class HintsMethods {
 
   _sec_insights(d) {
     const ins = this._insights(d).slice(0, 3), hidden = this._hiddenInsights(d);
-    const items = ins.map((i) => `<div class="ins ${i.lvl}">${this._icon(i.icon)}<div class="it"><b>${i.title}</b><small>${i.text}</small></div>
+    const items = ins.map((i) => `<div class="ins ${i.lvl}">${this._icon(i.icon)}<div class="it${i.ent ? " lk" : ""}" ${i.ent ? `role="button" tabindex="0" data-act="more" data-v="${i.ent}"` : ""}><b>${i.title}</b><small>${i.text}</small></div>
       ${i.tab ? `<button class="vbtn" data-act="tab" data-v="${i.tab}">${this._t(i.go)}</button>` : ""}
       ${this._dismissable(i) ? `<button class="x" data-act="dismiss" data-v="${i.key}" title="${this._t("dismiss")}" aria-label="${this._t("dismiss")}">${this._icon("mdi:close")}</button>` : ""}</div>`).join("");
     const more = hidden.length
@@ -130,13 +130,13 @@ export class HintsMethods {
   // Diagnosis tab: status tiles on top, measurements across the full width, then runtime / starts.
   _diagTab(d) {
     const c = d.central, lang = this._hass.language;
-    const tile = (icon, col, title, value, sub, extra = "") => `<div class="srow" style="--c:${col}"><span class="ic">${this._icon(icon)}</span><div class="b"><div class="sl"><span>${title}</span><b>${value}</b></div>${sub ? `<div class="s">${sub}</div>` : ""}${extra}</div></div>`;
+    const tile = (icon, col, title, value, sub, extra = "", id = "") => `<div class="srow" style="--c:${col}"><span class="ic">${this._icon(icon)}</span><div class="b"><div class="sl"><span>${title}</span>${this._lk(id, `<b>${value}</b>`)}</div>${sub ? `<div class="s">${sub}</div>` : ""}${extra}</div></div>`;
     const tiles = [];
     // heat pump
     if (c.heat_pump_heating || c.compressor_speed) {
       const cool = this._on(c.heat_pump_cooling), heat = this._on(c.heat_pump_heating);
       const rpm = this._num(c.compressor_speed), pw = this._pnum();
-      const sub = [rpm === null ? "" : `${rpm.toLocaleString(lang)} rpm`, pw === null ? "" : `${this._fmt(pw, pw % 1 ? 1 : 0)} W`].filter(Boolean).join(" · ");
+      const sub = [rpm === null ? "" : this._lk(c.compressor_speed, `${rpm.toLocaleString(lang)} rpm`), pw === null ? "" : this._lk(this._powerId(), `${this._fmt(pw, pw % 1 ? 1 : 0)} W`)].filter(Boolean).join(" · ");
       const sw = c.cooling_enable ? `<div class="s sw">${this._t("cooling_enable")}<ha-switch data-act="coolsw" ${this._on(c.cooling_enable) ? "checked" : ""} ${this._ok(c.cooling_enable) ? "" : "disabled"}></ha-switch></div>` : "";
       const col = cool ? BLUE : heat ? GREEN : "var(--secondary-text-color)";
       const frac = rpm === null ? 0 : Math.min(100, Math.round((rpm / (this._config.max_compressor_rpm || 6000)) * 100));
@@ -144,7 +144,7 @@ export class HintsMethods {
       const chips = [[c.heat_pump_continuous, "mdi:autorenew", this._t("hp_continuous")], [c.cooling_available, "mdi:snowflake-check", this._t("cooling_available")]]
         .filter(([id]) => id && this._ok(id) && this._on(id)).map(([, ic, l]) => `<span class="chip">${this._icon(ic)}${l}</span>`).join("");
       tiles.push(tile(cool ? "mdi:snowflake" : "mdi:heat-pump", col, this._t("heatpump"),
-        this._t(cool ? "hp_cooling" : heat ? "hp_heating" : "hp_idle"), sub, `${bar}${chips ? `<div class="chips" style="margin-top:8px">${chips}</div>` : ""}${sw}`));
+        this._t(cool ? "hp_cooling" : heat ? "hp_heating" : "hp_idle"), sub, `${bar}${chips ? `<div class="chips" style="margin-top:8px">${chips}</div>` : ""}${sw}`, cool ? c.heat_pump_cooling : c.heat_pump_heating));
     }
     // PTC auxiliary heating: power of all elements, one segment per room (lit = element runs)
     const ptcRooms = d.rooms.filter((r) => r.ents && r.ents.ptc_active), pId = this._ptcP(), pW = pId ? this._watts(pId) : null;
@@ -154,7 +154,7 @@ export class HintsMethods {
       const names = ptcRooms.filter((r) => this._on(r.ents.ptc_active)).map((r) => r.name).join(", ");
       tiles.push(tile("mdi:radiator", on ? CORAL : "var(--secondary-text-color)", this._t("ptc_heating"),
         pW !== null ? (pW >= 1000 ? `${this._fmt(pW / 1000, 2)} kW` : `${this._fmt(pW, 0)} W`) : this._t(on ? "ptc_active" : "ptc_off"),
-        [on ? names : this._t("ptc_idle"), this._t("ptc_rooms_en", ena, n)].filter(Boolean).join(" · "), `<div class="pseg" aria-hidden="true">${segs}</div>`));
+        [on ? names : this._t("ptc_idle"), this._t("ptc_rooms_en", ena, n)].filter(Boolean).join(" · "), `<div class="pseg" aria-hidden="true">${segs}</div>`, pId || ""));
     }
     // filter
     const f = this._filterInfo(c);
@@ -167,28 +167,28 @@ export class HintsMethods {
       const btn = c.filter_changed ? `<button class="vbtn" data-act="filterchg">${this._icon("mdi:check")}${this._t("f_btn")}</button>` : "";
       const rc = this._recirc() && this._ok(c.filter_recirculation)
         ? `<div class="s">${this._t("filter_recirc")}: <b style="color:${this._on(c.filter_recirculation) ? "#c98400" : GREEN}">${this._on(c.filter_recirculation) ? this._t("change_due") : this._t("ok")}</b></div>` : "";
-      tiles.push(tile("mdi:air-filter", col, this._t("filter_device"), f.due ? this._t("change_due") : this._t("ok"), sub,
-        `<div class="pbar" style="margin:8px 0 6px"><i style="width:${pct}%;background:${col}"></i></div>${rc}${btn}`));
+      tiles.push(tile("mdi:air-filter", col, this._t("filter_device"), f.due ? this._t("change_due") : this._t("ok"), this._lk(c.filter_age_days, sub),
+        `<div class="pbar" style="margin:8px 0 6px"><i style="width:${pct}%;background:${col}"></i></div>${rc}${btn}`, c.filter_device));
     }
     // system
     if (this._ok(c.error_system)) {
       const bad = this._on(c.error_system);
       const chg = c.mode_change_possible && this._ok(c.mode_change_possible) ? `${this._t("mode_change")}: ${this._on(c.mode_change_possible) ? this._t("possible") : this._t("not_possible")}` : "";
       const byp = c.bypass_active && this._ok(c.bypass_active) ? `<div class="s">${this._icon("mdi:routes")} ${this._t(this._on(c.bypass_active) ? "bypass_open" : "bypass_closed")}</div>` : "";
-      tiles.push(tile(bad ? "mdi:alert-circle-outline" : "mdi:check-circle-outline", bad ? "#db4437" : GREEN, this._t("error"), bad ? this._t("has_error") : this._t("no_error"), chg, byp));
+      tiles.push(tile(bad ? "mdi:alert-circle-outline" : "mdi:check-circle-outline", bad ? "#db4437" : GREEN, this._t("error"), bad ? this._t("has_error") : this._t("no_error"), chg, byp, c.error_system));
     }
     // runtime and starts
-    const st = (icon, color, label, val, unit) => val === null ? "" : `<div class="mr"><span>${label}</span><b>${val}${unit}</b></div>`;
+    const st = (icon, color, label, val, unit, id) => val === null ? "" : `<div class="mr${id ? " lk" : ""}" ${id ? `role="button" tabindex="0" data-act="more" data-v="${id}"` : ""}><span>${label}</span><b>${val}${unit}</b></div>`;
     const sv = (id, dg) => this._num(id) === null ? null : this._fmt(this._num(id), dg);
-    const stHtml = st("mdi:clock-outline", GREEN, this._t("rt_today"), sv(c.hp_runtime_today, 1), " h") + st("mdi:counter", BLUE, this._t("starts_today"), sv(c.hp_starts_today, 0), "×") +
-      st("mdi:history", GREEN, this._t("rt_total"), sv(c.hp_runtime_total, 1), " h") + st("mdi:counter", BLUE, this._t("starts_total"), sv(c.hp_starts_total, 0), "×");
+    const stHtml = st("mdi:clock-outline", GREEN, this._t("rt_today"), sv(c.hp_runtime_today, 1), " h", c.hp_runtime_today) + st("mdi:counter", BLUE, this._t("starts_today"), sv(c.hp_starts_today, 0), "×", c.hp_starts_today) +
+      st("mdi:history", GREEN, this._t("rt_total"), sv(c.hp_runtime_total, 1), " h", c.hp_runtime_total) + st("mdi:counter", BLUE, this._t("starts_total"), sv(c.hp_starts_total, 0), "×", c.hp_starts_total);
     // PTC consumption: the meter reading and, from its statistics, what it consumed since midnight
     let ptcRows = "";
     if (this._ptcE()) {
       const tot = this._kwh(this._ptcE()), b = this._hget("b|24h", () => this._loadBuckets(d, "24h")), mid = new Date().setHours(0, 0, 0, 0) / 1000;
       const today = b ? b.filter((x) => x.pkwh !== undefined && x.t >= mid).reduce((a, x) => a + x.pkwh, 0) : null;
       const has = b && b.some((x) => x.pkwh !== undefined && x.t >= mid);
-      ptcRows = st("mdi:radiator", CORAL, this._t("ptc_today"), has ? this._fmt(today, 2) : null, " kWh") + st("mdi:radiator", CORAL, this._t("ptc_total"), tot === null ? null : this._fmt(tot, tot < 100 ? 2 : 0), " kWh");
+      ptcRows = st("mdi:radiator", CORAL, this._t("ptc_today"), has ? this._fmt(today, 2) : null, " kWh", this._ptcE()) + st("mdi:radiator", CORAL, this._t("ptc_total"), tot === null ? null : this._fmt(tot, tot < 100 ? 2 : 0), " kWh", this._ptcE());
     }
     const stats = stHtml || ptcRows ? `<ha-card>${this._header("mdi:counter", this._t("stats"))}<div class="mtgrid">${stHtml}${ptcRows}</div></ha-card>` : "";
     return `${tiles.length ? `<ha-card>${this._header("mdi:stethoscope", this._t("status"))}<div class="srows">${tiles.join("")}</div></ha-card>` : ""}${this._sec_measure(d)}${stats}`;

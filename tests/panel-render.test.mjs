@@ -711,3 +711,18 @@ test("values of one entity open its more-info dialog", async () => {
   const diag = await render(panel, () => { panel._tab = "diag"; });
   assert.ok(diag.includes('data-act="more" data-v="sensor.temp_supply_air"'), "measurement rows are links");
 });
+
+test("values in schema, operation, diagnosis, status, hints and hot water open their entity", async () => {
+  const link = (html, id, what) => assert.ok(html.includes(`data-act="more" data-v="${id}"`), `${what}: ${id}`);
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = hass;
+  let html = await render(panel, () => { panel._tab = "overview"; });
+  for (const id of ["sensor.temp_supply_air", "sensor.temp_fresh_air", "sensor.temp_evaporator", "sensor.fan_speed_supply", "sensor.fan_speed_extract", "sensor.temp_compressor", "sensor.heat_recovery"]) link(html, id, "schema or operation");
+  link(html, "binary_sensor.error_system", "status row");
+  html = await render(panel, () => { panel._tab = "diag"; });
+  for (const id of ["sensor.compressor_speed", "sensor.hp_runtime_today", "binary_sensor.error_system", "binary_sensor.heat_pump_heating"]) link(html, id, "diagnosis");
+  const tw = new X.ProxonFwtPanel();
+  tw.hass = twHass;
+  html = await render(tw, () => { tw._tab = "warm"; });
+  for (const id of ["sensor.tw_water", "sensor.tw_outer", "sensor.tw_pv", "sensor.tw_power"]) link(html, id, "hot water");
+});
