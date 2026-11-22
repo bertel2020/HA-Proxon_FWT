@@ -2,7 +2,7 @@
 
 *[🇬🇧 English version](CHANGELOG.en.md)*
 
-## Unveröffentlicht
+## 2.5.0 – 2026-11-22
 
 **Neu**
 - **Panel – Raumkarten immer gleich groß:** Die Karten behalten ihre Größe, egal wie viele ein Filter übrig lässt (eine einzelne Karte wird nicht mehr über die ganze Breite gezogen), und alle Reihen sind gleich hoch. Die Kacheln der Dashboard-Karte ebenso. In schmalen Karten entfällt das Symbol „Details“, damit der Raumname nicht abgeschnitten wird.

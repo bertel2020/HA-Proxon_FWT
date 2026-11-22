@@ -2,7 +2,7 @@
 
 *[🇩🇪 Deutsche Version](CHANGELOG.md)*
 
-## Unreleased
+## 2.5.0 – 2026-11-22
 
 **New**
 - **Panel – room cards always the same size:** The cards keep their size whatever a filter leaves (a single card no longer stretches over the full width), and all rows are equally tall. The tiles of the dashboard card too. In narrow cards the "details" icon is dropped so the room name is not cut off.
