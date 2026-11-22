@@ -694,3 +694,20 @@ test("without PTC sensors the compressor tile stays", async () => {
   const html = await render(panel, () => { panel._tab = "overview"; });
   assert.ok(html.includes("Kompressor") && !html.includes("Räumen heizen"));
 });
+
+test("values of one entity open its more-info dialog", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = hass;
+  const html = await render(panel, () => { panel._tab = "rooms"; });
+  assert.ok(html.includes('data-act="more" data-v="sensor.room0_co2"'), "CO2 chip is a link");
+  assert.ok(html.includes('data-act="more" data-v="climate.room0"'), "ring value is a link");
+  const seen = [];
+  panel.dispatchEvent = (ev) => { seen.push(ev); return true; };
+  globalThis.CustomEvent = class { constructor(type, init) { this.type = type; this.detail = init.detail; } };
+  panel._click({ composedPath: () => [{ dataset: { act: "more", v: "sensor.room0_co2" } }] });
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].type, "hass-more-info");
+  assert.equal(seen[0].detail.entityId, "sensor.room0_co2");
+  const diag = await render(panel, () => { panel._tab = "diag"; });
+  assert.ok(diag.includes('data-act="more" data-v="sensor.temp_supply_air"'), "measurement rows are links");
+});

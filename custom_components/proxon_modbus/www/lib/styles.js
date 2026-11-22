@@ -261,6 +261,8 @@ svg .sh { font-size: 14px; font-weight: 500; }
 .ring .knob:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -4px; }
 .ring svg { width: 100%; height: 100%; display: block; }
 .ring .c { position: absolute; inset: 17.19% 0 0 0; display: grid; place-content: center; text-align: center; }
+.lk { cursor: pointer; } .chip.lk:hover, .rs.lk:hover { filter: brightness(.95); } .mr.lk:hover b, .ring .c .lk:hover b { color: var(--primary-color); }
+.lk:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; border-radius: 8px; }
 .ring .c b { display: block; font-size: 28px; font-weight: 500; line-height: 1.1; }
 .ring .c small { display: block; color: var(--secondary-text-color); font-size: 13px; }
 .rctl { display: flex; flex-direction: column; align-items: center; gap: 10px; }

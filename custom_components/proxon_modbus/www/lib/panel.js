@@ -48,7 +48,7 @@ export class ProxonFwtPanel extends ProxonFwtBase {
     return `<div class="ring"><svg viewBox="0 0 150 128" aria-hidden="true">
       <circle cx="75" cy="75" r="${R0}" fill="none" stroke="var(--card-background-color)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${arc} ${C}" transform="${rot}"/>
       ${i.cur == null ? "" : `<circle cx="75" cy="75" r="${R0}" fill="none" stroke="${i.col}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${Math.max(0.1, arc * f(i.cur))} ${C}" transform="${rot}"/>`}${mark}</svg>
-      <div class="c"><div><b>${i.cur == null ? "–" : this._fmt(i.cur) + "°"}</b><small>${this._t("actual")}</small></div></div>${knob}</div>`;
+      <div class="c"><div class="lk" role="button" tabindex="0" data-act="more" data-v="${i.r.climate}"><b>${i.cur == null ? "–" : this._fmt(i.cur) + "°"}</b><small>${this._t("actual")}</small></div></div>${knob}</div>`;
   }
 
   _stepper(n, i) {
@@ -57,9 +57,11 @@ export class ProxonFwtPanel extends ProxonFwtBase {
       ${this._btn(`data-act="rstep" data-v="${n}|1" aria-label="+"`, "round", this._icon("mdi:plus"), i.down)}</div>`;
   }
 
-  _roomChips(i) {
+  // Each value opens the more-info dialog of its entity (not in the list view, where the whole row opens the details).
+  _roomChips(i, link = true) {
     const c = (v) => (v > 1000 ? "r" : v > 800 ? "w" : "g");
-    return `${i.co2 != null ? `<span class="chip ${c(i.co2)}">${this._icon("mdi:molecule-co2")}${Math.round(i.co2)}</span>` : ""}${i.rf != null ? `<span class="chip">${this._icon("mdi:water-percent")}${Math.round(i.rf)} %</span>` : ""}${i.ptcA ? `<span class="chip w">${this._icon("mdi:radiator")}PTC</span>` : ""}`;
+    const chip = (cls, id, inner) => (link && id ? `<span class="chip ${cls} lk" role="button" tabindex="0" data-act="more" data-v="${id}">${inner}</span>` : `<span class="chip ${cls}">${inner}</span>`);
+    return `${i.co2 != null ? chip(c(i.co2), i.r.co2, `${this._icon("mdi:molecule-co2")}${Math.round(i.co2)}`) : ""}${i.rf != null ? chip("", i.r.rf, `${this._icon("mdi:water-percent")}${Math.round(i.rf)} %`) : ""}${i.ptcA ? chip("w", i.r.ents.ptc_active, `${this._icon("mdi:radiator")}PTC`) : ""}`;
   }
 
   // 24 h room temperature with target line, loaded on demand from the recorder history of the climate entity.
@@ -138,7 +140,7 @@ export class ProxonFwtPanel extends ProxonFwtBase {
   _roomList(rows) {
     return rows.map(([n, i]) => {
       return `<div class="lcard"><div class="rh lrow" role="button" tabindex="0" aria-haspopup="dialog" data-act="rtoggle" data-v="${n}"><span class="ri">${this._icon(this._roomIcon(i.r.name))}</span><b>${i.r.name}</b>
-        <span class="t2">${this._roomChips(i)}<b style="color:${i.col}">${i.cur == null ? "–" : this._fmt(i.cur) + "°"}</b><span class="lb">→ ${i.tgt == null ? "–" : this._fmt(i.tgt, 0) + "°"}</span></span></div></div>`;
+        <span class="t2">${this._roomChips(i, false)}<b style="color:${i.col}">${i.cur == null ? "–" : this._fmt(i.cur) + "°"}</b><span class="lb">→ ${i.tgt == null ? "–" : this._fmt(i.tgt, 0) + "°"}</span></span></div></div>`;
     }).join("");
   }
 
@@ -160,12 +162,12 @@ export class ProxonFwtPanel extends ProxonFwtBase {
     const arf = rfs.length ? rfs.reduce((a, [, i]) => a + i.rf, 0) / rfs.length : null;
     const pw = this._opt("ptc_power_entity") ? this._watts(this._opt("ptc_power_entity")) : null;
     const pe = this._opt("ptc_energy_entity") ? this._kwh(this._opt("ptc_energy_entity")) : null;
-    const sum = (ic, c, label, val, unit) => `<div class="rs" style="--c:${c}"><span class="ic">${this._icon(ic)}</span><div><small>${label}</small><b>${val}<span>${unit}</span></b></div></div>`;
+    const sum = (ic, c, label, val, unit, id) => `<div class="rs${id ? " lk" : ""}" style="--c:${c}" ${id ? `role="button" tabindex="0" data-act="more" data-v="${id}"` : ""}><span class="ic">${this._icon(ic)}</span><div><small>${label}</small><b>${val}<span>${unit}</span></b></div></div>`;
     const summary = `<div class="rsum">${avg === null ? "" : sum("mdi:thermometer", BLUE, this._t("rs_avg"), this._fmt(avg), " °C")}
       ${sum("mdi:fire", CORAL, this._t("rs_heat"), all.filter(([, i]) => i.heats).length, ` ${this._t("rs_active")} · ${all.filter(([, i]) => i.ptcE && this._on(i.ptcE)).length} ${this._t("rs_enabled")}`)}
-      ${pw === null ? "" : sum("mdi:radiator", CORAL, this._t("rs_ptcw"), pw >= 1000 ? this._fmt(pw / 1000, 2) : Math.round(pw), pw >= 1000 ? " kW" : " W")}
-      ${pe === null ? "" : sum("mdi:lightning-bolt", AMBER, this._t("rs_ptce"), this._fmt(pe, pe < 100 ? 2 : 0), " kWh")}
-      ${top ? sum("mdi:molecule-co2", AMBER, this._t("rs_co2"), Math.round(top[1].co2), ` ppm · ${top[1].r.name}`) : ""}
+      ${pw === null ? "" : sum("mdi:radiator", CORAL, this._t("rs_ptcw"), pw >= 1000 ? this._fmt(pw / 1000, 2) : Math.round(pw), pw >= 1000 ? " kW" : " W", this._opt("ptc_power_entity"))}
+      ${pe === null ? "" : sum("mdi:lightning-bolt", AMBER, this._t("rs_ptce"), this._fmt(pe, pe < 100 ? 2 : 0), " kWh", this._opt("ptc_energy_entity"))}
+      ${top ? sum("mdi:molecule-co2", AMBER, this._t("rs_co2"), Math.round(top[1].co2), ` ppm · ${top[1].r.name}`, top[1].r.co2) : ""}
       ${arf === null ? "" : sum("mdi:water-percent", "var(--primary-color)", this._t("rs_rf"), Math.round(arf), " %")}</div>`;
     let rows = all.filter(([, i]) => filter === "all" || (filter === "heat" && i.heats) || (filter === "ena" && i.ptcE && this._on(i.ptcE)) || (filter === "dev" && Math.abs(i.dev) > 0.3) || (filter === "co2" && i.co2 != null && i.co2 > 800));
     if (filter === "dev") rows = rows.sort((a, b) => Math.abs(b[1].dev) - Math.abs(a[1].dev));

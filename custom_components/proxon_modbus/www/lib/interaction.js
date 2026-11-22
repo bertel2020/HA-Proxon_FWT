@@ -103,6 +103,9 @@ export class InteractionMethods {
         if (this._ropen) this._ropen.clear();
         if (this._lastRoom != null) this._focusReq = `close:${this._lastRoom}`;
         this._sig = ""; this._update(); break;
+      case "more": // value of one entity: open Home Assistant's own dialog (history, settings)
+        this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: v }, bubbles: true, composed: true }));
+        break;
       case "noop": break;
       case "rstep": {
         const [n, dir] = v.split("|"), id = this._d.rooms[Number(n)].climate;
