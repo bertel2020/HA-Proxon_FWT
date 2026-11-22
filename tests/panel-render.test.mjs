@@ -570,3 +570,90 @@ test("the lane view honours the targets switch, the range and the configured PV 
   assert.ok(month.includes('class="ch"') && !month.includes("Heizzeit:"), "statistics: lanes without program bands");
   panel._twRefs = true; panel._histRange = "24h"; panel._twMetric = undefined;
 });
+
+// ---- FWT history: chips, lanes, tables ------------------------------------------
+const fwtRows = (id) => {
+  const now = Date.now() / 1000, bin = id.startsWith("binary_sensor.");
+  return [[20, 1], [14, 3], [8, 2], [2, 4]].map(([h, k]) => ({ lu: now - h * 3600, s: bin ? (k % 2 ? "on" : "off") : String(10 * k + (id.includes("compressor_speed") ? 3000 : 0)) }));
+};
+const fwtHist = { ...hass, callWS: async (m) => {
+  if (m.type === "history/history_during_period") return Object.fromEntries(m.entity_ids.map((i) => [i, fwtRows(i)]));
+  if (m.type === "recorder/statistics_during_period") return Object.fromEntries(m.statistic_ids.map((i) => [i, [1, 2, 3, 4].map((k) => ({ start: Date.now() - k * 36e5, mean: 10 * k, change: 0.5 }))]));
+  return hass.callWS(m);
+} };
+const histPanel = async (prep = () => {}) => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = fwtHist;
+  const html = await render(panel, () => { panel._tab = "history"; panel._histRange = "24h"; panel._hcmp = false; prep(panel); });
+  return { panel, html };
+};
+const clickAct = (panel, act, v) => panel._click({ composedPath: () => [{ dataset: { act, v } }] });
+const again = (panel) => render(panel, () => { panel._tab = "history"; });
+
+test("history chips: 'All' first and selected, then the groups; no separate compressor chip; no previous-period switch in 'All'", async () => {
+  const { panel, html } = await histPanel();
+  check(html);
+  const chips = [...html.matchAll(/data-act="metric" data-v="(\w+)"/g)].map((x) => x[1]);
+  assert.deepEqual(chips, ["all", "temp", "circuit", "drives", "power", "eff", "co2", "rf"]);
+  assert.ok(/class="vbtn a" data-act="metric" data-v="all"/.test(html), "'All' is selected by default");
+  assert.ok(!/<button[^>]*data-act="hcmp"/.test(html), "no previous-period switch in the lane view");
+  assert.ok(panel._cm.series.length >= 10, "curves of all groups in one chart");
+  const tbl = html.slice(html.indexOf('class="hsts"'), html.indexOf("Wärmepumpen-Laufzeit"));
+  assert.ok(tbl.length > 100 && !tbl.includes("Σ"), "no sum column in the table (the bar cards below keep theirs)");
+  clickAct(panel, "metric", "circuit");
+  assert.ok(/<button[^>]*data-act="hcmp"/.test(await again(panel)), "single group: the switch is back");
+});
+
+test("the table under a chart has now, min, max and mean; 'now' is the live value of the sensor", async () => {
+  const { html } = await histPanel((p) => { p._metric = "temp"; });
+  const head = html.slice(html.indexOf('class="hst hh"'), html.indexOf('class="hst hh"') + 400);
+  for (const w of ["jetzt", "Min", "Max", "Ø"]) assert.ok(head.toLowerCase().includes(w.toLowerCase()), `column ${w}`);
+  const row = html.slice(html.indexOf("</i>Zuluft</span>"));
+  assert.ok(row.slice(0, 200).includes("19,4°"), "the now value is the live temperature, not the last point of the curve");
+});
+
+test("a click on a table row hides the curve and its scale, a second click shows it again", async () => {
+  const { panel } = await histPanel((p) => { p._metric = "temp"; p._hid = {}; });
+  const n = panel._cm.series.length;
+  clickAct(panel, "ser", "temp|Zuluft");
+  const off = await again(panel);
+  assert.equal(panel._cm.series.length, n - 1, "one curve less in the plot");
+  assert.ok(/class="hst tg off" role="button" tabindex="0" aria-pressed="false" data-act="ser" data-v="temp\|Zuluft"/.test(off), "row stays, dimmed");
+  clickAct(panel, "ser", "temp|Zuluft");
+  await again(panel);
+  assert.equal(panel._cm.series.length, n, "back");
+});
+
+test("in the refrigerant circuit the compressor temperature starts hidden", async () => {
+  const { panel, html } = await histPanel((p) => { p._metric = "circuit"; p._hid = {}; });
+  assert.ok(/hst tg off[^>]*data-v="circuit\|Kompressor"/.test(html), "row dimmed");
+  assert.equal(panel._cm.series.length, 5, "five curves in the plot");
+  clickAct(panel, "ser", "circuit|Kompressor");
+  await again(panel);
+  assert.equal(panel._cm.series.length, 6, "shown on click");
+});
+
+test("the table folds away and leaves the curve names as switches", async () => {
+  const { panel, html } = await histPanel((p) => { p._metric = "temp"; p._hstOpen = true; });
+  assert.ok(html.includes('class="hsts"') && html.includes('data-act="hsts" aria-expanded="true"'));
+  clickAct(panel, "hsts");
+  const folded = await again(panel);
+  assert.ok(!folded.includes('class="hsts"') && folded.includes('aria-expanded="false"'), "table gone");
+  assert.ok(/class="legend hlg"[^]*data-act="ser"/.test(folded), "the curve names stay clickable");
+  clickAct(panel, "hsts");
+  assert.ok((await again(panel)).includes('class="hsts"'), "and open again");
+});
+
+test("all line charts have the same height; the key figure tile for the compressor opens the drives chip", async () => {
+  const { html } = await histPanel((p) => { p._metric = "temp"; });
+  const { CHART_H } = await import(new URL("lib/constants.js", WWW).href);
+  assert.ok(html.includes(`viewBox="0 0 ${html.match(/viewBox="0 0 (\d+) \d+"/)[1]} ${CHART_H}"`), "single chart has CHART_H");
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = fwtHist;
+  const ov = await render(panel, () => { panel._tab = "overview"; });
+  check(ov);
+  assert.ok(/data-act="kpi" data-v="drives"[^]*Kompressor[^]*2\.400/.test(ov), "tile with the speed");
+  clickAct(panel, "kpi", "drives");
+  const hist = await render(panel, () => {});
+  assert.ok(/class="vbtn a" data-act="metric" data-v="drives"/.test(hist), "the drives chip is selected");
+});
