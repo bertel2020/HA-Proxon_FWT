@@ -243,7 +243,7 @@ The card discovers all entities of the integration by itself (via platform and e
 
 **Alerts** (emergency mode, frost protection, system error, filter due, write errors) always show on top as soon as something is wrong.
 
-**Presets** (`preset`): `compact` (overview and controls in one card), `standard` (plus diagram, rooms and maintenance; the default for new cards) and `all` (plus refrigerant circuit, history, runtime, energy). An own `sections` list replaces the preset. The sections always appear in the fixed order above, not in the order of the list. The older names `heatpump`, `kpi` (now overview), `mode`, `fan`, `quick` (now controls) and `air` (now schema) keep working and are mapped; `alerts` is gone, alerts are always on.
+**Presets** (`preset`): `compact` (overview and controls in one card), `standard` (plus diagram, rooms and maintenance; the default for new cards) and `all` (plus refrigerant circuit, history, runtime, energy). **Tabs:** `layout: tabs` shows the card as one card with a head (state, mode, fan stage) and the tabs Overview, Rooms, Maintenance and History; which tabs appear follows from the chosen sections. In narrow cards the tab bar shows icons only. An own `sections` list replaces the preset. The sections always appear in the fixed order above, not in the order of the list. The older names `heatpump`, `kpi` (now overview), `mode`, `fan`, `quick` (now controls) and `air` (now schema) keep working and are mapped; `alerts` is gone, alerts are always on.
 
 Anything the unit does not provide (e.g. power consumption or outdoor temperature) is hidden. The card can be configured graphically in the card editor.
 
@@ -257,6 +257,7 @@ Anything the unit does not provide (e.g. power consumption or outdoor temperatur
 | `ptc_power_entity`, `ptc_energy_entity` | integration | own power sensor and energy meter (Wh/kWh/MWh) for **all PTC elements together**: the panel shows them in overview (replaces the compressor tile), diagnosis, history and rooms (the unit does not measure this itself) |
 | `outdoor_entity` | integration | own entity for the outdoor temperature instead of the device sensor |
 | `preset` | `standard` | `compact`, `standard` or `all` (see above) |
+| `layout` | `stacked` | `stacked` (sections one below the other) or `tabs` (see above) |
 | `sections` | – | own list of sections (`overview`, `operation`, `schema`, `rooms`, `status`, `refrigerant`, `history`, `runtime`, `energy`); replaces the preset |
 | `max_fan_rpm` | `3000` | speed at which the fan bars are full |
 | `max_compressor_rpm` | `6000` | speed at which the compressor ring is full |

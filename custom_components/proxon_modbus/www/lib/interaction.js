@@ -87,6 +87,7 @@ export class InteractionMethods {
       case "dismiss": this._dismissed = this._dismissed || {}; this._dismissed[v] = Date.now(); this._saveDismissed(); this._sig = ""; this._update(); break;
       case "undismiss": this._dismissed = {}; this._saveDismissed(); this._sig = ""; this._update(); break;
       case "kpi": this._metric = v; this._tab = "history"; this._sig = ""; this._update(); if (this.scrollIntoView) this.scrollIntoView({ block: "start" }); break;
+      case "ctab": this._ctab = v; this._sig = ""; this._update(); break;
       case "tab": this._tab = v; this._sig = ""; this._update(); if (this.scrollIntoView) this.scrollIntoView({ block: "start" }); break;
       case "rview": this._rview = v; this._sig = ""; this._update(); break;
       case "rfilter": this._rfilter = v === this._rfilter ? "all" : v; this._sig = ""; this._update(); break;

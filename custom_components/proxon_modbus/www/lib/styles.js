@@ -79,13 +79,23 @@ ha-card { padding: 14px 16px; display: block; border: 1px solid var(--ha-card-bo
 .bblk .lbl2 { margin-top: 10px; }
 .bblk .lbl2 b { font-weight: 500; color: var(--primary-text-color); font-size: 14px; }
 .note { font-size: 13px; color: var(--secondary-text-color); margin-top: 8px; }
-.ovw { padding-bottom: 14px; }
+.ovw { padding-bottom: 14px; container-type: inline-size; }
 .ovh { display: flex; justify-content: space-between; align-items: center; gap: 10px; } .ovh b { font-size: 18px; font-weight: 500; }
 .ovs { color: var(--secondary-text-color); font-size: 14px; margin: 2px 0 12px; }
 .ovt { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px; }
+@container (max-width: 460px) { .ovt { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .mini { background: var(--secondary-background-color); border-radius: 12px; padding: 8px 10px; text-align: center; min-width: 0; }
 .mini small { display: block; font-size: 12px; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .mini b { display: block; font-size: 18px; font-weight: 500; }
 .spill { font-size: 13px; padding: 3px 10px; border-radius: 99px; color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); white-space: nowrap; }
+.tabcard { container-type: inline-size; }
+.ctabs { display: flex; gap: 2px; border-bottom: 1px solid var(--divider-color); margin: 12px -16px 14px; padding: 0 12px; overflow-x: auto; scrollbar-width: none; }
+.ctab { background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 9px 12px; font: inherit; font-size: 14px; color: var(--secondary-text-color); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.ctab ha-icon { --mdc-icon-size: 18px; } .ctab.a { color: var(--primary-text-color); border-bottom-color: var(--primary-color); font-weight: 500; }
+.ctab:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; border-radius: 6px; }
+.cbody { min-height: 260px; }
+.cbody ha-card { padding: 0; border: 0; background: transparent; box-shadow: none; --ha-card-border-width: 0; --ha-card-box-shadow: none; --ha-card-background: transparent; }
+.cbody ha-card + ha-card, .cbody .opw.bare + ha-card { margin-top: 14px; }
+@container (max-width: 460px) { .ctab span { display: none; } .ctabs { justify-content: space-around; } }
 .opw.bare { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--divider-color); }
 .hp { display: flex; align-items: center; gap: 16px; }
 .big { font-size: 26px; font-weight: 500; }

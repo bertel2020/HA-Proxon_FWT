@@ -245,7 +245,7 @@ Die Karte findet alle Entities der Integration selbst (über Plattform und Entit
 
 **Meldungen** (Notbetrieb, Einfrierschutz, Systemfehler, Filter fällig, Schreibfehler) erscheinen immer oben, sobald etwas nicht stimmt.
 
-**Voreinstellungen** (`preset`): `compact` (Überblick und Bedienung in einer Karte), `standard` (zusätzlich Schema, Räume und Wartung; Vorgabe für neue Karten) und `all` (zusätzlich Kältekreis, Verlauf, Laufzeit, Energie). Eine eigene Liste `sections` ersetzt die Voreinstellung. Die Bereiche erscheinen immer in der festen Reihenfolge oben, nicht in der Reihenfolge der Liste. Die älteren Namen `heatpump`, `kpi` (jetzt Überblick), `mode`, `fan`, `quick` (jetzt Bedienung) und `air` (jetzt Schema) gelten weiter und werden umgesetzt; `alerts` entfällt, die Meldungen sind immer an.
+**Voreinstellungen** (`preset`): `compact` (Überblick und Bedienung in einer Karte), `standard` (zusätzlich Schema, Räume und Wartung; Vorgabe für neue Karten) und `all` (zusätzlich Kältekreis, Verlauf, Laufzeit, Energie). **Tabs:** `layout: tabs` zeigt die Karte als eine Karte mit Kopf (Zustand, Betriebsart, Lüfterstufe) und Tabs Überblick, Räume, Wartung und Verlauf; welche Tabs erscheinen, folgt aus den gewählten Bereichen. In schmalen Karten zeigt die Tab-Leiste nur Symbole. Eine eigene Liste `sections` ersetzt die Voreinstellung. Die Bereiche erscheinen immer in der festen Reihenfolge oben, nicht in der Reihenfolge der Liste. Die älteren Namen `heatpump`, `kpi` (jetzt Überblick), `mode`, `fan`, `quick` (jetzt Bedienung) und `air` (jetzt Schema) gelten weiter und werden umgesetzt; `alerts` entfällt, die Meldungen sind immer an.
 
 Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wird ausgeblendet. Die Karte lässt sich im Karten-Editor grafisch konfigurieren. Sensoren (Leistung, Energie, Außentemperatur, PTC) kommen aus den Optionen der Integration; im YAML der Karte lassen sie sich weiterhin überschreiben.
 
@@ -259,6 +259,7 @@ Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wi
 | `ptc_power_entity`, `ptc_energy_entity` | Integration | eigener Leistungssensor und Energiezähler (Wh/kWh/MWh) für **alle PTC-Elemente zusammen**: Das Panel zeigt sie in Übersicht (ersetzt die Kachel Kompressor), Diagnose, Verlauf und Räume (das Gerät misst das nicht selbst) |
 | `outdoor_entity` | Integration | eigene Entität für die Außentemperatur statt des Gerätesensors |
 | `preset` | `standard` | `compact`, `standard` oder `all` (siehe oben) |
+| `layout` | `stacked` | `stacked` (Bereiche untereinander) oder `tabs` (siehe oben) |
 | `sections` | – | eigene Liste der Bereiche (`overview`, `operation`, `schema`, `rooms`, `status`, `refrigerant`, `history`, `runtime`, `energy`); ersetzt die Voreinstellung |
 | `max_fan_rpm` | `3000` | Drehzahl, bei der die Lüfter-Balken voll sind |
 | `max_compressor_rpm` | `6000` | Drehzahl, bei der der Kompressor-Ring voll ist |

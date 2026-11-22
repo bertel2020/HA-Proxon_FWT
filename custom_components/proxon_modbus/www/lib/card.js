@@ -1,4 +1,4 @@
-import { resolveSections, GRID_SECTIONS, PRESETS, LAYOUTS } from "./constants.js";
+import { resolveSections, GRID_SECTIONS, PRESETS, LAYOUTS, TAB_GROUPS } from "./constants.js";
 import { ProxonFwtBase } from "./compose.js";
 
 export class ProxonFwtCard extends ProxonFwtBase {
@@ -50,11 +50,36 @@ export class ProxonFwtCard extends ProxonFwtBase {
     return out;
   }
 
+  // Tabbed layout: one card, its head (state, mode, figures' title) stays; the tabs group the sections by purpose.
+  _tabsHtml(d) {
+    const secs = this._config.sections;
+    const o = this._overviewParts(d);
+    const tabs = [];
+    for (const [id, list, icon] of TAB_GROUPS) {
+      const mine = list.filter((s) => secs.includes(s));
+      if (!mine.length) continue;
+      let html = "";
+      for (const s of mine) {
+        if (s === "overview") html += o ? o.body : "";
+        else if (s === "operation") html += this._sec_operation(d, { bare: true });
+        else html += this[`_sec_${s}`](d);
+      }
+      if (html) tabs.push({ id, icon, label: this._t(`sec_${mine[0]}`), html });
+    }
+    if (!tabs.length) return "";
+    const cur = tabs.find((t) => t.id === this._ctab) || tabs[0];
+    const bar = tabs.length > 1 ? `<div class="ctabs" role="tablist">${tabs.map((t) => `<button class="ctab ${t.id === cur.id ? "a" : ""}" role="tab" aria-selected="${t.id === cur.id}" data-act="ctab" data-v="${t.id}" aria-label="${t.label}">${this._icon(t.icon)}<span>${t.label}</span></button>`).join("")}</div>` : "";
+    return `<ha-card class="tabcard">${o ? o.head : `<div class="ovh"><b>${this._config.title || "Proxon FWT"}</b></div>`}${bar}<div class="cbody">${cur.html}</div></ha-card>`;
+  }
+
   _render() {
     const d = this._d;
     let body;
     if (!d) {
       body = `<ha-card><div class="empty">${this._t("none")}</div></ha-card>`;
+    } else if (this._config.layout === "tabs") {
+      const alerts = this._sec_alerts(d);
+      body = `<div class="stack">${alerts}${this._tabsHtml(d)}</div>`;
     } else {
       const parts = [];
       let cluster = [];

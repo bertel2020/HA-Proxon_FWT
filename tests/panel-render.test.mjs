@@ -754,7 +754,7 @@ test("the card shows its own status card and no dead panel links; the editor lis
   ed.hass = hass;
   ed.setConfig({ type: "custom:proxon-fwt-card" });
   const flat = (sc) => sc.flatMap((s) => (s.schema ? flat(s.schema) : [s.name]));
-  assert.deepEqual(flat(ed._form.schema), ["preset", "sec_operate", "sec_plant", "sec_details", "outdoor_side"], "no sensor or speed fields in the editor");
+  assert.deepEqual(flat(ed._form.schema), ["preset", "layout", "sec_operate", "sec_plant", "sec_details", "outdoor_side"], "no sensor or speed fields in the editor");
   assert.equal(ed._label("alerts"), "Meldungen");
 });
 
@@ -784,4 +784,32 @@ test("sections: old names map to the new ones, order is fixed, presets and alert
   assert.deepEqual(custom.sections, ["overview", "operation", "schema", "rooms", "status", "history"]);
   assert.equal(custom.preset, undefined);
   assert.equal(ed._data(custom).preset, "custom");
+});
+
+test("tabs layout: one card with head and tab bar, the tab shows its sections, a click switches", async () => {
+  const card = new X.ProxonFwtCard();
+  card.setConfig({ preset: "all", layout: "tabs" });
+  card.hass = hass;
+  let html = await render(card, () => {});
+  check(html);
+  assert.ok(html.includes("tabcard") && html.includes("ctabs"));
+  for (const t of ["overview", "rooms", "maintenance", "history"]) assert.ok(html.includes(`data-act="ctab" data-v="${t}"`), `tab ${t}`);
+  assert.ok(html.includes("ovh") && html.includes("Zuluft") && html.includes("opw bare"), "first tab: head, figures, controls");
+  assert.ok(!html.includes("Kältekreis und Antriebe") && !html.includes('class="rgrid'), "other tabs are not rendered");
+  html = await render(card, () => { card._ctab = "maintenance"; });
+  assert.ok(html.includes("Kältekreis und Antriebe") && html.includes("Gerätefilter") && html.includes("ovh"), "maintenance tab keeps the head");
+  card._click({ composedPath: () => [{ dataset: { act: "ctab", v: "rooms" } }] });
+  assert.equal(card._ctab, "rooms");
+  html = await render(card, () => {});
+  assert.ok(html.includes("Wohnen") && !html.includes("Gerätefilter"));
+  const one = new X.ProxonFwtCard();
+  one.setConfig({ sections: ["rooms"], layout: "tabs" });
+  one.hass = hass;
+  assert.ok(!(await render(one, () => {})).includes('class="ctabs'), "a single tab shows no tab bar");
+  assert.throws(() => new X.ProxonFwtCard().setConfig({ layout: "grid" }));
+  const ed = new X.ProxonFwtCardEditor();
+  ed.hass = hass;
+  ed.setConfig({ layout: "tabs" });
+  assert.equal(ed._data(ed._config).layout, "tabs");
+  assert.equal(ed._config_from({ ...ed._data(ed._config), layout: "stacked" }).layout, undefined);
 });

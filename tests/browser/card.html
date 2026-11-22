@@ -1,0 +1,112 @@
+<!doctype html>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proxon FWT card harness</title>
+<style>
+  :root { --card-background-color:#fff; --secondary-background-color:#f1f2f4; --primary-text-color:#14162e; --secondary-text-color:#5a5d73; --primary-color:#3d8be0; --divider-color:#e0e1e6; }
+  body { margin:0; background:#eceef2; font-family: system-ui, sans-serif; }
+  ha-card { display:block; background:var(--card-background-color); border-radius:12px; }
+  ha-icon { display:inline-block; width:1em; height:1em; }
+  html.dark body { background:#14151d; }
+</style>
+<script>
+  // Preview helpers: ?icons loads the Material Design Icons font, ?dark switches the theme.
+  const q = new URLSearchParams(location.search);
+  if (q.has("dark")) document.documentElement.style.cssText = "--card-background-color:#1c1d27;--secondary-background-color:#272936;--primary-text-color:#e8e9f0;--secondary-text-color:#a0a3b8;--primary-color:#5aa0ec;--divider-color:#34364a;color-scheme:dark";
+  if (q.has("dark")) document.documentElement.classList.add("dark"); // the body does not exist yet here
+  if (q.has("icons")) customElements.define("ha-switch", class extends HTMLElement {
+    static get observedAttributes() { return ["checked", "disabled"]; }
+    constructor() { super(); this.attachShadow({ mode: "open" }); }
+    connectedCallback() { this.attributeChangedCallback(); }
+    attributeChangedCallback() {
+      const on = this.hasAttribute("checked"), dim = this.hasAttribute("disabled") ? 0.5 : 1;
+      this.shadowRoot.innerHTML = `<style>:host{display:inline-block;width:38px;height:22px;vertical-align:middle}.t{width:38px;height:22px;border-radius:11px;background:${on ? "var(--primary-color)" : "#8a8f98"};position:relative;opacity:${dim}}.t::after{content:"";position:absolute;top:3px;left:${on ? 19 : 3}px;width:16px;height:16px;border-radius:50%;background:#fff}</style><div class="t"></div>`;
+    }
+  });
+  // @font-face only registers from the document, the glyph rules are loaded again inside every icon
+  if (q.has("icons")) document.head.insertAdjacentHTML("beforeend", '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">');
+  if (q.has("icons")) customElements.define("ha-icon", class extends HTMLElement {
+    static get observedAttributes() { return ["icon"]; }
+    constructor() { super(); this.attachShadow({ mode: "open" }); }
+    attributeChangedCallback() { this.shadowRoot.innerHTML = `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css"><style>:host{display:inline-flex;align-items:center;justify-content:center;width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px)}.mdi:before{font-size:var(--mdc-icon-size,24px);line-height:1}</style><span class="mdi mdi-${(this.getAttribute("icon") || "").replace(/^mdi:/, "")}"></span>`; }
+  });
+</script>
+<div style="max-width:var(--w,520px);margin:16px auto"><proxon-fwt-card id="p"></proxon-fwt-card></div>
+<script type="module">
+import "../../custom_components/proxon_modbus/www/proxon-fwt-card.js";
+const el = document.getElementById("p");
+const calls = (window.__calls = []);
+// ---- synthetic data ---------------------------------------------------------
+const entities = {}, states = {}, devices = {};
+const ent = (id, device, extra = {}, state = "1", attrs = {}) => {
+  entities[id] = { entity_id: id, platform: "proxon_modbus", device_id: device, ...extra };
+  states[id] = { state, attributes: attrs, last_updated: "2026-11-07T11:00:00Z" };
+};
+devices.central = { id: "central", name: "Proxon FWT" };
+const num = { temp_supply_air: "19.4", temp_fresh_air: "4.1", temp_exhaust_air: "6.2", temp_outside: "-2.3", temp_extract_air: "21.3", temp_pre_evaporator: "3", temp_evaporator: "1", temp_post_preheat: "10", temp_pre_condenser: "40", temp_condenser: "45", temp_compressor: "70", compressor_speed: "2400", fan_speed_supply: "1500", fan_speed_extract: "1480", heat_recovery: "82", filter_age_days: "45", filter_shutdown_days: "30", hp_runtime_total: "1200", hp_starts_total: "300", hp_runtime_today: "3.5", hp_starts_today: "4", power_consumption: "450" };
+for (const [k, v] of Object.entries(num)) ent(`sensor.${k}`, "central", { translation_key: k }, v, { unit_of_measurement: k === "power_consumption" ? "W" : "" });
+ent("select.operating_mode", "central", { translation_key: "operating_mode" }, "eco_winter", { options: ["off", "eco_winter", "eco_summer", "comfort"] });
+ent("select.fan_stage", "central", { translation_key: "fan_stage" }, "stage_2", { options: ["off", "stage_1", "stage_2", "stage_3", "stage_4"] });
+for (const k of ["fan_auto", "fan_intensive", "fan_stage_restore", "cooling_enable", "boost"]) ent(`switch.${k}`, "central", { translation_key: k }, k === "fan_auto" ? "on" : "off");
+for (const k of ["heat_pump_heating", "heat_pump_cooling", "heat_pump_continuous", "bypass_active", "filter_device", "filter_recirculation", "error_system", "mode_change_possible", "fan_stage_4_selectable", "intensive_ventilation_selectable", "cooling_available"]) ent(`binary_sensor.${k}`, "central", { translation_key: k }, k === "heat_pump_heating" || k === "mode_change_possible" || k === "fan_stage_4_selectable" ? "on" : "off");
+states["switch.fan_auto"].state = "off";
+states["switch.fan_stage_restore"] = { state: "on", attributes: { preferred_stage: "stage_2", last_restore: "2026-11-17T08:42:00Z" }, last_updated: "2026-11-17T08:42:00Z" };
+ent("select.fan_stage_preferred", "central", { translation_key: "fan_stage_preferred" }, "stage_2", { options: ["stage_1", "stage_2", "stage_3", "stage_4"] });
+ent("sensor.last_write_error", "central", { translation_key: "last_write_error" }, "none", {});
+ent("button.filter_changed", "central", { translation_key: "filter_changed" }, "unknown");
+const roomData = [["Wohnen", 21.6, 22, 720, 44, 0], ["Küche", 20.9, 21, 600, 44, 0], ["Schlafzimmer", 18.8, 19, 1180, 46, 0], ["Kind 1", 20.2, 21, 900, 48, 1],
+  ["Kind 2", 21.0, 21, 600, 45, 0], ["Bad", 22.9, 22, 700, 58, 0], ["Büro", 21.3, 21, 940, 42, 0]];
+roomData.forEach(([name, cur, tgt, co2, rf, ptc], i) => {
+  const id = `room${i}`;
+  devices[id] = { id, name, via_device_id: "central", identifiers: [["proxon_modbus", `e1_room_${i}`]] };
+  ent(`climate.${id}`, id, {}, "heat", { current_temperature: cur, temperature: tgt, min_temp: 18, max_temp: 30, target_temp_step: 1 });
+  ent(`binary_sensor.${id}_ptc_active`, id, { translation_key: "ptc_active" }, ptc ? "on" : "off");
+  ent(`switch.${id}_ptc_enable`, id, { translation_key: "ptc_enable" }, i === 0 || ptc ? "on" : "off");
+  ent(`sensor.${id}_co2`, id, {}, String(co2), { device_class: "carbon_dioxide" });
+  ent(`sensor.${id}_rf`, id, {}, String(rf), { device_class: "humidity" });
+});
+
+// Hot water heat pump (TWWP): device below the central one, its entities, the options the panel reads and a day of history.
+devices.tw1 = { id: "tw1", name: "Trinkwasser-Wärmepumpe", via_device_id: "central", identifiers: [["proxon_modbus", "e1_twwp_SUB1"]] };
+ent("water_heater.tw", "tw1", {}, "pv", { current_temperature: 54.2, temperature: 53 });
+for (const [k, v] of [["normal", 53], ["pv", 60], ["min", 42]]) ent(`number.tw_${k}`, "tw1", { translation_key: `twwp_target_${k}` }, String(v), { min: 30, max: 60, step: 1 });
+ent("number.tw_hlow", "tw1", { translation_key: "twwp_hyst_low" }, "3", { min: 1, max: 10, step: 0.5 });
+ent("number.tw_hhigh", "tw1", { translation_key: "twwp_hyst_high" }, "1", { min: 0, max: 5, step: 0.5 });
+ent("sensor.tw_program", "tw1", { translation_key: "twwp_program" }, "pv");
+ent("sensor.tw_pv_status", "tw1", { translation_key: "twwp_pv_status" }, "pv");
+ent("sensor.tw_reason", "tw1", { translation_key: "twwp_reason" }, "pv", { control: false, last_run: new Date(Date.now() - 23000).toISOString(), last_error: null });
+ent("sensor.tw_planned", "tw1", { translation_key: "twwp_planned" }, "0", { switches: {} });
+ent("binary_sensor.tw_problem", "tw1", { translation_key: "twwp_sensor_problem" }, "off");
+ent("switch.tw_control", "tw1", { translation_key: "twwp_control" }, "off");
+for (const [id, state, a] of [["sensor.tw_water", "54.2", { unit_of_measurement: "°C" }], ["sensor.tw_outer", "5.2", { unit_of_measurement: "°C" }], ["sensor.tw_pv", "2.5", { unit_of_measurement: "kW" }],
+  ["sensor.tw_power", "389", { unit_of_measurement: "W" }], ["sensor.tw_energy", "5604.6", { unit_of_measurement: "kWh" }], ["switch.freigabe", "on", {}], ["switch.freigabe_pv", "on", {}]]) {
+  states[id] = { state, attributes: a, last_updated: "2026-11-07T11:00:00Z" };
+}
+const twSettings = [{ device_id: "central", twwp: [{ device_id: "tw1", water_temp: "sensor.tw_water", outer_temp: "sensor.tw_outer", pv_power: "sensor.tw_pv",
+  power_entity: "sensor.tw_power", energy_entity: "sensor.tw_energy", enable_switch: "switch.freigabe", enable_pv_switch: "switch.freigabe_pv" }] }];
+const twHistory = (ids) => {
+  const now = Date.now() / 1000, t = (h) => now - h * 3600;
+  const rows = (pts) => pts.map(([h, v]) => ({ lu: t(h), s: String(v) }));
+  const all = {
+    "sensor.tw_water": rows([[24, 44], [20, 41], [16, 45], [12, 52], [10, 50], [8, 47], [7, 52], [5, 58], [4, 60], [3, 58], [1, 55], [0, 54.2]]),
+    "sensor.tw_program": rows([[24, "off"], [18, "minimum"], [14, "normal"], [9, "off"], [7, "pv"], [2, "off"]]),
+    "sensor.tw_power": rows([[24, 0], [18, 410], [16, 0], [14, 395], [11, 0], [7, 389], [3, 0]]),
+    "sensor.tw_pv": rows([[24, 0], [9, 1.2], [7, 2.8], [5, 2.5], [3, 0.4], [2, 0]]),
+    "sensor.tw_outer": rows([[24, 2], [12, 4], [8, 6], [0, 5.2]]),
+  };
+  return Object.fromEntries(ids.filter((i) => all[i]).map((i) => [i, all[i]]));
+};
+
+const hass = {
+  language: "de", entities, states, devices,
+  callWS: async (m) => (m.type === "proxon_modbus/settings" ? twSettings : m.type === "history/history_during_period" && m.entity_ids.some((i) => i.startsWith("sensor.tw_")) ? twHistory(m.entity_ids) : m.type === "frontend/get_user_data" ? { value: null } : {}),
+  callService: async (d, s, x) => { calls.push([d, s, x]); },
+};
+
+
+
+window.__hass = hass;
+// ?cfg={"preset":"all","layout":"tabs"} sets the card config, ?w=420 the card width
+el.setConfig(JSON.parse(q.get("cfg") || "{}"));
+if (q.has("w")) document.documentElement.style.setProperty("--w", q.get("w") + "px");
+el.hass = hass;
+</script>

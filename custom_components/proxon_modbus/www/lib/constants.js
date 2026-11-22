@@ -61,7 +61,7 @@ export const METRIC_META = {
 export const BLUE = "#378ADD", CORAL = "#D85A30", AMBER = "#f2a516", GREEN = "#3fa660";
 export const CHART_H = 300; // total height of every line chart (single curve groups and the hot water lanes)
 export const SETTINGS_TTL = 60000;
-export const UI_ACTS = new Set(["more", "hcmp", "ser", "hsts", "hrange", "metric", "twmetric", "twcmp", "twhyst", "twrefs", "dismiss", "undismiss", "kpi", "tab", "rview", "rfilter", "rtoggle", "rclose", "noop", "rstep", "twstep", "up", "down", "view", "room", "menu"]);
+export const UI_ACTS = new Set(["more", "ctab", "hcmp", "ser", "hsts", "hrange", "metric", "twmetric", "twcmp", "twhyst", "twrefs", "dismiss", "undismiss", "kpi", "tab", "rview", "rfilter", "rtoggle", "rclose", "noop", "rstep", "twstep", "up", "down", "view", "room", "menu"]);
 export const WRITE_ERROR_SHOWN_MS = 3600000;
 export const DISMISS_GRACE_MS = 1800000;
 export const BAD = ["unavailable", "unknown", undefined, null, ""];
