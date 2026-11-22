@@ -5,6 +5,8 @@
 ## Unreleased
 
 **New**
+- **PTC elements: power and consumption.** The options let you pick one power sensor and one energy meter for all PTC elements together (your own sensors, e.g. from a Shelly). The panel shows them in the **overview** (PTC tile with curve and "x of y rooms heating"; it replaces the compressor tile while a PTC power sensor is set), in the **diagnosis** (PTC auxiliary heating row with one segment per room, plus PTC consumption today and total), in the **history** (PTC chip, a lane in "All" and a bar card for the PTC consumption) and as tiles in the rooms summary (Wh, kWh and MWh are accepted). The key figure tiles now come in pairs: supply and outside air, heat recovery and power, PTC and hot water. The unit itself provides no such values.
+- **Panel – room popup on phones:** swipe the handle or header down to close it.
 - **Panel – history:** New views **All** (air, heat recovery, refrigerant circuit, drives and power as lanes on one time axis, with running bands and bypass phases), **Refrigerant circuit** (the six temperatures, the compressor temperature starts hidden) and **Drives** (compressor, supply and extract fan in rpm). "All" is the default and replaces the "Compressor" chip.
 - **Panel – table below the charts:** Now uniform with **Now**, min, max and mean (the now value comes from the live sensor). A click on a row hides the curve and the scale adjusts. The table can be folded; the curve names then stay as switches.
 - **Panel – key figures:** New **Compressor** tile (speed with a 24 hour curve, opens the drives in the history). The grid is 3 × 2, and 2 × 3 on mobile.

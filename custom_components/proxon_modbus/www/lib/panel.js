@@ -158,9 +158,13 @@ export class ProxonFwtPanel extends ProxonFwtBase {
     const avg = temps.length ? temps.reduce((a, [, i]) => a + i.cur, 0) / temps.length : null;
     const top = cos.sort((a, b) => b[1].co2 - a[1].co2)[0];
     const arf = rfs.length ? rfs.reduce((a, [, i]) => a + i.rf, 0) / rfs.length : null;
+    const pw = this._opt("ptc_power_entity") ? this._watts(this._opt("ptc_power_entity")) : null;
+    const pe = this._opt("ptc_energy_entity") ? this._kwh(this._opt("ptc_energy_entity")) : null;
     const sum = (ic, c, label, val, unit) => `<div class="rs" style="--c:${c}"><span class="ic">${this._icon(ic)}</span><div><small>${label}</small><b>${val}<span>${unit}</span></b></div></div>`;
     const summary = `<div class="rsum">${avg === null ? "" : sum("mdi:thermometer", BLUE, this._t("rs_avg"), this._fmt(avg), " °C")}
       ${sum("mdi:fire", CORAL, this._t("rs_heat"), all.filter(([, i]) => i.heats).length, ` ${this._t("rs_active")} · ${all.filter(([, i]) => i.ptcE && this._on(i.ptcE)).length} ${this._t("rs_enabled")}`)}
+      ${pw === null ? "" : sum("mdi:radiator", CORAL, this._t("rs_ptcw"), pw >= 1000 ? this._fmt(pw / 1000, 2) : Math.round(pw), pw >= 1000 ? " kW" : " W")}
+      ${pe === null ? "" : sum("mdi:lightning-bolt", AMBER, this._t("rs_ptce"), this._fmt(pe, pe < 100 ? 2 : 0), " kWh")}
       ${top ? sum("mdi:molecule-co2", AMBER, this._t("rs_co2"), Math.round(top[1].co2), ` ppm · ${top[1].r.name}`) : ""}
       ${arf === null ? "" : sum("mdi:water-percent", "var(--primary-color)", this._t("rs_rf"), Math.round(arf), " %")}</div>`;
     let rows = all.filter(([, i]) => filter === "all" || (filter === "heat" && i.heats) || (filter === "ena" && i.ptcE && this._on(i.ptcE)) || (filter === "dev" && Math.abs(i.dev) > 0.3) || (filter === "co2" && i.co2 != null && i.co2 > 800));
@@ -202,7 +206,7 @@ export class ProxonFwtPanel extends ProxonFwtBase {
     } else if (tab === "warm") {
       body = this._twTab(d);
     } else if (tab === "history") {
-      body = `<div class="stack"><div class="hsurf">${this._sec_history(d)}${this._sec_runtime(d)}${this._sec_energy(d)}</div></div>`;
+      body = `<div class="stack"><div class="hsurf">${this._sec_history(d)}${this._sec_runtime(d)}${this._sec_energy(d)}${this._sec_ptc(d)}</div></div>`;
     } else {
       body = `<div class="stack">${this._sec_insights(d)}${this._diagTab(d)}</div>`;
     }

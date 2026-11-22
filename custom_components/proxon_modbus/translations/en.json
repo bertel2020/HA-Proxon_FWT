@@ -155,7 +155,9 @@
           "boost_minutes": "Boost ventilation duration (minutes)",
           "power_entity": "Own power sensor (optional)",
           "outdoor_entity": "Own outdoor temperature sensor (optional)",
-          "energy_entity": "Own energy meter (optional)"
+          "energy_entity": "Own energy meter (optional)",
+          "ptc_power_entity": "Own PTC power sensor (optional)",
+          "ptc_energy_entity": "Own PTC energy meter (optional)"
         },
         "data_description": {
           "filter_interval": "Basis of the maintenance bar in the side panel. The unit asks for a change after 180 days and shuts down by force 21 days after that message.",
@@ -164,7 +166,9 @@
           "outdoor_side": "Which side of the unit are fresh air and exhaust air connected to, seen from the front? This turns the diagram in the card and side panel. The supply and extract air are on the opposite side.",
           "power_entity": "Replaces the unit's power consumption in the card and side panel, e.g. a Shelly on the unit. Leave empty to use the unit's sensor.",
           "outdoor_entity": "Replaces the unit's outdoor temperature in the card and side panel. Leave empty to use the unit's sensor.",
-          "energy_entity": "Used for the energy card in the side panel instead of estimating from the power, e.g. the energy counter of a Shelly on the unit. Accepts Wh, kWh and MWh. Leave empty to estimate from the power."
+          "energy_entity": "Used for the energy card in the side panel instead of estimating from the power, e.g. the energy counter of a Shelly on the unit. Accepts Wh, kWh and MWh. Leave empty to estimate from the power.",
+          "ptc_power_entity": "Power of all PTC elements together, e.g. a Shelly in their supply. Only shown in the side panel (rooms).",
+          "ptc_energy_entity": "Energy counter of all PTC elements together. Accepts Wh, kWh and MWh. Only shown in the side panel (rooms)."
         }
       },
       "names": {

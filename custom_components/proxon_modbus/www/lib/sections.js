@@ -102,13 +102,19 @@ export class SectionsMethods {
     const eff = this._efficiency();
     const bypass = this._on(c.bypass_active);
     const power = this._pnum(), rpm = this._ok(c.compressor_speed) ? this._num(c.compressor_speed) : null;
+    // Pairs read together (two columns on phones): supply / outside air, heat recovery / unit power, PTC (or compressor) / hot water.
+    const ptcId = this._ptcP(), ptcW = ptcId ? this._watts(ptcId) : null, [ptcOn, ptcN] = this._ptcRooms(d);
+    const ptcTile = tile("mdi:radiator", CORAL, this._t("ptc_short"), ptcW === null ? null : ptcW >= 1000 ? this._fmt(ptcW / 1000, 2) : this._fmt(ptcW, 0), ptcW !== null && ptcW >= 1000 ? "kW" : "W", "ptc",
+      `${this._kpiSpark(d, "ptc", this._t("ptc_power"), CORAL, { lo: 0, step: true })}${ptcN ? `<div class="lb">${this._t("ptc_rooms", ptcOn, ptcN)}</div>` : ""}`, true);
     const html = tile("mdi:thermometer", CORAL, this._t("supply_t"), this._temp(c.temp_supply_air), "", "temp", this._kpiSpark(d, "temp", this._t("supply_t"), CORAL), !!c.temp_supply_air) +
+      tile("mdi:weather-partly-cloudy", BLUE, this._t("outside"), this._temp(this._outdoorId()), "", "temp", this._kpiSpark(d, "temp", this._t("outside"), BLUE), !!this._outdoorId()) +
       tile("mdi:percent-circle-outline", GREEN, this._t("efficiency"), bypass ? this._t("bypass_short") : eff === null ? null : `${eff} % <span title="${this._t("eff_info")}">${this._icon("mdi:information-outline", 'class="info"')}</span>`, "", "eff", this._effSpark(d)) +
       tile("mdi:flash", AMBER, this._t("power"), power === null ? null : this._fmt(power, power % 1 ? 1 : 0),
         "W", "power", this._kpiSpark(d, "power", this._t("power"), AMBER, { lo: 0, step: true }), !!this._powerId()) +
+      (ptcId ? ptcTile : (
       tile("mdi:engine-outline", "#7e57c2", this._t("compressor"), rpm === null ? null : this._fmt(rpm, 0), "rpm", "drives",
-        this._kpiSpark(d, "drives", this._t("compressor"), "#7e57c2", { lo: 0 }), !!c.compressor_speed) +
-      tile("mdi:weather-partly-cloudy", BLUE, this._t("outside"), this._temp(this._outdoorId()), "", "temp", this._kpiSpark(d, "temp", this._t("outside"), BLUE), !!this._outdoorId()) +
+        this._kpiSpark(d, "drives", this._t("compressor"), "#7e57c2", { lo: 0 }), !!c.compressor_speed)
+      )) +
       (panel && d.twwp.length ? this._twKpi(d) : "");
     if (![this._temp(c.temp_supply_air), power, rpm, this._temp(this._outdoorId()), bypass ? 1 : eff].some((v) => !missing(v))) return "";
     return `<ha-card>${this._header("mdi:gauge", this._t("kpi"))}<div class="kpiw"><div class="kpi">${html}</div></div></ha-card>`;

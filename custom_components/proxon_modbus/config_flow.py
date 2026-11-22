@@ -44,6 +44,8 @@ from .const import (
     DEFAULT_FILTER_INTERVAL,
     CONF_OUTDOOR_SIDE,
     CONF_POWER_ENTITY,
+    CONF_PTC_ENERGY_ENTITY,
+    CONF_PTC_POWER_ENTITY,
     CONF_NUM_ROOMS,
     CONF_NUM_RF_SENSORS,
     CONF_PARITY,
@@ -604,6 +606,8 @@ class ProxonModbusOptionsFlow(OptionsFlow):
                 CONF_POWER_ENTITY: user_input.get(CONF_POWER_ENTITY) or None,
                 CONF_OUTDOOR_ENTITY: user_input.get(CONF_OUTDOOR_ENTITY) or None,
                 CONF_ENERGY_ENTITY: user_input.get(CONF_ENERGY_ENTITY) or None,
+                CONF_PTC_POWER_ENTITY: user_input.get(CONF_PTC_POWER_ENTITY) or None,
+                CONF_PTC_ENERGY_ENTITY: user_input.get(CONF_PTC_ENERGY_ENTITY) or None,
                 CONF_FILTER_INTERVAL: int(user_input.get(CONF_FILTER_INTERVAL, DEFAULT_FILTER_INTERVAL)),
                 CONF_RECIRC_FILTER: bool(user_input.get(CONF_RECIRC_FILTER, DEFAULT_RECIRC_FILTER)),
                 CONF_BOOST_MINUTES: int(user_input.get(CONF_BOOST_MINUTES, DEFAULT_BOOST_MINUTES)),
@@ -685,6 +689,18 @@ class ProxonModbusOptionsFlow(OptionsFlow):
                 vol.Optional(
                     CONF_ENERGY_ENTITY,
                     description={"suggested_value": options.get(CONF_ENERGY_ENTITY)},
+                ): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain="sensor", device_class="energy")
+                ),
+                vol.Optional(
+                    CONF_PTC_POWER_ENTITY,
+                    description={"suggested_value": options.get(CONF_PTC_POWER_ENTITY)},
+                ): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain="sensor", device_class="power")
+                ),
+                vol.Optional(
+                    CONF_PTC_ENERGY_ENTITY,
+                    description={"suggested_value": options.get(CONF_PTC_ENERGY_ENTITY)},
                 ): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain="sensor", device_class="energy")
                 ),

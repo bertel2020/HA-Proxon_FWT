@@ -32,6 +32,8 @@ from .const import (
     DEFAULT_FILTER_INTERVAL,
     CONF_OUTDOOR_SIDE,
     CONF_POWER_ENTITY,
+    CONF_PTC_ENERGY_ENTITY,
+    CONF_PTC_POWER_ENTITY,
     CONF_ROOM_AREAS,
     CONF_ROOM_NAMES,
     CONF_SCAN_INTERVAL,
@@ -143,6 +145,8 @@ def _ws_settings(
                 "power_entity": entry.options.get(CONF_POWER_ENTITY),
                 "outdoor_entity": entry.options.get(CONF_OUTDOOR_ENTITY),
                 "energy_entity": entry.options.get(CONF_ENERGY_ENTITY),
+                "ptc_power_entity": entry.options.get(CONF_PTC_POWER_ENTITY),
+                "ptc_energy_entity": entry.options.get(CONF_PTC_ENERGY_ENTITY),
                 "filter_interval": entry.options.get(CONF_FILTER_INTERVAL, DEFAULT_FILTER_INTERVAL),
                 "recirc_filter": entry.options.get(CONF_RECIRC_FILTER, DEFAULT_RECIRC_FILTER),
             }

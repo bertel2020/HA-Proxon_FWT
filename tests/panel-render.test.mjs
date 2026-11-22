@@ -657,3 +657,40 @@ test("all line charts have the same height; the key figure tile for the compress
   const hist = await render(panel, () => {});
   assert.ok(/class="vbtn a" data-act="metric" data-v="drives"/.test(hist), "the drives chip is selected");
 });
+
+test("central PTC power and energy sensors show as tiles in the rooms summary", async () => {
+  ent("sensor.ptc_w", "central", {}, "1.2", { device_class: "power", unit_of_measurement: "kW" });
+  ent("sensor.ptc_e", "central", {}, "2500", { device_class: "energy", unit_of_measurement: "Wh" });
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = { ...hass, callWS: async (m) => (m.type === "proxon_modbus/settings" ? [{ device_id: "central", ptc_power_entity: "sensor.ptc_w", ptc_energy_entity: "sensor.ptc_e" }] : {}) };
+  const html = await render(panel, () => { panel._tab = "rooms"; });
+  check(html);
+  assert.ok(html.includes("1,20") && html.includes("kW"), "power tile");
+  assert.ok(html.includes("2,50") && html.includes("kWh"), "energy tile");
+});
+
+test("PTC sensors appear in overview (replacing the compressor tile), diagnosis and history", async () => {
+  ent("sensor.ptc_w", "central", {}, "1.2", { device_class: "power", unit_of_measurement: "kW" });
+  ent("sensor.ptc_e", "central", {}, "412", { device_class: "energy", unit_of_measurement: "kWh" });
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = { ...hass, callWS: async (m) => (m.type === "proxon_modbus/settings" ? [{ device_id: "central", ptc_power_entity: "sensor.ptc_w", ptc_energy_entity: "sensor.ptc_e" }] : {}) };
+  let html = await render(panel, () => { panel._tab = "overview"; });
+  check(html);
+  assert.ok(html.includes("von 3 Räumen heizen"), "PTC tile with the room count");
+  assert.ok(html.includes("1,20"), "PTC power in kW");
+  assert.ok(!html.includes(">Kompressor<"), "the compressor tile makes way for the PTC tile");
+  html = await render(panel, () => { panel._tab = "diag"; });
+  check(html);
+  assert.ok(html.includes("PTC-Zusatzheizung") && html.includes("pseg"), "diagnosis tile with room segments");
+  assert.ok(html.includes("PTC-Verbrauch gesamt") && html.includes("412"), "meter reading");
+  html = await render(panel, () => { panel._tab = "history"; panel._metric = "ptc"; });
+  check(html);
+  assert.ok(html.includes('data-v="ptc"'), "PTC chip in the history");
+});
+
+test("without PTC sensors the compressor tile stays", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = hass;
+  const html = await render(panel, () => { panel._tab = "overview"; });
+  assert.ok(html.includes("Kompressor") && !html.includes("Räumen heizen"));
+});

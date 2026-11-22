@@ -1,4 +1,4 @@
-import { METRIC_META, BLUE } from "./constants.js";
+import { METRIC_META, BLUE, CORAL } from "./constants.js";
 
 export class HistorySectionsMethods {
   // ---- history: sections ------------------------------------------------
@@ -10,7 +10,7 @@ export class HistorySectionsMethods {
   _sec_history(d) {
     const range = this._range();
     // "all": air, refrigerant circuit, drives and power as lanes on one time axis (only when at least two of them exist)
-    const groups = ["temp", "eff", "circuit", "drives", "power"].filter((m) => this._metricDefs(d, m).length);
+    const groups = ["temp", "eff", "circuit", "drives", "power", "ptc"].filter((m) => this._metricDefs(d, m).length);
     const avail = Object.keys(METRIC_META).filter((m) => (m === "all" ? groups.length > 1 : this._metricDefs(d, m).length));
     if (!avail.length) return "";
     const metric = avail.includes(this._metric) ? this._metric : avail[0];
@@ -25,7 +25,7 @@ export class HistorySectionsMethods {
     if (all) body = this._allBody(d, range, groups);
     else if (series === undefined) body = this._skel(300);
     else if (!series || !series.some((s) => s.pts.length > 1)) body = `<div class="note">${this._t(range === "30d" || range === "1y" ? "no_stats" : "no_history")}</div>`;
-    else body = this._chart(series, { range, unit: METRIC_META[metric].unit, bands: range === "24h" || range === "7d", bypass: series.bypass, energy: metric === "power", key: metric, off0: metric === "circuit" ? [this._t("compressor")] : [] });
+    else body = this._chart(series, { range, unit: METRIC_META[metric].unit, bands: range === "24h" || range === "7d", bypass: series.bypass, energy: metric === "power" || metric === "ptc", key: metric, off0: metric === "circuit" ? [this._t("compressor")] : [] });
     const rb = (v, l) => `<button class="vbtn ${range === v ? "a" : ""}" data-act="hrange" data-v="${v}">${l}</button>`;
     const chips = avail.length > 1 ? `<div class="mchips" role="group">${avail.map((m) => `<button class="vbtn ${m === metric ? "a" : ""}" data-act="metric" data-v="${m}">${this._icon(METRIC_META[m].icon)}${this._t(METRIC_META[m].label)}</button>`).join("")}</div>` : "";
     return `<ha-card><div class="h">${this._icon("mdi:chart-line")}${this._t("history")}
@@ -41,11 +41,12 @@ export class HistorySectionsMethods {
     const fmt = { temp: (v) => `${nf(v)}°`, circuit: (v) => `${nf(v)}°`, drives: (v) => `${this._fmt(v, 0)} rpm`,
       eff: (v) => `${this._fmt(v, 0)} %`,
       power: (v) => (v >= 1000 ? `${this._fmt(v / 1000)} kW` : `${this._fmt(v, 0)} W`) };
-    const title = { temp: this._t("g_air"), eff: this._t("efficiency"), circuit: this._t("g_circuit"), drives: this._t("g_drive"), power: this._t("power") };
-    const h = { temp: 110, eff: 80, circuit: 110, drives: 100, power: 80 };
+    fmt.ptc = fmt.power;
+    const title = { temp: this._t("g_air"), eff: this._t("efficiency"), circuit: this._t("g_circuit"), drives: this._t("g_drive"), power: this._t("power"), ptc: this._t("ptc_power") };
+    const h = { temp: 110, eff: 80, circuit: 110, drives: 100, power: 80, ptc: 80 };
     const lanes = loaded.map(({ m, s }) => {
       const list = (s || []).filter((x) => x.pts.length > 1 && !(m === "circuit" && x.label === comp))
-        .map((x) => ({ ...x, hkey: `${m}|${x.label}`, kind: "line", fmt: fmt[m], energy: m === "power" }));
+        .map((x) => ({ ...x, hkey: `${m}|${x.label}`, kind: "line", fmt: fmt[m], energy: m === "power" || m === "ptc" }));
       return list.length && { h: h[m], axis: true, title: title[m], series: list };
     }).filter(Boolean);
     if (!lanes.length) return `<div class="note">${this._t(range === "30d" || range === "1y" ? "no_stats" : "no_history")}</div>`;
@@ -76,6 +77,15 @@ export class HistorySectionsMethods {
     const body = rows === undefined ? this._skel(260)
       : rows && rows.some((x) => x.h !== undefined) ? this._barChart(rows, { key: "h", label: "runtime", color: "#3fa660", unit: "h", range, out: true, stamp: this._hstamp(`b|${range}`) }) : `<div class="note">${this._t("no_stats")}</div>`;
     return `<ha-card>${this._header("mdi:heat-pump-outline", this._t("runtime"), this._rangeSub(range))}${body}</ha-card>`;
+  }
+
+  // Energy meter of the PTC elements: consumption per bucket, from the meter's statistics.
+  _sec_ptc(d) {
+    if (!this._ptcE()) return "";
+    const range = this._range(), rows = this._hget(`b|${range}`, () => this._loadBuckets(d, range));
+    if (rows === null || (rows && !rows.some((x) => x.pkwh !== undefined))) return "";
+    return `<ha-card>${this._header("mdi:radiator", this._t("ptc_energy"), this._rangeSub(range))}${rows === undefined ? this._skel(260)
+      : this._barChart(rows, { key: "pkwh", label: "ptc_energy", color: CORAL, unit: "kWh", range, stamp: this._hstamp(`b|${range}`) })}</ha-card>`;
   }
 
   _sec_energy(d) {

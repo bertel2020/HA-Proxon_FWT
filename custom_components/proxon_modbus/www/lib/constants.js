@@ -26,6 +26,7 @@ export const METRIC_META = {
   circuit: { icon: "mdi:thermometer-lines", unit: "°", label: "g_circuit" },
   drives: { icon: "mdi:engine-outline", unit: " rpm", label: "g_drive" },
   power: { icon: "mdi:flash", unit: " W", label: "power" },
+  ptc: { icon: "mdi:radiator", unit: " W", label: "ptc_short" },
   eff: { icon: "mdi:percent-circle-outline", unit: " %", label: "efficiency" },
   co2: { icon: "mdi:molecule-co2", unit: " ppm", label: "co2" },
   rf: { icon: "mdi:water-percent", unit: " %", label: "humidity" },

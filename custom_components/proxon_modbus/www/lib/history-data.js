@@ -38,6 +38,7 @@ export class HistoryDataMethods {
         .map(([id, l], i) => [id, l, pal[i % pal.length]]);
       case "drives": return keep([[c.compressor_speed, this._t("compressor"), "#3d8be0"], [c.fan_speed_supply, this._t("supply_fan"), CORAL], [c.fan_speed_extract, this._t("extract_fan"), AMBER]]);
       case "power": return keep([[this._powerId(), this._t("power"), AMBER]]);
+      case "ptc": return keep([[this._ptcP(), this._t("ptc_power"), CORAL]]);
       case "eff": return c.temp_pre_evaporator && c.temp_extract_air && c.temp_fresh_air
         ? [[c.temp_pre_evaporator, "s", CORAL], [c.temp_extract_air, "e", AMBER], [c.temp_fresh_air, "f", BLUE]] : [];
       case "co2": return d.rooms.filter((r) => r.co2).map((r, i) => [r.co2, r.name, pal[i % pal.length]]);
@@ -102,6 +103,8 @@ export class HistoryDataMethods {
     }
     const pscale = this._pscale();
     if (pscale !== 1) raw = raw.map((pts, i) => (ids[i] === this._powerId() ? pts.map(([t, v]) => [t, v * pscale]) : pts));
+    const ptcId = this._ptcP();
+    if (ptcId && this._wscale(ptcId) !== 1) raw = raw.map((pts, i) => (ids[i] === ptcId ? pts.map(([t, v]) => [t, v * this._wscale(ptcId)]) : pts));
     // Phases with the summer bypass open (exchanger bypassed): shown as a band and left out of the heat recovery rate.
     let bypass = [];
     const byId = this._d && this._d.central.bypass_active;
@@ -150,8 +153,8 @@ export class HistoryDataMethods {
   // Runtime, starts, outdoor temperature, mean power and energy per bucket (hour / day / month, depending on the range)
   // from the long-term statistics. The one loader for every card below the history chart, so they always share a range.
   async _loadBuckets(d, range) {
-    const c = d.central, out = this._outdoorId(), pw = this._powerId(), en = this._energyId();
-    const ids = [c.hp_runtime_total, c.hp_starts_total, out, pw, en].filter(Boolean);
+    const c = d.central, out = this._outdoorId(), pw = this._powerId(), en = this._energyId(), pe = this._ptcE();
+    const ids = [c.hp_runtime_total, c.hp_starts_total, out, pw, en, pe].filter(Boolean);
     if (!ids.length) return null;
     const period = { "24h": "hour", "7d": "day", "30d": "day", "1y": "month" }[range], now = new Date();
     const start = range === "1y" ? new Date(now.getFullYear(), now.getMonth() - 11, 1) : new Date(now.getTime() - RANGE_MS[range]);
@@ -170,6 +173,7 @@ export class HistoryDataMethods {
     if (c.hp_starts_total) put(c.hp_starts_total, "change", "starts");
     if (out) put(out, "mean", "out");
     if (pw) put(pw, "mean", "w", this._pscale());
+    if (pe) put(pe, "change", "pkwh", this._kscale(pe));
     if (en) put(en, "change", "kwh", this._escale()); // a meter gives the real consumption per bucket
     const list = [...rows.values()].sort((a, b) => a.t - b.t), nowS = now.getTime() / 1000, fixed = period === "hour" ? 3600 : 86400;
     const meter = list.some((m) => m.kwh !== undefined); // no meter statistics yet: estimate from the power like before
@@ -184,7 +188,7 @@ export class HistoryDataMethods {
   // The value for the "now" column under the charts: the live state of the sensor, else the last point of the curve.
   _nowVal(s) {
     const v = s.id ? this._num(s.id) : null;
-    if (v !== null && v !== undefined) return s.id === this._powerId() ? v * this._pscale() : v;
+    if (v !== null && v !== undefined) return s.id === this._powerId() ? v * this._pscale() : s.id && s.id === this._ptcP() ? v * this._wscale(s.id) : v;
     return s.pts.length ? s.pts[s.pts.length - 1][1] : null;
   }
 

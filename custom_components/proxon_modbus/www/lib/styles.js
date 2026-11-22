@@ -219,6 +219,7 @@ svg .sh { font-size: 14px; font-weight: 500; }
 .mrow { margin-bottom: 14px; } .mh { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 6px; }
 .mh > span { display: flex; align-items: center; gap: 8px; } .mh ha-icon { --mdc-icon-size: 18px; color: var(--secondary-text-color); } .mh b { margin-left: auto; font-weight: 500; }
 .pbar { height: 8px; border-radius: 4px; background: var(--secondary-background-color); overflow: hidden; margin-bottom: 4px; }
+.pseg { display: flex; gap: 3px; margin-top: 8px; } .pseg i { flex: 1; height: 8px; border-radius: 2px; background: var(--secondary-background-color); } .pseg i.on { background: #D85A30; }
 .pbar i { display: block; height: 100%; border-radius: 4px; }
 .msep { border-top: 1px solid var(--divider-color); padding-top: 8px; margin-top: 4px; }
 .rtop { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }

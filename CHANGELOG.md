@@ -5,6 +5,8 @@
 ## Unveröffentlicht
 
 **Neu**
+- **PTC-Elemente: Leistung und Verbrauch.** In den Optionen lassen sich ein Leistungssensor und ein Energiezähler für alle PTC-Elemente zusammen wählen (eigene Sensoren, z. B. von einem Shelly). Das Panel zeigt sie in der **Übersicht** (Kachel PTC mit Kurve und „x von y Räumen heizen“, sie ersetzt die Kachel Kompressor, solange ein PTC-Leistungssensor gewählt ist), in der **Diagnose** (Zeile PTC-Zusatzheizung mit einem Segment je Raum, dazu PTC-Verbrauch heute und gesamt), im **Verlauf** (Chip PTC, Spur in „Alle“ und Balken-Karte PTC-Verbrauch) und als Kacheln in der Räume-Zusammenfassung (Wh, kWh und MWh sind möglich). Die Kacheln der Kennzahlen stehen jetzt paarweise: Zuluft und Außen, Rückwärmzahl und Leistung, PTC und Warmwasser. Das Gerät selbst liefert dafür keine Werte.
+- **Panel – Raum-Popup am Smartphone:** Lässt sich am Griff oder an der Kopfzeile nach unten wischen, um es zu schließen.
 - **Panel – Verlauf:** Neue Ansichten **Alle** (Luft, Rückwärmzahl, Kältekreis, Antriebe und Leistung als Spuren auf einer gemeinsamen Zeitachse, mit Laufbändern und Bypass-Phasen), **Kältekreis** (die sechs Temperaturen, die Kompressor-Temperatur startet ausgeblendet) und **Antriebe** (Kompressor, Zu- und Abluft in rpm). „Alle“ ist voreingestellt und ersetzt den Chip „Kompressor“.
 - **Panel – Tabelle unter den Charts:** Einheitlich mit **Jetzt**, Min, Max und Ø (der Jetzt-Wert kommt vom aktuellen Sensor). Ein Klick auf eine Zeile blendet die Kurve aus, die Skala passt sich an. Die Tabelle lässt sich einklappen; dann bleiben die Kurvennamen als Schalter.
 - **Panel – Kennzahlen:** Neue Kachel **Kompressor** (Drehzahl mit 24‑Stunden-Kurve, öffnet im Verlauf die Antriebe). Das Raster ist 3 × 2 und mobil 2 × 3.

@@ -249,6 +249,7 @@ Anything the unit does not provide (e.g. power consumption or outdoor temperatur
 | `outdoor_side` | integration (`left`) | `left` or `right`: which side of the heat exchanger fresh and exhaust air are on |
 | `power_entity` | integration | own entity for the power consumption (e.g. a Shelly) instead of the device sensor |
 | `energy_entity` | integration | own energy meter (Wh/kWh/MWh): the energy card then shows the measured consumption instead of an estimate from the power |
+| `ptc_power_entity`, `ptc_energy_entity` | integration | own power sensor and energy meter (Wh/kWh/MWh) for **all PTC elements together**: the panel shows them in overview (replaces the compressor tile), diagnosis, history and rooms (the unit does not measure this itself) |
 | `outdoor_entity` | integration | own entity for the outdoor temperature instead of the device sensor |
 | `sections` | all | list of sections to show. Default: `operation`, `air`, `heatpump`, `refrigerant`, `status`, `rooms`. Also possible: `mode`, `fan` (instead of `operation`), `quick` (boost ventilation with 15/30/60 minutes only; in the panel it is part of `operation`), `schema`, `kpi`, `alerts`, `history`, `runtime`, `energy` |
 | `max_fan_rpm` | `3000` | speed at which the fan bars are full |

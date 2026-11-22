@@ -169,7 +169,7 @@ export class ProxonFwtBase extends HTMLElement {
     if (d && centralId && (this._settingsFor !== centralId || (!this._settingsBusy && Date.now() - (this._settingsAt || 0) > SETTINGS_TTL))) this._loadSettings(centralId);
     const ids = d
       ? [...Object.values(d.central), ...d.rooms.flatMap((r) => [r.climate, r.co2, r.rf, ...Object.values(r.ents)]),
-        ...d.twwp.flatMap((t) => this._twIds(t)), this._opt("power_entity"), this._opt("outdoor_entity")]
+        ...d.twwp.flatMap((t) => this._twIds(t)), this._opt("power_entity"), this._opt("outdoor_entity"), this._opt("ptc_power_entity"), this._opt("ptc_energy_entity")]
       : [];
     const sig = ids.filter(Boolean).map((i) => {
       const s = h.states[i];
@@ -290,6 +290,42 @@ export class ProxonFwtBase extends HTMLElement {
 
   _num(id) {
     return this._ok(id) && !isNaN(Number(this._state(id).state)) ? Number(this._state(id).state) : null;
+  }
+
+  // Value of a power / energy entity in W / kWh, whatever unit it reports.
+  _wscale(id) {
+    const u = String(((this._state(id) || { attributes: {} }).attributes.unit_of_measurement) || "W").trim();
+    return u === "kW" ? 1e3 : u === "MW" ? 1e6 : 1;
+  }
+
+  _kscale(id) {
+    const u = String(((this._state(id) || { attributes: {} }).attributes.unit_of_measurement) || "kWh").trim();
+    return u === "Wh" ? 1e-3 : u === "MWh" ? 1e3 : 1;
+  }
+
+  _watts(id) {
+    const v = this._num(id);
+    return v === null ? null : v * this._wscale(id);
+  }
+
+  _kwh(id) {
+    const v = this._num(id);
+    return v === null ? null : v * this._kscale(id);
+  }
+
+  // The optional PTC sensors of the options (all PTC elements together).
+  _ptcP() {
+    return this._opt("ptc_power_entity") || null;
+  }
+
+  _ptcE() {
+    return this._opt("ptc_energy_entity") || null;
+  }
+
+  // [rooms whose PTC element runs, rooms with a PTC element, rooms with it enabled]
+  _ptcRooms(d) {
+    const rs = d.rooms.filter((r) => r.ents && r.ents.ptc_active);
+    return [rs.filter((r) => this._on(r.ents.ptc_active)).length, rs.length, rs.filter((r) => r.ents.ptc_enable && this._on(r.ents.ptc_enable)).length];
   }
 
   _on(id) {
