@@ -93,6 +93,7 @@ export class InteractionMethods {
       case "rfilter": this._rfilter = v === this._rfilter ? "all" : v; this._sig = ""; this._update(); break;
       case "rtoggle": {
         const id = this._d.rooms[Number(v)].climate;
+        this._room = Number(v);
         this._ropen = this._ropen || new Set();
         const was = this._ropen.has(id);
         this._ropen.clear();

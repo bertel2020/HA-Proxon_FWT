@@ -213,7 +213,7 @@ export class ProxonFwtBase extends HTMLElement {
     if (sheet) sheet.scrollTop = k.top;
     let el = null;
     if (want === "open" && sheet) el = sheet.querySelector(".x");
-    else if (want && want.startsWith("close:")) el = root.querySelector(`.rh[data-act="rtoggle"][data-v="${cssEscape(want.slice(6))}"], .crow[data-v="${cssEscape(want.slice(6))}"]`);
+    else if (want && want.startsWith("close:")) el = root.querySelector(`.rh[data-act="rtoggle"][data-v="${cssEscape(want.slice(6))}"], .crow[data-v="${cssEscape(want.slice(6))}"], .tile[data-act="rtoggle"][data-v="${cssEscape(want.slice(6))}"], .rw[data-act="rtoggle"][data-v="${cssEscape(want.slice(6))}"]`);
     else if (k.act && k.act !== "rclose" && k.act !== "noop") {
       const sel = `[data-act="${k.act}"]${k.v != null ? `[data-v="${cssEscape(String(k.v))}"]` : ""}`;
       el = (k.inDlg && sheet ? sheet : root).querySelector(sel);

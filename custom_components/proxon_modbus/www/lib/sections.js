@@ -396,6 +396,24 @@ export class SectionsMethods {
     return `<ha-card>${this._header("mdi:shield-check-outline", this._t("status"))}${html.replace('class="row', 'class="row first')}</ha-card>`;
   }
 
+  _open(r) {
+    return !!this._ropen && this._ropen.has(r.climate);
+  }
+
+  // The details of one room as a popup (a bottom sheet on phones): the same controls as before, no longer pushed under the list.
+  _roomPopup(info) {
+    const sel = info.find((i) => this._open(i.r));
+    if (!sel) return "";
+    this._room = info.indexOf(sel); // the plus/minus buttons act on the selected room
+    const st = sel.heats ? [this._t("st_heat"), "mdi:fire", CORAL] : Math.abs(sel.dev) <= 0.3 ? [this._t("st_ok"), "mdi:check", GREEN]
+      : sel.dev < 0 ? [this._t("st_cool"), "mdi:arrow-down", BLUE] : [this._t("st_warm"), "mdi:arrow-up", CORAL];
+    return `<div class="rdlg" data-act="rclose"><div class="rsheet" role="dialog" aria-modal="true" aria-label="${sel.r.name}" data-act="noop">
+      <div class="grab"></div>
+      <div class="dh"><div><h3>${sel.r.name}</h3><div class="ds" style="--c:${st[2]}">${this._icon(st[1])}${st[0]}</div></div>
+        <button class="x" data-act="rclose" aria-label="${this._t("close")}">${this._icon("mdi:close")}</button></div>
+      ${this._roomDetail(sel)}</div></div>`;
+  }
+
   _roomDetail(sel) {
     const a = sel.s.attributes;
     const unavailable = sel.s.state === "unavailable";
@@ -442,22 +460,21 @@ export class SectionsMethods {
     };
     let list;
     if (this._view === "tiles") {
-      list = `<div class="tiles">${info.map((i, n) => `<button class="tile ${n === this._room ? "s" : ""}" style="${tint(i)}" data-act="room" data-v="${n}">
+      list = `<div class="tiles">${info.map((i, n) => `<button class="tile ${this._open(i.r) ? "s" : ""}" style="${tint(i)}" data-act="rtoggle" data-v="${n}" aria-haspopup="dialog">
         <div class="n">${this._icon(this._roomIcon(i.r.name))}${i.r.name}${Math.abs(i.dev) > 0.3 ? this._icon(i.dev < 0 ? "mdi:arrow-down" : "mdi:arrow-up", 'class="dv"') : ""}</div><div class="t">${i.cur == null ? "–" : this._fmt(i.cur) + "°"}</div>
         <div class="lb">${this._t("target")} ${i.tgt == null ? "–" : this._fmt(i.tgt, 0) + "°"}</div>
         <div class="chips"><span class="chip ${i.heats ? "w" : "g"}">${this._icon(i.heats ? "mdi:fire" : "mdi:check")}${i.heats ? this._t("heats") : this._t("fine")}</span>
         ${i.co2 != null ? `<span class="chip ${co2c(i.co2)}">${this._icon("mdi:molecule-co2")}${Math.round(i.co2)}</span>` : ""}</div></button>`).join("")}</div>`;
     } else {
-      list = info.map((i, n) => `<div class="rw ${n === this._room ? "s" : ""}" style="${tint(i)}" role="button" tabindex="0" data-act="room" data-v="${n}">
+      list = info.map((i, n) => `<div class="rw ${this._open(i.r) ? "s" : ""}" style="${tint(i)}" role="button" tabindex="0" data-act="rtoggle" data-v="${n}" aria-haspopup="dialog">
         <span>${this._icon(this._roomIcon(i.r.name))}${i.r.name}</span><span class="lb">${[i.co2 != null ? `${Math.round(i.co2)} ppm` : "", i.rf != null ? `${Math.round(i.rf)} %` : ""].filter(Boolean).join(" · ")}</span>
         <span class="chip ${i.heats ? "w" : "g"}">${i.heats ? this._t("heats") : this._t("fine")}</span>
         <b>${i.cur == null ? "–" : this._fmt(i.cur) + "°"} <span class="lb">→ ${i.tgt == null ? "–" : this._fmt(i.tgt, 0) + "°"}</span></b></div>`).join("");
     }
-    const det = this._drawerMode ? "" : this._roomDetail(info[this._room]);
     return `<ha-card><div class="h">${this._icon("mdi:home-outline")}${this._t("rooms")}<span class="lb" style="margin-left:6px">${heating} ${this._t("of")} ${rooms.length} ${this._t("heating_n")}</span>
       <span class="r"><span class="lb">${this._t("heatmap")}</span>
       <button class="vbtn ${this._view === "tiles" ? "a" : ""}" data-act="view" data-v="tiles">${this._icon("mdi:view-grid-outline")}${this._t("tiles")}</button>
-      <button class="vbtn ${this._view === "list" ? "a" : ""}" data-act="view" data-v="list">${this._icon("mdi:format-list-bulleted")}${this._t("list")}</button></span></div>${list}${this._ptcLine(d)}<div class="rlegend"><span>${this._icon("mdi:arrow-down")}${this._t("legend_cool")}</span><span>${this._icon("mdi:check")}${this._t("legend_ok")}</span><span>${this._icon("mdi:arrow-up")}${this._t("legend_warm")}</span></div>${det}</ha-card>`;
+      <button class="vbtn ${this._view === "list" ? "a" : ""}" data-act="view" data-v="list">${this._icon("mdi:format-list-bulleted")}${this._t("list")}</button></span></div>${list}${this._ptcLine(d)}<div class="rlegend"><span>${this._icon("mdi:arrow-down")}${this._t("legend_cool")}</span><span>${this._icon("mdi:check")}${this._t("legend_ok")}</span><span>${this._icon("mdi:arrow-up")}${this._t("legend_warm")}</span><span>${this._icon("mdi:gesture-tap")}${this._t("r_tapnote")}</span></div>${this._drawerMode ? "" : this._roomPopup(info)}</ha-card>`;
   }
 
   // Merge the "on" periods of one or more binary sensors into [start, end] intervals (seconds).

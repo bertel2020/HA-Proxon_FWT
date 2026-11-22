@@ -5,6 +5,7 @@
 ## 2.5.0 – 2026-11-22
 
 **Neu**
+- **Dashboard-Karte – Raum-Popup:** Eine Raum-Kachel (oder Listenzeile) öffnet die Details jetzt als Popup, am Handy als Sheet zum Wegwischen, statt sie unter der Liste einzublenden. Der Fokus kehrt beim Schließen (Escape, Kreuz, Tipp daneben) zur Kachel zurück.
 - **Panel – Raumkarten immer gleich groß:** Die Karten behalten ihre Größe, egal wie viele ein Filter übrig lässt (eine einzelne Karte wird nicht mehr über die ganze Breite gezogen), und alle Reihen sind gleich hoch. Die Kacheln der Dashboard-Karte ebenso. In schmalen Karten entfällt das Symbol „Details“, damit der Raumname nicht abgeschnitten wird.
 - **Dashboard-Karte – Raum-Kacheln:** Die Kacheln heben sich wie im Panel ab (Rahmen und Schatten, farbiger Balken oben, Hover-Effekt, die gewählte Kachel mit Rahmen). Läuft das PTC-Element, ist die Kachel korallenfarben; der doppelte PTC-Chip entfällt. In der Listenansicht trägt jede Zeile einen farbigen Streifen.
 - **Panel – Raumkarten:** Die ganze Karte öffnet jetzt das Detail-Popup (Chips, Ring-Wert, Plus/Minus und Regler behalten ihre eigene Funktion). Die Karten heben sich ab: mit Rahmen und Schatten, einem farbigen Balken oben und einem leichten Farbton nach Zustand (heizt, im Soll, kühler, wärmer) und einem Hover-Effekt.

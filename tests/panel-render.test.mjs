@@ -732,7 +732,7 @@ test("the dashboard card links its values to their entities", async () => {
   const card = new X.ProxonFwtCard();
   card.setConfig({ sections: X.ALL_SECTIONS });
   card.hass = hass;
-  const html = await render(card, () => {});
+  const html = await render(card, () => { card._ropen = new Set(["climate.room0"]); }); // the room details sit in a popup
   check(html);
   for (const id of ["sensor.temp_supply_air", "sensor.temp_fresh_air", "sensor.compressor_speed", "sensor.temp_evaporator", "sensor.temp_pre_evaporator",
     "binary_sensor.error_system", "binary_sensor.heat_pump_heating", "climate.room0", "sensor.room0_co2", "sensor.heat_recovery", "sensor.power_consumption"]) {
@@ -840,4 +840,25 @@ test("room cards keep one size: no column count per filter result, equal row hei
   const html = await render(panel, () => { panel._tab = "rooms"; panel._rview = "cards"; panel._rfilter = "heat"; });
   assert.ok(html.includes('<div class="rgrid">'), "the grid has no per-result column style");
   assert.ok(html.includes("grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); grid-auto-rows: 1fr"), "fixed tracks, equal rows");
+});
+
+test("a room tile of the dashboard card opens its details as a popup and closes again", async () => {
+  const card = new X.ProxonFwtCard();
+  card.setConfig({ sections: ["rooms"] });
+  card.hass = hass;
+  let html = await render(card, () => {});
+  assert.ok(/class="tile [^"]*" style="[^"]*" data-act="rtoggle" data-v="1"/.test(html), "tiles open the popup");
+  assert.ok(!html.includes('class="rdlg"') && !html.includes('class="det"'), "nothing below the list while closed");
+  card._click({ composedPath: () => [{ dataset: { act: "rtoggle", v: "1" } }] });
+  assert.equal(card._room, 1);
+  html = await render(card, () => {});
+  check(html);
+  assert.ok(html.includes('class="rdlg"') && html.includes('role="dialog"') && html.includes("Schlafen") && html.includes('data-act="up"'), "popup with the room's controls");
+  assert.ok(/class="tile s /.test(html) || /class="tile [^"]*\bs\b/.test(html), "the open room's tile is marked");
+  card._click({ composedPath: () => [{ dataset: { act: "rclose" } }] });
+  html = await render(card, () => {});
+  assert.ok(!html.includes('class="rdlg"'), "closed again");
+  // the list view opens the popup too
+  html = await render(card, () => { card._view = "list"; });
+  assert.ok(/class="rw [^"]*" style="[^"]*" role="button" tabindex="0" data-act="rtoggle"/.test(html));
 });
