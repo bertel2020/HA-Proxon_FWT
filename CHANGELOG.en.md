@@ -5,6 +5,9 @@
 ## 2.5.0 – 2026-11-22
 
 **New**
+- **Panel – hot water, unit picture:** The unit looks more like a hot water heat pump: a fan unit with a ring and five blades, vent slots, feet and a shadow. The water has a colour gradient with a wave line at the surface and a sheen strip, and bubbles rise while it heats. The reading sits on a light field, so it stays legible on every water colour.
+- **Panel – hot water, history:** The chart is taller (420 instead of 300 px), the same in "All" and for single measurements.
+- **Panel – history, "All":** The lanes are taller (air and refrigerant circuit 150 px, drives 130, power 110, heat recovery and PTC 100) with larger gaps. The curves are calmer: a moving average over about 20 minutes smooths the sawtooth (the table below still shows the real values), the lines are thinner and the heat pump bands and grid lines are paler.
 - **Panel – hot water, tank picture:** A small sun with an arrow sits left of the unit again (bright and flowing while there is PV power), a small moon without an arrow at night. The moon on top of the unit is gone and the target labels on the right are smaller.
 - **Panel – hot water, "Tank" card:** The picture now shows only the unit with the target marks, larger and without the floating sun or moon and the arrow. The PV power is a tile of its own beside it (sun by day, moon at night). All tiles have an icon and the colour of their state, like the key figures. The outdoor temperature and the reading in the unit no longer touch the divider line.
 - **Panel – key figures:** The 24 hour curve now runs across the full width of the tile (below the icon and value, at the bottom edge) and is thinner (1.2 instead of 1.6 px). The bar on top is a little slimmer.

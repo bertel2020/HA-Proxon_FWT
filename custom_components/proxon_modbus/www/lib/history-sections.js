@@ -43,10 +43,10 @@ export class HistorySectionsMethods {
       power: (v) => (v >= 1000 ? `${this._fmt(v / 1000)} kW` : `${this._fmt(v, 0)} W`) };
     fmt.ptc = fmt.power;
     const title = { temp: this._t("g_air"), eff: this._t("efficiency"), circuit: this._t("g_circuit"), drives: this._t("g_drive"), power: this._t("power"), ptc: this._t("ptc_power") };
-    const h = { temp: 110, eff: 80, circuit: 110, drives: 100, power: 80, ptc: 80 };
+    const h = { temp: 150, eff: 100, circuit: 150, drives: 130, power: 110, ptc: 100 };
     const lanes = loaded.map(({ m, s }) => {
       const list = (s || []).filter((x) => x.pts.length > 1 && !(m === "circuit" && x.label === comp))
-        .map((x) => ({ ...x, hkey: `${m}|${x.label}`, kind: "line", fmt: fmt[m], energy: m === "power" || m === "ptc" }));
+        .map((x) => ({ ...x, hkey: `${m}|${x.label}`, kind: "line", fmt: fmt[m], energy: m === "power" || m === "ptc", smooth: m === "power" || m === "ptc" ? 0 : 5 }));
       return list.length && { h: h[m], axis: true, title: title[m], series: list };
     }).filter(Boolean);
     if (!lanes.length) return `<div class="note">${this._t(range === "30d" || range === "1y" ? "no_stats" : "no_history")}</div>`;
@@ -56,7 +56,7 @@ export class HistorySectionsMethods {
       short && hp && hp.iv.length ? { iv: hp.iv, color: "#3fa660", label: this._t("hp_runs") } : null,
       short && bypass.length ? { iv: bypass, color: BLUE, label: this._t("bypass_open") } : null,
     ].filter(Boolean);
-    return this._laneChart(lanes, { range, phases, gap: 20, key: "all" });
+    return this._laneChart(lanes, { range, phases, gap: 26, key: "all", soft: true });
   }
 
   // When a cached history load last succeeded (ms), or 0.

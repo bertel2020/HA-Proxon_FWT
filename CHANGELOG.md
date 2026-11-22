@@ -5,6 +5,9 @@
 ## 2.5.0 – 2026-11-22
 
 **Neu**
+- **Panel – Warmwasser, Gerätebild:** Das Gerät sieht mehr nach einer Warmwasser-Wärmepumpe aus: Lüftereinheit mit Ring und fünf Flügeln, Lüftungsschlitze, Füße und Schatten. Das Wasser hat einen Farbverlauf mit Wellenlinie an der Oberfläche und Glanzstreifen, beim Heizen steigen Bläschen auf. Der Messwert steht auf einem hellen Feld und ist so auf jeder Wasserfarbe lesbar.
+- **Panel – Warmwasser, Verlauf:** Der Chart ist höher (420 statt 300 px), in „Alle“ und bei einzelnen Messwerten gleich.
+- **Panel – Verlauf, „Alle“:** Die Spuren sind höher (Luft und Kältekreis 150 px, Antriebe 130, Leistung 110, Rückwärmzahl und PTC 100) und größere Abstände. Die Kurven sind ruhiger: ein gleitender Mittelwert über rund 20 Minuten glättet das Sägezahnmuster (die Tabelle darunter zeigt weiter die echten Werte), die Linien sind dünner und die Wärmepumpen-Bänder und Gitterlinien blasser.
 - **Panel – Warmwasser, Speicherbild:** Links vom Gerät sitzt wieder eine kleine Sonne mit Pfeil (hell und laufend, solange PV-Strom da ist), nachts ein kleiner Mond ohne Pfeil. Der Mond oben am Gerät entfällt, die Beschriftungen der Sollwerte rechts sind kleiner.
 - **Panel – Warmwasser, Karte „Speicher“:** Das Bild zeigt nur noch das Gerät mit den Sollwert-Marken, größer und ohne die schwebende Sonne oder den Mond samt Pfeil. Die PV-Leistung steht als eigene Kachel daneben (Sonne am Tag, Mond in der Nacht). Alle Kacheln haben ein Symbol und die Farbe ihres Zustands, wie die Kennzahlen. Die Außentemperatur und der Messwert im Gerät überlappen die Trennlinie nicht mehr.
 - **Panel – Kennzahlen:** Die 24-Stunden-Kurve läuft jetzt über die ganze Breite der Kachel (unter Symbol und Wert, am unteren Rand) und ist dünner (1,2 statt 1,6 px). Der Balken oben ist etwas schmaler.

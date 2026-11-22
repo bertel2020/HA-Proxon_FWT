@@ -54,6 +54,17 @@ export class HistoryDataMethods {
     return out;
   }
 
+  // Centred moving average over n points (n odd), time stamps kept; the ends use the points that exist.
+  static _smooth(pts, n) {
+    if (!n || n < 2 || pts.length < 3) return pts;
+    const r = Math.floor(n / 2);
+    return pts.map(([t], i) => {
+      let sum = 0, c = 0;
+      for (let j = Math.max(0, i - r); j <= Math.min(pts.length - 1, i + r); j++) { sum += pts[j][1]; c++; }
+      return [t, sum / c];
+    });
+  }
+
   static _down(pts, n) {
     if (pts.length <= n) return pts;
     const t0 = pts[0][0], t1 = pts[pts.length - 1][0], w = (t1 - t0) / n || 1;

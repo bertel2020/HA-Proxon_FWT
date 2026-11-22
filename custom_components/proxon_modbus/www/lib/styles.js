@@ -463,11 +463,13 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .twm small { display: block; font-size: 13px; color: var(--secondary-text-color); margin-bottom: 2px; }
 .twm b { font-size: 22px; font-weight: 500; }
 .twflow { stroke-dasharray: 7 6; }
+.twhsvg .bub { opacity: 0; animation: twrise 3.2s ease-in infinite; }
+@keyframes twrise { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: .7; } 100% { transform: translateY(-100px); opacity: 0; } }
 .twhsvg.heat .twflow { animation: twdash 1s linear infinite; }
-.twhsvg .fan { transform-box: view-box; transform-origin: 36px 29px; } /* the hub, not the middle of the blades */
+.twhsvg .fan { transform-box: view-box; transform-origin: 36px 30px; } /* the hub, not the middle of the blades */
 .twhsvg.heat .fan { animation: twspin 1.4s linear infinite; }
 @keyframes twdash { to { stroke-dashoffset: -13; } }
-@media (prefers-reduced-motion: reduce) { .twhsvg.heat .twflow, .twhsvg.heat .fan { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .twhsvg.heat .twflow, .twhsvg.heat .fan, .twhsvg .bub { animation: none; } }
 @keyframes twspin { to { transform: rotate(360deg); } }
 .twst { display: flex; gap: 12px; align-items: flex-start; min-width: 0; }
 .twst > ha-icon { --mdc-icon-size: 28px; color: var(--c); flex: none; width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 22%, transparent); }

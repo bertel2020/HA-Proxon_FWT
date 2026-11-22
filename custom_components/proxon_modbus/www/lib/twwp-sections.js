@@ -1,10 +1,11 @@
-import { BLUE, CORAL, AMBER, GREEN, RANGE_MS, CHART_H, esc } from "./constants.js";
+import { BLUE, CORAL, AMBER, GREEN, RANGE_MS, esc } from "./constants.js";
 
 const PHASE_COLOR = { pv: GREEN, normal: AMBER, minimum: CORAL, night: BLUE };
 const TARGETS = [["twwp_target_normal", "tw_t_normal"], ["twwp_target_pv", "tw_t_pv"], ["twwp_target_min", "tw_t_min"]];
 const HYSTS = [["twwp_hyst_low", "tw_h_low"], ["twwp_hyst_high", "tw_h_high"]];
 const MIN_BAND = 2; // K: below this the heat pump may switch on and off in short intervals
 const NIGHT = "#7F77DD";
+const TW_H = 420; // height of the hot water charts (taller than the other history charts)
 const S_LO = 30, S_HI = 65; // the target scale; the targets can be set from 30 to 60, the scale shows 5 K more for the hysteresis
 
 // The "Warmwasser" tab: hot water heat pump (TWWP) with tank, targets, program and the controller's last decision.
@@ -184,24 +185,33 @@ export class TwwpSectionsMethods {
       : `<g opacity="${sunOn ? 1 : 0.4}"><circle cx="22" cy="40" r="9" fill="${AMBER}"/><g stroke="${AMBER}" stroke-width="2.4" stroke-linecap="round">${[0, 45, 90, 135, 180, 225, 270, 315].map((a) => `<line x1="22" y1="26" x2="22" y2="22" transform="rotate(${a} 22 40)"/>`).join("")}</g></g>
       <path class="twflow" d="M40 40 H 52" fill="none" stroke="${flow}" stroke-width="2.5"/><path d="M47 35 L53 40 L47 45" fill="none" stroke="${flow}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
     const svg = `<svg class="twhsvg ${heats ? "heat" : ""}" viewBox="0 0 300 226" role="img" aria-label="${this._t("tw_tank")} ${w === null ? "" : this._fmt(w) + "°"}">
-      <title>${this._t("tw_tank_note")}</title><defs><clipPath id="twc${i}"><rect x="0" y="0" width="112" height="200" rx="28"/></clipPath></defs>
+      <title>${this._t("tw_tank_note")}</title><defs><clipPath id="twc${i}"><rect x="0" y="0" width="112" height="200" rx="28"/></clipPath>
+        <linearGradient id="twg${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:${col};stop-opacity:.6"/><stop offset="1" style="stop-color:${col};stop-opacity:.92"/></linearGradient>
+        <linearGradient id="twh${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--secondary-background-color)"/><stop offset="1" style="stop-color:color-mix(in srgb, var(--primary-text-color) 16%, var(--secondary-background-color))"/></linearGradient></defs>
       ${scene}
       <g transform="translate(58,10)">
-        <rect width="112" height="200" rx="28" fill="var(--card-background-color)" stroke="var(--divider-color)" stroke-width="1.5"/>
+        <ellipse cx="56" cy="205" rx="54" ry="5" fill="var(--primary-text-color)" opacity=".12"/>
+        <rect x="14" y="196" width="22" height="9" rx="3" fill="var(--primary-text-color)" opacity=".4"/><rect x="76" y="196" width="22" height="9" rx="3" fill="var(--primary-text-color)" opacity=".4"/>
+        <rect width="112" height="200" rx="28" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-opacity=".3" stroke-width="2"/>
         <g clip-path="url(#twc${i})">
           <rect x="0" y="70" width="112" height="130" fill="var(--secondary-background-color)" opacity=".55"/>
-          <rect x="0" y="${lvl.toFixed(1)}" width="112" height="${(200 - lvl).toFixed(1)}" fill="${col}" opacity=".75"/>
-          <rect x="0" y="0" width="112" height="70" fill="var(--secondary-background-color)"/>
-          <rect x="0" y="68" width="112" height="4" fill="var(--divider-color)" opacity=".8"/>
+          <rect x="0" y="${lvl.toFixed(1)}" width="112" height="${(200 - lvl).toFixed(1)}" fill="url(#twg${i})"/>
+          <path d="M0 ${lvl.toFixed(1)} q14 -5 28 0 t28 0 t28 0 t28 0 v6 h-112 z" fill="#fff" opacity=".35"/>
+          ${heats && lvl < 170 ? [22, 48, 74, 96].map((x, k) => `<circle class="bub" cx="${x}" cy="192" r="${k % 2 ? 2 : 3}" fill="#fff" style="animation-delay:${k * 0.7}s"/>`).join("") : ""}
+          <rect x="95" y="80" width="6" height="108" rx="3" fill="#fff" opacity=".22"/>
+          <rect x="0" y="0" width="112" height="70" fill="url(#twh${i})"/>
+          <rect x="0" y="68" width="112" height="4" fill="var(--primary-text-color)" opacity=".22"/>
         </g>
-        <circle cx="36" cy="29" r="20" fill="none" stroke="var(--primary-text-color)" stroke-width="2.5" opacity=".85"/>
-        <g class="fan" fill="var(--primary-text-color)" opacity=".85">${[0, 120, 240].map((r) => `<ellipse cx="36" cy="19" rx="6" ry="10" transform="rotate(${r} 36 29)"/>`).join("")}<circle cx="36" cy="29" r="3.5" fill="var(--card-background-color)"/></g>
-        <g stroke="var(--primary-text-color)" stroke-width="3.5" stroke-linecap="round" opacity=".6"><line x1="64" x2="94" y1="22" y2="22"/><line x1="64" x2="94" y1="32" y2="32"/><line x1="64" x2="94" y1="42" y2="42"/></g>
-        <circle cx="92" cy="58" r="5" fill="${heats ? GREEN : "var(--divider-color)"}"/>
-        ${this._lk(c.outer_temp, `<text x="36" y="64" font-size="15" font-weight="700" text-anchor="middle" fill="var(--primary-text-color)">${outer === null ? "" : this._fmt(outer) + "°"}</text>`, "g")}
-        <circle cx="16" cy="146" r="5" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="1.8"/>
-        ${this._lk(c.water_temp || t.heater, `<text x="64" y="156" text-anchor="middle" font-size="27" font-weight="700" fill="var(--primary-text-color)">${w === null ? "–" : this._fmt(w) + "°"}</text>`, "g")}
-        <text x="62" y="180" text-anchor="middle" font-size="12" fill="var(--secondary-text-color)">${this._t("tw_mp")}</text>
+        <circle cx="36" cy="30" r="22" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-opacity=".55" stroke-width="2.5"/>
+        <circle cx="36" cy="30" r="17" fill="none" stroke="var(--primary-text-color)" stroke-opacity=".18" stroke-width="1"/>
+        <g class="fan" fill="var(--primary-text-color)" opacity=".8">${[0, 72, 144, 216, 288].map((r) => `<ellipse cx="36" cy="21" rx="4.5" ry="9" transform="rotate(${r} 36 30)"/>`).join("")}<circle cx="36" cy="30" r="4" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-opacity=".5"/></g>
+        <g fill="var(--primary-text-color)" opacity=".4">${[14, 23, 32, 41].map((y) => `<rect x="68" y="${y}" width="30" height="4" rx="2"/>`).join("")}</g>
+        <circle cx="92" cy="58" r="4.5" fill="${heats ? GREEN : "var(--divider-color)"}" stroke="var(--primary-text-color)" stroke-opacity=".25"/>
+        ${this._lk(c.outer_temp, `<text x="36" y="66" font-size="14" font-weight="700" text-anchor="middle" fill="var(--primary-text-color)">${outer === null ? "" : this._fmt(outer) + "°"}</text>`, "g")}
+        <rect x="6" y="124" width="100" height="52" rx="14" fill="var(--card-background-color)" opacity=".92"/>
+        <circle cx="18" cy="146" r="5" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="1.8"/>
+        ${this._lk(c.water_temp || t.heater, `<text x="64" y="153" text-anchor="middle" font-size="27" font-weight="700" fill="var(--primary-text-color)">${w === null ? "–" : this._fmt(w) + "°"}</text>`, "g")}
+        <text x="62" y="170" text-anchor="middle" font-size="11" fill="var(--secondary-text-color)">${this._t("tw_mp")}</text>
         ${marks}
       </g></svg>`;
     const chip = bad ? `<span class="chip r">${this._t("tw_problem")}</span>` : prog ? `<span class="chip ${prog === "pv" ? "g" : prog === "minimum" ? "w" : prog === "normal" ? "a" : ""}">${this._t(`tw_p_${prog}`)}</span>` : "";
@@ -427,7 +437,7 @@ export class TwwpSectionsMethods {
     if (all) {
       const loaded = metrics.map((x) => ({ m: x, s: this._hget(key(x), () => this._twLoadSeries(x, range)) }));
       const lanes = loaded.some((e) => e.s === undefined) ? undefined : this._twLanes(t, loaded, this._twRefsOn());
-      body = lanes === undefined ? this._skel(300) : lanes.length ? this._laneChart(lanes, { range, phases, H: CHART_H }) : emptyNote;
+      body = lanes === undefined ? this._skel(TW_H) : lanes.length ? this._laneChart(lanes, { range, phases, H: TW_H }) : emptyNote;
     } else {
       let series = this._hget(key(m), () => this._twLoadSeries(m, range));
       if (this._hcmp && series) {
@@ -437,9 +447,9 @@ export class TwwpSectionsMethods {
       const tv = (id) => this._num(id);
       const refs = m.k === "water" && this._twRefsOn() ? [["twwp_target_pv", "tw_pv_line"], ["twwp_target_normal", "tw_ref_n"], ["twwp_target_min", "tw_ref_min"]]
         .map(([e, l]) => ({ v: tv(t.ents[e]), label: this._t(l, this._fmt(tv(t.ents[e]), 0)) })).filter((r) => r.v !== null) : [];
-      if (series === undefined) body = this._skel(190);
+      if (series === undefined) body = this._skel(TW_H);
       else if (!series || !series.some((s) => s.pts.length > 1)) body = emptyNote;
-      else body = this._chart(series, { range, unit: m.unit, bands: false, phases, refs, energy: m.k === "power" });
+      else body = this._chart(series, { range, unit: m.unit, bands: false, phases, refs, energy: m.k === "power", H: TW_H });
     }
     const heat = ps && ps.heat != null && ps.heat > 0 ? `<div class="note">${this._t("tw_heat_time", this._twFmtDur(ps.heat))}</div>` : "";
     const rb = (v, l) => `<button class="vbtn ${range === v ? "a" : ""}" data-act="hrange" data-v="${v}">${l}</button>`;

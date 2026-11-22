@@ -28,7 +28,7 @@ export class ChartsMethods {
   }
 
   _chart(allSeries, o) {
-    const W = Math.max(300, (this.clientWidth || 680) - 80), H = CHART_H, pl = 42, pr = 10, pt = 10, pb = 22;
+    const W = Math.max(300, (this.clientWidth || 680) - 80), H = o.H || CHART_H, pl = 42, pr = 10, pt = 10, pb = 22;
     const lang = this._hass.language;
     const ms = RANGE_MS[o.range] / 1000;
     const t1 = Date.now() / 1000, t0 = t1 - ms;
@@ -50,7 +50,7 @@ export class ChartsMethods {
     let grid = "";
     for (let v = lo; v <= hi + step / 2; v += step) {
       const zero = Math.abs(v) < step / 1e6; // the zero line is drawn stronger
-      grid += `<line x1="${pl}" x2="${W - pr}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" ${zero ? 'stroke="var(--secondary-text-color)" stroke-width="1" opacity=".55"' : 'stroke="var(--divider-color)" stroke-width=".6"'}/>
+      grid += `<line x1="${pl}" x2="${W - pr}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" ${zero ? 'stroke="var(--secondary-text-color)" stroke-width="1" opacity=".55"' : `stroke="var(--divider-color)" stroke-width=".6" opacity="${o.soft ? ".7" : "1"}"`}/>
         <text class="st" x="${pl - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end" style="font-size:12px">${v.toLocaleString(lang, { minimumFractionDigits: dec, maximumFractionDigits: dec })}</text>`;
     }
     const xt = this._timeAxis(o, t0, t1, W, H, x);
@@ -156,11 +156,13 @@ export class ChartsMethods {
           y = (v) => bot - (Math.max(0, v) / mx) * lane.h;
           if (s.short) grid += `<text class="st" x="${pl - 6}" y="${(bot - 4 - k * 13).toFixed(1)}" text-anchor="end" style="font-size:12px;fill:${s.color}">${s.short}</text>`;
         }
-        const pts = (s.step ? this.constructor._stairs(s.pts) : s.pts).map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+        // calmer drawing: a centred moving average over the curve (the figures in the table keep the raw values)
+        const draw = s.step ? this.constructor._stairs(s.pts) : s.smooth ? this.constructor._smooth(s.pts, s.smooth) : s.pts;
+        const pts = draw.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
         if (s.kind === "area" && s.pts.length > 1) {
           body += `<polygon points="${x(s.pts[0][0]).toFixed(1)},${bot.toFixed(1)} ${pts} ${x(s.pts[s.pts.length - 1][0]).toFixed(1)},${bot.toFixed(1)}" fill="${s.color}" opacity=".35"/>`;
         }
-        body += `<polyline fill="none" stroke="${s.color}" stroke-width="${s.kind === "area" ? 1.2 : 1.8}" stroke-linejoin="round" points="${pts}"/>`;
+        body += `<polyline fill="none" stroke="${s.color}" stroke-width="${s.kind === "area" ? 1.2 : o.soft ? 1.5 : 1.8}" stroke-linejoin="round" points="${pts}"/>`;
         flat.push({ ...s, y });
       });
       rowsAll.push(...lane.series.filter((s) => s.pts.length));
@@ -168,7 +170,7 @@ export class ChartsMethods {
     });
     const phaseBands = (o.phases || []).map((ph) => ph.iv.map(([a, b]) => {
       const s0 = Math.max(a, t0), s1 = Math.min(b, t1);
-      return s1 > s0 ? `<rect x="${x(s0).toFixed(1)}" y="${pt}" width="${Math.max(1, x(s1) - x(s0)).toFixed(1)}" height="${plot}" fill="${ph.color}" opacity=".18"/>` : "";
+      return s1 > s0 ? `<rect x="${x(s0).toFixed(1)}" y="${pt}" width="${Math.max(1, x(s1) - x(s0)).toFixed(1)}" height="${plot}" fill="${ph.color}" opacity="${o.soft ? ".1" : ".18"}"/>` : "";
     }).join("")).join("");
     const legend = (o.phases || []).filter((ph) => ph.iv.length && !ph.noLegend).map((ph) => `<span><i style="background:${ph.color};opacity:.5"></i>${ph.legend || ph.label}</span>`).join("");
     // min / max / mean per curve; the energy as the integral of a power curve
