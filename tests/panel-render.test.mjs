@@ -813,3 +813,14 @@ test("tabs layout: one card with head and tab bar, the tab shows its sections, a
   assert.equal(ed._data(ed._config).layout, "tabs");
   assert.equal(ed._config_from({ ...ed._data(ed._config), layout: "stacked" }).layout, undefined);
 });
+
+test("the whole room card opens the details, its own controls keep their action", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = hass;
+  const html = await render(panel, () => { panel._tab = "rooms"; panel._rview = "cards"; });
+  assert.ok(/<div class="rc" style="--rcc:[^"]+" data-act="rtoggle" data-v="0">/.test(html), "card is the click target, tinted by its state");
+  assert.ok(html.includes('data-act="more" data-v="sensor.room0_co2"') && html.includes('data-act="rstep"'), "chips and steps are still their own targets");
+  // the innermost element with an action wins: a click in the empty part of the card reaches the card
+  panel._click({ composedPath: () => [{ dataset: {} }, { dataset: { act: "rtoggle", v: "0" } }, { dataset: {} }] });
+  assert.ok(panel._ropen.size === 1, "details open");
+});

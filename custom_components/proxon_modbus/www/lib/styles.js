@@ -356,7 +356,10 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .panel ha-card { border: 0; border-radius: 12px; padding: 14px 18px 16px; }
 .panel .h { font-size: 14px; color: var(--secondary-text-color); padding-bottom: 8px; margin-bottom: 10px; border-bottom: 1px solid var(--divider-color); }
 .panel .h > ha-icon { color: var(--secondary-text-color); }
-.panel .k, .panel .rs, .panel .dt, .panel .rc, .panel .lcard { border: 0; box-shadow: none; border-radius: 12px; background: var(--secondary-background-color); }
+.panel .rc { cursor: pointer; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--rcc, var(--pbd)) 38%, transparent); box-shadow: 0 1px 3px rgba(0, 0, 0, .08), inset 0 3px 0 var(--rcc, transparent);
+  background: color-mix(in srgb, var(--rcc, transparent) 6%, var(--secondary-background-color)); transition: box-shadow .15s, border-color .15s, transform .15s; }
+.panel .rc:hover { border-color: var(--rcc); box-shadow: 0 4px 12px rgba(0, 0, 0, .14), inset 0 3px 0 var(--rcc); transform: translateY(-1px); }
+.panel .k, .panel .rs, .panel .dt, .panel .lcard { border: 0; box-shadow: none; border-radius: 12px; background: var(--secondary-background-color); }
 .panel .dt { padding: 14px; }
 .panel .rseg, .panel .seg.cmp { border: 0; }
 .panel .ins { border-left-width: 3px; border-radius: 10px; }

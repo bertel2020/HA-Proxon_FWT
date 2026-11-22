@@ -104,7 +104,8 @@ export class ProxonFwtPanel extends ProxonFwtBase {
   }
 
   _roomCard(n, i) {
-    return `<div class="rc"><div class="rh" role="button" tabindex="0" aria-haspopup="dialog" data-act="rtoggle" data-v="${n}">
+    // The whole card opens the details; chips, the ring value, the steps and the knob keep their own action (the innermost one wins).
+    return `<div class="rc" style="--rcc:${i.heats ? CORAL : i.col}" data-act="rtoggle" data-v="${n}"><div class="rh" role="button" tabindex="0" aria-haspopup="dialog" data-act="rtoggle" data-v="${n}">
       <span class="ri">${this._icon(this._roomIcon(i.r.name))}</span><b>${i.r.name}</b>
       <span class="st" style="--c:${i.st[2]}">${this._icon(i.st[1])}${i.st[0]}</span><span class="chev">${this._icon("mdi:arrow-expand-all")}</span></div>
       <div class="rb">${this._ring(n, i)}<div class="rctl">${this._stepper(n, i)}<div class="mp">${this._roomChips(i)}</div></div></div></div>`;
