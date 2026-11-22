@@ -108,15 +108,15 @@ export class HintsMethods {
     const t = (label, id) => this._ok(id) ? [label, this._temp(id), id] : null;
     const n = (label, id, unit, dg = 0) => this._ok(id) && this._num(id) !== null ? [label, `${this._fmt(this._num(id), dg)} ${unit}`, id] : null;
     const groups = [
-      [this._t("g_air"), [t(this._t("fresh"), c.temp_fresh_air), t(this._t("exhaust"), c.temp_exhaust_air), t(this._t("extract"), c.temp_extract_air),
+      [this._t("g_air"), BLUE, "mdi:weather-windy", [t(this._t("fresh"), c.temp_fresh_air), t(this._t("exhaust"), c.temp_exhaust_air), t(this._t("extract"), c.temp_extract_air),
         t(this._t("supply"), c.temp_supply_air), t(this._t("outside"), this._outdoorId())]],
-      [this._t("g_circuit"), [t(this._t("pre_evaporator"), c.temp_pre_evaporator), t(this._t("evaporator"), c.temp_evaporator), t(this._t("post_preheat"), c.temp_post_preheat),
+      [this._t("g_circuit"), CORAL, "mdi:snowflake-thermometer", [t(this._t("pre_evaporator"), c.temp_pre_evaporator), t(this._t("evaporator"), c.temp_evaporator), t(this._t("post_preheat"), c.temp_post_preheat),
         t(this._t("pre_condenser"), c.temp_pre_condenser), t(this._t("condenser"), c.temp_condenser), t(this._t("compressor"), c.temp_compressor)]],
-      [this._t("g_drive"), [n(this._t("compressor"), c.compressor_speed, "rpm"), n(this._t("supply_fan"), c.fan_speed_supply, "rpm"),
+      [this._t("g_drive"), "#7e57c2", "mdi:fan", [n(this._t("compressor"), c.compressor_speed, "rpm"), n(this._t("supply_fan"), c.fan_speed_supply, "rpm"),
         n(this._t("extract_fan"), c.fan_speed_extract, "rpm"), this._pnum() === null ? null : [this._t("power_long"), `${this._fmt(this._pnum(), this._pnum() % 1 ? 1 : 0)} W`, this._powerId()]]],
-    ].map(([g, rows]) => [g, rows.filter(Boolean)]).filter(([, rows]) => rows.length);
+    ].map(([g, col, ic, rows]) => [g, col, ic, rows.filter(Boolean)]).filter(([, , , rows]) => rows.length);
     if (!groups.length) return "";
-    return `<ha-card>${this._header("mdi:table", this._t("measure"))}<div class="mtgrid">${groups.map(([g, rows]) => `<div><div class="mg">${g}</div>
+    return `<ha-card>${this._header("mdi:table", this._t("measure"))}<div class="mtgrid">${groups.map(([g, col, ic, rows]) => `<div class="mgc" style="--kc:${col}"><div class="mg"><span class="ic">${this._icon(ic)}</span>${g}</div>
       ${rows.map(([l, v, id]) => `<div class="mr${id ? " lk" : ""}" ${id ? `role="button" tabindex="0" data-act="more" data-v="${id}"` : ""}><span>${l}</span><b>${v}</b></div>`).join("")}</div>`).join("")}</div></ha-card>`;
   }
 

@@ -272,10 +272,11 @@ export class SectionsMethods {
     return `<ha-card>${this._header("mdi:sitemap-outline", this._t("schema"), chips)}${svg}<div class="note">${this._t("probes")}</div></ha-card>`;
   }
 
+  // The wish stage is a quiet small switch (neutral, numbers only), so it is not mistaken for the operating stage above it.
   _prefSeg(c, pref) {
     const rs = c.fan_stage_preferred, ok = rs && this._ok(rs);
-    return `<div class="seg" style="grid-template-columns:repeat(4,1fr);margin-top:6px">${FAN_STAGES.filter(([o]) => o !== "off").map(([opt, , label]) =>
-      this._btn(`data-act="prefstage" data-v="${esc(opt)}"`, pref === opt ? "a" : "", `${this._t("stage")} ${label}`, !ok, `--mc:${BLUE}`)).join("")}</div>`;
+    return `<div class="rseg pseg" role="group">${FAN_STAGES.filter(([o]) => o !== "off").map(([opt, , label]) =>
+      this._btn(`data-act="prefstage" data-v="${esc(opt)}" aria-label="${this._t("stage")} ${label}"`, pref === opt ? "a" : "", label, !ok)).join("")}</div>`;
   }
 
   // Panel only: operating mode and fan stages in one card (the dashboard card keeps them as separate sections).
@@ -307,7 +308,7 @@ export class SectionsMethods {
     if (c.fan_stage_restore) {
       const { pref, prefLabel } = this._restoreState(c);
       restore = `<div class="row">${this._icon("mdi:fan-clock")}${this._t("fan_restore")}<span class="sp"><ha-switch data-act="restoresw" ${this._on(c.fan_stage_restore) ? "checked" : ""} ${this._ok(c.fan_stage_restore) ? "" : "disabled"}></ha-switch></span></div>
-        <div class="note rsub">${this._t("fan_pref")}${prefLabel ? "" : `: ${this._t("fan_pref_none")}`}</div>${this._prefSeg(c, pref)}`;
+        <div class="note rsub prefrow"><span>${this._t("fan_pref")}${prefLabel ? "" : `: ${this._t("fan_pref_none")}`}</span>${this._prefSeg(c, pref)}</div>`;
     }
     const hp = this._on(c.heat_pump_cooling) ? this._t("hp_cooling") : this._on(c.heat_pump_heating) ? this._t("hp_heating") : this._t("hp_idle");
     const right = [c.heat_pump_heating ? hp : "", current].filter(Boolean).join(" · ");

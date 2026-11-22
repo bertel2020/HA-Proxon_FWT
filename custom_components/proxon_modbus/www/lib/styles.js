@@ -32,10 +32,13 @@ ha-card { padding: 14px 16px; display: block; border: 1px solid var(--ha-card-bo
 .opw { container-type: inline-size; }
 .lbl2 { font-size: 13px; color: var(--secondary-text-color); margin: 12px 0 6px; display: flex; gap: 8px; align-items: center; }
 .opw .lbl2:first-of-type { margin-top: 0; }
-.seg.cmp { background: var(--secondary-background-color); border-radius: 12px; padding: 4px; gap: 4px; border: 1px solid var(--pbd); }
-.seg.cmp button { display: flex; gap: 6px; align-items: center; justify-content: center; padding: 8px 4px; border-radius: 9px; background: transparent; border-color: transparent; white-space: nowrap; }
-.seg.cmp button ha-icon { display: inline-block; margin: 0; --mdc-icon-size: 18px; }
-.seg.cmp button.a { background: var(--card-background-color); box-shadow: 0 1px 3px #0002; border-color: transparent; color: var(--mc, var(--primary-color)); }
+.seg.cmp { background: var(--secondary-background-color); border-radius: 16px; padding: 5px; gap: 6px; border: 1px solid var(--pbd); }
+.seg.cmp button { display: flex; gap: 6px; align-items: center; justify-content: center; padding: 10px 4px; border-radius: 12px; background: transparent; border-color: transparent; white-space: nowrap; transition: background .15s, box-shadow .15s; }
+.seg.cmp button ha-icon { display: inline-block; margin: 0; --mdc-icon-size: 22px; }
+.seg.cmp button:hover:not(:disabled):not(.a) { background: color-mix(in srgb, var(--mc, var(--primary-color)) 10%, transparent); border-color: transparent; }
+/* the chosen button is filled in the colour of its mode, so the state reads at a glance */
+.seg.cmp button.a { background: color-mix(in srgb, var(--mc, var(--primary-color)) 16%, var(--card-background-color)); box-shadow: inset 0 0 0 2px var(--mc, var(--primary-color)); border-color: transparent; color: var(--mc, var(--primary-color)); font-weight: 600; }
+.seg.cmp.fs button.a { background: var(--mc, var(--primary-color)); box-shadow: 0 2px 6px color-mix(in srgb, var(--mc, var(--primary-color)) 40%, transparent); color: var(--text-primary-color, #fff); }
 .seg.cmp .ls { display: none; }
 @container (max-width: 560px) { .seg.cmp.mo button { flex-direction: column; gap: 2px; font-size: 13px; padding: 6px 2px; } .seg.cmp .lf { display: none; } .seg.cmp .ls { display: inline; } }
 .oinline { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-top: 12px; font-size: 14px; color: var(--secondary-text-color); }
@@ -79,6 +82,8 @@ ha-card { padding: 14px 16px; display: block; border: 1px solid var(--ha-card-bo
 .kpi .v { font-size: 22px; font-weight: 500; line-height: 1.15; }
 .kpi .v small { font-size: 13px; color: var(--secondary-text-color); font-weight: 400; }
 .rsub { margin: 0 0 4px; padding-left: 26px; }
+.prefrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pseg { padding: 2px; border-radius: 9px; } .pseg button { padding: 3px 11px; font-size: 13px; min-width: 30px; justify-content: center; }
 .bblk { margin-top: 12px; padding-top: 4px; border-top: 1px solid var(--divider-color); }
 .bblk .lbl2 { margin-top: 10px; }
 .bblk .lbl2 b { font-weight: 500; color: var(--primary-text-color); font-size: 14px; }
@@ -239,6 +244,13 @@ svg .sh { font-size: 14px; font-weight: 500; }
 .dstat { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 32px; }
 .dsr { display: flex; gap: 32px; } .dsr b { display: block; font-size: 22px; font-weight: 500; } .dsr small { color: var(--secondary-text-color); font-size: 12.5px; }
 .mtgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 4px 24px; }
+/* measurements: one tinted panel per group with a coloured heading, rows separated by hairlines */
+.mgc { min-width: 0; padding: 14px 16px 8px; border-radius: 14px; background: color-mix(in srgb, var(--kc) 7%, var(--card-background-color)); border: 1px solid color-mix(in srgb, var(--kc) 30%, transparent); box-shadow: inset 0 4px 0 var(--kc); }
+.mtgrid:has(.mgc) { gap: 12px; } /* the panels stretch to the same height */
+.mgc .mg { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; color: var(--primary-text-color); font-size: 13px; }
+.mgc .mg .ic { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: color-mix(in srgb, var(--kc) 20%, transparent); color: var(--kc); --mdc-icon-size: 17px; }
+.mgc .mr { padding: 8px 4px; border-radius: 6px; } .mgc .mr b { font-size: 15px; }
+.mgc .mr.lk:hover { background: color-mix(in srgb, var(--kc) 12%, transparent); }
 .mg { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; color: var(--secondary-text-color); margin: 4px 0; }
 /* runtime and starts: the same tile look as the key figures */
 .stgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); grid-auto-rows: 1fr; gap: 10px; }

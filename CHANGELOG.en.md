@@ -5,6 +5,9 @@
 ## 2.5.0 – 2026-11-22
 
 **New**
+- **Operating mode and fan stage:** The chosen mode is tinted and outlined in the colour of the mode (winter blue, comfort green, stove red), the chosen fan stage is filled solid. The buttons are a little larger with more spacing and a light tint on hover.
+- **Wish stage:** The remembered stage is a small, neutral switch (digits only) on the right of one row. It is no longer blue and no longer as large as the operating stage, so the two are not mixed up.
+- **Panel – diagnosis, measurements:** The three groups (air, refrigerant circuit, drives) are now tinted panels of their own with a coloured icon, a bar on top and the same height; the values are bolder and a row is highlighted on hover.
 - **Panel – diagnosis, runtime and starts:** The values are now tiles like the key figures (icon, name, large value) instead of rows with divider lines side by side.
 - **Panel – key figures:** The tiles now stand out in the panel too (a panel rule used to override the style): lightly tinted in the colour of the figure, with a coloured border, a bar on top and a coloured shadow.
 - **Panel – hot water, tank picture:** At night the picture shows a moon instead of the sun and no PV arrow. The unit has more contrast: darker fan and housing, a stronger water fill, a larger outdoor temperature; the highlight strip behind the measuring point is gone.

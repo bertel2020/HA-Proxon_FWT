@@ -5,6 +5,9 @@
 ## 2.5.0 – 2026-11-22
 
 **Neu**
+- **Betriebsart und Lüfterstufe:** Die gewählte Betriebsart ist in der Farbe des Modus getönt und umrandet (Winter blau, Komfort grün, Ofen rot), die gewählte Lüfterstufe voll gefüllt. Die Felder sind etwas größer, haben mehr Abstand, und beim Überfahren färbt sich der Hintergrund leicht.
+- **Wunschstufe:** Die gemerkte Stufe ist ein kleiner, neutraler Umschalter (nur Ziffern) rechts in einer Zeile. Er ist nicht mehr blau und nicht mehr so groß wie die Betriebsstufe, damit man beide nicht verwechselt.
+- **Panel – Diagnose, Messwerte:** Die drei Gruppen (Luft, Kältekreis, Antriebe) sind jetzt eigene getönte Felder mit farbigem Symbol, Balken oben und gleicher Höhe; die Werte sind kräftiger, und die Zeile hebt sich beim Überfahren ab.
 - **Panel – Diagnose, Laufzeit und Starts:** Die Werte stehen jetzt als Kacheln wie die Kennzahlen (Symbol, Name, großer Wert) statt als Zeilen mit Trennlinien nebeneinander.
 - **Panel – Kennzahlen:** Die Kacheln heben sich jetzt auch im Panel ab (vorher überschrieb eine Panel-Regel den Stil): leicht in der Farbe der Kennzahl getönt, mit farbigem Rahmen, Balken oben und farbigem Schatten.
 - **Panel – Warmwasser, Speicherbild:** In der Nacht zeigt das Bild einen Mond statt der Sonne und keinen PV-Pfeil. Das Gerät ist kontrastreicher: dunkler Lüfter und Gehäuse, kräftigere Wasserfüllung, größere Außentemperatur; der Glanzstreifen hinter dem Messpunkt entfällt.
