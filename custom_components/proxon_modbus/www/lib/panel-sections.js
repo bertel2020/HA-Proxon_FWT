@@ -31,6 +31,10 @@ export class PanelSectionsMethods {
       const bad = this._on(c.error_system);
       rows.push(row(bad ? "mdi:alert-circle-outline" : "mdi:check-circle-outline", bad ? BADC : GREEN, this._t("error"), this._t(bad ? "has_error" : "no_error"), bad ? "diag" : ""));
     }
+    const f = this._filterInfo(c);
+    if (this._ok(c.filter_device) || f.known) {
+      rows.push(row("mdi:air-filter", f.due ? WARN : GREEN, this._t("filter_device"), this._t(f.due ? "change_due" : "ok"), "diag"));
+    }
     if (c.mode_change_possible && this._ok(c.mode_change_possible)) {
       const ok = this._on(c.mode_change_possible);
       rows.push(row("mdi:swap-horizontal", MUTED, this._t("mode_change"), this._t(ok ? "possible" : "not_possible")));
@@ -38,10 +42,6 @@ export class PanelSectionsMethods {
     if (c.bypass_active && this._ok(c.bypass_active)) {
       const open = this._on(c.bypass_active), txt = this._t(open ? "bypass_open" : "bypass_closed");
       rows.push(row("mdi:routes", open ? BLUE : MUTED, txt.replace(/\s*\(.*\)$/, ""), ""));
-    }
-    const f = this._filterInfo(c);
-    if (this._ok(c.filter_device) || f.known) {
-      rows.push(row("mdi:air-filter", f.due ? WARN : GREEN, this._t("filter_device"), this._t(f.due ? "change_due" : "ok"), "diag"));
     }
     const ptc = d.rooms.filter((r) => this._on(r.ents.ptc_active)).length;
     const ptcEna = d.rooms.filter((r) => r.ents.ptc_enable && this._on(r.ents.ptc_enable)).length;
