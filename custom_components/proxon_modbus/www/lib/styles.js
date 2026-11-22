@@ -349,7 +349,9 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .panel .hsurf ha-card { background: none; box-shadow: none; border-radius: 0; padding: 16px 0; }
 .panel .hsurf ha-card + ha-card { border-top: 1px solid var(--divider-color); }
 .panel .rsheet { background: var(--card-background-color); }
-.rsheet .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--divider-color); margin: 0 auto 12px; }
+.rsheet .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--divider-color); margin: 0 auto 12px; position: relative; }
+.rsheet .grab::after { content: ""; position: absolute; inset: -14px -40px -10px; } /* larger touch target for the swipe-down handle */
+@media (max-width: 640px) { .rsheet .grab, .rsheet .dh { touch-action: none; } }
 .rsheet .dh { display: flex; align-items: flex-start; gap: 10px; }
 .rsheet .dh h3 { margin: 0; font-size: 18px; font-weight: 500; }
 .rsheet .ds { display: inline-flex; gap: 5px; align-items: center; font-size: 14px; margin-top: 2px; color: var(--c); --mdc-icon-size: 16px; }

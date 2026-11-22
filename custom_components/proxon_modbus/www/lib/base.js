@@ -26,10 +26,33 @@ export class ProxonFwtBase extends HTMLElement {
         this._drag = { el: knob, n: Number(knob.dataset.ring) };
         if (knob.setPointerCapture) knob.setPointerCapture(ev.pointerId);
         ev.preventDefault();
+        return;
+      }
+      // Phone bottom sheet: drag the handle / header down to dismiss it.
+      const sheet = this._pd.closest && this._pd.closest(".rsheet");
+      if (sheet && this._pd.closest(".grab, .dh") && !this._pd.closest("button") && window.matchMedia && window.matchMedia("(max-width: 640px)").matches) {
+        this._sheetDrag = { el: sheet, y0: ev.clientY, dy: 0, t0: ev.timeStamp, id: ev.pointerId };
+        if (sheet.setPointerCapture) { try { sheet.setPointerCapture(ev.pointerId); } catch (e) { /* ignore */ } }
+        sheet.style.transition = "none";
       }
     });
-    this.shadowRoot.addEventListener("pointermove", (ev) => { if (this._drag) this._dragRing(ev); });
-    for (const t of ["pointerup", "pointercancel"]) this.shadowRoot.addEventListener(t, () => { this._drag = null; });
+    this.shadowRoot.addEventListener("pointermove", (ev) => {
+      if (this._drag) this._dragRing(ev);
+      const sd = this._sheetDrag;
+      if (sd && ev.pointerId === sd.id) { sd.dy = Math.max(0, ev.clientY - sd.y0); sd.el.style.transform = `translateY(${sd.dy}px)`; }
+    });
+    for (const t of ["pointerup", "pointercancel"]) this.shadowRoot.addEventListener(t, (ev) => {
+      this._drag = null;
+      const sd = this._sheetDrag;
+      if (!sd || ev.pointerId !== sd.id) return;
+      this._sheetDrag = null;
+      const fast = sd.dy / Math.max(1, ev.timeStamp - sd.t0) > 0.5; // px/ms
+      sd.el.style.transition = "transform .18s ease-out";
+      if (t === "pointerup" && (sd.dy > 100 || (fast && sd.dy > 30))) {
+        sd.el.style.transform = "translateY(100%)";
+        setTimeout(() => this._click({ composedPath: () => [{ dataset: { act: "rclose" } }] }), 160);
+      } else sd.el.style.transform = "";
+    });
     this.shadowRoot.addEventListener("click", (ev) => this._click(ev));
     this.shadowRoot.addEventListener("keydown", (ev) => {
       const knob = ev.target && ev.target.closest && ev.target.closest(".knob");
