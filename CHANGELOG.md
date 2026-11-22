@@ -5,6 +5,8 @@
 ## 2.5.0 – 2026-11-22
 
 **Neu**
+- **Panel – Diagnose, Laufzeit und Starts:** Die Werte stehen jetzt als Kacheln wie die Kennzahlen (Symbol, Name, großer Wert) statt als Zeilen mit Trennlinien nebeneinander.
+- **Panel – Kennzahlen:** Die Kacheln heben sich jetzt auch im Panel ab (vorher überschrieb eine Panel-Regel den Stil): leicht in der Farbe der Kennzahl getönt, mit farbigem Rahmen, Balken oben und farbigem Schatten.
 - **Panel – Warmwasser, Speicherbild:** In der Nacht zeigt das Bild einen Mond statt der Sonne und keinen PV-Pfeil. Das Gerät ist kontrastreicher: dunkler Lüfter und Gehäuse, kräftigere Wasserfüllung, größere Außentemperatur; der Glanzstreifen hinter dem Messpunkt entfällt.
 - **Panel – Kennzahlen und Diagnose:** Alle Kennzahlen-Kacheln sind gleich hoch, haben einen Rahmen, einen Schatten und oben einen Balken in der Farbe der Kennzahl. In der Diagnose steht der Bypass als eigene Zeile mit etwas mehr Abstand statt als Zusatzzeile unter „Systemfehler“.
 - **Panel – Warmwasser, neues Layout:** Eine Statusleiste über die ganze Breite zeigt die Entscheidung der Regelung groß und farbig (Nacht indigo, Normalbetrieb orange, PV grün) mit einem 24-Stunden-Balken der Programmphasen und der Marke „jetzt“. Der Verlauf nutzt die volle Breite, Hauptbild und Regelung stehen darüber nebeneinander. Das Speicherbild ist größer: dicke Sonnenstrahlen, größere Beschriftung der Sollwerte und ein Mond am Gerät in der Nacht. Der Knopf „Messwerte“ ist jetzt eine Pille wie die übrigen Knöpfe.

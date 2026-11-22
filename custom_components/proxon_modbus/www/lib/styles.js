@@ -64,10 +64,13 @@ ha-card { padding: 14px 16px; display: block; border: 1px solid var(--ha-card-bo
 @container (max-width: 900px) { .kpi { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @container (max-width: 640px) { .kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @container (max-width: 520px) { .kpi .ic { width: 28px; height: 28px; } .kpi .k { gap: 6px; } .kpi .v { font-size: 20px; white-space: nowrap; } .kpi .v small { font-size: 12px; } .kpi .lb { font-size: 12px; } }
-.kpi .k { display: flex; gap: 10px; align-items: flex-start; min-width: 0; padding: 14px; background: var(--card-background-color); border: 1px solid color-mix(in srgb, var(--primary-text-color) 16%, transparent);
-  box-shadow: inset 0 4px 0 var(--kc, var(--divider-color)), 0 2px 6px #0000001a; } /* top-aligned: label and value sit at the same height in every tile, with or without a sparkline or sub line */
+.kpi .k, .panel .kpi .k { display: flex; gap: 10px; align-items: flex-start; min-width: 0; padding: 14px; border-radius: 14px;
+  --kb: var(--kc, var(--divider-color));
+  background: color-mix(in srgb, var(--kb) 9%, var(--card-background-color));
+  border: 1px solid color-mix(in srgb, var(--kb) 38%, transparent);
+  box-shadow: inset 0 4px 0 var(--kb), 0 3px 10px color-mix(in srgb, var(--kb) 22%, transparent); } /* tinted, framed, with a bar on top: reads as a tile in the panel too */
 .kpi .k > div:last-child { min-width: 0; }
-.kpi .k.go { cursor: pointer; border-radius: 12px; } .kpi .k.go:hover .ic { filter: brightness(.95); outline: 1px solid color-mix(in srgb, var(--kc) 50%, transparent); }
+.kpi .k.go { cursor: pointer; transition: transform .12s, box-shadow .12s; } .kpi .k.go:hover { transform: translateY(-1px); } .kpi .k.go:hover .ic { filter: brightness(.95); outline: 1px solid color-mix(in srgb, var(--kc) 50%, transparent); }
 .spk { display: block; width: 110px; max-width: 100%; height: 22px; margin-top: 2px; }
 .kpi .lb { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kpi .ic { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none;
@@ -237,6 +240,14 @@ svg .sh { font-size: 14px; font-weight: 500; }
 .dsr { display: flex; gap: 32px; } .dsr b { display: block; font-size: 22px; font-weight: 500; } .dsr small { color: var(--secondary-text-color); font-size: 12.5px; }
 .mtgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 4px 24px; }
 .mg { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; color: var(--secondary-text-color); margin: 4px 0; }
+/* runtime and starts: the same tile look as the key figures */
+.stgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); grid-auto-rows: 1fr; gap: 10px; }
+.sr { display: flex; gap: 12px; align-items: center; min-width: 0; padding: 12px 14px; border-radius: 14px; background: color-mix(in srgb, var(--kc) 9%, var(--card-background-color));
+  border: 1px solid color-mix(in srgb, var(--kc) 38%, transparent); box-shadow: inset 0 4px 0 var(--kc), 0 3px 10px color-mix(in srgb, var(--kc) 22%, transparent); }
+.sr .ic { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; background: color-mix(in srgb, var(--kc) 18%, transparent); color: var(--kc); --mdc-icon-size: 20px; }
+.sr > div { min-width: 0; } .sr small { display: block; font-size: 13px; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sr b { font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; } .sr b span { font-size: 13px; font-weight: 400; color: var(--secondary-text-color); margin-left: 2px; }
+.sr.lk:hover { transform: translateY(-1px); }
 .mr { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; padding: 6px 0; border-top: 1px solid var(--divider-color); }
 .mr b { font-weight: 500; font-variant-numeric: tabular-nums; }
 .mrow { margin-bottom: 14px; } .mh { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 6px; }

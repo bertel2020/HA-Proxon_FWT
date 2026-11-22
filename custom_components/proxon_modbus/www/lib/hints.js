@@ -175,7 +175,7 @@ export class HintsMethods {
       }
     }
     // runtime and starts
-    const st = (icon, color, label, val, unit, id) => val === null ? "" : `<div class="mr${id ? " lk" : ""}" ${id ? `role="button" tabindex="0" data-act="more" data-v="${id}"` : ""}><span>${label}</span><b>${val}${unit}</b></div>`;
+    const st = (icon, color, label, val, unit, id) => val === null ? "" : `<div class="sr${id ? " lk" : ""}" style="--kc:${color}" ${id ? `role="button" tabindex="0" data-act="more" data-v="${id}"` : ""}><span class="ic">${this._icon(icon)}</span><div><small>${label}</small><b>${val}<span>${unit}</span></b></div></div>`;
     const sv = (id, dg) => this._num(id) === null ? null : this._fmt(this._num(id), dg);
     const stHtml = st("mdi:clock-outline", GREEN, this._t("rt_today"), sv(c.hp_runtime_today, 1), " h", c.hp_runtime_today) + st("mdi:counter", BLUE, this._t("starts_today"), sv(c.hp_starts_today, 0), "×", c.hp_starts_today) +
       st("mdi:history", GREEN, this._t("rt_total"), sv(c.hp_runtime_total, 1), " h", c.hp_runtime_total) + st("mdi:counter", BLUE, this._t("starts_total"), sv(c.hp_starts_total, 0), "×", c.hp_starts_total);
@@ -187,7 +187,7 @@ export class HintsMethods {
       const has = b && b.some((x) => x.pkwh !== undefined && x.t >= mid);
       ptcRows = st("mdi:radiator", CORAL, this._t("ptc_today"), has ? this._fmt(today, 2) : null, " kWh", this._ptcE()) + st("mdi:radiator", CORAL, this._t("ptc_total"), tot === null ? null : this._fmt(tot, tot < 100 ? 2 : 0), " kWh", this._ptcE());
     }
-    const stats = stHtml || ptcRows ? `<ha-card>${this._header("mdi:counter", this._t("stats"))}<div class="mtgrid">${stHtml}${ptcRows}</div></ha-card>` : "";
+    const stats = stHtml || ptcRows ? `<ha-card>${this._header("mdi:counter", this._t("stats"))}<div class="stgrid">${stHtml}${ptcRows}</div></ha-card>` : "";
     return `${tiles.length ? `<ha-card>${this._header("mdi:stethoscope", this._t("status"))}<div class="srows">${tiles.join("")}</div></ha-card>` : ""}${this._sec_measure(d)}${stats}`;
   }
 

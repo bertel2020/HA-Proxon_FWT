@@ -5,6 +5,8 @@
 ## 2.5.0 – 2026-11-22
 
 **New**
+- **Panel – diagnosis, runtime and starts:** The values are now tiles like the key figures (icon, name, large value) instead of rows with divider lines side by side.
+- **Panel – key figures:** The tiles now stand out in the panel too (a panel rule used to override the style): lightly tinted in the colour of the figure, with a coloured border, a bar on top and a coloured shadow.
 - **Panel – hot water, tank picture:** At night the picture shows a moon instead of the sun and no PV arrow. The unit has more contrast: darker fan and housing, a stronger water fill, a larger outdoor temperature; the highlight strip behind the measuring point is gone.
 - **Panel – key figures and diagnosis:** All key figure tiles are the same height and have a border, a shadow and a bar on top in the colour of the figure. In the diagnosis the bypass is a row of its own instead of an extra line under "System error".
 - **Panel – hot water, new layout:** A status bar over the full width shows the controller's decision large and in colour (night indigo, normal orange, PV green) with a 24-hour bar of the program phases and a "now" mark. The history uses the full width, with the main picture and the control side by side above it. The tank picture is larger: thicker sun rays, bigger labels for the targets and a moon on the unit at night. The "Measurements" button is now a pill like the other buttons.
