@@ -167,7 +167,6 @@ export class TwwpSectionsMethods {
     const heats = pw !== null && pw > 100, prog = this._ok(t.ents.twwp_program) ? this._state(t.ents.twwp_program).state : null, night = prog === "night";
     const bad = this._on(t.ents.twwp_sensor_problem), outer = c.outer_temp ? this._num(c.outer_temp) : null;
     const col = w === null ? "var(--divider-color)" : tn !== null && w >= tn ? CORAL : tm !== null && w >= tm ? AMBER : BLUE;
-    const flow = heats ? (prog === "pv" ? GREEN : AMBER) : "var(--divider-color)";
     // Fill level: the water temperature on the 30 to 65 degree scale, drawn into the water part of the tank (y 72 to 200).
     const yv = (v) => 72 + (1 - (Math.max(S_LO, Math.min(S_HI, v)) - S_LO) / (S_HI - S_LO)) * 128;
     const lvl = w === null ? 200 : yv(w);
@@ -178,20 +177,9 @@ export class TwwpSectionsMethods {
         const y = yv(v), ty = Math.max(y + 5, lastY + 16); lastY = ty;
         return `<line x1="112" x2="122" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--primary-text-color)" stroke-width="2.2"/><text x="127" y="${ty.toFixed(1)}" font-size="13" font-weight="500" fill="var(--primary-text-color)">${this._t(k, this._fmt(v, 0))}</text>`;
       }).join("");
-    const rays = [0, 45, 90, 135, 180, 225, 270, 315].map((a) => `<line x1="58" y1="58" x2="58" y2="49" transform="rotate(${a} 58 100)"/>`).join("");
-    const svg = `<svg class="twhsvg ${heats ? "heat" : ""}" viewBox="0 0 440 226" role="img" aria-label="${this._t("tw_tank")} ${w === null ? "" : this._fmt(w) + "°"}">
+    const svg = `<svg class="twhsvg ${heats ? "heat" : ""}" viewBox="0 0 250 226" role="img" aria-label="${this._t("tw_tank")} ${w === null ? "" : this._fmt(w) + "°"}">
       <title>${this._t("tw_tank_note")}</title><defs><clipPath id="twc${i}"><rect x="0" y="0" width="112" height="200" rx="28"/></clipPath></defs>
-      ${night ? `      <g><path d="M72 84a28 28 0 1 1-30-34 22 22 0 0 0 30 34z" fill="${NIGHT}" opacity=".9"/>
-      <g fill="${NIGHT}" opacity=".7"><circle cx="82" cy="58" r="2.6"/><circle cx="92" cy="80" r="2"/><circle cx="30" cy="140" r="2"/></g>
-      <text x="58" y="162" text-anchor="middle" font-size="18" font-weight="700" fill="var(--primary-text-color)">${this._t("tw_p_night")}</text>
-      <text x="58" y="182" text-anchor="middle" font-size="13" fill="var(--secondary-text-color)">${pv === null ? "" : this._fmt(pv / 1000) + " kW"}</text></g>
-      ` : `      <circle cx="58" cy="100" r="26" fill="${AMBER}" opacity="${pv !== null && pv > 200 ? 1 : 0.35}"/><g stroke="${AMBER}" stroke-width="3.5" stroke-linecap="round" opacity="${pv !== null && pv > 200 ? 1 : 0.35}">${rays}</g>
-      ${pv === null ? "" : this._lk(c.pv_power, `<text x="58" y="162" text-anchor="middle" font-size="18" font-weight="700" fill="var(--primary-text-color)">${this._fmt(pv / 1000)} kW</text><text x="58" y="182" text-anchor="middle" font-size="13" fill="var(--secondary-text-color)">${this._t("tw_pv_power")}</text>`, "g")}
-      <path class="twflow" d="M92 100 C 150 100, 170 72, 224 72" fill="none" stroke="${flow}" stroke-width="3"/>
-      <path d="M214 66 L226 72 L214 78" fill="none" stroke="${flow}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-      ${heats ? this._lk(c.power_entity, `<text x="150" y="82" text-anchor="middle" font-size="12" fill="var(--secondary-text-color)">${this._fmt(pw, 0)} W</text>`, "g") : ""}
-      `}
-      <g transform="translate(232,10)">
+      <g transform="translate(8,10)">
         <rect width="112" height="200" rx="28" fill="var(--card-background-color)" stroke="var(--divider-color)" stroke-width="1.5"/>
         <g clip-path="url(#twc${i})">
           <rect x="0" y="70" width="112" height="130" fill="var(--secondary-background-color)" opacity=".55"/>
@@ -203,21 +191,23 @@ export class TwwpSectionsMethods {
         <g class="fan" fill="var(--primary-text-color)" opacity=".85">${[0, 120, 240].map((r) => `<ellipse cx="36" cy="19" rx="6" ry="10" transform="rotate(${r} 36 29)"/>`).join("")}<circle cx="36" cy="29" r="3.5" fill="var(--card-background-color)"/></g>
         <g stroke="var(--primary-text-color)" stroke-width="3.5" stroke-linecap="round" opacity=".6"><line x1="64" x2="94" y1="22" y2="22"/><line x1="64" x2="94" y1="32" y2="32"/><line x1="64" x2="94" y1="42" y2="42"/></g>
         <circle cx="92" cy="58" r="5" fill="${heats ? GREEN : "var(--divider-color)"}"/>
-        ${this._lk(c.outer_temp, `<text x="36" y="67" font-size="17" font-weight="700" text-anchor="middle" fill="var(--primary-text-color)">${outer === null ? "" : this._fmt(outer) + "°"}</text>`, "g")}
-        <circle cx="18" cy="146" r="5" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="1.8"/>
-        ${this._lk(c.water_temp || t.heater, `<text x="66" y="156" text-anchor="middle" font-size="30" font-weight="700" fill="var(--primary-text-color)">${w === null ? "–" : this._fmt(w) + "°"}</text>`, "g")}
+        ${this._lk(c.outer_temp, `<text x="36" y="64" font-size="15" font-weight="700" text-anchor="middle" fill="var(--primary-text-color)">${outer === null ? "" : this._fmt(outer) + "°"}</text>`, "g")}
+        <circle cx="16" cy="146" r="5" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="1.8"/>
+        ${this._lk(c.water_temp || t.heater, `<text x="64" y="156" text-anchor="middle" font-size="27" font-weight="700" fill="var(--primary-text-color)">${w === null ? "–" : this._fmt(w) + "°"}</text>`, "g")}
         <text x="62" y="180" text-anchor="middle" font-size="12" fill="var(--secondary-text-color)">${this._t("tw_mp")}</text>
         ${marks}
         ${night ? `<g transform="translate(92,58)"><circle r="11" fill="${NIGHT}"/><path transform="translate(-6,-6) scale(.5)" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></g>` : ""}
       </g></svg>`;
     const chip = bad ? `<span class="chip r">${this._t("tw_problem")}</span>` : prog ? `<span class="chip ${prog === "pv" ? "g" : prog === "minimum" ? "w" : prog === "normal" ? "a" : ""}">${this._t(`tw_p_${prog}`)}</span>` : "";
-    const tile = (label, value, id) => `<div class="twm${id ? " lk" : ""}" ${id ? `role="button" tabindex="0" data-act="more" data-v="${id}"` : ""}><small>${label}</small><b>${value}</b></div>`;
+    const tile = (icon, color, label, value, id) => `<div class="sr${id ? " lk" : ""}" style="--kc:${color}" ${id ? `role="button" tabindex="0" data-act="more" data-v="${id}"` : ""}><span class="ic">${this._icon(icon)}</span><div><small>${label}</small><b>${value}</b></div></div>`;
     const since = heats && today && today.since != null ? this._twFmtDur(Math.max(0, Date.now() / 1000 - today.since)) : null;
+    const hpCol = night ? NIGHT : heats ? (prog === "pv" ? GREEN : AMBER) : "#8a8f98";
     const tiles = [
-      pw !== null ? tile(this._t(heats ? "tw_since" : "tw_hp"), heats ? (since || "–") : this._t("tw_idle")) : "",
-      pw !== null ? tile(this._t("power"), `${this._fmt(pw, 0)} W`, c.power_entity) : "",
-      today && today.kwh != null ? tile(this._t("tw_today_e"), `${this._fmt(today.kwh)} kWh`, c.energy_entity) : "",
-      today && today.heat != null ? tile(this._t("tw_today_h"), this._twFmtDur(today.heat)) : "",
+      pw !== null ? tile(night ? "mdi:weather-night" : "mdi:fan", hpCol, this._t(heats ? "tw_since" : "tw_hp"), heats ? (since || "–") : this._t("tw_idle")) : "",
+      pw !== null ? tile("mdi:flash", "#7e57c2", this._t("power"), `${this._fmt(pw, 0)} W`, c.power_entity) : "",
+      pv !== null ? tile(night ? "mdi:weather-night" : "mdi:weather-sunny", night ? NIGHT : AMBER, this._t("tw_pv_power"), `${this._fmt(pv / 1000)} kW`, c.pv_power) : "",
+      today && today.kwh != null ? tile("mdi:counter", GREEN, this._t("tw_today_e"), `${this._fmt(today.kwh)} kWh`, c.energy_entity) : "",
+      today && today.heat != null ? tile("mdi:clock-outline", BLUE, this._t("tw_today_h"), this._twFmtDur(today.heat)) : "",
     ].join("");
     return `<ha-card>${this._header("mdi:water-boiler", this._t("tw_tank"), chip)}<div class="twhero">${svg}<div class="twside"><div class="twmg">${tiles}</div></div></div></ha-card>`;
   }

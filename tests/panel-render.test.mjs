@@ -481,7 +481,7 @@ test("the housing in the main picture is clearly taller than wide, and everythin
   assert.ok(h / w >= 1.3 && h / w <= 1.9, `aspect ${(h / w).toFixed(2)} looks like a standing unit`);
   const vb = /viewBox="0 0 (\d+) (\d+)" role="img" aria-label="Speicher/.exec(html);
   assert.ok(vb && Number(vb[2]) >= h + 10, "the picture is high enough for the housing");
-  assert.ok(Number(vb[1]) >= 232 + w, "and wide enough");
+  assert.ok(Number(vb[1]) >= 8 + w + 120, "and wide enough, with room for the target labels");
 });
 
 test("the lane chart stacks measurements on one time axis, each lane with its own scale, with shared bands, legend and crosshair data", () => {

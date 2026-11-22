@@ -121,7 +121,7 @@ export class SectionsMethods {
     let hi = Math.max(...vs, o.hi ?? -Infinity);
     if (hi - lo < 1e-9) hi = lo + 1;
     const line = (o.step ? this.constructor._stairs(pts) : pts).map(([t, v]) => `${(((t - t0) / (t1 - t0)) * W).toFixed(1)},${(H - ((v - lo) / (hi - lo)) * (H - 2) - 1).toFixed(1)}`).join(" ");
-    return `<svg class="spk" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="${color}" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="${line}"/></svg>`;
+    return `<svg class="spk" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="${color}" stroke-width="1.2" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="${line}"/></svg>`;
   }
 
   // The 24 h curve of one curve of a history metric (shares its data with the history chart); label picks the curve.

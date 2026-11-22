@@ -5,6 +5,8 @@
 ## 2.5.0 – 2026-11-22
 
 **New**
+- **Panel – hot water, "Tank" card:** The picture now shows only the unit with the target marks, larger and without the floating sun or moon and the arrow. The PV power is a tile of its own beside it (sun by day, moon at night). All tiles have an icon and the colour of their state, like the key figures. The outdoor temperature and the reading in the unit no longer touch the divider line.
+- **Panel – key figures:** The 24 hour curve now runs across the full width of the tile (below the icon and value, at the bottom edge) and is thinner (1.2 instead of 1.6 px). The bar on top is a little slimmer.
 - **Operating mode and fan stage:** The chosen mode is tinted and outlined in the colour of the mode (winter blue, comfort green, stove red), the chosen fan stage is filled solid. The buttons are a little larger with more spacing and a light tint on hover.
 - **Wish stage:** The remembered stage is a small, neutral switch (digits only) on the right of one row. It is no longer blue and no longer as large as the operating stage, so the two are not mixed up.
 - **Panel – diagnosis, measurements:** The three groups (air, refrigerant circuit, drives) are now tinted panels of their own with a coloured icon, a bar on top and the same height; the values are bolder and a row is highlighted on hover.

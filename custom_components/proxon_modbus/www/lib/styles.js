@@ -66,15 +66,21 @@ ha-card { padding: 14px 16px; display: block; border: 1px solid var(--ha-card-bo
 .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); grid-auto-rows: 1fr; gap: 10px; } /* every row equally tall */
 @container (max-width: 900px) { .kpi { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @container (max-width: 640px) { .kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@container (max-width: 520px) { .kpi .ic { width: 28px; height: 28px; } .kpi .k { gap: 6px; } .kpi .v { font-size: 20px; white-space: nowrap; } .kpi .v small { font-size: 12px; } .kpi .lb { font-size: 12px; } }
-.kpi .k, .panel .kpi .k { display: flex; gap: 10px; align-items: flex-start; min-width: 0; padding: 14px; border-radius: 14px;
+@container (max-width: 520px) { .kpi .ic { width: 28px; height: 28px; } .kpi .k { column-gap: 8px; } .kpi .v { font-size: 20px; white-space: nowrap; } .kpi .v small { font-size: 12px; } .kpi .lb { font-size: 12px; } }
+/* icon and text on top, the 24 h curve below over the full width of the tile (the inner div is dissolved so its children join the grid) */
+.kpi .k, .panel .kpi .k { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto 1fr; column-gap: 12px; align-items: start; min-width: 0; padding: 14px; border-radius: 14px;
   --kb: var(--kc, var(--divider-color));
   background: color-mix(in srgb, var(--kb) 9%, var(--card-background-color));
   border: 1px solid color-mix(in srgb, var(--kb) 38%, transparent);
-  box-shadow: inset 0 4px 0 var(--kb), 0 3px 10px color-mix(in srgb, var(--kb) 22%, transparent); } /* tinted, framed, with a bar on top: reads as a tile in the panel too */
-.kpi .k > div:last-child { min-width: 0; }
+  box-shadow: inset 0 3px 0 var(--kb), 0 3px 10px color-mix(in srgb, var(--kb) 22%, transparent); } /* tinted, framed, with a bar on top: reads as a tile in the panel too */
+.kpi .k > div:last-child { display: contents; }
+.kpi .k .ic { grid-column: 1; grid-row: 1 / span 2; }
+.kpi .k .lb, .kpi .k .v { grid-column: 2; }
+.kpi .k .spk { grid-column: 1 / -1; align-self: end; margin-top: 8px; }
+.kpi .k .v ~ .lb { grid-column: 1 / -1; margin-top: 4px; }
 .kpi .k.go { cursor: pointer; transition: transform .12s, box-shadow .12s; } .kpi .k.go:hover { transform: translateY(-1px); } .kpi .k.go:hover .ic { filter: brightness(.95); outline: 1px solid color-mix(in srgb, var(--kc) 50%, transparent); }
 .spk { display: block; width: 110px; max-width: 100%; height: 22px; margin-top: 2px; }
+.kpi .spk { width: 100%; height: 30px; }
 .kpi .lb { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kpi .ic { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none;
   background: color-mix(in srgb, var(--kc) 18%, transparent); color: var(--kc); }
@@ -449,10 +455,10 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .banner.go { cursor: pointer; }
 .banner .bgo { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 400; opacity: .8; white-space: nowrap; }
 .banner .bgo ha-icon { --mdc-icon-size: 16px; }
-.twhero { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
-.twhsvg { width: min(100%, 460px); height: auto; flex: none; }
-.twside { flex: 1; min-width: 220px; max-width: 520px; }
-.twmg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.twhero { display: flex; gap: 28px; align-items: center; justify-content: space-around; flex-wrap: wrap; }
+.twhsvg { width: min(100%, 330px); height: auto; flex: none; }
+.twside { flex: 1; min-width: 240px; max-width: 560px; }
+.twmg { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
 .twm { background: var(--secondary-background-color); border-radius: 10px; padding: 12px 14px; min-width: 0; }
 .twm small { display: block; font-size: 13px; color: var(--secondary-text-color); margin-bottom: 2px; }
 .twm b { font-size: 22px; font-weight: 500; }
