@@ -1,4 +1,4 @@
-import { METRIC_META } from "./constants.js";
+import { METRIC_META, BLUE } from "./constants.js";
 
 export class HistorySectionsMethods {
   // ---- history: sections ------------------------------------------------
@@ -10,7 +10,7 @@ export class HistorySectionsMethods {
   _sec_history(d) {
     const range = this._range();
     // "all": air, refrigerant circuit, drives and power as lanes on one time axis (only when at least two of them exist)
-    const groups = ["temp", "circuit", "drives", "power"].filter((m) => this._metricDefs(d, m).length);
+    const groups = ["temp", "eff", "circuit", "drives", "power"].filter((m) => this._metricDefs(d, m).length);
     const avail = Object.keys(METRIC_META).filter((m) => (m === "all" ? groups.length > 1 : this._metricDefs(d, m).length));
     if (!avail.length) return "";
     const metric = avail.includes(this._metric) ? this._metric : avail[0];
@@ -39,15 +39,21 @@ export class HistorySectionsMethods {
     if (loaded.some((e) => e.s === undefined)) return this._skel(380);
     const nf = (v) => this._fmt(v, Math.abs(v) < 100 ? 1 : 0), comp = this._t("compressor");
     const fmt = { temp: (v) => `${nf(v)}°`, circuit: (v) => `${nf(v)}°`, drives: (v) => `${this._fmt(v, 0)} rpm`,
+      eff: (v) => `${this._fmt(v, 0)} %`,
       power: (v) => (v >= 1000 ? `${this._fmt(v / 1000)} kW` : `${this._fmt(v, 0)} W`) };
-    const h = { temp: 110, circuit: 110, drives: 100, power: 80 };
+    const h = { temp: 110, eff: 80, circuit: 110, drives: 100, power: 80 };
     const lanes = loaded.map(({ m, s }) => {
       const list = (s || []).filter((x) => x.pts.length > 1 && !(m === "circuit" && x.label === comp))
         .map((x) => ({ ...x, hkey: `${m}|${x.label}`, kind: "line", fmt: fmt[m], energy: m === "power" }));
       return list.length && { h: h[m], axis: true, series: list };
     }).filter(Boolean);
     if (!lanes.length) return `<div class="note">${this._t(range === "30d" || range === "1y" ? "no_stats" : "no_history")}</div>`;
-    const hp = this._hp(), phases = (range === "24h" || range === "7d") && hp && hp.iv.length ? [{ iv: hp.iv, color: "#3fa660", label: this._t("hp_runs") }] : [];
+    const hp = this._hp(), short = range === "24h" || range === "7d";
+    const bypass = (loaded.map((e) => e.s && e.s.bypass).find((b) => b && b.length)) || [];
+    const phases = [
+      short && hp && hp.iv.length ? { iv: hp.iv, color: "#3fa660", label: this._t("hp_runs") } : null,
+      short && bypass.length ? { iv: bypass, color: BLUE, label: this._t("bypass_open") } : null,
+    ].filter(Boolean);
     return this._laneChart(lanes, { range, phases, gap: 20, key: "all" });
   }
 
