@@ -266,7 +266,7 @@ export class SectionsMethods {
       <text class="sh" x="${X(340)}" y="110" text-anchor="middle" style="font-size:14px">${bypass ? this._t("bypass_short") : eff !== null && run ? eff + " %" : "–"}</text>
       <text class="st nh" x="${X(340)}" y="124" text-anchor="middle" style="font-size:10px">${bypass ? this._t("open_s") : this._t("wrg_s")}</text>`, "g")}
       <text class="st" x="${X(340)}" y="198" text-anchor="middle">${this._t("exchanger")}</text>
-      <g class="hot" data-act="tab" data-v="diag" role="button" tabindex="0" aria-label="${this._t("tip_comp")}"><title>${this._t("tip_comp")}</title>
+      <g class="hot" data-act="${this._isPanel ? "tab" : "more"}" data-v="${this._isPanel ? "diag" : c.compressor_speed}" role="button" tabindex="0" aria-label="${this._t("tip_comp")}"><title>${this._t("tip_comp")}</title>
         ${hp ? `<circle class="ripple" cx="${X(340)}" cy="245" r="31" fill="none" stroke="${ring}" stroke-width="2"/>` : ""}
         <circle cx="${X(340)}" cy="245" r="31" fill="var(--card-background-color)" stroke="var(--pbd)" stroke-width="3.5"/>
         ${hp && frac > 0 ? `<circle cx="${X(340)}" cy="245" r="31" fill="none" stroke="${ring}" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="${(circ * frac).toFixed(1)} ${circ.toFixed(1)}" transform="rotate(-90 ${X(340)} 245)"/>` : ""}
@@ -372,23 +372,28 @@ export class SectionsMethods {
     const cool = c.cooling_enable
       ? `<div class="row">${this._icon("mdi:snowflake")}${this._t("cooling_enable")}<span class="sp"><ha-switch data-act="coolsw" ${this._on(c.cooling_enable) ? "checked" : ""} ${this._ok(c.cooling_enable) ? "" : "disabled"}></ha-switch></span></div>` : "";
     return `<ha-card>${this._header("mdi:heat-pump", this._t("heatpump"))}
-      <div class="hp">${ring}<div style="flex:1"><div class="lb">${this._t("compressor")}</div>
-      ${power === null ? "" : `<div style="margin-top:6px"><div class="lb">${this._t("power_long")}</div>${this._lk(this._powerId(), `<div class="big">${this._fmt(power, power % 1 ? 1 : 0)} <small>W</small></div>`, "div")}</div>`}</div></div>
+      <div class="hp">${ring}<div style="flex:1">
+      ${power === null ? "" : `<div><div class="lb">${this._t("power_long")}</div>${this._lk(this._powerId(), `<div class="big">${this._fmt(power, power % 1 ? 1 : 0)} <small>W</small></div>`, "div")}</div>`}</div></div>
       <div class="chips">${chip(c.heat_pump_heating, "mdi:fire", this._t("hp_heating"), "g")}${chip(c.heat_pump_cooling, "mdi:snowflake", this._t("hp_cooling"), "a")}${chip(c.heat_pump_continuous, "mdi:autorenew", this._t("hp_continuous"), "a")}${chip(c.cooling_available, "mdi:snowflake-check", this._t("cooling_available"), "g")}</div>
       ${cool}</ha-card>`;
   }
 
+  // Refrigerant circuit and drives: the circuit temperatures as tiles, the compressor speed beside them, the supply points as rows.
   _sec_refrigerant(d) {
-    const c = d.central;
-    const tile = (label, id, sub = "") => this._ok(id)
-      ? `<div class="k lk" role="button" tabindex="0" data-act="more" data-v="${id}"><div class="lb">${label}${sub}</div><div class="v">${this._temp(id)}</div></div>` : "";
-    const row = (label, id) => this._ok(id) ? `<div class="row lk" role="button" tabindex="0" data-act="more" data-v="${id}"><span class="lb">${label}</span><b>${this._temp(id)}</b></div>` : "";
+    const c = d.central, lang = this._hass.language;
+    const lk = (id) => `role="button" tabindex="0" data-act="more" data-v="${id}"`;
+    const tile = (label, id) => this._ok(id)
+      ? `<div class="k lk" ${lk(id)}><div class="lb">${label}</div><div class="v">${this._temp(id)}</div></div>` : "";
+    const rtile = (label, id) => this._num(id) === null ? ""
+      : `<div class="k lk" ${lk(id)}><div class="lb">${label}</div><div class="v">${this._num(id).toLocaleString(lang)} <small>rpm</small></div></div>`;
+    const row = (label, id) => this._ok(id) ? `<div class="row lk" ${lk(id)}><span class="lb">${label}</span><b>${this._temp(id)}</b></div>` : "";
+    const rrow = (label, id) => this._num(id) === null ? "" : `<div class="row lk" ${lk(id)}><span class="lb">${label}</span><b>${this._num(id).toLocaleString(lang)} rpm</b></div>`;
     const tiles = tile(this._t("evaporator"), c.temp_evaporator) + tile(this._t("condenser"), c.temp_condenser) +
-      tile(this._t("compressor"), c.temp_compressor) + tile(this._t("outside"), this._outdoorId(), this._opt("outdoor_entity") ? " ·" : "");
-    const rows = row(this._t("pre_evaporator"), c.temp_pre_evaporator) + row(this._t("post_preheat"), c.temp_post_preheat) +
-      row(this._t("pre_condenser"), c.temp_pre_condenser);
+      tile(this._t("compressor"), c.temp_compressor) + rtile(`${this._t("compressor")} ${this._t("drive_speed")}`, c.compressor_speed);
+    const rows = row(this._t("pre_evaporator"), c.temp_pre_evaporator) + row(this._t("pre_condenser"), c.temp_pre_condenser) +
+      rrow(this._t("supply_fan"), c.fan_speed_supply) + rrow(this._t("extract_fan"), c.fan_speed_extract);
     if (!tiles && !rows) return "";
-    return `<ha-card>${this._header("mdi:thermometer", this._t("refrigerant"), this._t("diagnostic"))}
+    return `<ha-card>${this._header("mdi:thermometer-lines", this._t("refrigerant"))}
       <div class="kgrid">${tiles}</div><div style="margin-top:10px">${rows}</div></ha-card>`;
   }
 

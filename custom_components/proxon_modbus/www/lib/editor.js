@@ -1,6 +1,9 @@
 import { DEFAULT_SECTIONS, ALL_SECTIONS } from "./constants.js";
 import { TEXT } from "./text.js";
 
+// Replaced by `operation` and `schema`; still valid in YAML, shown here only when a card uses them.
+const LEGACY = ["mode", "fan", "quick", "air"];
+
 export class ProxonFwtCardEditor extends HTMLElement {
   setConfig(config) {
     this._config = config;
@@ -16,12 +19,8 @@ export class ProxonFwtCardEditor extends HTMLElement {
     const lang = ((this._hass && this._hass.language) || "en").split("-")[0];
     const T = TEXT[lang] || TEXT.en;
     const labels = lang === "de"
-      ? { sections: "Bereiche", outdoor_side: "Außenseite des Wärmetauschers", power_entity: "Leistungssensor (optional)",
-          energy_entity: "Energiezähler (optional)", outdoor_entity: "Außentemperatursensor (optional)", max_fan_rpm: "Lüfter-Drehzahl für volle Balken (rpm)",
-          max_compressor_rpm: "Kompressor-Drehzahl für vollen Ring (rpm)" }
-      : { sections: "Sections", outdoor_side: "Outdoor side of the heat exchanger", power_entity: "Power sensor (optional)",
-          energy_entity: "Energy meter (optional)", outdoor_entity: "Outdoor temperature sensor (optional)", max_fan_rpm: "Fan speed for full bars (rpm)",
-          max_compressor_rpm: "Compressor speed for full ring (rpm)" };
+      ? { sections: "Bereiche", outdoor_side: "Außenseite des Wärmetauschers" }
+      : { sections: "Sections", outdoor_side: "Outdoor side of the heat exchanger" };
     return labels[name] || T[name] || name;
   }
 
@@ -43,16 +42,12 @@ export class ProxonFwtCardEditor extends HTMLElement {
     this._form.hass = this._hass;
     this._form.computeLabel = (s) => this._label(s.name);
     this._form.schema = [
-      { name: "sections", selector: { select: { multiple: true, mode: "list", options: ALL_SECTIONS.map((v) => ({ value: v, label: T[v] || v })) } } },
+      { name: "sections", selector: { select: { multiple: true, mode: "list", options: ALL_SECTIONS.filter((v) => !LEGACY.includes(v) || (this._config.sections || []).includes(v)).map((v) => ({ value: v, label: T[v] || v })) } } },
       { name: "outdoor_side", selector: { select: { mode: "dropdown", options: [
         { value: "auto", label: lang === "de" ? "Wie in der Integration" : "As set in the integration" },
         { value: "left", label: lang === "de" ? "Links" : "Left" }, { value: "right", label: lang === "de" ? "Rechts" : "Right" }] } } },
-      { name: "power_entity", selector: { entity: { domain: "sensor", device_class: "power" } } },
-      { name: "energy_entity", selector: { entity: { domain: "sensor", device_class: "energy" } } },
-      { name: "outdoor_entity", selector: { entity: { domain: "sensor", device_class: "temperature" } } },
-      { name: "max_fan_rpm", selector: { number: { min: 500, max: 10000, step: 100, mode: "box" } } },
-      { name: "max_compressor_rpm", selector: { number: { min: 500, max: 20000, step: 100, mode: "box" } } },
     ];
-    this._form.data = { sections: DEFAULT_SECTIONS, outdoor_side: "auto", max_fan_rpm: 3000, max_compressor_rpm: 6000, ...this._config };
+    // Sensors and the speed limits come from the integration options (or the YAML); they stay in the config untouched.
+    this._form.data = { sections: DEFAULT_SECTIONS, outdoor_side: "auto", ...this._config };
   }
 }

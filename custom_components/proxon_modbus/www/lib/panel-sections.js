@@ -22,7 +22,7 @@ export class PanelSectionsMethods {
   }
 
   // Overview status block: one quiet row per topic (icon, label, value). The heat pump state stays in the header chips, the fan stage in the controls.
-  _sec_status(d) {
+  _sec_pstatus(d) {
     const c = d.central, rows = [];
     // The row opens its tab; the value opens the entity (a row without a tab opens the entity as a whole).
     const row = (icon, col, label, value, go = "", id = "") => `<div class="srow2 ${go ? "go" : ""}" ${go ? `role="button" tabindex="0" data-act="tab" data-v="${go}"` : id ? `role="button" tabindex="0" data-act="more" data-v="${id}"` : ""}>

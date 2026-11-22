@@ -11,13 +11,14 @@ class El {
   addEventListener() {} removeEventListener() {}
   toggleAttribute(n, on) { on ? this.attrs.add(n) : this.attrs.delete(n); }
   dispatchEvent() { return true; }
+  appendChild() {}
 }
 const registry = {};
 Object.assign(globalThis, {
   HTMLElement: El, CustomEvent: class {}, Event: class {},
   customElements: { get: (n) => registry[n], define: (n, c) => { registry[n] = c; } },
   window: { customCards: [] }, localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
-  document: { createElement: (tag) => ({ tag, textContent: "" }), addEventListener() {}, removeEventListener() {} },
+  document: { createElement: (tag) => ({ tag, textContent: "", addEventListener() {} }), addEventListener() {}, removeEventListener() {} },
   ResizeObserver: class { observe() {} disconnect() {} },
 });
 globalThis.window.window = globalThis.window;
@@ -738,4 +739,21 @@ test("the dashboard card links its values to their entities", async () => {
     assert.ok(html.includes(`data-act="more" data-v="${id}"`), `card: ${id}`);
   }
   assert.ok(html.includes('class="row first'), "the first status row keeps its style");
+});
+
+test("the card shows its own status card and no dead panel links; the editor lists sections by name", async () => {
+  const card = new X.ProxonFwtCard();
+  card.setConfig({ sections: ["status", "refrigerant", "heatpump", "schema"] });
+  card.hass = hass;
+  const html = await render(card, () => {});
+  check(html);
+  assert.ok(html.includes("Alter") || html.includes("Tag 45"), "filter age line of the card status");
+  assert.ok(!/<[a-z][^>]*data-act="tab"/.test(html), "no links to panel tabs in the card");
+  assert.ok(!html.includes("Außen ·") && html.includes("Kältekreis und Antriebe"));
+  const ed = new X.ProxonFwtCardEditor();
+  ed.hass = hass;
+  ed.setConfig({ type: "custom:proxon-fwt-card" });
+  const names = ed._form.schema.map((s) => s.name);
+  assert.deepEqual(names, ["sections", "outdoor_side"], "no sensor or speed fields in the editor");
+  assert.equal(ed._label("alerts"), "Meldungen");
 });

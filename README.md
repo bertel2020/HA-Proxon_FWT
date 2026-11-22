@@ -239,10 +239,10 @@ Die Karte findet alle Entities der Integration selbst (über Plattform und Entit
 - **Luftwege** als Kreuzstrom-Wärmetauscher mit den vier Temperaturen
   Nicht wählbare Stufen sind ausgegraut. Die älteren Bereiche `mode` und `fan` gibt es weiterhin einzeln
 - **Wärmepumpe** (Kompressor, Leistungsaufnahme, Betriebszustände, Kühlungsfreigabe)
-- **Kältekreis** (Diagnose-Temperaturen) sowie **Status und Wartung** (Fehler, Filter mit Alter in Tagen, Frist bis zur Zwangsabschaltung und Knopf „Filter getauscht“)
+- **Kältekreis und Antriebe** (Kreislauf-Temperaturen, Kompressor- und Ventilator-Drehzahlen) sowie **Status und Wartung** (Fehler, Filter mit Alter in Tagen, Frist bis zur Zwangsabschaltung und Knopf „Filter getauscht“)
 - **Räume** als Kacheln oder Liste mit Detailansicht: Soll/Ist, CO₂, Feuchte, PTC-Zustand und -Freigabe je Raum. Ein Raum zeigt „heizt“ nur bei aktivem PTC-Element, sonst „unter/über Soll“
 
-Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wird ausgeblendet. Die Karte lässt sich im Karten-Editor grafisch konfigurieren.
+Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wird ausgeblendet. Die Karte lässt sich im Karten-Editor grafisch konfigurieren. Sensoren (Leistung, Energie, Außentemperatur, PTC) kommen aus den Optionen der Integration; im YAML der Karte lassen sie sich weiterhin überschreiben.
 
 `outdoor_side`, `power_entity`, `energy_entity` und `outdoor_entity` lassen sich auch einmal zentral in den **Optionen der Integration** (Konfigurieren) einstellen, ebenso das Filter-Intervall und ein optionaler Umluftfilter und gelten dann für alle Browser, Karte und Seitenpanel. Eine Angabe in der Karte hat Vorrang.
 
@@ -253,7 +253,7 @@ Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wi
 | `energy_entity` | Integration | eigener Energiezähler (Wh/kWh/MWh): Die Energie-Karte zeigt dann den gemessenen Verbrauch statt einer Schätzung aus der Leistung |
 | `ptc_power_entity`, `ptc_energy_entity` | Integration | eigener Leistungssensor und Energiezähler (Wh/kWh/MWh) für **alle PTC-Elemente zusammen**: Das Panel zeigt sie in Übersicht (ersetzt die Kachel Kompressor), Diagnose, Verlauf und Räume (das Gerät misst das nicht selbst) |
 | `outdoor_entity` | Integration | eigene Entität für die Außentemperatur statt des Gerätesensors |
-| `sections` | alle | Liste der anzuzeigenden Bereiche. Standard: `operation`, `air`, `heatpump`, `refrigerant`, `status`, `rooms`. Zusätzlich möglich: `mode`, `fan` (statt `operation`), `quick` (nur Stoßlüften mit 15/30/60 Minuten; im Panel ist es Teil von `operation`), `schema`, `kpi`, `alerts`, `history`, `runtime`, `energy` |
+| `sections` | siehe Standard | Liste der anzuzeigenden Bereiche. Standard: `operation`, `air`, `heatpump`, `refrigerant`, `status`, `rooms`. Zusätzlich möglich: `mode`, `fan` (statt `operation`), `quick` (nur Stoßlüften mit 15/30/60 Minuten; im Panel ist es Teil von `operation`), `schema`, `kpi`, `alerts`, `history`, `runtime`, `energy` |
 | `max_fan_rpm` | `3000` | Drehzahl, bei der die Lüfter-Balken voll sind |
 | `max_compressor_rpm` | `6000` | Drehzahl, bei der der Kompressor-Ring voll ist |
 | `device_id` | – | nur bei mehreren Anlagen: Geräte-ID des zentralen Geräts |

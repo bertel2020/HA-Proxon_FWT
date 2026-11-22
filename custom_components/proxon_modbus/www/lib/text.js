@@ -2,7 +2,7 @@
 export const TEXT = {
   de: {
     mode: "Betriebsart", air: "Luftwege", fan: "Lüftung", heatpump: "Wärmepumpe",
-    refrigerant: "Kältekreis", diagnostic: "Diagnose", status: "Status und Wartung",
+    refrigerant: "Kältekreis und Antriebe", alerts: "Meldungen", drive_speed: "Drehzahl", diagnostic: "Diagnose", status: "Status und Wartung",
     rooms: "Räume", tiles: "Kacheln", list: "Liste", schema: "Anlagenschema",
     kpi: "Kennzahlen", history: "Verlauf", hist_24: "1 Tag", prev_period: "Vorzeitraum", st_min: "Min", st_max: "Max", hist_7: "1 Woche", hp_runs: "Wärmepumpe läuft", heatmap: "Farbe = Abweichung vom Soll",
     off: "Aus", eco_summer: "Eco Sommer", eco_winter: "Eco Winter", comfort: "Komfort",
@@ -157,7 +157,7 @@ export const TEXT = {
   },
   en: {
     mode: "Operating mode", air: "Air paths", fan: "Ventilation", heatpump: "Heat pump",
-    refrigerant: "Refrigerant circuit", diagnostic: "Diagnostics", status: "Status and maintenance",
+    refrigerant: "Refrigerant circuit and drives", alerts: "Alerts", drive_speed: "Speed", diagnostic: "Diagnostics", status: "Status and maintenance",
     rooms: "Rooms", tiles: "Tiles", list: "List", schema: "System diagram",
     kpi: "Key figures", history: "History", hist_24: "1 day", prev_period: "Previous period", st_min: "Min", st_max: "Max", hist_7: "1 week", hp_runs: "Heat pump running", heatmap: "Colour = deviation from target",
     off: "Off", eco_summer: "Eco summer", eco_winter: "Eco winter", comfort: "Comfort",
