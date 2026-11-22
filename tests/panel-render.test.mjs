@@ -311,7 +311,7 @@ test("the hot water history switches measurement and range", async () => {
   await render(panel, () => { panel._tab = "warm"; });
   panel._click({ composedPath: () => [{ dataset: { act: "twmetric", v: "power" } }] });
   const power = await render(panel, () => { panel._tab = "warm"; });
-  assert.ok(power.includes("Σ") && power.includes(" W"), "power: unit and energy sum");
+  assert.ok(!power.includes("Σ") && power.includes(" W"), "power: unit, no energy sum column");
   assert.ok(!power.slice(power.indexOf('class="ch"')).includes("Soll PV 60°"), "no target lines on the power curve");
   const month = await render(panel, () => { panel._tab = "warm"; panel._histRange = "30d"; });
   check(month);
@@ -516,7 +516,7 @@ test("the lane chart stacks measurements on one time axis, each lane with its ow
   assert.ok(html.includes("<polygon") && html.includes(">PV</text>") && html.includes(">WP</text>"), "the lane without axis: area plus the names of the two curves");
   assert.ok(html.includes('fill="#3fa660" opacity=".18"') && html.includes("PV-Betrieb 6 h 0 min"), "phase band through all lanes, legend with the time");
   assert.ok(html.includes("<b>3.000 W</b>") || html.includes("<b>3000 W</b>"), "max of the PV curve in the table");
-  assert.ok(html.includes("Σ") && html.includes("kWh"), "energy of the power curve");
+  assert.ok(!html.includes("Σ"), "no energy sum column");
   const m = panel._cm, top = m.pt, bottom = m.H - m.pb;
   assert.equal(m.series.length, 4);
   for (const s of m.series) {

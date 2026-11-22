@@ -79,41 +79,38 @@ export class ChartsMethods {
     const nf = (v) => v.toLocaleString(lang, { maximumFractionDigits: Math.abs(v) < 100 ? 1 : 0 });
     const statRows = allSeries.filter((s) => s.pts.length && !s.prev).map((s) => {
       const v = s.pts.map((p) => p[1]), off = isHid(s), now = this._nowVal(s);
-      let kwh = "";
-      if (o.energy) {
-        let wh = 0;
-        for (let i = 1; i < s.pts.length; i++) wh += ((s.pts[i][1] + s.pts[i - 1][1]) / 2) * ((s.pts[i][0] - s.pts[i - 1][0]) / 3600);
-        kwh = `<span class="v"><b>${nf(wh / 1000)}</b> kWh</span>`;
-      }
-      return `<div class="hst tg ${off ? "off" : ""}" role="button" tabindex="0" aria-pressed="${!off}" data-act="ser" data-v="${esc(hidKey(s))}"><span class="n"><i style="background:${s.color}"></i>${s.label}</span><span class="v"><b>${now === null ? "–" : nf(now) + o.unit}</b></span><span class="v"><b>${nf(Math.min(...v))}${o.unit}</b></span><span class="v"><b>${nf(Math.max(...v))}${o.unit}</b></span><span class="v"><b>${nf(v.reduce((a, b) => a + b, 0) / v.length)}${o.unit}</b></span>${kwh}</div>`;
+      return `<div class="hst tg ${off ? "off" : ""}" role="button" tabindex="0" aria-pressed="${!off}" data-act="ser" data-v="${esc(hidKey(s))}"><span class="n"><i style="background:${s.color}"></i>${s.label}</span><span class="v"><b>${now === null ? "–" : nf(now) + o.unit}</b></span><span class="v"><b>${nf(Math.min(...v))}${o.unit}</b></span><span class="v"><b>${nf(Math.max(...v))}${o.unit}</b></span><span class="v"><b>${nf(v.reduce((a, b) => a + b, 0) / v.length)}${o.unit}</b></span></div>`;
     }).join("");
-    const statHead = statRows ? `<div class="hst hh"><span class="n"></span><span class="v">${this._t("r_now")}</span><span class="v">${this._t("st_min")}</span><span class="v">${this._t("st_max")}</span><span class="v">Ø</span>${o.energy ? '<span class="v">Σ</span>' : ""}</div>` : "";
+    const statHead = statRows ? `<div class="hst hh"><span class="n"></span><span class="v">${this._t("r_now")}</span><span class="v">${this._t("st_min")}</span><span class="v">${this._t("st_max")}</span><span class="v">Ø</span></div>` : "";
     this._cm = { W, H, pl, pr, pt, pb, t0, t1, lo, hi, series, unit: o.unit, range: o.range, x, y, phases: o.phases || [] };
     return `<div class="chw"><svg class="ch" style="max-width:100%;height:auto;touch-action:pan-y" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("history")}">
       ${bands}${byBands}${phaseBands}${grid}${refLines}${lines}${xt}<line class="xl" y1="${pt}" y2="${H - pb}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/><g class="xd"></g>
       <rect class="ov" x="${pl}" y="${pt}" width="${W - pl - pr}" height="${H - pt - pb}" fill="transparent"/></svg><div class="tip" style="display:none"></div></div>
       <div class="legend">${legend}${(o.phases || []).filter((ph) => ph.iv.length && !ph.noLegend).map((ph) => `<span><i style="background:${ph.color};opacity:.5"></i>${ph.legend || ph.label}</span>`).join("")}${showBands ? `<span><i style="background:#3fa660;opacity:.4"></i>${this._t("hp_runs")}</span>` : ""}${o.bypass && o.bypass.length ? `<span><i style="background:${BLUE};opacity:.4"></i>${this._t("bypass_open")}</span>` : ""}</div>
-      <div class="hsts" style="--c:${o.energy ? 5 : 4}">${statHead}${statRows}</div>`;
+      <div class="hsts" style="--c:4">${statHead}${statRows}</div>`;
   }
 
   // Several measurements one below the other (lanes) on one shared time axis, one crosshair and one tooltip.
   // lanes: [{ h, axis, series: [{ label, short, color, pts, kind: "line" | "area", fmt, energy }], refs }]. A lane with an axis has a
   // common scale with grid and numbers; a lane without one gives each curve a scale of its own (told apart by colour and name only).
   _laneChart(lanes, o) {
-    const W = Math.max(300, (this.clientWidth || 680) - 80), pl = 42, pr = 10, pt = 8, pb = 22, gap = 8, lang = this._hass.language;
+    const W = Math.max(300, (this.clientWidth || 680) - 80), pl = 42, pr = 10, pt = 8, pb = 22, gap = o.gap ?? 8, lang = this._hass.language;
     const t1 = Date.now() / 1000, t0 = t1 - RANGE_MS[o.range] / 1000;
     const x = (t) => pl + ((t - t0) / (t1 - t0)) * (W - pl - pr);
     const plot = lanes.reduce((n, l) => n + l.h, 0) + gap * (lanes.length - 1), H = pt + plot + pb;
     const nf = (v) => v.toLocaleString(lang, { maximumFractionDigits: Math.abs(v) < 100 ? 1 : 0 });
     let top = pt, grid = "", body = "", sep = "";
-    const flat = [];
+    const flat = [], rowsAll = [];
+    // Curves hidden by a click on their row leave the lane and its scale (the key keeps same-named curves of two lanes apart).
+    const hidKey = (s) => `${o.key || ""}|${s.hkey ?? s.label}`, hid = this._hid || {}, isHid = (s) => !!hid[hidKey(s)];
     lanes.forEach((lane, li) => {
-      const lt = top, bot = top + lane.h, all = lane.series.filter((s) => s.pts.length); // lt: the top of this lane, kept for the scale functions
+      const lt = top, bot = top + lane.h, all = lane.series.filter((s) => s.pts.length && !isHid(s)); // lt: the top of this lane, kept for the scale functions
       if (li) sep += `<line x1="${pl}" x2="${W - pr}" y1="${(top - gap / 2).toFixed(1)}" y2="${(top - gap / 2).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".8"/>`;
       let ys = null;
       if (lane.axis) {
         const vals = all.flatMap((s) => s.pts.map((p) => p[1])).concat((lane.refs || []).map((r) => r.v));
-        const mn = Math.min(...vals), mx = Math.max(...vals), raw = Math.max(1e-6, mx - mn) / (lane.h > 100 ? 3 : 2), p10 = 10 ** Math.floor(Math.log10(raw)), f = raw / p10;
+        if (!vals.length) vals.push(0, 1);
+        const mn = Math.min(...vals), mx = Math.max(...vals), raw = Math.max(1e-6, mx - mn) / (lane.h >= 90 ? 3 : 2), p10 = 10 ** Math.floor(Math.log10(raw)), f = raw / p10;
         const step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p10;
         let lo = Math.floor(mn / step) * step, hi = Math.ceil(mx / step) * step;
         if (hi - lo < step * 2) hi = lo + step * 2;
@@ -144,6 +141,7 @@ export class ChartsMethods {
         body += `<polyline fill="none" stroke="${s.color}" stroke-width="${s.kind === "area" ? 1.2 : 1.8}" stroke-linejoin="round" points="${pts}"/>`;
         flat.push({ ...s, y });
       });
+      rowsAll.push(...lane.series.filter((s) => s.pts.length));
       top = bot + gap;
     });
     const phaseBands = (o.phases || []).map((ph) => ph.iv.map(([a, b]) => {
@@ -152,24 +150,17 @@ export class ChartsMethods {
     }).join("")).join("");
     const legend = (o.phases || []).filter((ph) => ph.iv.length && !ph.noLegend).map((ph) => `<span><i style="background:${ph.color};opacity:.5"></i>${ph.legend || ph.label}</span>`).join("");
     // min / max / mean per curve; the energy as the integral of a power curve
-    const extra = flat.some((s) => s.energy);
-    const rows = flat.map((s) => {
-      const v = s.pts.map((p) => p[1]);
-      let kwh = "";
-      if (extra) {
-        let wh = 0;
-        if (s.energy) for (let i = 1; i < s.pts.length; i++) wh += ((s.pts[i][1] + s.pts[i - 1][1]) / 2) * ((s.pts[i][0] - s.pts[i - 1][0]) / 3600);
-        kwh = `<span class="v">${s.energy ? `<b>${nf(wh / 1000)}</b> kWh` : ""}</span>`;
-      }
-      return `<div class="hst"><span class="n"><i style="background:${s.color}"></i>${s.label}</span><span class="v"><b>${this._nowVal(s) === null ? "–" : s.fmt(this._nowVal(s))}</b></span><span class="v"><b>${s.fmt(Math.min(...v))}</b></span><span class="v"><b>${s.fmt(Math.max(...v))}</b></span><span class="v"><b>${s.fmt(v.reduce((a, b) => a + b, 0) / v.length)}</b></span>${kwh}</div>`;
+    const rows = rowsAll.map((s) => {
+      const v = s.pts.map((p) => p[1]), off = isHid(s);
+      return `<div class="hst tg ${off ? "off" : ""}" role="button" tabindex="0" aria-pressed="${!off}" data-act="ser" data-v="${esc(hidKey(s))}"><span class="n"><i style="background:${s.color}"></i>${s.label}</span><span class="v"><b>${this._nowVal(s) === null ? "–" : s.fmt(this._nowVal(s))}</b></span><span class="v"><b>${s.fmt(Math.min(...v))}</b></span><span class="v"><b>${s.fmt(Math.max(...v))}</b></span><span class="v"><b>${s.fmt(v.reduce((a, b) => a + b, 0) / v.length)}</b></span></div>`;
     }).join("");
-    const head = rows ? `<div class="hst hh"><span class="n"></span><span class="v">${this._t("r_now")}</span><span class="v">${this._t("st_min")}</span><span class="v">${this._t("st_max")}</span><span class="v">Ø</span>${extra ? '<span class="v">Σ</span>' : ""}</div>` : "";
+    const head = rows ? `<div class="hst hh"><span class="n"></span><span class="v">${this._t("r_now")}</span><span class="v">${this._t("st_min")}</span><span class="v">${this._t("st_max")}</span><span class="v">Ø</span></div>` : "";
     this._cm = { W, H, pl, pr, pt, pb, t0, t1, lo: 0, hi: 0, series: flat, unit: "", range: o.range, x, y: (lanes[0] && lanes[0].y) || (() => pt), phases: o.phases || [] };
     return `<div class="chw"><svg class="ch" style="max-width:100%;height:auto;touch-action:pan-y" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("history")}">
       ${phaseBands}${grid}${sep}${body}${this._timeAxis(o, t0, t1, W, H, x)}<line class="xl" y1="${pt}" y2="${H - pb}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/><g class="xd"></g>
       <rect class="ov" x="${pl}" y="${pt}" width="${W - pl - pr}" height="${plot}" fill="transparent"/></svg><div class="tip" style="display:none"></div></div>
       <div class="legend">${legend}</div>
-      <div class="hsts" style="--c:${extra ? 5 : 4}">${head}${rows}</div>`;
+      <div class="hsts" style="--c:4">${head}${rows}</div>`;
   }
 
   // Hover / touch tooltip for bar charts and sparklines: elements with data-tip="title|value".

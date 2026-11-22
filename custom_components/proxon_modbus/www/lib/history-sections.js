@@ -40,15 +40,15 @@ export class HistorySectionsMethods {
     const nf = (v) => this._fmt(v, Math.abs(v) < 100 ? 1 : 0), comp = this._t("compressor");
     const fmt = { temp: (v) => `${nf(v)}°`, circuit: (v) => `${nf(v)}°`, drives: (v) => `${this._fmt(v, 0)} rpm`,
       power: (v) => (v >= 1000 ? `${this._fmt(v / 1000)} kW` : `${this._fmt(v, 0)} W`) };
-    const h = { temp: 100, circuit: 100, drives: 90, power: 70 };
+    const h = { temp: 110, circuit: 110, drives: 100, power: 80 };
     const lanes = loaded.map(({ m, s }) => {
       const list = (s || []).filter((x) => x.pts.length > 1 && !(m === "circuit" && x.label === comp))
-        .map((x) => ({ ...x, kind: "line", fmt: fmt[m], energy: m === "power" }));
+        .map((x) => ({ ...x, hkey: `${m}|${x.label}`, kind: "line", fmt: fmt[m], energy: m === "power" }));
       return list.length && { h: h[m], axis: true, series: list };
     }).filter(Boolean);
     if (!lanes.length) return `<div class="note">${this._t(range === "30d" || range === "1y" ? "no_stats" : "no_history")}</div>`;
     const hp = this._hp(), phases = (range === "24h" || range === "7d") && hp && hp.iv.length ? [{ iv: hp.iv, color: "#3fa660", label: this._t("hp_runs") }] : [];
-    return this._laneChart(lanes, { range, phases });
+    return this._laneChart(lanes, { range, phases, gap: 20, key: "all" });
   }
 
   // When a cached history load last succeeded (ms), or 0.
