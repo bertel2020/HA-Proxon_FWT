@@ -824,3 +824,12 @@ test("the whole room card opens the details, its own controls keep their action"
   panel._click({ composedPath: () => [{ dataset: {} }, { dataset: { act: "rtoggle", v: "0" } }, { dataset: {} }] });
   assert.ok(panel._ropen.size === 1, "details open");
 });
+
+test("dashboard card room tiles are tinted by state and show PTC once", async () => {
+  const card = new X.ProxonFwtCard();
+  card.setConfig({ sections: ["rooms"] });
+  card.hass = hass;
+  const html = await render(card, () => {});
+  assert.ok(/class="tile[^"]*" style="--hc:#D85A30;--ha:16%"/.test(html), "the room whose PTC runs is coral");
+  assert.ok(!html.includes("mdi:lightning-bolt"), "no second PTC chip next to the heating chip");
+});

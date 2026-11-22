@@ -101,19 +101,22 @@ ha-card { padding: 14px 16px; display: block; border: 1px solid var(--ha-card-bo
 .big { font-size: 26px; font-weight: 500; }
 .big small { font-size: 14px; color: var(--secondary-text-color); font-weight: 400; }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
-.tile { font: inherit; text-align: left; cursor: pointer; border: 2px solid transparent; border-radius: 12px; padding: 10px 12px;
+.tile { font: inherit; text-align: left; cursor: pointer; border: 1px solid color-mix(in srgb, var(--hc, var(--pbd)) 40%, transparent); border-radius: 12px; padding: 11px 13px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .08), inset 0 3px 0 var(--hc, transparent); transition: box-shadow .15s, border-color .15s, transform .15s;
   background: color-mix(in srgb, var(--hc, transparent) var(--ha, 0%), var(--secondary-background-color)); color: var(--primary-text-color); }
-.tile.s { border-color: var(--primary-color); }
+.tile:hover { border-color: var(--hc, var(--primary-color)); box-shadow: 0 4px 12px rgba(0, 0, 0, .14), inset 0 3px 0 var(--hc, transparent); transform: translateY(-1px); }
+.tile.s { border-color: var(--primary-color); box-shadow: 0 0 0 2px var(--primary-color), inset 0 3px 0 var(--hc, transparent); }
 .tile .n { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; }
 .tile .n ha-icon { --mdc-icon-size: 18px; color: var(--hc, var(--secondary-text-color)); }
 .tile .t { font-size: 24px; font-weight: 500; margin: 6px 0 2px; }
 .tile .lb { margin-bottom: 4px; }
 .tile .chips { margin: 0; gap: 4px; }
 .rw { display: grid; grid-template-columns: 1fr auto auto auto; gap: 12px; align-items: center; padding: 9px 8px;
-  border-top: 1px solid var(--divider-color); cursor: pointer; border-radius: 8px; }
+  border-top: 1px solid var(--divider-color); cursor: pointer; border-radius: 8px; box-shadow: inset 3px 0 0 var(--hc, transparent); padding-left: 12px; }
+.rw:hover { background: color-mix(in srgb, var(--hc, transparent) 8%, var(--secondary-background-color)); }
 .rw > span:first-child { display: flex; align-items: center; gap: 8px; }
 .rw ha-icon { --mdc-icon-size: 18px; color: var(--hc, var(--secondary-text-color)); }
-.rw.s { background: var(--secondary-background-color); }
+.rw.s { background: color-mix(in srgb, var(--hc, transparent) 10%, var(--secondary-background-color)); box-shadow: inset 3px 0 0 var(--hc, transparent), 0 0 0 1px var(--primary-color); }
 .vbtn { font: inherit; font-size: 14px; padding: 5px 12px; border: 0; border-radius: 8px; cursor: pointer;
   background: var(--secondary-background-color); color: var(--secondary-text-color); display: inline-flex; gap: 4px; align-items: center; }
 .vbtn ha-icon { --mdc-icon-size: 16px; }

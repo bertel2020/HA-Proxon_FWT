@@ -437,6 +437,7 @@ export class SectionsMethods {
     const co2c = (v) => (v > 1000 ? "r" : v > 800 ? "w" : "g");
     const tint = (i) => {
       const a = Math.min(Math.abs(i.dev) / 1.5, 1) * 32;
+      if (i.heats) return `--hc:${CORAL};--ha:16%`; // the PTC element runs: coral, whatever the deviation
       return Math.abs(i.dev) <= 0.3 ? "--hc:#3fa660;--ha:6%" : `--hc:${i.dev < 0 ? BLUE : CORAL};--ha:${Math.round(a)}%`;
     };
     let list;
@@ -445,7 +446,6 @@ export class SectionsMethods {
         <div class="n">${this._icon(this._roomIcon(i.r.name))}${i.r.name}${Math.abs(i.dev) > 0.3 ? this._icon(i.dev < 0 ? "mdi:arrow-down" : "mdi:arrow-up", 'class="dv"') : ""}</div><div class="t">${i.cur == null ? "–" : this._fmt(i.cur) + "°"}</div>
         <div class="lb">${this._t("target")} ${i.tgt == null ? "–" : this._fmt(i.tgt, 0) + "°"}</div>
         <div class="chips"><span class="chip ${i.heats ? "w" : "g"}">${this._icon(i.heats ? "mdi:fire" : "mdi:check")}${i.heats ? this._t("heats") : this._t("fine")}</span>
-        ${i.ptcA ? `<span class="chip w">${this._icon("mdi:lightning-bolt")}PTC</span>` : ""}
         ${i.co2 != null ? `<span class="chip ${co2c(i.co2)}">${this._icon("mdi:molecule-co2")}${Math.round(i.co2)}</span>` : ""}</div></button>`).join("")}</div>`;
     } else {
       list = info.map((i, n) => `<div class="rw ${n === this._room ? "s" : ""}" style="${tint(i)}" role="button" tabindex="0" data-act="room" data-v="${n}">
