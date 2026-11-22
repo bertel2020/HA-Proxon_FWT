@@ -435,7 +435,7 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .twm b { font-size: 22px; font-weight: 500; }
 .twflow { stroke-dasharray: 7 6; }
 .twhsvg.heat .twflow { animation: twdash 1s linear infinite; }
-.twhsvg .fan { transform-box: view-box; transform-origin: 36px 32px; } /* the hub, not the middle of the blades */
+.twhsvg .fan { transform-box: view-box; transform-origin: 36px 29px; } /* the hub, not the middle of the blades */
 .twhsvg.heat .fan { animation: twspin 1.4s linear infinite; }
 @keyframes twdash { to { stroke-dashoffset: -13; } }
 @media (prefers-reduced-motion: reduce) { .twhsvg.heat .twflow, .twhsvg.heat .fan { animation: none; } }
