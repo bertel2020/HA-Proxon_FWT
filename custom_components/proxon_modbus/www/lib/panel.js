@@ -145,12 +145,6 @@ export class ProxonFwtPanel extends ProxonFwtBase {
     }).join("");
   }
 
-  // Even rows: as many columns as fit, but never a short last row if fewer columns spread the cards better.
-  _roomCols(n) {
-    const w = (this.clientWidth || 900) - 32, max = Math.max(1, Math.min(6, Math.floor((w + 12) / 262)));
-    return Math.ceil(n / Math.ceil(n / max)) || 1;
-  }
-
   _sec_rooms(d) {
     if (!d.rooms.length) return `<ha-card>${this._header("mdi:home-outline", this._t("rooms"))}<div class="note">${this._t("no_rooms")}</div></ha-card>`;
     this._ropen = this._ropen || new Set();
@@ -177,7 +171,7 @@ export class ProxonFwtPanel extends ProxonFwtBase {
     const chips = [["all", ""], ["heat", "mdi:fire"], ["ena", "mdi:fire-circle"], ["dev", "mdi:swap-vertical"], ["co2", "mdi:molecule-co2"]]
       .map(([k, ic]) => `<button class="fchip ${k === filter ? "a" : ""}" data-act="rfilter" data-v="${k}" aria-pressed="${k === filter}">${ic ? this._icon(ic) : ""}${this._t(`rf_${k}`)}</button>`).join("");
     const body = !rows.length ? `<div class="note" style="text-align:center;padding:18px">${this._t("rs_none")}</div>`
-      : view === "cards" ? `<div class="rgrid" style="--rc:${this._roomCols(rows.length)}">${rows.map(([n, i]) => this._roomCard(n, i)).join("")}</div>`
+      : view === "cards" ? `<div class="rgrid">${rows.map(([n, i]) => this._roomCard(n, i)).join("")}</div>`
       : view === "cmp" ? this._roomCmp(rows) : this._roomList(rows);
     return `<ha-card><div class="rtop"><div class="h" style="margin:0">${this._icon("mdi:home-outline")}${this._t("rooms")}</div><span class="grow"></span><div class="rseg" role="group">${seg}</div></div>
       ${summary}<div class="rfil">${chips}</div>

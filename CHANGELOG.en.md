@@ -5,6 +5,7 @@
 ## Unreleased
 
 **New**
+- **Panel – room cards always the same size:** The cards keep their size whatever a filter leaves (a single card no longer stretches over the full width), and all rows are equally tall. The tiles of the dashboard card too. In narrow cards the "details" icon is dropped so the room name is not cut off.
 - **Dashboard card – room tiles:** The tiles stand out as in the panel (border and shadow, coloured bar on top, hover effect, the selected tile with a frame). While the PTC element runs, the tile is coral; the duplicate PTC chip is gone. In the list view each row carries a coloured stripe.
 - **Panel – room cards:** The whole card now opens the details popup (chips, the ring value, plus/minus and the knob keep their own action). The cards stand out: border and shadow, a coloured bar on top and a light tint by state (heating, on target, cooler, warmer), and a hover effect.
 - **Dashboard card with tabs:** New option `layout: tabs` (in the editor "Layout"). One card with a head (state, operating mode, fan stage) and the tabs Overview, Rooms, Maintenance and History; the tabs follow from the chosen sections, and in narrow cards the bar shows icons only. New test page `tests/browser/card.html` for the card (`?cfg={...}&w=380`).

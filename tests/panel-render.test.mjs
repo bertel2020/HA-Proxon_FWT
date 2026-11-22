@@ -833,3 +833,11 @@ test("dashboard card room tiles are tinted by state and show PTC once", async ()
   assert.ok(/class="tile[^"]*" style="--hc:#D85A30;--ha:16%"/.test(html), "the room whose PTC runs is coral");
   assert.ok(!html.includes("mdi:lightning-bolt"), "no second PTC chip next to the heating chip");
 });
+
+test("room cards keep one size: no column count per filter result, equal row heights", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = hass;
+  const html = await render(panel, () => { panel._tab = "rooms"; panel._rview = "cards"; panel._rfilter = "heat"; });
+  assert.ok(html.includes('<div class="rgrid">'), "the grid has no per-result column style");
+  assert.ok(html.includes("grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); grid-auto-rows: 1fr"), "fixed tracks, equal rows");
+});

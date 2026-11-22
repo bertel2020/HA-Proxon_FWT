@@ -100,7 +100,7 @@ ha-card { padding: 14px 16px; display: block; border: 1px solid var(--ha-card-bo
 .hp { display: flex; align-items: center; gap: 16px; }
 .big { font-size: 26px; font-weight: 500; }
 .big small { font-size: 14px; color: var(--secondary-text-color); font-weight: 400; }
-.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); grid-auto-rows: 1fr; gap: 8px; }
 .tile { font: inherit; text-align: left; cursor: pointer; border: 1px solid color-mix(in srgb, var(--hc, var(--pbd)) 40%, transparent); border-radius: 12px; padding: 11px 13px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .08), inset 0 3px 0 var(--hc, transparent); transition: box-shadow .15s, border-color .15s, transform .15s;
   background: color-mix(in srgb, var(--hc, transparent) var(--ha, 0%), var(--secondary-background-color)); color: var(--primary-text-color); }
@@ -260,7 +260,9 @@ svg .sh { font-size: 14px; font-weight: 500; }
   background: color-mix(in srgb, var(--c) 16%, transparent); color: var(--c); --mdc-icon-size: 22px; }
 .rs small { display: block; color: var(--secondary-text-color); font-size: 13px; }
 .rs b { font-size: 19px; font-weight: 500; } .rs b span { font-size: 13px; font-weight: 400; color: var(--secondary-text-color); }
-.rgrid { display: grid; grid-template-columns: repeat(var(--rc, 3), minmax(0, 1fr)); gap: 12px; }
+/* Fixed tracks: a card keeps its size whatever the filter leaves (one card does not stretch), and every row is as tall as the tallest card. */
+.rgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); grid-auto-rows: 1fr; gap: 12px; }
+@container (max-width: 290px) { .rc .chev { display: none; } }
 .rc { border-radius: 18px; padding: 14px; background: var(--secondary-background-color); border: 1px solid var(--pbd); min-width: 0; container-type: inline-size; }
 @container (min-width: 330px) { .rc .rb { flex-direction: row; justify-content: space-around; } }
 .rc:hover { border-color: color-mix(in srgb, var(--primary-color) 40%, transparent); }
