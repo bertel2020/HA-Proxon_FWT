@@ -2,6 +2,22 @@
 
 *[🇩🇪 Deutsche Version](CHANGELOG.md)*
 
+## Unreleased
+
+**New**
+- **Panel – history:** New views **All** (air, heat recovery, refrigerant circuit, drives and power as lanes on one time axis, with running bands and bypass phases), **Refrigerant circuit** (the six temperatures, the compressor temperature starts hidden) and **Drives** (compressor, supply and extract fan in rpm). "All" is the default and replaces the "Compressor" chip.
+- **Panel – table below the charts:** Now uniform with **Now**, min, max and mean (the now value comes from the live sensor). A click on a row hides the curve and the scale adjusts. The table can be folded; the curve names then stay as switches.
+- **Panel – key figures:** New **Compressor** tile (speed with a 24 hour curve, opens the drives in the history). The grid is 3 × 2, and 2 × 3 on mobile.
+
+**Changed**
+- **Panel – hot water:** The switching thresholds now sit in the Operation card, the targets below the tank. The tank is taller, its fill level follows the water temperature, and the three targets are drawn as marks at its edge.
+- **Panel – charts:** All line charts have the same height (300 px), the bar charts are somewhat taller than before. The Σ (kWh) column below the charts is gone; the energy is in the Energy card.
+- **Panel – status and maintenance:** The device filter now follows the system error directly.
+
+**Fixed**
+- Labels of reference lines (for example "Target 53°" and "PV target 60°") no longer overlap.
+- A flat curve gets a readable axis instead of the same value three times.
+
 ## 2.4.3 – 2026-11-20
 
 **Fixed**

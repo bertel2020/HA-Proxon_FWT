@@ -2,6 +2,22 @@
 
 *[🇬🇧 English version](CHANGELOG.en.md)*
 
+## Unveröffentlicht
+
+**Neu**
+- **Panel – Verlauf:** Neue Ansichten **Alle** (Luft, Rückwärmzahl, Kältekreis, Antriebe und Leistung als Spuren auf einer gemeinsamen Zeitachse, mit Laufbändern und Bypass-Phasen), **Kältekreis** (die sechs Temperaturen, die Kompressor-Temperatur startet ausgeblendet) und **Antriebe** (Kompressor, Zu- und Abluft in rpm). „Alle“ ist voreingestellt und ersetzt den Chip „Kompressor“.
+- **Panel – Tabelle unter den Charts:** Einheitlich mit **Jetzt**, Min, Max und Ø (der Jetzt-Wert kommt vom aktuellen Sensor). Ein Klick auf eine Zeile blendet die Kurve aus, die Skala passt sich an. Die Tabelle lässt sich einklappen; dann bleiben die Kurvennamen als Schalter.
+- **Panel – Kennzahlen:** Neue Kachel **Kompressor** (Drehzahl mit 24‑Stunden-Kurve, öffnet im Verlauf die Antriebe). Das Raster ist 3 × 2 und mobil 2 × 3.
+
+**Geändert**
+- **Panel – Warmwasser:** Die Schaltschwellen stehen jetzt in der Karte Betrieb, die Sollwerte unter dem Speicher. Der Speicher ist höher, der Füllstand folgt der Wassertemperatur, und die drei Sollwerte sind als Marken an der Kante eingezeichnet.
+- **Panel – Charts:** Alle Linien-Charts sind gleich hoch (300 px), die Balken-Charts etwas höher als bisher. Die Spalte Σ (kWh) unter den Charts entfällt, die Energie steht in der Energie-Karte.
+- **Panel – Status und Wartung:** Der Gerätefilter steht direkt nach dem Systemfehler.
+
+**Korrigiert**
+- Beschriftungen von Referenzlinien (zum Beispiel „Soll 53°“ und „Soll PV 60°“) überlagern sich nicht mehr.
+- Eine flache Kurve bekommt eine lesbare Achse statt dreimal desselben Wertes.
+
 ## 2.4.3 – 2026-11-20
 
 **Korrigiert**
