@@ -426,7 +426,7 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .banner .bgo { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 400; opacity: .8; white-space: nowrap; }
 .banner .bgo ha-icon { --mdc-icon-size: 16px; }
 .twhero { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
-.twhsvg { width: min(100%, 400px); height: auto; flex: none; }
+.twhsvg { width: min(100%, 460px); height: auto; flex: none; }
 .twside { flex: 1; min-width: 220px; max-width: 520px; }
 .twmg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .twm { background: var(--secondary-background-color); border-radius: 10px; padding: 12px 14px; min-width: 0; }
@@ -439,10 +439,10 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 @keyframes twdash { to { stroke-dashoffset: -13; } }
 @media (prefers-reduced-motion: reduce) { .twhsvg.heat .twflow, .twhsvg.heat .fan { animation: none; } }
 @keyframes twspin { to { transform: rotate(360deg); } }
-.twst { display: flex; gap: 10px; padding: 10px 12px; border-radius: 12px; margin-bottom: 14px; background: color-mix(in srgb, var(--c) 12%, transparent); }
-.twst ha-icon { --mdc-icon-size: 22px; color: var(--c); flex: none; margin-top: 1px; }
-.twst b { display: block; font-size: 15px; font-weight: 500; }
-.twst span, .twst small { display: block; font-size: 13px; color: var(--secondary-text-color); margin-top: 1px; } .twst small { font-size: 12px; }
+.twst { display: flex; gap: 12px; align-items: flex-start; min-width: 0; }
+.twst > ha-icon { --mdc-icon-size: 28px; color: var(--c); flex: none; width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 22%, transparent); }
+.twst b { display: block; font-size: 18px; font-weight: 500; }
+.twst span, .twst small { display: block; font-size: 14px; color: var(--secondary-text-color); margin-top: 1px; } .twst small { font-size: 12px; }
 .twsc2 { position: relative; height: 112px; margin: 2px 10px 0; }
 .twsc2 .twbar { position: absolute; left: 0; right: 0; top: 44px; height: 12px; display: flex; border-radius: 6px; overflow: hidden; }
 .twsc2 .twbar i { display: block; height: 100%; }
@@ -468,10 +468,26 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .twc { container-type: inline-size; }
 
 .twgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
+/* status bar over the full width: the decision on the left, the 24 h program strip below it */
+.twsb { border-radius: 16px; padding: 16px 18px; margin-bottom: 12px; background: color-mix(in srgb, var(--c) 13%, var(--card-background-color)); display: grid; gap: 14px; }
+.twday { min-width: 0; }
+.twdb { position: relative; height: 22px; border-radius: 11px; overflow: hidden; background: color-mix(in srgb, var(--primary-text-color) 8%, transparent); }
+.twdb i { position: absolute; top: 0; bottom: 0; opacity: .85; }
+.twdb i.nowm { left: auto; right: 0; width: 3px; background: var(--primary-text-color); opacity: 1; }
+.twdt { position: relative; height: 16px; margin-top: 4px; font-size: 11px; color: var(--secondary-text-color); font-variant-numeric: tabular-nums; }
+.twdt span { position: absolute; top: 0; } .twdt span.r { right: 0; font-weight: 500; color: var(--primary-text-color); }
+.twday .twlg { margin: 4px 0 0; }
+/* the "Messwerte" toggle looks like the other pill buttons */
+.twhyb { font: inherit; font-size: 14px; padding: 7px 14px 7px 10px; border: 0; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  background: var(--secondary-background-color); color: var(--primary-text-color); }
+.twhyb:hover { background: color-mix(in srgb, var(--primary-text-color) 12%, var(--secondary-background-color)); }
+.twhyb ha-icon { --mdc-icon-size: 18px; color: var(--secondary-text-color); }
+.twhyb:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
 @container (min-width: 1000px) {
   .twgrid { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
-  .tw-hero { grid-column: 1; grid-row: 1; } .tw-hist { grid-column: 1; grid-row: 2; }
-  .tw-op { grid-column: 2; grid-row: 1 / span 2; } /* top aligned, not stretched: no empty space inside a card */
+  .tw-hero { grid-column: 1; grid-row: 1; } .tw-op { grid-column: 2; grid-row: 1; } /* top aligned, not stretched: no empty space inside a card */
+  .tw-hist { grid-column: 1 / -1; grid-row: 2; } /* the history uses the full width */
+  .twsb { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); align-items: center; gap: 24px; }
 }
 `;
 

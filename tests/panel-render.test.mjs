@@ -382,7 +382,7 @@ test("one Operation card: switch, PV status, enables and the last decision; no s
   panel.hass = twHass;
   const html = await render(panel, () => { panel._tab = "warm"; });
   check(html);
-  const op = html.slice(html.indexOf('class="tw-op"'));
+  const op = html.slice(html.indexOf('class="twc"')); // the decision sits in the status bar above the grid, the rest in the control card
   assert.ok(op.includes("Probelauf: Entscheidungen werden nur angezeigt") && op.includes('data-act="twctl"') && op.includes("Automatik") === false, "dry-run switch");
   assert.ok(op.includes("Normal: an · PV: aus"), "both enables, quietly");
   assert.ok(op.includes("Heizt mit PV-Überschuss") && op.includes("geprüft vor"), "what was decided, and when");
@@ -454,19 +454,19 @@ test("a reference line at the top edge gets its label below the line, so it is n
   assert.ok(y("Soll PV 60°") > 0, "inside the picture");
 });
 
-test("the wide hot water layout does not stretch cards: hero and history left, control right, all top aligned", async () => {
+test("the wide hot water layout does not stretch cards: hero left, control right, history over the full width, all top aligned", async () => {
   const css = (await import("node:fs")).readFileSync(new URL("lib/styles.js", WWW), "utf8");
   const wide = css.slice(css.indexOf("@container (min-width: 1000px) {\n  .twgrid"));
   assert.ok(!/align-items: stretch/.test(wide.slice(0, wide.indexOf("`;"))), "no stretching in the wide layout");
-  assert.match(css, /\.tw-op \{ grid-column: 2; grid-row: 1 \/ span 2; \}/);
-  assert.match(css, /\.tw-hist \{ grid-column: 1; grid-row: 2; \}/);
+  assert.match(css, /\.tw-op \{ grid-column: 2; grid-row: 1; \}/);
+  assert.match(css, /\.tw-hist \{ grid-column: 1 \/ -1; grid-row: 2; \}/);
   assert.match(css, /\.twgrid \{ display: grid;[^}]*align-items: start;/);
 });
 test("the scale shows 65 degrees although the targets stop at 60, so the PV switching band above 60 is visible", async () => {
   const panel = new X.ProxonFwtPanel();
   panel.hass = twHass;
   const html = await render(panel, () => { panel._tab = "warm"; });
-  const scale = html.slice(html.indexOf('class="twsc2"'), html.indexOf('class="twlg"'));
+  const scale = html.slice(html.indexOf('class="twsc2"'), html.indexOf('class="twlg"', html.indexOf('class="twsc2"')));
   assert.ok(scale.includes(">65</span>") && scale.includes(">60</span>") && !scale.includes(">70</span>"), "marks up to 65");
   assert.ok(html.includes("Bis das Wasser 61° erreicht"), "the stop point 61 lies on the scale");
 });
@@ -868,7 +868,7 @@ test("the control card says in plain words what was decided, for every reason", 
     const html = await render(panel, () => { panel._tab = "warm"; });
     check(html);
     assert.ok(html.includes(`<b>${text}</b>`), reason);
-    assert.ok(!/\{\d\}/.test(html.slice(html.indexOf('class="twst"'), html.indexOf('class="twsc2"'))), `${reason}: no placeholder left`);
+    assert.ok(!/\{\d\}/.test(html.slice(html.indexOf('class="twst"'), html.indexOf('class="twgrid"'))), `${reason}: no placeholder left`);
   }
   const night = new X.ProxonFwtPanel();
   night.hass = { ...twHass, states: { ...twStates, "sensor.tw_reason": { ...twStates["sensor.tw_reason"], state: "night" } } };
