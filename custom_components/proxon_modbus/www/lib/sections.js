@@ -94,26 +94,26 @@ export class SectionsMethods {
     const missing = (v) => v === null || v === undefined;
     // A missing value shows a dash, so the four tiles are always the same and it is visible which one has no data.
     // A missing value says why: no source at all (`src` false: nothing chosen or found) or a source without a value.
-    const tile = (icon, color, label, value, unit = "", metric = "", extra = "", src = true) => missing(value)
+    const tile = (icon, color, label, value, unit = "", metric = "", extra = "", src = true, ent = "") => missing(value)
       ? tile0(icon, color, label, "–", "", "", `<div class="lb" title="${this._t(src ? "kpi_nodata" : "kpi_nosrc")}">${this._t(src ? "kpi_nodata" : "kpi_nosrc")}</div>`)
-      : tile0(icon, color, label, value, unit, metric, extra);
-    const tile0 = (icon, color, label, value, unit, metric, extra) =>
-      `<div class="k ${panel && metric ? "go" : ""}" style="--kc:${color}" ${panel && metric ? `data-act="kpi" data-v="${metric}" role="button" tabindex="0"` : ""}><div class="ic">${this._icon(icon)}</div><div><div class="lb">${label}</div><div class="v">${value}${unit ? ` <small>${unit}</small>` : ""}</div>${extra}</div></div>`;
+      : tile0(icon, color, label, value, unit, metric, extra, ent);
+    const tile0 = (icon, color, label, value, unit, metric, extra, ent = "") =>
+      `<div class="k ${panel && metric ? "go" : !panel && ent ? "go lk" : ""}" style="--kc:${color}" ${panel && metric ? `data-act="kpi" data-v="${metric}" role="button" tabindex="0"` : !panel && ent ? `data-act="more" data-v="${ent}" role="button" tabindex="0"` : ""}><div class="ic">${this._icon(icon)}</div><div><div class="lb">${label}</div><div class="v">${value}${unit ? ` <small>${unit}</small>` : ""}</div>${extra}</div></div>`;
     const eff = this._efficiency();
     const bypass = this._on(c.bypass_active);
     const power = this._pnum(), rpm = this._ok(c.compressor_speed) ? this._num(c.compressor_speed) : null;
     // Pairs read together (two columns on phones): supply / outside air, heat recovery / unit power, PTC (or compressor) / hot water.
     const ptcId = this._ptcP(), ptcW = ptcId ? this._watts(ptcId) : null, [ptcOn, ptcN] = this._ptcRooms(d);
     const ptcTile = tile("mdi:radiator", CORAL, this._t("ptc_short"), ptcW === null ? null : ptcW >= 1000 ? this._fmt(ptcW / 1000, 2) : this._fmt(ptcW, 0), ptcW !== null && ptcW >= 1000 ? "kW" : "W", "ptc",
-      `${this._kpiSpark(d, "ptc", this._t("ptc_power"), CORAL, { lo: 0, step: true })}${ptcN ? `<div class="lb">${this._t("ptc_rooms", ptcOn, ptcN)}</div>` : ""}`, true);
-    const html = tile("mdi:thermometer", CORAL, this._t("supply_t"), this._temp(c.temp_supply_air), "", "temp", this._kpiSpark(d, "temp", this._t("supply_t"), CORAL), !!c.temp_supply_air) +
-      tile("mdi:weather-partly-cloudy", BLUE, this._t("outside"), this._temp(this._outdoorId()), "", "temp", this._kpiSpark(d, "temp", this._t("outside"), BLUE), !!this._outdoorId()) +
-      tile("mdi:percent-circle-outline", GREEN, this._t("efficiency"), bypass ? this._t("bypass_short") : eff === null ? null : `${eff} % <span title="${this._t("eff_info")}">${this._icon("mdi:information-outline", 'class="info"')}</span>`, "", "eff", this._effSpark(d)) +
+      `${this._kpiSpark(d, "ptc", this._t("ptc_power"), CORAL, { lo: 0, step: true })}${ptcN ? `<div class="lb">${this._t("ptc_rooms", ptcOn, ptcN)}</div>` : ""}`, true, ptcId);
+    const html = tile("mdi:thermometer", CORAL, this._t("supply_t"), this._temp(c.temp_supply_air), "", "temp", this._kpiSpark(d, "temp", this._t("supply_t"), CORAL), !!c.temp_supply_air, c.temp_supply_air) +
+      tile("mdi:weather-partly-cloudy", BLUE, this._t("outside"), this._temp(this._outdoorId()), "", "temp", this._kpiSpark(d, "temp", this._t("outside"), BLUE), !!this._outdoorId(), this._outdoorId()) +
+      tile("mdi:percent-circle-outline", GREEN, this._t("efficiency"), bypass ? this._t("bypass_short") : eff === null ? null : `${eff} % <span title="${this._t("eff_info")}">${this._icon("mdi:information-outline", 'class="info"')}</span>`, "", "eff", this._effSpark(d), true, c.heat_recovery) +
       tile("mdi:flash", AMBER, this._t("power"), power === null ? null : this._fmt(power, power % 1 ? 1 : 0),
-        "W", "power", this._kpiSpark(d, "power", this._t("power"), AMBER, { lo: 0, step: true }), !!this._powerId()) +
+        "W", "power", this._kpiSpark(d, "power", this._t("power"), AMBER, { lo: 0, step: true }), !!this._powerId(), this._powerId()) +
       (ptcId ? ptcTile : (
       tile("mdi:engine-outline", "#7e57c2", this._t("compressor"), rpm === null ? null : this._fmt(rpm, 0), "rpm", "drives",
-        this._kpiSpark(d, "drives", this._t("compressor"), "#7e57c2", { lo: 0 }), !!c.compressor_speed)
+        this._kpiSpark(d, "drives", this._t("compressor"), "#7e57c2", { lo: 0 }), !!c.compressor_speed, c.compressor_speed)
       )) +
       (panel && d.twwp.length ? this._twKpi(d) : "");
     if (![this._temp(c.temp_supply_air), power, rpm, this._temp(this._outdoorId()), bypass ? 1 : eff].some((v) => !missing(v))) return "";
@@ -162,9 +162,9 @@ export class SectionsMethods {
       `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="2" ${anim ? 'class="fl"' : ""} ${arrow ? 'marker-end="url(#pa)"' : ""}/>`;
     const box = (x, y, col, label, id) => {
       const v = this._temp(id);
-      return `<rect x="${x}" y="${y}" width="130" height="46" rx="8" fill="${col}" fill-opacity=".14" stroke="${col}" stroke-opacity=".6" stroke-width=".7"/>
+      return this._lk(id, `<rect x="${x}" y="${y}" width="130" height="46" rx="8" fill="${col}" fill-opacity=".14" stroke="${col}" stroke-opacity=".6" stroke-width=".7"/>
         <text class="st" x="${x + 65}" y="${y + 15}" text-anchor="middle">${label}</text>
-        <text class="sh" x="${x + 65}" y="${y + 34}" text-anchor="middle">${v === null ? "–" : `${v}C`}</text>`;
+        <text class="sh" x="${x + 65}" y="${y + 34}" text-anchor="middle">${v === null ? "–" : `${v}C`}</text>`, "g");
     };
     const svg = `<svg width="100%" viewBox="0 0 680 220" role="img" aria-label="${this._t("exchanger")}">
       <defs><marker id="pa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
@@ -362,18 +362,18 @@ export class SectionsMethods {
     if (rpm === null && power === null && !c.heat_pump_heating) return "";
     const frac = rpm === null ? 0 : Math.min(1, rpm / (this._config.max_compressor_rpm || 6000));
     const circ = 2 * Math.PI * 44;
-    const ring = `<svg width="104" height="104" viewBox="0 0 110 110" role="img" aria-label="${this._t("compressor")}">
+    const ring = this._lk(c.compressor_speed, `<svg width="104" height="104" viewBox="0 0 110 110" role="img" aria-label="${this._t("compressor")}">
       <circle cx="55" cy="55" r="44" fill="none" stroke="var(--divider-color)" stroke-width="9"/>
       <circle cx="55" cy="55" r="44" fill="none" stroke="var(--primary-color)" stroke-width="9" stroke-linecap="round"
         stroke-dasharray="${(circ * frac).toFixed(1)} ${circ.toFixed(1)}" transform="rotate(-90 55 55)"/>
       <text x="55" y="50" text-anchor="middle" dominant-baseline="central" style="font-size:19px;font-weight:500">${rpm === null ? "–" : rpm.toLocaleString(this._hass.language)}</text>
-      <text class="st" x="55" y="70" text-anchor="middle" style="font-size:11px">rpm</text></svg>`;
-    const chip = (id, icon, label, cls) => (id && this._ok(id)) ? `<span class="chip ${this._on(id) ? cls : ""}">${this._icon(icon)}${label}</span>` : "";
+      <text class="st" x="55" y="70" text-anchor="middle" style="font-size:11px">rpm</text></svg>`);
+    const chip = (id, icon, label, cls) => (id && this._ok(id)) ? `<span class="chip lk ${this._on(id) ? cls : ""}" role="button" tabindex="0" data-act="more" data-v="${id}">${this._icon(icon)}${label}</span>` : "";
     const cool = c.cooling_enable
       ? `<div class="row">${this._icon("mdi:snowflake")}${this._t("cooling_enable")}<span class="sp"><ha-switch data-act="coolsw" ${this._on(c.cooling_enable) ? "checked" : ""} ${this._ok(c.cooling_enable) ? "" : "disabled"}></ha-switch></span></div>` : "";
     return `<ha-card>${this._header("mdi:heat-pump", this._t("heatpump"))}
       <div class="hp">${ring}<div style="flex:1"><div class="lb">${this._t("compressor")}</div>
-      ${power === null ? "" : `<div style="margin-top:6px"><div class="lb">${this._t("power_long")}</div><div class="big">${this._fmt(power, power % 1 ? 1 : 0)} <small>W</small></div></div>`}</div></div>
+      ${power === null ? "" : `<div style="margin-top:6px"><div class="lb">${this._t("power_long")}</div>${this._lk(this._powerId(), `<div class="big">${this._fmt(power, power % 1 ? 1 : 0)} <small>W</small></div>`, "div")}</div>`}</div></div>
       <div class="chips">${chip(c.heat_pump_heating, "mdi:fire", this._t("hp_heating"), "g")}${chip(c.heat_pump_cooling, "mdi:snowflake", this._t("hp_cooling"), "a")}${chip(c.heat_pump_continuous, "mdi:autorenew", this._t("hp_continuous"), "a")}${chip(c.cooling_available, "mdi:snowflake-check", this._t("cooling_available"), "g")}</div>
       ${cool}</ha-card>`;
   }
@@ -381,8 +381,8 @@ export class SectionsMethods {
   _sec_refrigerant(d) {
     const c = d.central;
     const tile = (label, id, sub = "") => this._ok(id)
-      ? `<div class="k"><div class="lb">${label}${sub}</div><div class="v">${this._temp(id)}</div></div>` : "";
-    const row = (label, id) => this._ok(id) ? `<div class="row"><span class="lb">${label}</span><b>${this._temp(id)}</b></div>` : "";
+      ? `<div class="k lk" role="button" tabindex="0" data-act="more" data-v="${id}"><div class="lb">${label}${sub}</div><div class="v">${this._temp(id)}</div></div>` : "";
+    const row = (label, id) => this._ok(id) ? `<div class="row lk" role="button" tabindex="0" data-act="more" data-v="${id}"><span class="lb">${label}</span><b>${this._temp(id)}</b></div>` : "";
     const tiles = tile(this._t("evaporator"), c.temp_evaporator) + tile(this._t("condenser"), c.temp_condenser) +
       tile(this._t("compressor"), c.temp_compressor) + tile(this._t("outside"), this._outdoorId(), this._opt("outdoor_entity") ? " ·" : "");
     const rows = row(this._t("pre_evaporator"), c.temp_pre_evaporator) + row(this._t("post_preheat"), c.temp_post_preheat) +
@@ -396,8 +396,8 @@ export class SectionsMethods {
   _filterDetail(c) {
     const f = this._filterInfo(c);
     if (!f.known && f.left === null) return "";
-    const age = f.known ? `<div class="row">${this._icon("mdi:calendar-clock")}${this._t("f_age")}<b>${this._t("f_day_of", String(Math.round(f.age)), String(f.iv))}</b></div>` : "";
-    const left = f.left !== null ? `<div class="row">${this._icon("mdi:timer-alert-outline")}${this._t("f_shutdown", this._days(f.left))}</div>` : "";
+    const age = f.known ? `<div class="row${c.filter_age_days ? " lk" : ""}" ${c.filter_age_days ? `role="button" tabindex="0" data-act="more" data-v="${c.filter_age_days}"` : ""}>${this._icon("mdi:calendar-clock")}${this._t("f_age")}<b>${this._t("f_day_of", String(Math.round(f.age)), String(f.iv))}</b></div>` : "";
+    const left = f.left !== null ? `<div class="row${c.filter_shutdown_days ? " lk" : ""}" ${c.filter_shutdown_days ? `role="button" tabindex="0" data-act="more" data-v="${c.filter_shutdown_days}"` : ""}>${this._icon("mdi:timer-alert-outline")}${this._t("f_shutdown", this._days(f.left))}</div>` : "";
     const btn = c.filter_changed && (f.due || f.known) ? `<div class="row"><button class="vbtn" data-act="filterchg">${this._icon("mdi:check")}${this._t("f_btn")}</button></div>` : "";
     return age + left + btn;
   }
@@ -405,28 +405,28 @@ export class SectionsMethods {
   _sec_status(d) {
     const c = d.central;
     const prob = (id, label, okText, badText, icon) => this._ok(id)
-      ? `<div class="row">${this._icon(icon)}${label}<b style="color:${this._on(id) ? "#c98400" : GREEN}">${this._on(id) ? badText : okText}</b></div>` : "";
+      ? `<div class="row lk" role="button" tabindex="0" data-act="more" data-v="${id}">${this._icon(icon)}${label}<b style="color:${this._on(id) ? "#c98400" : GREEN}">${this._on(id) ? badText : okText}</b></div>` : "";
     const change = c.mode_change_possible && this._ok(c.mode_change_possible)
-      ? `<div class="row">${this._icon("mdi:shuffle-variant")}${this._t("mode_change")}<b>${this._on(c.mode_change_possible) ? this._t("possible") : this._t("not_possible")}</b></div>` : "";
+      ? `<div class="row lk" role="button" tabindex="0" data-act="more" data-v="${c.mode_change_possible}">${this._icon("mdi:shuffle-variant")}${this._t("mode_change")}<b>${this._on(c.mode_change_possible) ? this._t("possible") : this._t("not_possible")}</b></div>` : "";
     const html = prob(c.error_system, this._t("error"), this._t("no_error"), this._t("has_error"), "mdi:check-circle-outline") +
       prob(c.filter_device, this._t("filter_device"), this._t("ok"), this._t("change_due"), "mdi:air-filter") + this._filterDetail(c) +
       (this._recirc() ? prob(c.filter_recirculation, this._t("filter_recirc"), this._t("ok"), this._t("change_due"), "mdi:air-filter") : "") + change;
     if (!html) return "";
-    return `<ha-card>${this._header("mdi:shield-check-outline", this._t("status"))}${html.replace('class="row"', 'class="row first"')}</ha-card>`;
+    return `<ha-card>${this._header("mdi:shield-check-outline", this._t("status"))}${html.replace('class="row', 'class="row first')}</ha-card>`;
   }
 
   _roomDetail(sel) {
     const a = sel.s.attributes;
     const unavailable = sel.s.state === "unavailable";
-    return `<div class="det"><div class="dtop"><div class="cur"><div class="lb" style="font-weight:400">${sel.r.name} · ${this._t("actual")}</div>${sel.cur == null ? "–" : this._fmt(sel.cur) + "°"}</div>
+    return `<div class="det"><div class="dtop"><div class="cur lk" role="button" tabindex="0" data-act="more" data-v="${sel.r.climate}"><div class="lb" style="font-weight:400">${sel.r.name} · ${this._t("actual")}</div>${sel.cur == null ? "–" : this._fmt(sel.cur) + "°"}</div>
       <div class="adj">${this._btn('data-act="down"', "round", this._icon("mdi:minus"), unavailable)}
       <div style="text-align:center"><div class="lb">${this._t("target")}</div><div style="font-size:22px;font-weight:500">${sel.tgt == null ? "–" : this._fmt(sel.tgt, 0) + "°"}</div></div>
       ${this._btn('data-act="up"', "round", this._icon("mdi:plus"), unavailable)}</div></div>
       ${a.min_temp != null ? `<div class="note">${this._t("adjustable")} ${this._fmt(a.min_temp, 0)}–${this._fmt(a.max_temp, 0)} °C</div>` : ""}
       <div class="dgrid">
-        ${sel.co2 != null ? `<div class="k"><div class="lb">${this._t("co2")}</div><div class="v small">${Math.round(sel.co2)} ppm</div></div>` : ""}
-        ${sel.rf != null ? `<div class="k"><div class="lb">${this._t("humidity")}</div><div class="v small">${Math.round(sel.rf)} %</div></div>` : ""}
-        ${sel.r.ents.ptc_active ? `<div class="k"><div class="lb">${this._t("ptc")}</div><div class="v small">${sel.ptcA ? this._t("ptc_active") : this._t("ptc_off")}</div></div>` : ""}
+        ${sel.co2 != null ? `<div class="k lk" role="button" tabindex="0" data-act="more" data-v="${sel.r.co2}"><div class="lb">${this._t("co2")}</div><div class="v small">${Math.round(sel.co2)} ppm</div></div>` : ""}
+        ${sel.rf != null ? `<div class="k lk" role="button" tabindex="0" data-act="more" data-v="${sel.r.rf}"><div class="lb">${this._t("humidity")}</div><div class="v small">${Math.round(sel.rf)} %</div></div>` : ""}
+        ${sel.r.ents.ptc_active ? `<div class="k lk" role="button" tabindex="0" data-act="more" data-v="${sel.r.ents.ptc_active}"><div class="lb">${this._t("ptc")}</div><div class="v small">${sel.ptcA ? this._t("ptc_active") : this._t("ptc_off")}</div></div>` : ""}
         ${sel.ptcE ? `<div class="k" style="display:flex;align-items:center;gap:8px"><div><div class="lb">${this._t("ptc_enabled")}</div><div class="v small">${this._on(sel.ptcE) ? this._t("yes") : this._t("no")}</div></div>
           <span class="sp" style="margin-left:auto"><ha-switch data-act="ptc" ${this._on(sel.ptcE) ? "checked" : ""} ${this._ok(sel.ptcE) ? "" : "disabled"}></ha-switch></span></div>` : ""}
       </div></div>`;

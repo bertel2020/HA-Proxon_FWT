@@ -726,3 +726,16 @@ test("values in schema, operation, diagnosis, status, hints and hot water open t
   html = await render(tw, () => { tw._tab = "warm"; });
   for (const id of ["sensor.tw_water", "sensor.tw_outer", "sensor.tw_pv", "sensor.tw_power"]) link(html, id, "hot water");
 });
+
+test("the dashboard card links its values to their entities", async () => {
+  const card = new X.ProxonFwtCard();
+  card.setConfig({ sections: X.ALL_SECTIONS });
+  card.hass = hass;
+  const html = await render(card, () => {});
+  check(html);
+  for (const id of ["sensor.temp_supply_air", "sensor.temp_fresh_air", "sensor.compressor_speed", "sensor.temp_evaporator", "sensor.temp_pre_evaporator",
+    "binary_sensor.error_system", "binary_sensor.heat_pump_heating", "climate.room0", "sensor.room0_co2", "sensor.heat_recovery", "sensor.power_consumption"]) {
+    assert.ok(html.includes(`data-act="more" data-v="${id}"`), `card: ${id}`);
+  }
+  assert.ok(html.includes('class="row first'), "the first status row keeps its style");
+});
