@@ -33,8 +33,11 @@ export class HistoryDataMethods {
     switch (m) {
       case "temp": return keep([[c.temp_supply_air, this._t("supply_t"), CORAL], [c.temp_extract_air, this._t("extract"), AMBER],
         [c.temp_fresh_air, this._t("fresh"), BLUE], [out, this._t("outside"), "#7e57c2"]]);
+      case "circuit": return keep([[c.temp_pre_evaporator, this._t("pre_evaporator")], [c.temp_evaporator, this._t("evaporator")], [c.temp_post_preheat, this._t("post_preheat")],
+        [c.temp_pre_condenser, this._t("pre_condenser")], [c.temp_condenser, this._t("condenser")], [c.temp_compressor, this._t("compressor")]])
+        .map(([id, l], i) => [id, l, pal[i % pal.length]]);
+      case "drives": return keep([[c.compressor_speed, this._t("compressor"), "#3d8be0"], [c.fan_speed_supply, this._t("supply_fan"), CORAL], [c.fan_speed_extract, this._t("extract_fan"), AMBER]]);
       case "power": return keep([[this._powerId(), this._t("power"), AMBER]]);
-      case "comp": return keep([[c.compressor_speed, this._t("compressor"), "#3d8be0"]]);
       case "eff": return c.temp_pre_evaporator && c.temp_extract_air && c.temp_fresh_air
         ? [[c.temp_pre_evaporator, "s", CORAL], [c.temp_extract_air, "e", AMBER], [c.temp_fresh_air, "f", BLUE]] : [];
       case "co2": return d.rooms.filter((r) => r.co2).map((r, i) => [r.co2, r.name, pal[i % pal.length]]);
@@ -120,7 +123,7 @@ export class HistoryDataMethods {
         if (v >= 0 && v <= 110) pts.push([t, v]);
       }
       out = [{ label: this._t("efficiency"), color: GREEN, pts: ProxonFwtBase._down(pts, 360) }];
-    } else out = defs.map(([, label, color], i) => ({ label, color, pts: ProxonFwtBase._down(raw[i], 360) }));
+    } else out = defs.map(([id, label, color], i) => ({ id, label, color, pts: ProxonFwtBase._down(raw[i], 360) }));
     out.bypass = bypass;
     if (prev) { // previous period: shifted onto the current time axis, drawn dashed
       for (const o of out) { o.pts = o.pts.map(([t, v]) => [t + ms / 1000, v]); o.prev = true; o.label = `${o.label} · ${this._t("prev_period")}`; }
@@ -176,6 +179,13 @@ export class HistoryDataMethods {
     });
     list.meter = meter;
     return list;
+  }
+
+  // The value for the "now" column under the charts: the live state of the sensor, else the last point of the curve.
+  _nowVal(s) {
+    const v = s.id ? this._num(s.id) : null;
+    if (v !== null && v !== undefined) return s.id === this._powerId() ? v * this._pscale() : v;
+    return s.pts.length ? s.pts[s.pts.length - 1][1] : null;
   }
 
   _skel(h) {

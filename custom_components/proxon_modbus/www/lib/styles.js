@@ -61,7 +61,8 @@ ha-card { padding: 14px 16px; display: block; border: 1px solid var(--ha-card-bo
 .kgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .kpiw { container-type: inline-size; }
 .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
-@container (max-width: 640px) { .kpi { grid-template-columns: repeat(2, 1fr); } .kpi .k:last-child:nth-child(odd) { grid-column: 1 / -1; } }
+@container (max-width: 900px) { .kpi { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@container (max-width: 640px) { .kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @container (max-width: 520px) { .kpi .ic { width: 30px; height: 30px; } .kpi .k { gap: 8px; } }
 .kpi .k { display: flex; gap: 10px; align-items: flex-start; min-width: 0; } /* top-aligned: label and value sit at the same height in every tile, with or without a sparkline or sub line */
 .kpi .k > div:last-child { min-width: 0; }
@@ -183,6 +184,8 @@ svg .sh { font-size: 14px; font-weight: 500; }
 .hst:not(.hh):hover { background: var(--secondary-background-color); }
 .hst .n { color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hst .v { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; } .hst b { font-weight: 600; color: var(--primary-text-color); }
+.hst.tg { cursor: pointer; user-select: none; }
+.hst.tg.off { opacity: .45; } .hst.tg.off .n { text-decoration: line-through; }
 .hst.hh { padding-top: 0; padding-bottom: 2px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; opacity: .8; }
 .hst i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
 .tip { position: absolute; top: 4px; pointer-events: none; z-index: 2; font-size: 13px; padding: 6px 10px; border-radius: 8px; white-space: nowrap;
@@ -389,12 +392,12 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .banner .bgo { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 400; opacity: .8; white-space: nowrap; }
 .banner .bgo ha-icon { --mdc-icon-size: 16px; }
 .twhero { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
-.twhsvg { width: min(100%, 380px); height: auto; flex: none; }
+.twhsvg { width: min(100%, 440px); height: auto; flex: none; }
 .twside { flex: 1; min-width: 220px; max-width: 520px; }
 .twmg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.twm { background: var(--secondary-background-color); border-radius: 10px; padding: 8px 12px; min-width: 0; }
+.twm { background: var(--secondary-background-color); border-radius: 10px; padding: 12px 14px; min-width: 0; }
 .twm small { display: block; font-size: 13px; color: var(--secondary-text-color); margin-bottom: 2px; }
-.twm b { font-size: 20px; font-weight: 500; }
+.twm b { font-size: 22px; font-weight: 500; }
 .twflow { stroke-dasharray: 7 6; }
 .twhsvg.heat .twflow { animation: twdash 1s linear infinite; }
 .twhsvg .fan { transform-box: view-box; transform-origin: 36px 32px; } /* the hub, not the middle of the blades */
@@ -403,6 +406,8 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 @media (prefers-reduced-motion: reduce) { .twhsvg.heat .twflow, .twhsvg.heat .fan { animation: none; } }
 @keyframes twspin { to { transform: rotate(360deg); } }
 .twhy { margin-top: 6px; }
+.twsc { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--divider-color); }
+.twsch { display: flex; align-items: center; gap: 6px; font-weight: 500; margin-bottom: 4px; } .twsch ha-icon { --mdc-icon-size: 18px; }
 .twhyb { display: inline-flex; align-items: center; gap: 4px; font: inherit; font-size: 13px; color: var(--secondary-text-color); background: none; border: 0; padding: 4px 0; cursor: pointer; text-align: left; }
 .twhyb:hover { color: var(--primary-text-color); } .twhyb ha-icon { --mdc-icon-size: 18px; }
 .twstp .round { width: 30px; height: 30px; min-width: 30px; }
@@ -412,13 +417,13 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .twgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
 @container (min-width: 1000px) {
   .twgrid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
-  .tw-hero { grid-column: 1; grid-row: 1; } .tw-op { grid-column: 2; grid-row: 1; }
-  .tw-scale { grid-column: 1; grid-row: 2; } .tw-set { grid-column: 2; grid-row: 2; }
+  .tw-hero { grid-column: 1; grid-row: 1; } .tw-set { grid-column: 1; grid-row: 2; }
+  .tw-op { grid-column: 2; grid-row: 1 / span 2; }
   .tw-hist { grid-column: 1 / -1; grid-row: 3; }
   /* the two cards of a row are equally high, so no gap is left under the shorter one */
   .twgrid { align-items: stretch; }
-  .tw-hero, .tw-op, .tw-scale, .tw-set { display: flex; }
-  .tw-hero > ha-card, .tw-op > ha-card, .tw-scale > ha-card, .tw-set > ha-card { flex: 1; min-width: 0; }
+  .tw-hero, .tw-op, .tw-set { display: flex; }
+  .tw-hero > ha-card, .tw-op > ha-card, .tw-set > ha-card { flex: 1; min-width: 0; }
 }
 `;
 

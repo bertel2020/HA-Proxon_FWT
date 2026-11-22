@@ -1,4 +1,4 @@
-import { BLUE, AMBER, CORAL, RANGE_MS } from "./constants.js";
+import { BLUE, AMBER, CORAL, RANGE_MS, esc } from "./constants.js";
 
 export class ChartsMethods {
   // ---- history: charts --------------------------------------------------
@@ -27,12 +27,18 @@ export class ChartsMethods {
     return xt;
   }
 
-  _chart(series, o) {
-    const W = Math.max(300, (this.clientWidth || 680) - 80), H = 190, pl = 42, pr = 10, pt = 10, pb = 22;
+  _chart(allSeries, o) {
+    const W = Math.max(300, (this.clientWidth || 680) - 80), H = 260, pl = 42, pr = 10, pt = 10, pb = 22;
     const lang = this._hass.language;
     const ms = RANGE_MS[o.range] / 1000;
     const t1 = Date.now() / 1000, t0 = t1 - ms;
+    // Curves hidden by a click on their name (stat row) leave the plot and the scale; the previous period follows its curve.
+    const hidKey = (s) => `${o.key || ""}|${String(s.label).split(" · ")[0]}`;
+    const hid = this._hid || {}, def = (this._hdef = this._hdef || {});
+    const isHid = (s) => { const k = hidKey(s); def[k] = (o.off0 || []).includes(String(s.label).split(" · ")[0]); return k in hid ? !!hid[k] : def[k]; }; // off0: curves that start hidden
+    const series = allSeries.filter((s) => !isHid(s));
     const vals = series.flatMap((s) => s.pts.map((p) => p[1])).concat((o.refs || []).map((r) => r.v)); // reference lines are part of the scale
+    if (!vals.length) vals.push(0, 1);
     let mn = Math.min(...vals), mx = Math.max(...vals);
     const raw = Math.max(1e-6, mx - mn) / 3, p10 = 10 ** Math.floor(Math.log10(raw)), f = raw / p10;
     const step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p10;
@@ -71,23 +77,23 @@ export class ChartsMethods {
     const showBands = o.bands && this._hp() && this._hp().iv.length;
     // min / max / mean per curve (for power additionally the energy as the integral of the curve)
     const nf = (v) => v.toLocaleString(lang, { maximumFractionDigits: Math.abs(v) < 100 ? 1 : 0 });
-    const statRows = series.filter((s) => s.pts.length && !s.prev).map((s) => {
-      const v = s.pts.map((p) => p[1]);
+    const statRows = allSeries.filter((s) => s.pts.length && !s.prev).map((s) => {
+      const v = s.pts.map((p) => p[1]), off = isHid(s), now = this._nowVal(s);
       let kwh = "";
       if (o.energy) {
         let wh = 0;
         for (let i = 1; i < s.pts.length; i++) wh += ((s.pts[i][1] + s.pts[i - 1][1]) / 2) * ((s.pts[i][0] - s.pts[i - 1][0]) / 3600);
         kwh = `<span class="v"><b>${nf(wh / 1000)}</b> kWh</span>`;
       }
-      return `<div class="hst"><span class="n"><i style="background:${s.color}"></i>${s.label}</span><span class="v"><b>${nf(Math.min(...v))}</b>${o.unit}</span><span class="v"><b>${nf(Math.max(...v))}</b>${o.unit}</span><span class="v"><b>${nf(v.reduce((a, b) => a + b, 0) / v.length)}</b>${o.unit}</span>${kwh}</div>`;
+      return `<div class="hst tg ${off ? "off" : ""}" role="button" tabindex="0" aria-pressed="${!off}" data-act="ser" data-v="${esc(hidKey(s))}"><span class="n"><i style="background:${s.color}"></i>${s.label}</span><span class="v"><b>${now === null ? "–" : nf(now) + o.unit}</b></span><span class="v"><b>${nf(Math.min(...v))}${o.unit}</b></span><span class="v"><b>${nf(Math.max(...v))}${o.unit}</b></span><span class="v"><b>${nf(v.reduce((a, b) => a + b, 0) / v.length)}${o.unit}</b></span>${kwh}</div>`;
     }).join("");
-    const statHead = statRows ? `<div class="hst hh"><span class="n"></span><span class="v">${this._t("st_min")}</span><span class="v">${this._t("st_max")}</span><span class="v">Ø</span>${o.energy ? '<span class="v">Σ</span>' : ""}</div>` : "";
+    const statHead = statRows ? `<div class="hst hh"><span class="n"></span><span class="v">${this._t("r_now")}</span><span class="v">${this._t("st_min")}</span><span class="v">${this._t("st_max")}</span><span class="v">Ø</span>${o.energy ? '<span class="v">Σ</span>' : ""}</div>` : "";
     this._cm = { W, H, pl, pr, pt, pb, t0, t1, lo, hi, series, unit: o.unit, range: o.range, x, y, phases: o.phases || [] };
     return `<div class="chw"><svg class="ch" style="max-width:100%;height:auto;touch-action:pan-y" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("history")}">
       ${bands}${byBands}${phaseBands}${grid}${refLines}${lines}${xt}<line class="xl" y1="${pt}" y2="${H - pb}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/><g class="xd"></g>
       <rect class="ov" x="${pl}" y="${pt}" width="${W - pl - pr}" height="${H - pt - pb}" fill="transparent"/></svg><div class="tip" style="display:none"></div></div>
       <div class="legend">${legend}${(o.phases || []).filter((ph) => ph.iv.length && !ph.noLegend).map((ph) => `<span><i style="background:${ph.color};opacity:.5"></i>${ph.legend || ph.label}</span>`).join("")}${showBands ? `<span><i style="background:#3fa660;opacity:.4"></i>${this._t("hp_runs")}</span>` : ""}${o.bypass && o.bypass.length ? `<span><i style="background:${BLUE};opacity:.4"></i>${this._t("bypass_open")}</span>` : ""}</div>
-      <div class="hsts" style="--c:${o.energy ? 4 : 3}">${statHead}${statRows}</div>`;
+      <div class="hsts" style="--c:${o.energy ? 5 : 4}">${statHead}${statRows}</div>`;
   }
 
   // Several measurements one below the other (lanes) on one shared time axis, one crosshair and one tooltip.
@@ -155,15 +161,15 @@ export class ChartsMethods {
         if (s.energy) for (let i = 1; i < s.pts.length; i++) wh += ((s.pts[i][1] + s.pts[i - 1][1]) / 2) * ((s.pts[i][0] - s.pts[i - 1][0]) / 3600);
         kwh = `<span class="v">${s.energy ? `<b>${nf(wh / 1000)}</b> kWh` : ""}</span>`;
       }
-      return `<div class="hst"><span class="n"><i style="background:${s.color}"></i>${s.label}</span><span class="v"><b>${s.fmt(Math.min(...v))}</b></span><span class="v"><b>${s.fmt(Math.max(...v))}</b></span><span class="v"><b>${s.fmt(v.reduce((a, b) => a + b, 0) / v.length)}</b></span>${kwh}</div>`;
+      return `<div class="hst"><span class="n"><i style="background:${s.color}"></i>${s.label}</span><span class="v"><b>${this._nowVal(s) === null ? "–" : s.fmt(this._nowVal(s))}</b></span><span class="v"><b>${s.fmt(Math.min(...v))}</b></span><span class="v"><b>${s.fmt(Math.max(...v))}</b></span><span class="v"><b>${s.fmt(v.reduce((a, b) => a + b, 0) / v.length)}</b></span>${kwh}</div>`;
     }).join("");
-    const head = rows ? `<div class="hst hh"><span class="n"></span><span class="v">${this._t("st_min")}</span><span class="v">${this._t("st_max")}</span><span class="v">Ø</span>${extra ? '<span class="v">Σ</span>' : ""}</div>` : "";
+    const head = rows ? `<div class="hst hh"><span class="n"></span><span class="v">${this._t("r_now")}</span><span class="v">${this._t("st_min")}</span><span class="v">${this._t("st_max")}</span><span class="v">Ø</span>${extra ? '<span class="v">Σ</span>' : ""}</div>` : "";
     this._cm = { W, H, pl, pr, pt, pb, t0, t1, lo: 0, hi: 0, series: flat, unit: "", range: o.range, x, y: (lanes[0] && lanes[0].y) || (() => pt), phases: o.phases || [] };
     return `<div class="chw"><svg class="ch" style="max-width:100%;height:auto;touch-action:pan-y" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("history")}">
       ${phaseBands}${grid}${sep}${body}${this._timeAxis(o, t0, t1, W, H, x)}<line class="xl" y1="${pt}" y2="${H - pb}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/><g class="xd"></g>
       <rect class="ov" x="${pl}" y="${pt}" width="${W - pl - pr}" height="${plot}" fill="transparent"/></svg><div class="tip" style="display:none"></div></div>
       <div class="legend">${legend}</div>
-      <div class="hsts" style="--c:${extra ? 4 : 3}">${head}${rows}</div>`;
+      <div class="hsts" style="--c:${extra ? 5 : 4}">${head}${rows}</div>`;
   }
 
   // Hover / touch tooltip for bar charts and sparklines: elements with data-tip="title|value".
@@ -232,7 +238,7 @@ export class ChartsMethods {
   _barChart(rows, { key, label, color, unit, range, out, ref, stamp }) {
     const lang = this._hass.language, data = rows.filter((m) => m[key] !== undefined);
     if (!data.length) return `<div class="note">${this._t("no_stats")}</div>`;
-    const W = Math.max(300, (this.clientWidth || 680) - 80), H = 190, pl = 36, pr = out ? 34 : 10, pt = 12, pb = 22;
+    const W = Math.max(300, (this.clientWidth || 680) - 80), H = 260, pl = 36, pr = out ? 34 : 10, pt = 12, pb = 22;
     const vals = data.map((m) => m[key]), max = Math.max(1, Math.ceil(Math.max(...vals) * 1.05));
     const outs = out ? data.filter((m) => m.out !== undefined).map((m) => m.out) : [];
     const oLo = outs.length ? Math.floor(Math.min(...outs) - 1) : 0, oHi = outs.length ? Math.ceil(Math.max(...outs) + 1) : 1;

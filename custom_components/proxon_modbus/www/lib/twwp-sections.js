@@ -167,19 +167,29 @@ export class TwwpSectionsMethods {
     const bad = this._on(t.ents.twwp_sensor_problem), outer = c.outer_temp ? this._num(c.outer_temp) : null;
     const col = w === null ? "var(--divider-color)" : tn !== null && w >= tn ? CORAL : tm !== null && w >= tm ? AMBER : BLUE;
     const flow = heats ? (prog === "pv" ? GREEN : AMBER) : "var(--divider-color)";
-    const rays = [0, 45, 90, 135, 180, 225, 270, 315].map((a) => `<line x1="58" y1="22" x2="58" y2="13" transform="rotate(${a} 58 64)"/>`).join("");
-    const svg = `<svg class="twhsvg ${heats ? "heat" : ""}" viewBox="0 0 380 184" role="img" aria-label="${this._t("tw_tank")} ${w === null ? "" : this._fmt(w) + "°"}">
-      <title>${this._t("tw_tank_note")}</title><defs><clipPath id="twc${i}"><rect x="0" y="0" width="112" height="164" rx="26"/></clipPath></defs>
-      <circle cx="58" cy="64" r="24" fill="${AMBER}" opacity="${pv !== null && pv > 200 ? 1 : 0.35}"/><g stroke="${AMBER}" stroke-width="2.5" stroke-linecap="round" opacity="${pv !== null && pv > 200 ? 1 : 0.35}">${rays}</g>
-      ${pv === null ? "" : `<text x="58" y="124" text-anchor="middle" font-size="15" font-weight="500" fill="var(--primary-text-color)">${this._fmt(pv / 1000)} kW</text><text x="58" y="142" text-anchor="middle" font-size="11" fill="var(--secondary-text-color)">${this._t("tw_pv_power")}</text>`}
-      <path class="twflow" d="M92 72 C 150 72, 180 66, 224 66" fill="none" stroke="${flow}" stroke-width="3"/>
-      <path d="M214 60 L226 66 L214 72" fill="none" stroke="${flow}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-      ${heats ? `<text x="158" y="52" text-anchor="middle" font-size="12" fill="var(--secondary-text-color)">${this._fmt(pw, 0)} W</text>` : ""}
+    // Fill level: the water temperature on the 30 to 65 degree scale, drawn into the water part of the tank (y 72 to 200).
+    const yv = (v) => 72 + (1 - (Math.max(S_LO, Math.min(S_HI, v)) - S_LO) / (S_HI - S_LO)) * 128;
+    const lvl = w === null ? 200 : yv(w);
+    // The three targets as small marks at the right edge of the tank, so the state reads without the scale.
+    let lastY = -1e9;
+    const marks = [[tm, "tw_ref_min"], [tn, "tw_ref_n"], [t.ents.twwp_target_pv ? this._num(t.ents.twwp_target_pv) : null, "tw_pv_line"]]
+      .filter(([v]) => v !== null).sort((a, b) => b[0] - a[0]).map(([v, k]) => {
+        const y = yv(v), ty = Math.max(y + 4, lastY + 13); lastY = ty;
+        return `<line x1="112" x2="122" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--primary-text-color)" stroke-width="1.6"/><text x="127" y="${ty.toFixed(1)}" font-size="11" fill="var(--secondary-text-color)">${this._t(k, this._fmt(v, 0))}</text>`;
+      }).join("");
+    const rays = [0, 45, 90, 135, 180, 225, 270, 315].map((a) => `<line x1="58" y1="58" x2="58" y2="49" transform="rotate(${a} 58 100)"/>`).join("");
+    const svg = `<svg class="twhsvg ${heats ? "heat" : ""}" viewBox="0 0 440 226" role="img" aria-label="${this._t("tw_tank")} ${w === null ? "" : this._fmt(w) + "°"}">
+      <title>${this._t("tw_tank_note")}</title><defs><clipPath id="twc${i}"><rect x="0" y="0" width="112" height="200" rx="28"/></clipPath></defs>
+      <circle cx="58" cy="100" r="24" fill="${AMBER}" opacity="${pv !== null && pv > 200 ? 1 : 0.35}"/><g stroke="${AMBER}" stroke-width="2.5" stroke-linecap="round" opacity="${pv !== null && pv > 200 ? 1 : 0.35}">${rays}</g>
+      ${pv === null ? "" : `<text x="58" y="160" text-anchor="middle" font-size="15" font-weight="500" fill="var(--primary-text-color)">${this._fmt(pv / 1000)} kW</text><text x="58" y="178" text-anchor="middle" font-size="11" fill="var(--secondary-text-color)">${this._t("tw_pv_power")}</text>`}
+      <path class="twflow" d="M92 100 C 150 100, 170 72, 224 72" fill="none" stroke="${flow}" stroke-width="3"/>
+      <path d="M214 66 L226 72 L214 78" fill="none" stroke="${flow}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      ${heats ? `<text x="150" y="82" text-anchor="middle" font-size="12" fill="var(--secondary-text-color)">${this._fmt(pw, 0)} W</text>` : ""}
       <g transform="translate(232,10)">
-        <rect width="112" height="164" rx="26" fill="var(--card-background-color)" stroke="var(--divider-color)" stroke-width="1.5"/>
+        <rect width="112" height="200" rx="28" fill="var(--card-background-color)" stroke="var(--divider-color)" stroke-width="1.5"/>
         <g clip-path="url(#twc${i})">
-          <rect x="0" y="66" width="112" height="98" fill="${col}" opacity=".42"/>
-          <rect x="10" y="82" width="7" height="68" rx="3.5" fill="#fff" opacity=".28"/>
+          <rect x="0" y="${lvl.toFixed(1)}" width="112" height="${(200 - lvl).toFixed(1)}" fill="${col}" opacity=".42"/>
+          <rect x="10" y="${(lvl + 14).toFixed(1)}" width="7" height="${Math.max(0, 200 - lvl - 40).toFixed(1)}" rx="3.5" fill="#fff" opacity=".28"/>
           <rect x="0" y="0" width="112" height="70" fill="var(--secondary-background-color)"/>
           <rect x="0" y="68" width="112" height="4" fill="var(--divider-color)" opacity=".8"/>
         </g>
@@ -188,9 +198,10 @@ export class TwwpSectionsMethods {
         <g stroke="var(--secondary-text-color)" stroke-width="2.5" stroke-linecap="round" opacity=".5"><line x1="64" x2="94" y1="22" y2="22"/><line x1="64" x2="94" y1="32" y2="32"/><line x1="64" x2="94" y1="42" y2="42"/></g>
         <circle cx="92" cy="56" r="4" fill="${heats ? GREEN : "var(--divider-color)"}"/>
         <text x="36" y="62" font-size="11" text-anchor="middle" fill="var(--secondary-text-color)">${outer === null ? "" : this._fmt(outer) + "°"}</text>
-        <circle cx="18" cy="112" r="5" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="1.8"/>
-        <text x="66" y="120" text-anchor="middle" font-size="24" font-weight="500" fill="var(--primary-text-color)">${w === null ? "–" : this._fmt(w) + "°"}</text>
-        <text x="62" y="142" text-anchor="middle" font-size="11" fill="var(--secondary-text-color)">${this._t("tw_mp")}</text>
+        <circle cx="18" cy="146" r="5" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="1.8"/>
+        <text x="66" y="156" text-anchor="middle" font-size="28" font-weight="500" fill="var(--primary-text-color)">${w === null ? "–" : this._fmt(w) + "°"}</text>
+        <text x="62" y="178" text-anchor="middle" font-size="11" fill="var(--secondary-text-color)">${this._t("tw_mp")}</text>
+        ${marks}
       </g></svg>`;
     const chip = bad ? `<span class="chip r">${this._t("tw_problem")}</span>` : prog ? `<span class="chip ${prog === "pv" ? "g" : prog === "minimum" ? "w" : prog === "normal" ? "a" : ""}">${this._t(`tw_p_${prog}`)}</span>` : "";
     const tile = (label, value) => `<div class="twm"><small>${label}</small><b>${value}</b></div>`;
@@ -229,7 +240,7 @@ export class TwwpSectionsMethods {
     const g = (k) => this._num(t.ents[k]), tn = g("twwp_target_normal"), tp = g("twwp_target_pv"), tm = g("twwp_target_min");
     const lo = g("twwp_hyst_low"), hi = g("twwp_hyst_high"), w = this._twWater(t);
     if (tn === null || tp === null || tm === null || lo === null || hi === null) return null;
-    const W = Math.max(300, Math.min(1300, this._twCardW(2 / 3))), pl = 22, y0 = 36, H = 80;
+    const W = Math.max(300, Math.min(1300, this._twCardW(1 / 3))), pl = 22, y0 = 36, H = 80;
     const x = (v) => pl + ((Math.max(S_LO, Math.min(S_HI, v)) - S_LO) / (S_HI - S_LO)) * (W - 2 * pl);
     const bounds = [S_LO, tm, tn - lo, tn + hi, S_HI].reduce((o, v) => (o.push(Math.max(o.length ? o[o.length - 1] : S_LO, Math.min(S_HI, v))), o), []);
     const zones = [["tw_z_min", BLUE, .5], ["tw_z_heat", AMBER, .55], ["tw_z_hold", "#8a8f98", .45], ["tw_z_done", CORAL, .5]];
@@ -249,11 +260,12 @@ export class TwwpSectionsMethods {
     return { svg: `<div class="chw"><svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto" role="img" aria-label="${this._t("tw_targets")}">${bar}${flags}${ticks}${pointer}</svg></div>`, legend, caption };
   }
 
-  // The scale with the switching thresholds said in words.
-  _twScaleCard(t) {
+  // The scale with the switching thresholds said in words; sits at the bottom of the operation card, because it shows why the
+  // controller decides as it does.
+  _twScaleBlock(t) {
     const scale = this._twScale(t);
     if (!scale) return "";
-    return `<ha-card>${this._header("mdi:thermometer-lines", this._t("tw_scale"), `<span class="legend" style="margin:0">${scale.legend}</span>`)}${scale.svg}<div class="note" style="margin-top:2px">${scale.caption}</div></ha-card>`;
+    return `<div class="twsc"><div class="twsch">${this._icon("mdi:thermometer-lines")}${this._t("tw_scale")}</div>${scale.svg}<div class="legend" style="margin:4px 0 0">${scale.legend}</div><div class="note" style="margin-top:6px">${scale.caption}</div></div>`;
   }
 
   // The three targets as steppers; the hysteresis is rarely changed, so it sits folded away behind a line that says what it is.
@@ -285,7 +297,7 @@ export class TwwpSectionsMethods {
         ${ok ? `<div class="f"><span>${this._t("tw_last")}<small class="lb"> · ${this._twAge(at.last_run)}</small></span><b>${this._t(`tw_r_${rs.state}`)}</b></div>` : ""}
         ${plN !== null && plN > 0 ? this._twRow(this._t("tw_planned"), String(plN)) : ""}${sw && plN > 0 ? `<div class="note">${sw}</div>` : ""}
         ${bad ? this._twRow(this._t("tw_problem"), this._t("tw_yes"), `style="color:#db4437"`) : ""}
-        ${at.last_error ? this._twRow(this._t("tw_err"), esc(at.last_error), `style="color:#db4437"`) : ""}</div></ha-card>`;
+        ${at.last_error ? this._twRow(this._t("tw_err"), esc(at.last_error), `style="color:#db4437"`) : ""}</div>${this._twScaleBlock(t)}</ha-card>`;
   }
 
   // Entity behind one measurement of the history card; `attr` marks the water_heater fallback (its attribute, no statistics).
@@ -419,8 +431,8 @@ export class TwwpSectionsMethods {
     const many = d.twwp.length > 1;
     return `<div class="stack">${d.twwp.map((t, i) => `${many ? `<h3 class="twname">${t.name}</h3>` : ""}
       <div class="twc"><div class="twgrid">
-        <div class="tw-hero">${this._twHero(t, i)}</div><div class="tw-scale">${this._twScaleCard(t)}</div><div class="tw-set">${this._twTargets(t)}</div>
-        <div class="tw-op">${this._twOperation(t)}</div>
+        <div class="tw-hero">${this._twHero(t, i)}</div>
+        <div class="tw-op">${this._twOperation(t)}</div><div class="tw-set">${this._twTargets(t)}</div>
         <div class="tw-hist">${this._twHistory(t)}</div></div></div>`).join("")}</div>`;
   }
 }

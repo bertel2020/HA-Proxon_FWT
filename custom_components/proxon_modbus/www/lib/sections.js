@@ -101,14 +101,16 @@ export class SectionsMethods {
       `<div class="k ${panel && metric ? "go" : ""}" style="--kc:${color}" ${panel && metric ? `data-act="kpi" data-v="${metric}" role="button" tabindex="0"` : ""}><div class="ic">${this._icon(icon)}</div><div><div class="lb">${label}</div><div class="v">${value}${unit ? ` <small>${unit}</small>` : ""}</div>${extra}</div></div>`;
     const eff = this._efficiency();
     const bypass = this._on(c.bypass_active);
-    const power = this._pnum();
+    const power = this._pnum(), rpm = this._ok(c.compressor_speed) ? this._num(c.compressor_speed) : null;
     const html = tile("mdi:thermometer", CORAL, this._t("supply_t"), this._temp(c.temp_supply_air), "", "temp", this._kpiSpark(d, "temp", this._t("supply_t"), CORAL), !!c.temp_supply_air) +
       tile("mdi:percent-circle-outline", GREEN, this._t("efficiency"), bypass ? this._t("bypass_short") : eff === null ? null : `${eff} % <span title="${this._t("eff_info")}">${this._icon("mdi:information-outline", 'class="info"')}</span>`, "", "eff", this._effSpark(d)) +
       tile("mdi:flash", AMBER, this._t("power"), power === null ? null : this._fmt(power, power % 1 ? 1 : 0),
         "W", "power", this._kpiSpark(d, "power", this._t("power"), AMBER, { lo: 0, step: true }), !!this._powerId()) +
+      tile("mdi:engine-outline", "#7e57c2", this._t("compressor"), rpm === null ? null : this._fmt(rpm, 0), "rpm", "drives",
+        this._kpiSpark(d, "drives", this._t("compressor"), "#7e57c2", { lo: 0 }), !!c.compressor_speed) +
       tile("mdi:weather-partly-cloudy", BLUE, this._t("outside"), this._temp(this._outdoorId()), "", "temp", this._kpiSpark(d, "temp", this._t("outside"), BLUE), !!this._outdoorId()) +
       (panel && d.twwp.length ? this._twKpi(d) : "");
-    if (![this._temp(c.temp_supply_air), power, this._temp(this._outdoorId()), bypass ? 1 : eff].some((v) => !missing(v))) return "";
+    if (![this._temp(c.temp_supply_air), power, rpm, this._temp(this._outdoorId()), bypass ? 1 : eff].some((v) => !missing(v))) return "";
     return `<ha-card>${this._header("mdi:gauge", this._t("kpi"))}<div class="kpiw"><div class="kpi">${html}</div></div></ha-card>`;
   }
 

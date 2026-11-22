@@ -21,16 +21,18 @@ export const ROOM_ICONS = [
   [/keller|cellar/i, "mdi:stairs-down"], [/gäste|gaeste|guest/i, "mdi:bed-double"], [/ess|dining/i, "mdi:table-furniture"],
 ];
 export const METRIC_META = {
+  all: { icon: "mdi:chart-multiple", unit: "", label: "tw_all" },
   temp: { icon: "mdi:thermometer", unit: "°", label: "m_temp" },
+  circuit: { icon: "mdi:thermometer-lines", unit: "°", label: "g_circuit" },
+  drives: { icon: "mdi:engine-outline", unit: " rpm", label: "g_drive" },
   power: { icon: "mdi:flash", unit: " W", label: "power" },
-  comp: { icon: "mdi:engine-outline", unit: " rpm", label: "compressor" },
   eff: { icon: "mdi:percent-circle-outline", unit: " %", label: "efficiency" },
   co2: { icon: "mdi:molecule-co2", unit: " ppm", label: "co2" },
   rf: { icon: "mdi:water-percent", unit: " %", label: "humidity" },
 };
 export const BLUE = "#378ADD", CORAL = "#D85A30", AMBER = "#f2a516", GREEN = "#3fa660";
 export const SETTINGS_TTL = 60000;
-export const UI_ACTS = new Set(["hcmp", "hrange", "metric", "twmetric", "twcmp", "twhyst", "twrefs", "dismiss", "undismiss", "kpi", "tab", "rview", "rfilter", "rtoggle", "rclose", "noop", "rstep", "twstep", "up", "down", "view", "room", "menu"]);
+export const UI_ACTS = new Set(["hcmp", "ser", "hrange", "metric", "twmetric", "twcmp", "twhyst", "twrefs", "dismiss", "undismiss", "kpi", "tab", "rview", "rfilter", "rtoggle", "rclose", "noop", "rstep", "twstep", "up", "down", "view", "room", "menu"]);
 export const WRITE_ERROR_SHOWN_MS = 3600000;
 export const DISMISS_GRACE_MS = 1800000;
 export const BAD = ["unavailable", "unknown", undefined, null, ""];
