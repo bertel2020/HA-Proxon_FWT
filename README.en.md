@@ -233,12 +233,17 @@ type: custom:proxon-fwt-card
 
 The card discovers all entities of the integration by itself (via platform and entity key, not fixed entity IDs) and shows:
 
-- **Operation** (section `operation`): operating mode (Off, Eco summer, Eco winter, Comfort, Stove mode) and fan stage (0–4, Auto) in one card, plus speeds and intensive ventilation; emergency, frost protection and commissioning are shown as a locked state
-- **Air paths** as a cross-flow heat exchanger with the four temperatures
-  Stages that can't be chosen are greyed out. The older sections `mode` and `fan` are still available separately
-- **Heat pump** (compressor, power consumption, operating states, cooling enable)
-- **Refrigerant circuit** (diagnostic temperatures) and **status and maintenance** (errors, filter with age in days, deadline to the forced shutdown and a "Filter changed" button)
-- **Rooms** as tiles or list with a detail view: target/actual, CO₂, humidity, PTC state and enable per room. A room shows "heating" only while its PTC element is active, otherwise below/above target
+- **Overview** (`overview`): state of the unit (heating, cooling, idle, off or locked), operating mode and fan stage, and the figures that matter: supply, extract and fresh air, power and (with a PTC sensor) PTC power. Every value opens the dialog of its entity
+- **Controls** (`operation`): operating mode (Off, Eco summer, Eco winter, Comfort, Furnace), fan stage (0–4, Auto), intensive ventilation, boost ventilation and the cooling enable. Stages that can't be chosen are greyed out; emergency mode, frost protection and balancing show as a locked state. The controls share one card with the overview
+- **System diagram** (`schema`): heat exchanger, fans and refrigerant circuit with all probes; in narrow cards (below 420 px) the simple view with the four air temperatures
+- **Rooms** (`rooms`) as tiles or list with a detail view: target/actual, CO₂, humidity, PTC state and enable per room, plus a PTC line (running, enabled, power). A room shows "heating" only while its PTC element is active, otherwise below/above target
+- **Maintenance** (`status`): errors, filter with age in days, deadline to the forced shutdown and a "Filter changed" button
+- **Refrigerant circuit and drives** (`refrigerant`): circuit temperatures and compressor and fan speeds
+- **History**, **runtime** and **energy** (`history`, `runtime`, `energy`)
+
+**Alerts** (emergency mode, frost protection, system error, filter due, write errors) always show on top as soon as something is wrong.
+
+**Presets** (`preset`): `compact` (overview and controls in one card), `standard` (plus diagram, rooms and maintenance; the default for new cards) and `all` (plus refrigerant circuit, history, runtime, energy). An own `sections` list replaces the preset. The sections always appear in the fixed order above, not in the order of the list. The older names `heatpump`, `kpi` (now overview), `mode`, `fan`, `quick` (now controls) and `air` (now schema) keep working and are mapped; `alerts` is gone, alerts are always on.
 
 Anything the unit does not provide (e.g. power consumption or outdoor temperature) is hidden. The card can be configured graphically in the card editor.
 
@@ -251,7 +256,8 @@ Anything the unit does not provide (e.g. power consumption or outdoor temperatur
 | `energy_entity` | integration | own energy meter (Wh/kWh/MWh): the energy card then shows the measured consumption instead of an estimate from the power |
 | `ptc_power_entity`, `ptc_energy_entity` | integration | own power sensor and energy meter (Wh/kWh/MWh) for **all PTC elements together**: the panel shows them in overview (replaces the compressor tile), diagnosis, history and rooms (the unit does not measure this itself) |
 | `outdoor_entity` | integration | own entity for the outdoor temperature instead of the device sensor |
-| `sections` | all | list of sections to show. Default: `operation`, `air`, `heatpump`, `refrigerant`, `status`, `rooms`. Also possible: `mode`, `fan` (instead of `operation`), `quick` (boost ventilation with 15/30/60 minutes only; in the panel it is part of `operation`), `schema`, `kpi`, `alerts`, `history`, `runtime`, `energy` |
+| `preset` | `standard` | `compact`, `standard` or `all` (see above) |
+| `sections` | – | own list of sections (`overview`, `operation`, `schema`, `rooms`, `status`, `refrigerant`, `history`, `runtime`, `energy`); replaces the preset |
 | `max_fan_rpm` | `3000` | speed at which the fan bars are full |
 | `max_compressor_rpm` | `6000` | speed at which the compressor ring is full |
 | `device_id` | – | only with several units: device ID of the central device |

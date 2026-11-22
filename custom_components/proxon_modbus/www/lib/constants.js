@@ -1,7 +1,34 @@
 // Shared constants and small helpers.
-export const DEFAULT_SECTIONS = ["operation", "air", "heatpump", "refrigerant", "status", "rooms"];
-export const ALL_SECTIONS = ["operation", "mode", "fan", "air", "heatpump", "refrigerant", "status", "rooms", "quick", "schema", "kpi", "alerts", "history", "runtime", "energy"];
-export const GRID_SECTIONS = ["fan", "heatpump", "refrigerant", "status"];
+// The card's sections in their fixed order. Alerts are not a section: they show above everything whenever something is wrong.
+export const SECTION_ORDER = ["overview", "operation", "schema", "rooms", "status", "refrigerant", "history", "runtime", "energy"];
+// Older section names keep working: they map onto the current ones (null = gone).
+export const SECTION_ALIASES = { heatpump: "overview", kpi: "overview", mode: "operation", fan: "operation", quick: "operation", air: "schema", alerts: null };
+export const PRESETS = {
+  compact: ["overview", "operation"],
+  standard: ["overview", "operation", "schema", "rooms", "status"],
+  all: SECTION_ORDER,
+};
+export const DEFAULT_SECTIONS = PRESETS.standard;
+export const ALL_SECTIONS = [...SECTION_ORDER, ...Object.keys(SECTION_ALIASES)];
+export const GRID_SECTIONS = ["status", "refrigerant"];
+export const LAYOUTS = ["stacked", "tabs"];
+// Tabs of the tabbed layout: which sections each one shows.
+export const TAB_GROUPS = [
+  ["overview", ["overview", "operation", "schema"], "mdi:gauge"],
+  ["rooms", ["rooms"], "mdi:home-outline"],
+  ["maintenance", ["status", "refrigerant"], "mdi:tools"],
+  ["history", ["history", "runtime", "energy"], "mdi:chart-line"],
+];
+
+// The sections of a card config: an explicit list (custom), else the preset (standard by default); old names mapped, duplicates dropped, fixed order.
+export function resolveSections(config) {
+  const raw = config.sections !== undefined ? config.sections : PRESETS[config.preset] || DEFAULT_SECTIONS;
+  if (!Array.isArray(raw) || raw.some((s) => !ALL_SECTIONS.includes(s))) {
+    throw new Error(`sections must be a list of: ${ALL_SECTIONS.join(", ")}`);
+  }
+  const mapped = new Set(raw.map((s) => (s in SECTION_ALIASES ? SECTION_ALIASES[s] : s)).filter(Boolean));
+  return SECTION_ORDER.filter((s) => mapped.has(s));
+}
 
 export const MODE_META = {
   off: { icon: "mdi:power", color: "#8a8f98" },

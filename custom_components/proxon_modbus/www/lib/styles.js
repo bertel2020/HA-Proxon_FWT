@@ -79,6 +79,14 @@ ha-card { padding: 14px 16px; display: block; border: 1px solid var(--ha-card-bo
 .bblk .lbl2 { margin-top: 10px; }
 .bblk .lbl2 b { font-weight: 500; color: var(--primary-text-color); font-size: 14px; }
 .note { font-size: 13px; color: var(--secondary-text-color); margin-top: 8px; }
+.ovw { padding-bottom: 14px; }
+.ovh { display: flex; justify-content: space-between; align-items: center; gap: 10px; } .ovh b { font-size: 18px; font-weight: 500; }
+.ovs { color: var(--secondary-text-color); font-size: 14px; margin: 2px 0 12px; }
+.ovt { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px; }
+.mini { background: var(--secondary-background-color); border-radius: 12px; padding: 8px 10px; text-align: center; min-width: 0; }
+.mini small { display: block; font-size: 12px; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .mini b { display: block; font-size: 18px; font-weight: 500; }
+.spill { font-size: 13px; padding: 3px 10px; border-radius: 99px; color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); white-space: nowrap; }
+.opw.bare { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--divider-color); }
 .hp { display: flex; align-items: center; gap: 16px; }
 .big { font-size: 26px; font-weight: 500; }
 .big small { font-size: 14px; color: var(--secondary-text-color); font-weight: 400; }

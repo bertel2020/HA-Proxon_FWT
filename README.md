@@ -235,12 +235,17 @@ type: custom:proxon-fwt-card
 
 Die Karte findet alle Entities der Integration selbst (über Plattform und Entity-Schlüssel, nicht über feste Entity-IDs) und zeigt:
 
-- **Betrieb** (Bereich `operation`): Betriebsart (Aus, Eco Sommer, Eco Winter, Komfort, Ofenbetrieb) und Lüfterstufe (0–4, Auto) in einer Karte, dazu Drehzahlen und Intensivlüftung; Notbetrieb, Einfrierschutz und Einregulierung werden als gesperrter Zustand angezeigt
-- **Luftwege** als Kreuzstrom-Wärmetauscher mit den vier Temperaturen
-  Nicht wählbare Stufen sind ausgegraut. Die älteren Bereiche `mode` und `fan` gibt es weiterhin einzeln
-- **Wärmepumpe** (Kompressor, Leistungsaufnahme, Betriebszustände, Kühlungsfreigabe)
-- **Kältekreis und Antriebe** (Kreislauf-Temperaturen, Kompressor- und Ventilator-Drehzahlen) sowie **Status und Wartung** (Fehler, Filter mit Alter in Tagen, Frist bis zur Zwangsabschaltung und Knopf „Filter getauscht“)
-- **Räume** als Kacheln oder Liste mit Detailansicht: Soll/Ist, CO₂, Feuchte, PTC-Zustand und -Freigabe je Raum. Ein Raum zeigt „heizt“ nur bei aktivem PTC-Element, sonst „unter/über Soll“
+- **Überblick** (`overview`): Zustand der Anlage (heizt, kühlt, Leerlauf, Aus oder gesperrt), Betriebsart und Lüfterstufe sowie die Werte, auf die es ankommt: Zuluft, Abluft, Frischluft, Leistung und (mit PTC-Sensor) PTC-Leistung. Jeder Wert öffnet den Dialog seiner Entität
+- **Bedienung** (`operation`): Betriebsart (Aus, Eco Sommer, Eco Winter, Komfort, Ofenbetrieb), Lüfterstufe (0–4, Auto), Intensivlüftung, Stoßlüften und die Kühlungsfreigabe. Nicht wählbare Stufen sind ausgegraut; Notbetrieb, Einfrierschutz und Einregulierung werden als gesperrter Zustand angezeigt. Mit dem Überblick teilt sich die Bedienung eine Karte
+- **Anlagenschema** (`schema`): Wärmetauscher, Lüfter und Kältekreis mit allen Fühlern; in schmalen Karten (unter 420 px) die einfache Ansicht mit den vier Lufttemperaturen
+- **Räume** (`rooms`) als Kacheln oder Liste mit Detailansicht: Soll/Ist, CO₂, Feuchte, PTC-Zustand und -Freigabe je Raum, dazu eine PTC-Zeile (aktiv, freigegeben, Leistung). Ein Raum zeigt „heizt“ nur bei aktivem PTC-Element, sonst „unter/über Soll“
+- **Wartung** (`status`): Fehler, Filter mit Alter in Tagen, Frist bis zur Zwangsabschaltung und Knopf „Filter getauscht“
+- **Kältekreis und Antriebe** (`refrigerant`): Kreislauf-Temperaturen sowie Kompressor- und Ventilator-Drehzahlen
+- **Verlauf**, **Laufzeit** und **Energie** (`history`, `runtime`, `energy`)
+
+**Meldungen** (Notbetrieb, Einfrierschutz, Systemfehler, Filter fällig, Schreibfehler) erscheinen immer oben, sobald etwas nicht stimmt.
+
+**Voreinstellungen** (`preset`): `compact` (Überblick und Bedienung in einer Karte), `standard` (zusätzlich Schema, Räume und Wartung; Vorgabe für neue Karten) und `all` (zusätzlich Kältekreis, Verlauf, Laufzeit, Energie). Eine eigene Liste `sections` ersetzt die Voreinstellung. Die Bereiche erscheinen immer in der festen Reihenfolge oben, nicht in der Reihenfolge der Liste. Die älteren Namen `heatpump`, `kpi` (jetzt Überblick), `mode`, `fan`, `quick` (jetzt Bedienung) und `air` (jetzt Schema) gelten weiter und werden umgesetzt; `alerts` entfällt, die Meldungen sind immer an.
 
 Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wird ausgeblendet. Die Karte lässt sich im Karten-Editor grafisch konfigurieren. Sensoren (Leistung, Energie, Außentemperatur, PTC) kommen aus den Optionen der Integration; im YAML der Karte lassen sie sich weiterhin überschreiben.
 
@@ -253,7 +258,8 @@ Was die Anlage nicht liefert (z. B. Leistungsaufnahme oder Außentemperatur), wi
 | `energy_entity` | Integration | eigener Energiezähler (Wh/kWh/MWh): Die Energie-Karte zeigt dann den gemessenen Verbrauch statt einer Schätzung aus der Leistung |
 | `ptc_power_entity`, `ptc_energy_entity` | Integration | eigener Leistungssensor und Energiezähler (Wh/kWh/MWh) für **alle PTC-Elemente zusammen**: Das Panel zeigt sie in Übersicht (ersetzt die Kachel Kompressor), Diagnose, Verlauf und Räume (das Gerät misst das nicht selbst) |
 | `outdoor_entity` | Integration | eigene Entität für die Außentemperatur statt des Gerätesensors |
-| `sections` | siehe Standard | Liste der anzuzeigenden Bereiche. Standard: `operation`, `air`, `heatpump`, `refrigerant`, `status`, `rooms`. Zusätzlich möglich: `mode`, `fan` (statt `operation`), `quick` (nur Stoßlüften mit 15/30/60 Minuten; im Panel ist es Teil von `operation`), `schema`, `kpi`, `alerts`, `history`, `runtime`, `energy` |
+| `preset` | `standard` | `compact`, `standard` oder `all` (siehe oben) |
+| `sections` | – | eigene Liste der Bereiche (`overview`, `operation`, `schema`, `rooms`, `status`, `refrigerant`, `history`, `runtime`, `energy`); ersetzt die Voreinstellung |
 | `max_fan_rpm` | `3000` | Drehzahl, bei der die Lüfter-Balken voll sind |
 | `max_compressor_rpm` | `6000` | Drehzahl, bei der der Kompressor-Ring voll ist |
 | `device_id` | – | nur bei mehreren Anlagen: Geräte-ID des zentralen Geräts |

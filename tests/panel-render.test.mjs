@@ -753,7 +753,35 @@ test("the card shows its own status card and no dead panel links; the editor lis
   const ed = new X.ProxonFwtCardEditor();
   ed.hass = hass;
   ed.setConfig({ type: "custom:proxon-fwt-card" });
-  const names = ed._form.schema.map((s) => s.name);
-  assert.deepEqual(names, ["sections", "outdoor_side"], "no sensor or speed fields in the editor");
+  const flat = (sc) => sc.flatMap((s) => (s.schema ? flat(s.schema) : [s.name]));
+  assert.deepEqual(flat(ed._form.schema), ["preset", "sec_operate", "sec_plant", "sec_details", "outdoor_side"], "no sensor or speed fields in the editor");
   assert.equal(ed._label("alerts"), "Meldungen");
+});
+
+test("sections: old names map to the new ones, order is fixed, presets and alerts work", async () => {
+  const { resolveSections, PRESETS } = await import(new URL("lib/constants.js", WWW).href);
+  assert.deepEqual(resolveSections({}), PRESETS.standard);
+  assert.deepEqual(resolveSections({ preset: "compact" }), ["overview", "operation"]);
+  assert.deepEqual(resolveSections({ preset: "all" }), ["overview", "operation", "schema", "rooms", "status", "refrigerant", "history", "runtime", "energy"]);
+  assert.deepEqual(resolveSections({ sections: ["rooms", "fan", "air", "heatpump", "kpi", "mode", "quick", "alerts"] }), ["overview", "operation", "schema", "rooms"], "old names mapped, duplicates dropped, fixed order");
+  assert.deepEqual(resolveSections({ sections: ["rooms"], preset: "all" }), ["rooms"], "an explicit list wins over the preset");
+  assert.throws(() => resolveSections({ sections: ["nope"] }));
+  const card = new X.ProxonFwtCard();
+  card.setConfig({ preset: "compact" });
+  card.hass = hass;
+  const html = await render(card, () => {});
+  check(html);
+  assert.ok(html.includes("ovw") && html.includes("Zuluft") && html.includes("Komfort") && html.includes("opw bare"), "overview with the controls in one card");
+  assert.ok(!html.includes("Kältekreis") && !html.includes('class="rooms"'));
+  assert.equal(html.split("<ha-card").length - 1, 1, "compact is a single card");
+  // the editor writes a preset, or an explicit list once sections are changed
+  const ed = new X.ProxonFwtCardEditor();
+  ed.hass = hass;
+  ed.setConfig({ type: "custom:proxon-fwt-card" });
+  assert.deepEqual(ed._config_from({ ...ed._data(ed._config), preset: "all" }), { type: "custom:proxon-fwt-card", preset: "all" });
+  assert.deepEqual(ed._config_from({ ...ed._data(ed._config), preset: "standard" }), { type: "custom:proxon-fwt-card" });
+  const custom = ed._config_from({ ...ed._data(ed._config), sec_details: ["history"] });
+  assert.deepEqual(custom.sections, ["overview", "operation", "schema", "rooms", "status", "history"]);
+  assert.equal(custom.preset, undefined);
+  assert.equal(ed._data(custom).preset, "custom");
 });

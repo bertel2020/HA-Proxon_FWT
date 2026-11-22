@@ -103,13 +103,6 @@ export class HintsMethods {
     return `<div ${withTitle ? 'class="bblk"' : ""}><div class="lbl2">${withTitle ? `<b>${this._t("boost")}</b>` : ""}<small>${note}</small></div><div class="bch">${body}</div></div>`;
   }
 
-  // Own card for the dashboard card (section `quick`); the panel shows the same block inside "Operation".
-  _sec_quick(d) {
-    const block = this._boostBlock(d.central, false);
-    if (!block) return "";
-    return `<ha-card class="opw">${this._header("mdi:weather-windy", this._t("boost"))}${block}</ha-card>`;
-  }
-
   _sec_measure(d) {
     const c = d.central;
     const t = (label, id) => this._ok(id) ? [label, this._temp(id), id] : null;

@@ -54,16 +54,6 @@ export class SectionsMethods {
     return { rs, pref, prefLabel: FAN_STAGES.find(([o]) => o === pref)?.[2] };
   }
 
-  _sec_mode(d) {
-    const c = d.central;
-    if (!c.operating_mode) return "";
-    const m = this._modeState(c);
-    const buttons = this._modeButtons(m, (o, meta) => `${this._icon(meta.icon)}${this._t(o)}`);
-    return `<ha-card>${this._header("mdi:tune-variant", this._t("mode"), m.readonly ? this._t(m.detail) : m.cur ? this._t(m.cur) : "")}
-      ${m.banner}<div class="seg" style="grid-template-columns:repeat(auto-fit,minmax(96px,1fr))">${buttons}</div>
-      <div class="note">${m.desc}</div></ha-card>`;
-  }
-
   _sec_alerts(d) {
     const c = d.central;
     const out = [];
@@ -194,6 +184,7 @@ export class SectionsMethods {
   }
 
   _sec_schema(d) {
+    if (!this._isPanel && this.clientWidth && this.clientWidth < 420) return this._sec_air(d); // the diagram is drawn 680 wide: below 420 px the four temperatures read better
     const c = d.central;
     const flip = this._flip();
     const X = (x) => (flip ? 680 - x : x);
@@ -287,38 +278,8 @@ export class SectionsMethods {
       this._btn(`data-act="prefstage" data-v="${esc(opt)}"`, pref === opt ? "a" : "", `${this._t("stage")} ${label}`, !ok, `--mc:${BLUE}`)).join("")}</div>`;
   }
 
-  _sec_fan(d) {
-    const c = d.central;
-    if (!c.fan_stage && !c.fan_auto && !c.fan_intensive) return "";
-    const f = this._fanState(c), { stageOk } = f;
-    const buttons = this._fanButtons(c, f, (icon, label) => `${this._icon(icon)}${label}`);
-    const current = f.current || this._t("automatic");
-    const bar = (id, label, icon) => {
-      const v = this._num(id);
-      if (v === null) return "";
-      const pct = Math.min(100, Math.round((v / (this._config.max_fan_rpm || 3000)) * 100));
-      return `<div class="row first lk" role="button" tabindex="0" data-act="more" data-v="${id}">${this._icon(icon)}${label} ${v.toLocaleString(this._hass.language)} rpm<span class="bar"><i style="width:${pct}%"></i></span></div>`;
-    };
-    const sw = (id, label, icon, act) => id ? `<div class="row">${this._icon(icon)}${label}<span class="sp">
-      <ha-switch data-act="${act}" ${this._on(id) ? "checked" : ""} ${this._ok(id) ? "" : "disabled"}></ha-switch></span></div>` : "";
-    let restore = "";
-    if (c.fan_stage_restore) {
-      const { rs, pref, prefLabel } = this._restoreState(c);
-      const last = rs?.attributes?.last_restore;
-      const when = last ? new Date(last).toLocaleString(this._hass.language, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
-      restore = `${sw(c.fan_stage_restore, this._t("fan_restore"), "mdi:fan-clock", "restoresw")}
-        <div class="note" style="margin-top:2px">${this._t("fan_pref")}${prefLabel ? "" : `: ${this._t("fan_pref_none")}`}${when ? ` · ${this._t("fan_restored")} ${when}` : ""}</div>${this._prefSeg(c, pref)}`;
-    }
-    return `<ha-card>${this._header("mdi:fan", this._t("fan"), current)}
-      <div class="seg" style="grid-template-columns:repeat(6,1fr)">${buttons}</div>
-      ${stageOk ? "" : `<div class="note">${this._t("fan_note")}</div>`}
-      <div style="margin-top:8px">${bar(c.fan_speed_supply, this._t("supply_fan"), "mdi:arrow-top-right")}${bar(c.fan_speed_extract, this._t("extract_fan"), "mdi:arrow-bottom-left")}</div>
-      ${sw(c.fan_intensive, this._t("intensive"), "mdi:rocket-launch-outline", "intensive")}
-      ${sw(c.fan_auto, this._t("fan_auto"), "mdi:fan-auto", "autosw")}${restore}</ha-card>`;
-  }
-
   // Panel only: operating mode and fan stages in one card (the dashboard card keeps them as separate sections).
-  _sec_operation(d) {
+  _sec_operation(d, o = {}) {
     const c = d.central;
     if (!c.operating_mode && !c.fan_stage && !c.fan_auto && !c.fan_intensive) return "";
     // operating mode
@@ -350,32 +311,41 @@ export class SectionsMethods {
     }
     const hp = this._on(c.heat_pump_cooling) ? this._t("hp_cooling") : this._on(c.heat_pump_heating) ? this._t("hp_heating") : this._t("hp_idle");
     const right = [c.heat_pump_heating ? hp : "", current].filter(Boolean).join(" · ");
-    return `<ha-card class="opw">${this._header("mdi:tune-variant", this._t("operation"), right)}
+    const cool = !this._isPanel && c.cooling_enable
+      ? `<div class="row">${this._icon("mdi:snowflake")}${this._t("cooling_enable")}<span class="sp"><ha-switch data-act="coolsw" ${this._on(c.cooling_enable) ? "checked" : ""} ${this._ok(c.cooling_enable) ? "" : "disabled"}></ha-switch></span></div>` : "";
+    const inner = `${o.bare ? "" : this._header("mdi:tune-variant", this._t("operation"), right)}
       ${c.operating_mode ? `<div class="lbl2">${this._t("mode")}</div>` : ""}${modeHtml}${fanHtml}${inline}
-      ${desc ? `<div class="note">${desc}</div>` : ""}${restore}${this._isPanel ? this._boostBlock(c, true) : ""}</ha-card>`;
+      ${desc ? `<div class="note">${desc}</div>` : ""}${restore}${this._boostBlock(c, true)}${cool}`;
+    return o.bare ? `<div class="opw bare">${inner}</div>` : `<ha-card class="opw">${inner}</ha-card>`;
   }
 
-  _sec_heatpump(d) {
+  // The one-glance block of the card: state of the unit, the four figures that matter, optional PTC; `extra` (the controls) sits below.
+  _sec_overview(d, extra = "") {
     const c = d.central;
-    const rpm = this._num(c.compressor_speed);
-    const power = this._pnum();
-    if (rpm === null && power === null && !c.heat_pump_heating) return "";
-    const frac = rpm === null ? 0 : Math.min(1, rpm / (this._config.max_compressor_rpm || 6000));
-    const circ = 2 * Math.PI * 44;
-    const ring = this._lk(c.compressor_speed, `<svg width="104" height="104" viewBox="0 0 110 110" role="img" aria-label="${this._t("compressor")}">
-      <circle cx="55" cy="55" r="44" fill="none" stroke="var(--divider-color)" stroke-width="9"/>
-      <circle cx="55" cy="55" r="44" fill="none" stroke="var(--primary-color)" stroke-width="9" stroke-linecap="round"
-        stroke-dasharray="${(circ * frac).toFixed(1)} ${circ.toFixed(1)}" transform="rotate(-90 55 55)"/>
-      <text x="55" y="50" text-anchor="middle" dominant-baseline="central" style="font-size:19px;font-weight:500">${rpm === null ? "–" : rpm.toLocaleString(this._hass.language)}</text>
-      <text class="st" x="55" y="70" text-anchor="middle" style="font-size:11px">rpm</text></svg>`);
-    const chip = (id, icon, label, cls) => (id && this._ok(id)) ? `<span class="chip lk ${this._on(id) ? cls : ""}" role="button" tabindex="0" data-act="more" data-v="${id}">${this._icon(icon)}${label}</span>` : "";
-    const cool = c.cooling_enable
-      ? `<div class="row">${this._icon("mdi:snowflake")}${this._t("cooling_enable")}<span class="sp"><ha-switch data-act="coolsw" ${this._on(c.cooling_enable) ? "checked" : ""} ${this._ok(c.cooling_enable) ? "" : "disabled"}></ha-switch></span></div>` : "";
-    return `<ha-card>${this._header("mdi:heat-pump", this._t("heatpump"))}
-      <div class="hp">${ring}<div style="flex:1">
-      ${power === null ? "" : `<div><div class="lb">${this._t("power_long")}</div>${this._lk(this._powerId(), `<div class="big">${this._fmt(power, power % 1 ? 1 : 0)} <small>W</small></div>`, "div")}</div>`}</div></div>
-      <div class="chips">${chip(c.heat_pump_heating, "mdi:fire", this._t("hp_heating"), "g")}${chip(c.heat_pump_cooling, "mdi:snowflake", this._t("hp_cooling"), "a")}${chip(c.heat_pump_continuous, "mdi:autorenew", this._t("hp_continuous"), "a")}${chip(c.cooling_available, "mdi:snowflake-check", this._t("cooling_available"), "g")}</div>
-      ${cool}</ha-card>`;
+    const m = c.operating_mode ? this._modeState(c) : null, f = this._fanState(c);
+    const off = this._ok(c.operating_mode_state) && this._state(c.operating_mode_state).state === "off";
+    const cool = this._on(c.heat_pump_cooling), heat = this._on(c.heat_pump_heating);
+    let state = null;
+    if (m && m.readonly) state = [this._t(m.detail), "#c98400"];
+    else if (off) state = [this._t("off_s"), "var(--secondary-text-color)"];
+    else if (cool) state = [this._t("hp_cooling"), BLUE];
+    else if (heat) state = [this._t("hp_heating"), GREEN];
+    else if (c.heat_pump_heating || c.compressor_speed) state = [this._t("hp_idle"), "var(--secondary-text-color)"];
+    const sub = [m && m.cur ? this._t(m.cur) : "", f.current].filter(Boolean).join(" · ");
+    const mini = (label, value, id) => `<div class="mini ${id ? "lk" : ""}" ${id ? `role="button" tabindex="0" data-act="more" data-v="${id}"` : ""}><small>${label}</small><b>${value}</b></div>`;
+    const fresh = c.temp_fresh_air || this._outdoorId(), power = this._pnum(), ptcId = this._ptcP(), ptcW = ptcId ? this._watts(ptcId) : null;
+    const tiles = [
+      c.temp_supply_air ? mini(this._t("supply"), this._temp(c.temp_supply_air) || "–", c.temp_supply_air) : "",
+      c.temp_extract_air ? mini(this._t("extract"), this._temp(c.temp_extract_air) || "–", c.temp_extract_air) : "",
+      fresh ? mini(this._t("fresh"), this._temp(fresh) || "–", fresh) : "",
+      this._powerId() ? mini(this._t("power"), power === null ? "–" : `${this._fmt(power, power % 1 ? 1 : 0)} W`, this._powerId()) : "",
+      ptcId ? mini(this._t("ptc_short"), ptcW === null ? "–" : ptcW >= 1000 ? `${this._fmt(ptcW / 1000, 2)} kW` : `${this._fmt(ptcW, 0)} W`, ptcId) : "",
+    ].join("");
+    const chip = (id, icon, label) => id && this._ok(id) && this._on(id) ? `<span class="chip lk a" role="button" tabindex="0" data-act="more" data-v="${id}">${this._icon(icon)}${label}</span>` : "";
+    const chips = chip(c.heat_pump_continuous, "mdi:autorenew", this._t("hp_continuous")) + chip(c.cooling_available, "mdi:snowflake-check", this._t("cooling_available"));
+    if (!state && !tiles && !sub) return "";
+    return `<ha-card class="ovw"><div class="ovh"><b>${this._config.title || "Proxon FWT"}</b>${state ? this._lk(cool ? c.heat_pump_cooling : c.heat_pump_heating, `<span class="spill" style="--c:${state[1]}">${state[0]}</span>`) : ""}</div>
+      ${sub ? `<div class="ovs">${sub}</div>` : ""}<div class="ovt">${tiles}</div>${chips ? `<div class="chips" style="margin:8px 0 0">${chips}</div>` : ""}${extra}</ha-card>`;
   }
 
   // Refrigerant circuit and drives: the circuit temperatures as tiles, the compressor speed beside them, the supply points as rows.
@@ -437,6 +407,15 @@ export class SectionsMethods {
       </div></div>`;
   }
 
+  // PTC of all rooms in one line: running, enabled, and the power when a sensor is chosen.
+  _ptcLine(d) {
+    const [on, n, ena] = this._ptcRooms(d);
+    if (!n) return "";
+    const id = this._ptcP(), w = id ? this._watts(id) : null;
+    const pw = w === null ? "" : ` · ${this._lk(id, w >= 1000 ? `${this._fmt(w / 1000, 2)} kW` : `${this._fmt(w, 0)} W`)}`;
+    return `<div class="row" style="margin-top:10px">${this._icon("mdi:radiator")}${this._t("ptc")}<b style="margin-left:auto;color:${on ? "#c98400" : "var(--primary-text-color)"}">${on} ${this._t("rs_active")} · ${ena} ${this._t("rs_enabled")}${pw}</b></div>`;
+  }
+
   _sec_rooms(d) {
     const rooms = d.rooms;
     if (!rooms.length) return `<ha-card>${this._header("mdi:home-outline", this._t("rooms"))}<div class="note">${this._t("no_rooms")}</div></ha-card>`;
@@ -472,7 +451,7 @@ export class SectionsMethods {
     return `<ha-card><div class="h">${this._icon("mdi:home-outline")}${this._t("rooms")}<span class="lb" style="margin-left:6px">${heating} ${this._t("of")} ${rooms.length} ${this._t("heating_n")}</span>
       <span class="r"><span class="lb">${this._t("heatmap")}</span>
       <button class="vbtn ${this._view === "tiles" ? "a" : ""}" data-act="view" data-v="tiles">${this._icon("mdi:view-grid-outline")}${this._t("tiles")}</button>
-      <button class="vbtn ${this._view === "list" ? "a" : ""}" data-act="view" data-v="list">${this._icon("mdi:format-list-bulleted")}${this._t("list")}</button></span></div>${list}<div class="rlegend"><span>${this._icon("mdi:arrow-down")}${this._t("legend_cool")}</span><span>${this._icon("mdi:check")}${this._t("legend_ok")}</span><span>${this._icon("mdi:arrow-up")}${this._t("legend_warm")}</span></div>${det}</ha-card>`;
+      <button class="vbtn ${this._view === "list" ? "a" : ""}" data-act="view" data-v="list">${this._icon("mdi:format-list-bulleted")}${this._t("list")}</button></span></div>${list}${this._ptcLine(d)}<div class="rlegend"><span>${this._icon("mdi:arrow-down")}${this._t("legend_cool")}</span><span>${this._icon("mdi:check")}${this._t("legend_ok")}</span><span>${this._icon("mdi:arrow-up")}${this._t("legend_warm")}</span></div>${det}</ha-card>`;
   }
 
   // Merge the "on" periods of one or more binary sensors into [start, end] intervals (seconds).
