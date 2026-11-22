@@ -126,6 +126,15 @@ class Entry:
     entry_id = "e1"
     title = "Proxon"
     options = {}
+    def __init__(self):
+        self.tasks = []
+        self.keep = False  # keep the background coroutines so a test can run them
+
+    def async_create_background_task(self, hass, coro, name):
+        if self.keep:
+            self.tasks.append((name, coro))
+        else:
+            coro.close()
 
 
 def make(coord):
@@ -297,3 +306,57 @@ def test_write_check_gives_no_verdict_while_the_block_is_unreadable(coord):
     c.write_tracker._writes[coord.REG_OPERATING_MODE_WRITE]["at"] -= 60
     c._check_writes(coord.ProxonData(rooms={}, failed={coord.BLOCK_FUNCTION}))  # function block not read
     assert c.write_tracker.pending() == [coord.REG_OPERATING_MODE_WRITE]
+
+
+def refresh_counter(c):
+    calls = []
+
+    async def fake_refresh():
+        calls.append(1)
+
+    c.async_request_refresh = fake_refresh
+    return calls
+
+
+def test_write_schedules_followup_refresh_while_unconfirmed(coord):
+    c, _ = make(coord)
+    calls = refresh_counter(c)
+    c.config_entry.keep = True
+    run(c.async_write_register(coord.REG_FAN_STAGE_WRITE, 3))
+    assert len(calls) == 1  # the refresh after the settle delay
+    (name, coro), = c.config_entry.tasks
+    assert name == "proxon_write_followup"
+    coro.close()
+
+
+def test_followup_refresh_repeats_until_the_unit_confirms(coord, monkeypatch):
+    c, _ = make(coord)
+    calls = refresh_counter(c)
+    c.config_entry.keep = True
+    monkeypatch.setattr(coord, "WRITE_FOLLOWUP_DELAYS", (0, 0, 0))
+    run(c.async_write_register(coord.REG_FAN_STAGE_WRITE, 3))
+    (_, coro), = c.config_entry.tasks
+    base = len(calls)
+
+    async def go():
+        async def confirm_after_second_refresh():
+            while len(calls) < base + 2:
+                await asyncio.sleep(0)
+            c.write_tracker.check(coord.REG_FAN_STAGE_WRITE, 3, 0)
+
+        await asyncio.gather(coro, confirm_after_second_refresh())
+
+    run(go())
+    assert len(calls) == base + 2  # stopped as soon as the write was confirmed
+
+
+def test_followup_refresh_stops_after_all_delays(coord, monkeypatch):
+    c, _ = make(coord)
+    calls = refresh_counter(c)
+    c.config_entry.keep = True
+    monkeypatch.setattr(coord, "WRITE_FOLLOWUP_DELAYS", (0, 0, 0))
+    run(c.async_write_register(coord.REG_FAN_STAGE_WRITE, 3))
+    (_, coro), = c.config_entry.tasks
+    base = len(calls)
+    run(coro)
+    assert len(calls) == base + 3
