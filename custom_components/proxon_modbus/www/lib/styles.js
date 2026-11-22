@@ -394,7 +394,7 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .banner .bgo { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 400; opacity: .8; white-space: nowrap; }
 .banner .bgo ha-icon { --mdc-icon-size: 16px; }
 .twhero { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
-.twhsvg { width: min(100%, 440px); height: auto; flex: none; }
+.twhsvg { width: min(100%, 400px); height: auto; flex: none; }
 .twside { flex: 1; min-width: 220px; max-width: 520px; }
 .twmg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .twm { background: var(--secondary-background-color); border-radius: 10px; padding: 12px 14px; min-width: 0; }

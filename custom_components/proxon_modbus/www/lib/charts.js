@@ -40,7 +40,7 @@ export class ChartsMethods {
     const vals = series.flatMap((s) => s.pts.map((p) => p[1])).concat((o.refs || []).map((r) => r.v)); // reference lines are part of the scale
     if (!vals.length) vals.push(0, 1);
     let mn = Math.min(...vals), mx = Math.max(...vals);
-    const raw = Math.max(1e-6, mx - mn) / 3, p10 = 10 ** Math.floor(Math.log10(raw)), f = raw / p10;
+    const raw = Math.max(1e-6, mx - mn, Math.abs(mx) * 0.05) / 3, p10 = 10 ** Math.floor(Math.log10(raw)), f = raw / p10;
     const step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p10;
     let lo = Math.floor(mn / step) * step, hi = Math.ceil(mx / step) * step;
     if (hi - lo < step * 2) hi = lo + step * 2;
@@ -69,8 +69,13 @@ export class ChartsMethods {
     }).join("")).join("");
     // Reference lines (o.refs: [{ v, label }]), for example targets, dashed with their label at the right edge.
     // The label sits above its line, or below it when the line is at the top edge (it would be cut off there).
-    const refLines = (o.refs || []).map((r) => `<line x1="${pl}" x2="${W - pr}" y1="${y(r.v).toFixed(1)}" y2="${y(r.v).toFixed(1)}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="4 4" opacity=".75"/>
-      <text class="st" x="${W - pr - 2}" y="${(y(r.v) - 4 < pt + 9 ? y(r.v) + 13 : y(r.v) - 4).toFixed(1)}" text-anchor="end" style="font-size:12px">${r.label}</text>`).join("");
+    // Labels top to bottom; one that would sit on the label above it moves down below that one.
+    let lastLy = -1e9;
+    const refLines = [...(o.refs || [])].sort((m, n) => n.v - m.v).map((r) => {
+      const ry = y(r.v), ly = Math.max(ry - 4 < pt + 9 ? ry + 13 : ry - 4, lastLy + 13); lastLy = ly;
+      return `<line x1="${pl}" x2="${W - pr}" y1="${ry.toFixed(1)}" y2="${ry.toFixed(1)}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="4 4" opacity=".75"/>
+      <text class="st" x="${W - pr - 2}" y="${ly.toFixed(1)}" text-anchor="end" style="font-size:12px">${r.label}</text>`;
+    }).join("");
     const lines = series.map((s) => `<polyline fill="none" stroke="${s.color}" stroke-width="${s.prev ? 1.4 : 1.8}" ${s.prev ? 'stroke-dasharray="5 4" opacity=".55"' : ""} stroke-linejoin="round" points="${(s.step ? this.constructor._stairs(s.pts) : s.pts).map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>`).join("");
     // curves with their own stat row are named there; the legend keeps only the rest (previous period, bands)
     const legend = series.filter((s) => s.prev || !s.pts.length).map((s) => `<span><i style="background:${s.color}"></i>${s.label}</span>`).join("");
@@ -114,18 +119,20 @@ export class ChartsMethods {
     }
     const plot = lanes.reduce((n, l) => n + l.h, 0) + gap * (lanes.length - 1), H = pt + plot + pb;
     const nf = (v) => v.toLocaleString(lang, { maximumFractionDigits: Math.abs(v) < 100 ? 1 : 0 });
-    let top = pt, grid = "", body = "", sep = "";
+    let top = pt, grid = "", body = "", sep = "", gaps = "", titles = "";
     const flat = [], rowsAll = [];
     // Curves hidden by a click on their row leave the lane and its scale (the key keeps same-named curves of two lanes apart).
     const hidKey = (s) => `${o.key || ""}|${s.hkey ?? s.label}`, hid = this._hid || {}, isHid = (s) => !!hid[hidKey(s)];
     lanes.forEach((lane, li) => {
       const lt = top, bot = top + lane.h, all = lane.series.filter((s) => s.pts.length && !isHid(s)); // lt: the top of this lane, kept for the scale functions
+      if (li) gaps += `<rect x="0" y="${(top - gap).toFixed(1)}" width="${W}" height="${gap}" fill="var(--card-background-color)"/>`;
+      if (lane.title) titles += `<text x="${pl + 6}" y="${(lt + 12).toFixed(1)}" font-size="11" font-weight="500" fill="var(--secondary-text-color)" style="paint-order:stroke;stroke:var(--card-background-color);stroke-width:3px">${lane.title}</text>`;
       if (li) sep += `<line x1="${pl}" x2="${W - pr}" y1="${(top - gap / 2).toFixed(1)}" y2="${(top - gap / 2).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".8"/>`;
       let ys = null;
       if (lane.axis) {
         const vals = all.flatMap((s) => s.pts.map((p) => p[1])).concat((lane.refs || []).map((r) => r.v));
         if (!vals.length) vals.push(0, 1);
-        const mn = Math.min(...vals), mx = Math.max(...vals), raw = Math.max(1e-6, mx - mn) / (lane.h >= 90 ? 3 : 2), p10 = 10 ** Math.floor(Math.log10(raw)), f = raw / p10;
+        const mn = Math.min(...vals), mx = Math.max(...vals), raw = Math.max(1e-6, mx - mn, Math.abs(mx) * 0.05) / (lane.h >= 90 ? 3 : 2), p10 = 10 ** Math.floor(Math.log10(raw)), f = raw / p10;
         const step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p10;
         let lo = Math.floor(mn / step) * step, hi = Math.ceil(mx / step) * step;
         if (hi - lo < step * 2) hi = lo + step * 2;
@@ -172,7 +179,7 @@ export class ChartsMethods {
     const head = rows ? `<div class="hst hh"><span class="n"></span><span class="v">${this._t("r_now")}</span><span class="v">${this._t("st_min")}</span><span class="v">${this._t("st_max")}</span><span class="v">Ø</span></div>` : "";
     this._cm = { W, H, pl, pr, pt, pb, t0, t1, lo: 0, hi: 0, series: flat, unit: "", range: o.range, x, y: (lanes[0] && lanes[0].y) || (() => pt), phases: o.phases || [] };
     return `<div class="chw"><svg class="ch" style="max-width:100%;height:auto;touch-action:pan-y" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${this._t("history")}">
-      ${phaseBands}${grid}${sep}${body}${this._timeAxis(o, t0, t1, W, H, x)}<line class="xl" y1="${pt}" y2="${H - pb}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/><g class="xd"></g>
+      ${phaseBands}${gaps}${grid}${sep}${body}${titles}${this._timeAxis(o, t0, t1, W, H, x)}<line class="xl" y1="${pt}" y2="${H - pb}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/><g class="xd"></g>
       <rect class="ov" x="${pl}" y="${pt}" width="${W - pl - pr}" height="${plot}" fill="transparent"/></svg><div class="tip" style="display:none"></div></div>
       <div class="legend">${legend}</div>
       ${this._statBlock(rowsAll.map((s) => ({ key: hidKey(s), label: s.label, color: s.color, off: isHid(s) })), head, rows)}`;

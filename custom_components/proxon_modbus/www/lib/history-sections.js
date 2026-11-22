@@ -41,11 +41,12 @@ export class HistorySectionsMethods {
     const fmt = { temp: (v) => `${nf(v)}°`, circuit: (v) => `${nf(v)}°`, drives: (v) => `${this._fmt(v, 0)} rpm`,
       eff: (v) => `${this._fmt(v, 0)} %`,
       power: (v) => (v >= 1000 ? `${this._fmt(v / 1000)} kW` : `${this._fmt(v, 0)} W`) };
+    const title = { temp: this._t("g_air"), eff: this._t("efficiency"), circuit: this._t("g_circuit"), drives: this._t("g_drive"), power: this._t("power") };
     const h = { temp: 110, eff: 80, circuit: 110, drives: 100, power: 80 };
     const lanes = loaded.map(({ m, s }) => {
       const list = (s || []).filter((x) => x.pts.length > 1 && !(m === "circuit" && x.label === comp))
         .map((x) => ({ ...x, hkey: `${m}|${x.label}`, kind: "line", fmt: fmt[m], energy: m === "power" }));
-      return list.length && { h: h[m], axis: true, series: list };
+      return list.length && { h: h[m], axis: true, title: title[m], series: list };
     }).filter(Boolean);
     if (!lanes.length) return `<div class="note">${this._t(range === "30d" || range === "1y" ? "no_stats" : "no_history")}</div>`;
     const hp = this._hp(), short = range === "24h" || range === "7d";
