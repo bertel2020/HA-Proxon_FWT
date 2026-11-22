@@ -66,6 +66,7 @@ from .const import (
     REG_TEMP_PRE_EVAPORATOR,
     REG_TEMP_SUPPLY_AIR,
     REFRESH_COOLDOWN,
+    WRITE_FOLLOWUP_DELAYS,
     WRITE_SETTLE_DELAY,
 )
 from .logic import Boost, FanStageTracker, RunStats, WriteTracker, boost_kind
@@ -498,6 +499,18 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
         self.write_tracker.sent(address, value, time.monotonic(), dt_util.utcnow())
         await asyncio.sleep(WRITE_SETTLE_DELAY)
         await self.async_request_refresh()
+        if address in self.write_tracker.pending() and self.config_entry is not None:
+            self.config_entry.async_create_background_task(
+                self.hass, self._async_followup_refresh(address), "proxon_write_followup"
+            )
+
+    async def _async_followup_refresh(self, address: int) -> None:
+        """Poll again shortly while the unit has not yet reported the value written to `address`."""
+        for delay in WRITE_FOLLOWUP_DELAYS:
+            await asyncio.sleep(delay)
+            if address not in self.write_tracker.pending():
+                return
+            await self.async_request_refresh()
 
     async def _async_read_all(self) -> ProxonData:
         """Read every register block independently.

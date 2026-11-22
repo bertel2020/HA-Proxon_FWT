@@ -5,6 +5,7 @@
 ## 2.5.0 – 2026-11-22
 
 **Neu**
+- **Panel – Warmwasser, Speicherbild:** Links vom Gerät sitzt wieder eine kleine Sonne mit Pfeil (hell und laufend, solange PV-Strom da ist), nachts ein kleiner Mond ohne Pfeil. Der Mond oben am Gerät entfällt, die Beschriftungen der Sollwerte rechts sind kleiner.
 - **Panel – Warmwasser, Karte „Speicher“:** Das Bild zeigt nur noch das Gerät mit den Sollwert-Marken, größer und ohne die schwebende Sonne oder den Mond samt Pfeil. Die PV-Leistung steht als eigene Kachel daneben (Sonne am Tag, Mond in der Nacht). Alle Kacheln haben ein Symbol und die Farbe ihres Zustands, wie die Kennzahlen. Die Außentemperatur und der Messwert im Gerät überlappen die Trennlinie nicht mehr.
 - **Panel – Kennzahlen:** Die 24-Stunden-Kurve läuft jetzt über die ganze Breite der Kachel (unter Symbol und Wert, am unteren Rand) und ist dünner (1,2 statt 1,6 px). Der Balken oben ist etwas schmaler.
 - **Betriebsart und Lüfterstufe:** Die gewählte Betriebsart ist in der Farbe des Modus getönt und umrandet (Winter blau, Komfort grün, Ofen rot), die gewählte Lüfterstufe voll gefüllt. Die Felder sind etwas größer, haben mehr Abstand, und beim Überfahren färbt sich der Hintergrund leicht.

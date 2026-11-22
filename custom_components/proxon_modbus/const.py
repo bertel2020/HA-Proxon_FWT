@@ -87,6 +87,9 @@ DEFAULT_COOLING_AVAILABLE = True
 # and polling immediately would just read back the pre-write "Ist" value.
 # Starting value only; adjust after observing real settle time on the device.
 WRITE_SETTLE_DELAY = 2
+# Extra refreshes (seconds after the write) while the unit has not yet reported the written value:
+# the "Ist" register can lag more than WRITE_SETTLE_DELAY, which made the shown value jump back.
+WRITE_FOLLOWUP_DELAYS = (3, 6, 10)
 REFRESH_COOLDOWN = 1  # s, minimum gap between two refreshes requested after writes
 
 DEFAULT_NUM_ROOMS = 7

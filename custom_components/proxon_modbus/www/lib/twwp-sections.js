@@ -174,12 +174,19 @@ export class TwwpSectionsMethods {
     let lastY = -1e9;
     const marks = [[tm, "tw_ref_min"], [tn, "tw_ref_n"], [t.ents.twwp_target_pv ? this._num(t.ents.twwp_target_pv) : null, "tw_pv_line"]]
       .filter(([v]) => v !== null).sort((a, b) => b[0] - a[0]).map(([v, k]) => {
-        const y = yv(v), ty = Math.max(y + 5, lastY + 16); lastY = ty;
-        return `<line x1="112" x2="122" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--primary-text-color)" stroke-width="2.2"/><text x="127" y="${ty.toFixed(1)}" font-size="13" font-weight="500" fill="var(--primary-text-color)">${this._t(k, this._fmt(v, 0))}</text>`;
+        const y = yv(v), ty = Math.max(y + 5, lastY + 14); lastY = ty;
+        return `<line x1="112" x2="122" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--primary-text-color)" stroke-width="1.8"/><text x="126" y="${ty.toFixed(1)}" font-size="11" font-weight="500" fill="var(--primary-text-color)">${this._t(k, this._fmt(v, 0))}</text>`;
       }).join("");
-    const svg = `<svg class="twhsvg ${heats ? "heat" : ""}" viewBox="0 0 250 226" role="img" aria-label="${this._t("tw_tank")} ${w === null ? "" : this._fmt(w) + "°"}">
+    // A small sun with an arrow into the unit by day (lit and flowing while PV power is there), a small moon without arrow at night.
+    const sunOn = pv !== null && pv > 200, flow = sunOn ? (heats ? GREEN : AMBER) : "var(--divider-color)";
+    const scene = night
+      ? `<path transform="translate(10,28) scale(1.05)" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" fill="${NIGHT}"/>`
+      : `<g opacity="${sunOn ? 1 : 0.4}"><circle cx="22" cy="40" r="9" fill="${AMBER}"/><g stroke="${AMBER}" stroke-width="2.4" stroke-linecap="round">${[0, 45, 90, 135, 180, 225, 270, 315].map((a) => `<line x1="22" y1="26" x2="22" y2="22" transform="rotate(${a} 22 40)"/>`).join("")}</g></g>
+      <path class="twflow" d="M40 40 H 52" fill="none" stroke="${flow}" stroke-width="2.5"/><path d="M47 35 L53 40 L47 45" fill="none" stroke="${flow}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+    const svg = `<svg class="twhsvg ${heats ? "heat" : ""}" viewBox="0 0 300 226" role="img" aria-label="${this._t("tw_tank")} ${w === null ? "" : this._fmt(w) + "°"}">
       <title>${this._t("tw_tank_note")}</title><defs><clipPath id="twc${i}"><rect x="0" y="0" width="112" height="200" rx="28"/></clipPath></defs>
-      <g transform="translate(8,10)">
+      ${scene}
+      <g transform="translate(58,10)">
         <rect width="112" height="200" rx="28" fill="var(--card-background-color)" stroke="var(--divider-color)" stroke-width="1.5"/>
         <g clip-path="url(#twc${i})">
           <rect x="0" y="70" width="112" height="130" fill="var(--secondary-background-color)" opacity=".55"/>
@@ -196,7 +203,6 @@ export class TwwpSectionsMethods {
         ${this._lk(c.water_temp || t.heater, `<text x="64" y="156" text-anchor="middle" font-size="27" font-weight="700" fill="var(--primary-text-color)">${w === null ? "–" : this._fmt(w) + "°"}</text>`, "g")}
         <text x="62" y="180" text-anchor="middle" font-size="12" fill="var(--secondary-text-color)">${this._t("tw_mp")}</text>
         ${marks}
-        ${night ? `<g transform="translate(92,58)"><circle r="11" fill="${NIGHT}"/><path transform="translate(-6,-6) scale(.5)" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></g>` : ""}
       </g></svg>`;
     const chip = bad ? `<span class="chip r">${this._t("tw_problem")}</span>` : prog ? `<span class="chip ${prog === "pv" ? "g" : prog === "minimum" ? "w" : prog === "normal" ? "a" : ""}">${this._t(`tw_p_${prog}`)}</span>` : "";
     const tile = (icon, color, label, value, id) => `<div class="sr${id ? " lk" : ""}" style="--kc:${color}" ${id ? `role="button" tabindex="0" data-act="more" data-v="${id}"` : ""}><span class="ic">${this._icon(icon)}</span><div><small>${label}</small><b>${value}</b></div></div>`;
