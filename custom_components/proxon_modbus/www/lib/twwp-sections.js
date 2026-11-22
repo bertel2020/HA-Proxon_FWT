@@ -224,81 +224,80 @@ export class TwwpSectionsMethods {
       ${this._btn(`data-act="twstep" data-v="${id}|1" aria-label="+"`, "round", this._icon("mdi:plus"), down)}</span></div>`;
   }
 
-  // Wide panel (a container of 1000 px or more): two columns, 2 : 1; narrow: one column.
-  _twWide() {
-    return (this.clientWidth || 900) - 32 >= 1000;
+  // The target of one setting as a small tile with its own - and + buttons (the clicks add up in _twBump).
+  _twTile(id, label) {
+    const down = !this._ok(id), v = this._twTarget(id);
+    return `<div class="twt"><small>${label}</small><div class="twstp">
+      ${this._btn(`data-act="twstep" data-v="${id}|-1" aria-label="−"`, "round", this._icon("mdi:minus"), down)}
+      <b>${v === null ? "–" : this._fmt(v, v % 1 ? 1 : 0) + "°"}</b>
+      ${this._btn(`data-act="twstep" data-v="${id}|1" aria-label="+"`, "round", this._icon("mdi:plus"), down)}</div></div>`;
   }
 
-  // Usable width of a card: all of it, or its share (of 2 : 1) of the wide layout.
-  _twCardW(share = 1) {
-    const total = (this.clientWidth || 900) - 32;
-    return (this._twWide() ? (total - 12) * share : total) - 32;
-  }
-
-  // One slim scale from 30 to 65 degrees: the zones around the normal target, the three targets as marks and the pointer at
-  // the water temperature. What the switching band means is said in one line below.
+  // The scale from 30 to 65 degrees as HTML (real text size, positions in percent, so no width has to be guessed): the zones around the
+  // normal target, the three targets as marks above, the water temperature as pointer below. Close marks go to a second level.
   _twScale(t) {
     const g = (k) => this._num(t.ents[k]), tn = g("twwp_target_normal"), tp = g("twwp_target_pv"), tm = g("twwp_target_min");
     const lo = g("twwp_hyst_low"), hi = g("twwp_hyst_high"), w = this._twWater(t);
-    if (tn === null || tp === null || tm === null || lo === null || hi === null) return null;
-    const W = Math.max(300, Math.min(1300, this._twCardW(1 / 3))), pl = 22, y0 = 36, H = 80;
-    const x = (v) => pl + ((Math.max(S_LO, Math.min(S_HI, v)) - S_LO) / (S_HI - S_LO)) * (W - 2 * pl);
-    const bounds = [S_LO, tm, tn - lo, tn + hi, S_HI].reduce((o, v) => (o.push(Math.max(o.length ? o[o.length - 1] : S_LO, Math.min(S_HI, v))), o), []);
-    const zones = [["tw_z_min", BLUE, .5], ["tw_z_heat", AMBER, .55], ["tw_z_hold", "#8a8f98", .45], ["tw_z_done", CORAL, .5]];
-    const bar = zones.map(([, c, op], k) => (bounds[k + 1] > bounds[k] ? `<rect x="${x(bounds[k]).toFixed(1)}" y="${y0}" width="${(x(bounds[k + 1]) - x(bounds[k])).toFixed(1)}" height="12" fill="${c}" opacity="${op}"/>` : "")).join("");
-    const marks = [[tm, this._t("tw_ref_min", this._fmt(tm, 0))], [tn, this._t("tw_ref_n", this._fmt(tn, 0))], [tp, this._t("tw_pv_line", this._fmt(tp, 0))]].sort((m, n) => m[0] - n[0]);
-    let lastX = -1e9, level = 0;
-    const flags = marks.map(([v, l]) => {
-      level = x(v) - lastX < 90 ? 1 - level : 0; lastX = x(v);
-      return `<line x1="${x(v).toFixed(1)}" x2="${x(v).toFixed(1)}" y1="${level ? 16 : 31}" y2="52" stroke="var(--primary-text-color)" stroke-width="1.4"/><text x="${x(v).toFixed(1)}" y="${level ? 12 : 27}" text-anchor="middle" font-size="12" font-weight="500" fill="var(--primary-text-color)">${l}</text>`;
-    }).join("");
-    const ticks = [30, 40, 50, 60, 65].map((v) => `<text x="${x(v).toFixed(1)}" y="76" text-anchor="middle" font-size="12" fill="var(--secondary-text-color)">${v}</text>`).join("");
-    const right = w !== null && x(w) > W - 120;
-    const pointer = w === null ? "" : `<path d="M${x(w).toFixed(1)} 50 L${(x(w) - 6).toFixed(1)} 60 L${(x(w) + 6).toFixed(1)} 60 Z" fill="${CORAL}"/><text x="${(x(w) + (right ? -10 : 10)).toFixed(1)}" y="62" text-anchor="${right ? "end" : "start"}" font-size="12" font-weight="500" fill="var(--primary-text-color)">${this._t("tw_now", this._fmt(w))}</text>`;
+    if (tn === null || tp === null || tm === null || lo === null || hi === null) return "";
+    const pos = (v) => ((Math.max(S_LO, Math.min(S_HI, v)) - S_LO) / (S_HI - S_LO)) * 100;
     const f = (v) => this._fmt(v, v % 1 ? 1 : 0);
-    const caption = `${this._t("tw_br_n", f(tn - lo), f(tn + hi))} · ${this._t("tw_br_pv", f(tp - lo), f(tp + hi))}`;
+    const bounds = [S_LO, tm, tn - lo, tn + hi, S_HI].reduce((o, v) => (o.push(Math.max(o.length ? o[o.length - 1] : S_LO, Math.min(S_HI, v))), o), []);
+    const zones = [["tw_z_min", BLUE, .55], ["tw_z_heat", AMBER, .7], ["tw_z_hold", "#8a8f98", .45], ["tw_z_done", GREEN, .55]];
+    const bar = zones.map(([, c, op], k) => (bounds[k + 1] > bounds[k] ? `<i style="width:${(pos(bounds[k + 1]) - pos(bounds[k])).toFixed(2)}%;background:${c};opacity:${op}"></i>` : "")).join("");
+    let prev = -1e9, level = 0;
+    const marks = [[tm, "tw_m_min"], [tn, "tw_m_n"], [tp, "tw_m_pv"]].sort((m, n) => m[0] - n[0]).map(([v, k]) => {
+      const p = pos(v);
+      level = p - prev < 24 ? 1 - level : 0; prev = p;
+      return `<i class="tk l${level}" style="left:${p.toFixed(2)}%"></i><span class="lbl l${level}" style="left:${p.toFixed(2)}%">${this._t(k, f(v))}</span>`;
+    }).join("");
+    const pw = w === null ? null : pos(w);
+    const align = pw === null ? "" : pw > 82 ? "transform:translateX(-85%)" : pw < 14 ? "transform:translateX(-15%)" : "";
+    const pointer = w === null ? "" : `<i class="twpt" style="left:${pw.toFixed(2)}%"></i><span class="twpl" style="left:${pw.toFixed(2)}%;${align}">${this._t("tw_nowv", f(w))}</span>`;
+    const axis = [30, 40, 50, 60, 65].map((v) => `<span style="left:${pos(v).toFixed(2)}%">${v}</span>`).join("");
     const legend = zones.map(([k, c, op]) => `<span><i style="background:${c};opacity:${op + 0.15}"></i>${this._t(k)}</span>`).join("");
-    return { svg: `<div class="chw"><svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto" role="img" aria-label="${this._t("tw_targets")}">${bar}${flags}${ticks}${pointer}</svg></div>`, legend, caption };
+    return `<div class="twsc2" role="img" aria-label="${this._t("tw_reg")}"><div class="twbar">${bar}</div>${marks}${pointer}<div class="twax">${axis}</div></div><div class="twlg">${legend}</div>`;
   }
 
-  // The scale with the switching thresholds said in words; sits at the bottom of the operation card, because it shows why the
-  // controller decides as it does.
-  _twScaleBlock(t) {
-    const scale = this._twScale(t);
-    if (!scale) return "";
-    return `<div class="twsc"><div class="twsch">${this._icon("mdi:thermometer-lines")}${this._t("tw_scale")}</div>${scale.svg}<div class="legend" style="margin:4px 0 0">${scale.legend}</div><div class="note" style="margin-top:6px">${scale.caption}</div></div>`;
+  // What the controller decided, in plain words: [headline, detail, tone, icon]. The numbers come from the targets and the hysteresis.
+  _twStatus(t) {
+    const r = t.ents.twwp_reason, rs = this._state(r);
+    if (!r || !this._ok(r)) return null;
+    const g = (k) => this._num(t.ents[k]), tm = g("twwp_target_min"), tn = g("twwp_target_normal"), tp = g("twwp_target_pv"), lo = g("twwp_hyst_low"), hi = g("twwp_hyst_high");
+    const f = (v) => (v === null ? "–" : this._fmt(v, v % 1 ? 1 : 0));
+    const d = (a, b, sign) => (a === null || b === null ? null : a + sign * b);
+    const args = [f(tm), f(tn), f(tp), f(d(tn, lo, -1)), f(d(tn, hi, 1)), f(d(tp, lo, -1)), f(d(tp, hi, 1))];
+    const look = { pv: [GREEN, "mdi:white-balance-sunny"], normal: [AMBER, "mdi:fire"], pv_end: [AMBER, "mdi:fire"], minimum: [AMBER, "mdi:snowflake-alert"],
+      night: ["#7F77DD", "mdi:weather-night"], target_reached: [GREEN, "mdi:check-circle-outline"], pv_target_reached: [GREEN, "mdi:check-circle-outline"],
+      locked: [AMBER, "mdi:timer-sand"], sensor_unavailable: ["#db4437", "mdi:alert-circle-outline"] }[rs.state] || ["#8a8f98", "mdi:pause-circle-outline"];
+    return [this._t(`tw_s_${rs.state}`), this._t(`tw_x_${rs.state}`, ...args), look[0], look[1]];
   }
 
-  // The three targets as steppers; the hysteresis is rarely changed, so it sits folded away behind a line that says what it is.
-  _twTargets(t) {
-    const lo = this._twTarget(t.ents.twwp_hyst_low), hi = this._twTarget(t.ents.twwp_hyst_high);
-    const group = (list, unit) => list.filter(([k]) => t.ents[k]).map(([k, l]) => this._twStepper(t.ents[k], this._t(l), unit)).join("");
-    const warn = lo !== null && hi !== null && lo + hi < MIN_BAND, open = !!this._twHystOpen, f = (v) => this._fmt(v, v % 1 ? 1 : 0);
-    const hyst = lo !== null && hi !== null ? `<div class="twhy"><button class="lnk twhyb" data-act="twhyst" aria-expanded="${open}">${this._icon(open ? "mdi:chevron-up" : "mdi:chevron-down")}${this._t("tw_hyst_h")} · ${this._t("tw_hyst_sum", f(lo), f(hi))}</button>
-      ${open ? `<div class="rows">${group(HYSTS, " K")}</div>` : ""}</div>` : "";
-    return `<ha-card>${this._header("mdi:tune-variant", this._t("tw_targets"))}<div class="rows">${group(TARGETS, "°")}</div>${hyst}
-      ${warn ? `<div class="note" style="color:#c98400">${this._t("tw_hyst_warn")}</div>` : ""}</ha-card>`;
-  }
-
-  // Operation: whether the controller switches (or only runs dry), the PV status, the enables and the last decision.
-  // The program itself is shown in the card header of the main picture and in the day strip.
-  _twOperation(t) {
+  // Control: the switch (controller on or dry run), what was decided and why, the scale with the targets and their buttons, the
+  // hysteresis. The program itself is shown in the card header of the main picture and in the day strip.
+  _twControl(t) {
     const c = this._twCfg(t), ctl = t.ents.twwp_control, ctlOn = this._on(ctl);
     const pvs = this._ok(t.ents.twwp_pv_status) ? this._state(t.ents.twwp_pv_status).state : null;
-    const r = t.ents.twwp_reason, rs = this._state(r), at = (rs && rs.attributes) || {}, ok = this._ok(r);
+    const rs = this._state(t.ents.twwp_reason), at = (rs && rs.attributes) || {}, st = this._twStatus(t);
     const pl = t.ents.twwp_planned, plN = this._num(pl), bad = this._on(t.ents.twwp_sensor_problem);
     const sw = pl && this._state(pl) ? Object.entries(this._state(pl).attributes.switches || {}).map(([e, v]) => `${esc(e)} → ${this._t(v === "on" ? "tw_on" : "tw_off")}`).join("<br>") : "";
     const known = (id) => (id && this._state(id) ? this._t(this._on(id) ? "tw_on" : "tw_off") : null);
-    const en = known(c.enable_switch) !== null ? this._twRow(this._t("tw_en"), this._t("tw_en_val", known(c.enable_switch), known(c.enable_pv_switch) || "–")) : "";
-    return `<ha-card>${this._header("mdi:cog-outline", this._t("tw_op"))}
-      ${ctl ? `<div class="f twctl first"><div><b>${this._t("tw_ctl")}</b><small>${this._t(ctlOn ? "tw_ctl_on" : "tw_ctl_off")}</small></div>
-        <ha-switch data-act="twctl" data-v="${ctl}" ${ctlOn ? "checked" : ""} ${this._ok(ctl) ? "" : "disabled"}></ha-switch></div>` : ""}
-      <div class="rows">${pvs ? this._twRow(this._t("tw_pvstatus"), `<span class="chip ${pvs === "pv" ? "g" : pvs === "too_cold" ? "w" : ""}">${this._t(`tw_pv_${pvs}`)}</span>`) : ""}
-        ${en}
-        ${ok ? `<div class="f"><span>${this._t("tw_last")}<small class="lb"> · ${this._twAge(at.last_run)}</small></span><b>${this._t(`tw_r_${rs.state}`)}</b></div>` : ""}
-        ${plN !== null && plN > 0 ? this._twRow(this._t("tw_planned"), String(plN)) : ""}${sw && plN > 0 ? `<div class="note">${sw}</div>` : ""}
-        ${bad ? this._twRow(this._t("tw_problem"), this._t("tw_yes"), `style="color:#db4437"`) : ""}
-        ${at.last_error ? this._twRow(this._t("tw_err"), esc(at.last_error), `style="color:#db4437"`) : ""}</div>${this._twScaleBlock(t)}</ha-card>`;
+    const meta = [pvs ? this._t(`tw_pv_${pvs}`) : "", at.last_run ? this._t("tw_checked", this._twAge(at.last_run)) : ""].filter(Boolean).join(" · ");
+    const en = known(c.enable_switch) !== null ? `${this._t("tw_en")}: ${this._t("tw_en_val", known(c.enable_switch), known(c.enable_pv_switch) || "–")}` : "";
+    const sw2 = ctl ? `<span class="lb">${this._t(ctlOn ? "tw_auto" : "tw_dry")}</span><ha-switch data-act="twctl" data-v="${ctl}" ${ctlOn ? "checked" : ""} ${this._ok(ctl) ? "" : "disabled"}></ha-switch>` : "";
+    const status = st ? `<div class="twst" style="--c:${st[2]}">${this._icon(st[3])}<div><b>${st[0]}</b><span>${st[1]}</span>
+      ${ctl && !ctlOn ? `<span>${this._t("tw_ctl_off")}</span>` : ""}${meta ? `<small>${meta}</small>` : ""}${en ? `<small>${en}</small>` : ""}</div></div>` : "";
+    const tile = (k, l) => (t.ents[k] ? this._twTile(t.ents[k], this._t(l)) : "");
+    const lo = this._twTarget(t.ents.twwp_hyst_low), hi = this._twTarget(t.ents.twwp_hyst_high), open = !!this._twHystOpen, f = (v) => this._fmt(v, v % 1 ? 1 : 0);
+    const warn = lo !== null && hi !== null && lo + hi < MIN_BAND;
+    const hyst = lo !== null && hi !== null ? `<div class="twhy"><span>${this._t("tw_hyst_gap", f(lo), f(hi))}</span>
+      <button class="vbtn" data-act="twhyst" aria-expanded="${open}">${this._t(open ? "tw_done" : "tw_change")}</button></div>
+      ${open ? `<div class="rows">${HYSTS.filter(([k]) => t.ents[k]).map(([k, l]) => this._twStepper(t.ents[k], this._t(l), " K")).join("")}</div>` : ""}` : "";
+    return `<ha-card>${this._header("mdi:cog-outline", this._t("tw_reg"), sw2)}${status}${this._twScale(t)}
+      <div class="twts">${tile("twwp_target_min", "tw_t_min")}${tile("twwp_target_normal", "tw_t_normal")}${tile("twwp_target_pv", "tw_t_pv")}</div>${hyst}
+      ${warn ? `<div class="note" style="color:#c98400">${this._t("tw_hyst_warn")}</div>` : ""}
+      ${plN !== null && plN > 0 ? `<div class="note" style="margin-top:8px">${this._t("tw_planned")}: ${plN}${sw ? `<br>${sw}` : ""}</div>` : ""}
+      ${bad ? `<div class="note" style="color:#db4437">${this._t("tw_problem")}</div>` : ""}
+      ${at.last_error ? `<div class="note" style="color:#db4437">${this._t("tw_err")}: ${esc(at.last_error)}</div>` : ""}</ha-card>`;
   }
 
   // Entity behind one measurement of the history card; `attr` marks the water_heater fallback (its attribute, no statistics).
@@ -433,7 +432,7 @@ export class TwwpSectionsMethods {
     return `<div class="stack">${d.twwp.map((t, i) => `${many ? `<h3 class="twname">${t.name}</h3>` : ""}
       <div class="twc"><div class="twgrid">
         <div class="tw-hero">${this._twHero(t, i)}</div>
-        <div class="tw-op">${this._twOperation(t)}</div><div class="tw-set">${this._twTargets(t)}</div>
+        <div class="tw-op">${this._twControl(t)}</div>
         <div class="tw-hist">${this._twHistory(t)}</div></div></div>`).join("")}</div>`;
   }
 }

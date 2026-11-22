@@ -455,8 +455,8 @@ export class SectionsMethods {
     const co2c = (v) => (v > 1000 ? "r" : v > 800 ? "w" : "g");
     const tint = (i) => {
       const a = Math.min(Math.abs(i.dev) / 1.5, 1) * 32;
-      if (i.heats) return `--hc:${CORAL};--ha:16%`; // the PTC element runs: coral, whatever the deviation
-      return Math.abs(i.dev) <= 0.3 ? "--hc:#3fa660;--ha:6%" : `--hc:${i.dev < 0 ? BLUE : CORAL};--ha:${Math.round(a)}%`;
+      if (i.heats) return `--hc:${CORAL};--ha:22%`; // the PTC element runs: coral, whatever the deviation
+      return Math.abs(i.dev) <= 0.3 ? "--hc:#3fa660;--ha:12%" : `--hc:${i.dev < 0 ? BLUE : CORAL};--ha:${Math.max(14, Math.round(a))}%`;
     };
     let list;
     if (this._view === "tiles") {

@@ -90,9 +90,9 @@ export class ProxonFwtPanel extends ProxonFwtBase {
     const lang = this._hass.language, sw = W / data.pts.length;
     const hits = data.pts.map((p) => `<rect x="${(x(p[0]) - sw / 2).toFixed(1)}" y="0" width="${sw.toFixed(1)}" height="${H}" fill="transparent" data-tip="${new Date(p[0] * 1000).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })}|${this._fmt(p[1])} °C"/>`).join("");
     return `<div class="chw"><svg viewBox="0 0 ${W} ${H + 14}" style="width:100%;height:auto" role="img" aria-label="${this._t("r_t24")}">
-      ${i.tgt == null ? "" : `<line x1="0" x2="${W}" y1="${y(i.tgt)}" y2="${y(i.tgt)}" stroke="var(--secondary-text-color)" stroke-dasharray="4 4" opacity=".6"/><text x="${W}" y="${Math.max(10, y(i.tgt) - 4)}" text-anchor="end" font-size="10" fill="var(--secondary-text-color)">${this._t("r_set", this._fmt(i.tgt, 0))}</text>`}
-      <polyline fill="none" stroke="${i.col}" stroke-width="2.2" stroke-linejoin="round" points="${line}"/>
-      <circle cx="${x(last[0])}" cy="${y(last[1])}" r="4" fill="${i.col}"/>
+      ${i.tgt == null ? "" : `<line x1="0" x2="${W}" y1="${y(i.tgt)}" y2="${y(i.tgt)}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="4 4" vector-effect="non-scaling-stroke" opacity=".6"/><text x="${W}" y="${Math.max(10, y(i.tgt) - 4)}" text-anchor="end" font-size="10" fill="var(--secondary-text-color)">${this._t("r_set", this._fmt(i.tgt, 0))}</text>`}
+      <polyline fill="none" stroke="${i.col}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" points="${line}"/>
+      <circle cx="${x(last[0])}" cy="${y(last[1])}" r="3" fill="${i.col}"/>
       <text x="0" y="${H + 12}" font-size="10" fill="var(--secondary-text-color)">${this._t("r_ago")}</text><text x="${W}" y="${H + 12}" text-anchor="end" font-size="10" fill="var(--secondary-text-color)">${this._t("r_now")}</text>${hits}</svg><div class="tip" style="display:none"></div></div>`;
   }
 

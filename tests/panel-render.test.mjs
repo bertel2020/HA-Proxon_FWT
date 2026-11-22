@@ -160,7 +160,7 @@ test("the hot water tab appears only with a heat pump, and renders without undef
   assert.ok(html.includes('data-v="warm"') && html.includes("Warmwasser"));
   assert.ok(html.includes("54,2°") && html.includes("389 W") && html.includes("2,5 kW") && html.includes("Messpunkt Mitte"), "main picture: water, power, PV");
   assert.ok(html.includes('data-act="twstep"') && html.includes('data-act="twctl"'));
-  assert.ok(html.includes("PV-Überschuss: Start") && html.includes("vor 2"));
+  assert.ok(html.includes("Heizt mit PV-Überschuss") && html.includes("geprüft vor 2"), "the decision in plain words, and when it was made");
   assert.ok(html.includes("switch.freigabe → an"), "planned switching is listed");
 });
 
@@ -241,19 +241,19 @@ test("the hysteresis is shown and editable, the note follows it, and a narrow ba
   const html = await render(panel, () => { panel._tab = "warm"; });
   check(html);
   assert.ok(!html.includes('data-v="number.tw_hlow|1"'), "folded away by default");
-  assert.ok(html.includes('data-act="twhyst"') && html.includes("Hysterese · heizt 3 K unter Soll, stoppt 1 K darüber") && html.includes('aria-expanded="false"'), "a line says what it is");
+  assert.ok(html.includes('data-act="twhyst"') && html.includes("Schaltabstand: heizt 3 K unter Soll, stoppt 1 K darüber") && html.includes("Ändern") && html.includes('aria-expanded="false"'), "a line says what it is");
   panel._click({ composedPath: () => [{ dataset: { act: "twhyst" } }] });
   const open = await render(panel, () => { panel._tab = "warm"; });
-  assert.ok(open.includes('aria-expanded="true"') && open.includes('data-v="number.tw_hlow|1"') && open.includes('data-v="number.tw_hhigh|-1"'), "steppers for both values once opened");
+  assert.ok(open.includes("Fertig") && open.includes('aria-expanded="true"') && open.includes('data-v="number.tw_hlow|1"') && open.includes('data-v="number.tw_hhigh|-1"'), "steppers for both values once opened");
   panel._click({ composedPath: () => [{ dataset: { act: "twhyst" } }] });
   assert.ok(!(await render(panel, () => { panel._tab = "warm"; })).includes('data-v="number.tw_hlow|1"'), "and folded again");
-  assert.ok(html.includes("Normal: heizt unter 50°, stoppt ab 54°") && html.includes("PV: heizt unter 57°, stoppt ab 61°"), "brackets of the scale follow the values");
+  assert.ok(html.includes("Bis das Wasser 61° erreicht"), "the decision text follows the values");
   assert.ok(!html.includes("kleiner als 2 K"), "the default band of 4 K is fine");
   const narrow = { ...twHass, states: { ...twStates, "number.tw_hlow": { ...twStates["number.tw_hlow"], state: "1" }, "number.tw_hhigh": { ...twStates["number.tw_hhigh"], state: "0.5" } } };
   const p2 = new X.ProxonFwtPanel();
   p2.hass = narrow;
   const warn = await render(p2, () => { p2._tab = "warm"; });
-  assert.ok(warn.includes("kleiner als 2 K") && warn.includes("Normal: heizt unter 52°, stoppt ab 53,5°"));
+  assert.ok(warn.includes("kleiner als 2 K") && warn.includes("Bis das Wasser 60,5° erreicht"));
   calls.length = 0;
   panel._click({ composedPath: () => [{ dataset: { act: "twstep", v: "number.tw_hlow|1" } }] });
   await new Promise((r) => setTimeout(r, 700));
@@ -366,12 +366,12 @@ test("the target scale shows zones, marks, pointer and the switching band", asyn
   panel.hass = twHist;
   const html = await render(panel, () => { panel._tab = "warm"; });
   check(html);
-  assert.ok(html.includes("Minimum 42°") && html.includes("Soll 53°") && html.includes("Soll PV 60°"), "marks");
-  assert.ok(html.includes("jetzt 54,2°"), "pointer at the water temperature");
+  assert.ok(html.includes("Minimum 42°</span>") && html.includes("Normal 53°</span>") && html.includes("PV 60°</span>"), "marks");
+  assert.ok(html.includes("jetzt 54,2°</span>"), "pointer at the water temperature");
   for (const z of ["unter Minimum", "heizt", "halten", "Soll erreicht"]) assert.ok(html.includes(`${z}</span>`), `zone ${z}`);
   assert.ok(!html.includes('aria-label="Heute"'), "no separate day strip: the history shows the programs");
   const sm = panel._twScale({ ents: {}, id: "tw1" });
-  assert.equal(sm, null, "without the numbers there is no scale");
+  assert.equal(sm, "", "without the numbers there is no scale");
   const nodata = new X.ProxonFwtPanel();
   nodata.hass = twHass; // no history
   assert.ok((await render(nodata, () => { nodata._tab = "warm"; })).includes("jetzt 54,2°"), "the scale needs no history");
@@ -382,13 +382,13 @@ test("one Operation card: switch, PV status, enables and the last decision; no s
   panel.hass = twHass;
   const html = await render(panel, () => { panel._tab = "warm"; });
   check(html);
-  const op = html.slice(html.indexOf("Regelung aktiv"));
-  assert.ok(op.includes("Probelauf: Entscheidungen werden nur angezeigt") && op.includes('data-act="twctl"'), "dry-run switch");
-  assert.ok(op.includes("Normal: an · PV: aus"), "both enables in one row");
-  assert.ok(op.includes("Letzte Entscheidung") && op.includes("PV-Überschuss: Start"), "last decision");
+  const op = html.slice(html.indexOf('class="tw-op"'));
+  assert.ok(op.includes("Probelauf: Entscheidungen werden nur angezeigt") && op.includes('data-act="twctl"') && op.includes("Automatik") === false, "dry-run switch");
+  assert.ok(op.includes("Normal: an · PV: aus"), "both enables, quietly");
+  assert.ok(op.includes("Heizt mit PV-Überschuss") && op.includes("geprüft vor"), "what was decided, and when");
   assert.ok(op.includes("Geplante Schaltungen"), "planned switching is listed when there is one");
   assert.ok(!html.includes('class="twprog"') && !html.includes("Das Programm wählt der Regler"), "the program bar is gone");
-  assert.equal((html.match(/<ha-card>/g) || []).length, 4, "main picture, targets, operation (with the scale), history");
+  assert.equal((html.match(/<ha-card>/g) || []).length, 3, "main picture, control (scale, targets, hysteresis), history");
   const idle = { ...twHass, states: { ...twStates, "sensor.tw_planned": { ...twStates["sensor.tw_planned"], state: "0" } } };
   const p2 = new X.ProxonFwtPanel();
   p2.hass = idle;
@@ -400,8 +400,8 @@ test("the page is a grid: main picture and operation, scale and day, then the hi
   panel.hass = twHist;
   const html = await render(panel, () => { panel._tab = "warm"; });
   check(html);
-  const order = ["tw-hero", "tw-op", "tw-set", "tw-hist"].map((c) => html.indexOf(`class="${c}"`));
-  assert.ok(order.every((v) => v > 0) && order.every((v, k) => k === 0 || v > order[k - 1]), "four areas in reading order for the narrow layout");
+  const order = ["tw-hero", "tw-op", "tw-hist"].map((c) => html.indexOf(`class="${c}"`));
+  assert.ok(order.every((v) => v > 0) && order.every((v, k) => k === 0 || v > order[k - 1]), "three areas in reading order for the narrow layout");
   assert.ok(!html.includes("tw-day"), "the day card is gone");
   assert.ok(html.includes('class="twgrid"') && html.includes('class="twc"'));
   assert.ok(!html.includes("Ein Fühler in der Mitte des Speichers: Das Wasser ist einheitlich gefüllt.</div>"), "the explanation is a tooltip, not a text line");
@@ -409,20 +409,6 @@ test("the page is a grid: main picture and operation, scale and day, then the hi
   assert.ok(html.includes('class="legend"') && html.includes("<i style=\"background:"), "legend with colour swatches (in the card header)");
   const css = (await import("node:fs")).readFileSync(new URL("lib/styles.js", WWW), "utf8");
   assert.match(css, /@container \(min-width: 1000px\)[\s\S]*\.tw-hero[\s\S]*\.tw-hist/);
-});
-
-test("card widths: the full panel width when narrow, shares of 2 : 1 when wide", () => {
-  const panel = new X.ProxonFwtPanel();
-  panel.hass = hass;
-  panel.clientWidth = 700;
-  assert.equal(panel._twWide(), false);
-  assert.equal(panel._twCardW(), 700 - 64, "narrow: panel width minus paddings");
-  assert.equal(panel._twCardW(2 / 3), 700 - 64, "narrow: every card has the full width");
-  panel.clientWidth = 1500;
-  assert.equal(panel._twWide(), true);
-  const two = panel._twCardW(2 / 3), one = panel._twCardW(1 / 3);
-  assert.ok(Math.abs(two - 2 * one - 32) < 1, "two thirds are twice one third (plus one padding)");
-  assert.ok(two < panel._twCardW(), "a column is narrower than the whole panel");
 });
 
 test("the history legend names how long each program ran in the shown range", async () => {
@@ -468,19 +454,21 @@ test("a reference line at the top edge gets its label below the line, so it is n
   assert.ok(y("Soll PV 60°") > 0, "inside the picture");
 });
 
-test("the cards of a row in the wide hot water layout are stretched to the same height", async () => {
+test("the wide hot water layout does not stretch cards: hero and history left, control right, all top aligned", async () => {
   const css = (await import("node:fs")).readFileSync(new URL("lib/styles.js", WWW), "utf8");
-  assert.match(css, /\.twgrid \{ align-items: stretch; \}/);
-  assert.match(css, /\.tw-hero > ha-card[\s\S]*flex: 1/);
+  const wide = css.slice(css.indexOf("@container (min-width: 1000px) {\n  .twgrid"));
+  assert.ok(!/align-items: stretch/.test(wide.slice(0, wide.indexOf("`;"))), "no stretching in the wide layout");
+  assert.match(css, /\.tw-op \{ grid-column: 2; grid-row: 1 \/ span 2; \}/);
+  assert.match(css, /\.tw-hist \{ grid-column: 1; grid-row: 2; \}/);
+  assert.match(css, /\.twgrid \{ display: grid;[^}]*align-items: start;/);
 });
-
 test("the scale shows 65 degrees although the targets stop at 60, so the PV switching band above 60 is visible", async () => {
   const panel = new X.ProxonFwtPanel();
   panel.hass = twHass;
   const html = await render(panel, () => { panel._tab = "warm"; });
-  const scale = html.slice(html.indexOf('aria-label="Sollwerte"'));
-  assert.ok(scale.includes(">65</text>") && scale.includes(">60</text>") && !scale.includes(">70</text>"), "marks up to 65");
-  assert.ok(html.includes("PV: heizt unter 57°, stoppt ab 61°"), "the stop point 61 lies on the scale");
+  const scale = html.slice(html.indexOf('class="twsc2"'), html.indexOf('class="twlg"'));
+  assert.ok(scale.includes(">65</span>") && scale.includes(">60</span>") && !scale.includes(">70</span>"), "marks up to 65");
+  assert.ok(html.includes("Bis das Wasser 61° erreicht"), "the stop point 61 lies on the scale");
 });
 
 test("the housing in the main picture is clearly taller than wide, and everything inside it lies inside", async () => {
@@ -830,7 +818,7 @@ test("dashboard card room tiles are tinted by state and show PTC once", async ()
   card.setConfig({ sections: ["rooms"] });
   card.hass = hass;
   const html = await render(card, () => {});
-  assert.ok(/class="tile[^"]*" style="--hc:#D85A30;--ha:16%"/.test(html), "the room whose PTC runs is coral");
+  assert.ok(/class="tile[^"]*" style="--hc:#D85A30;--ha:22%"/.test(html), "the room whose PTC runs is coral");
   assert.ok(!html.includes("mdi:lightning-bolt"), "no second PTC chip next to the heating chip");
 });
 
@@ -861,4 +849,35 @@ test("a room tile of the dashboard card opens its details as a popup and closes 
   // the list view opens the popup too
   html = await render(card, () => { card._view = "list"; });
   assert.ok(/class="rw [^"]*" style="[^"]*" role="button" tabindex="0" data-act="rtoggle"/.test(html));
+});
+
+test("the room popup curve has a fixed thin stroke that does not scale with the width", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = { ...hass, callWS: async (m) => (m.type === "history/history_during_period" ? { "climate.room0": [{ s: "heat", a: { current_temperature: 20.1, temperature: 21 }, lu: Date.now() / 1000 - 7200 }, { s: "heat", a: { current_temperature: 20.8, temperature: 21 }, lu: Date.now() / 1000 - 3600 }, { s: "heat", a: { current_temperature: 21, temperature: 21 }, lu: Date.now() / 1000 - 60 }] } : {}) };
+  const html = await render(panel, () => { panel._tab = "rooms"; panel._ropen = new Set(["climate.room0"]); });
+  assert.ok(/<polyline fill="none" stroke="[^"]+" stroke-width="1\.5"[^>]*vector-effect="non-scaling-stroke"/.test(html), "thin curve with a fixed width");
+});
+
+test("the control card says in plain words what was decided, for every reason", async () => {
+  const cases = { pv: "Heizt mit PV-Überschuss", pv_target_reached: "PV-Soll erreicht", minimum_end: "Minimum erreicht", minimum: "Heizt auf das Minimum",
+    night: "Nachtruhe · Wärmepumpe gesperrt", night_end: "Nacht beendet", pv_end: "PV-Überschuss vorbei", normal: "Heizt im Normalbetrieb",
+    target_reached: "Soll erreicht", none: "Nichts zu tun", locked: "Wartet auf Mindestlauf- oder Pausenzeit", sensor_unavailable: "Wassersensor nicht verfügbar" };
+  for (const [reason, text] of Object.entries(cases)) {
+    const panel = new X.ProxonFwtPanel();
+    panel.hass = { ...twHass, states: { ...twStates, "sensor.tw_reason": { ...twStates["sensor.tw_reason"], state: reason } } };
+    const html = await render(panel, () => { panel._tab = "warm"; });
+    check(html);
+    assert.ok(html.includes(`<b>${text}</b>`), reason);
+    assert.ok(!/\{\d\}/.test(html.slice(html.indexOf('class="twst"'), html.indexOf('class="twsc2"'))), `${reason}: no placeholder left`);
+  }
+  const night = new X.ProxonFwtPanel();
+  night.hass = { ...twHass, states: { ...twStates, "sensor.tw_reason": { ...twStates["sensor.tw_reason"], state: "night" } } };
+  assert.ok((await render(night, () => { night._tab = "warm"; })).includes("Heizt erst wieder, wenn das Wasser unter 42° fällt."), "the minimum comes from the target");
+  // the three targets sit under the scale as tiles with their own buttons, minimum first
+  const p = new X.ProxonFwtPanel();
+  p.hass = twHass;
+  const html = await render(p, () => { p._tab = "warm"; });
+  const i = ["Minimum</small>", "Normalbetrieb</small>", "PV-Betrieb</small>"].map((k) => html.indexOf(k));
+  assert.ok(i.every((v) => v > 0) && i[0] < i[1] && i[1] < i[2], "tiles in the order of the scale");
+  assert.ok(html.includes('data-v="number.tw_min|1"') || html.includes('data-act="twstep"'), "steps are still twstep buttons");
 });
