@@ -1,4 +1,4 @@
-import { BLUE, AMBER, CORAL, RANGE_MS, esc } from "./constants.js";
+import { BLUE, AMBER, CORAL, RANGE_MS, CHART_H, esc } from "./constants.js";
 
 export class ChartsMethods {
   // ---- history: charts --------------------------------------------------
@@ -28,7 +28,7 @@ export class ChartsMethods {
   }
 
   _chart(allSeries, o) {
-    const W = Math.max(300, (this.clientWidth || 680) - 80), H = 260, pl = 42, pr = 10, pt = 10, pb = 22;
+    const W = Math.max(300, (this.clientWidth || 680) - 80), H = CHART_H, pl = 42, pr = 10, pt = 10, pb = 22;
     const lang = this._hass.language;
     const ms = RANGE_MS[o.range] / 1000;
     const t1 = Date.now() / 1000, t0 = t1 - ms;
@@ -87,7 +87,18 @@ export class ChartsMethods {
       ${bands}${byBands}${phaseBands}${grid}${refLines}${lines}${xt}<line class="xl" y1="${pt}" y2="${H - pb}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/><g class="xd"></g>
       <rect class="ov" x="${pl}" y="${pt}" width="${W - pl - pr}" height="${H - pt - pb}" fill="transparent"/></svg><div class="tip" style="display:none"></div></div>
       <div class="legend">${legend}${(o.phases || []).filter((ph) => ph.iv.length && !ph.noLegend).map((ph) => `<span><i style="background:${ph.color};opacity:.5"></i>${ph.legend || ph.label}</span>`).join("")}${showBands ? `<span><i style="background:#3fa660;opacity:.4"></i>${this._t("hp_runs")}</span>` : ""}${o.bypass && o.bypass.length ? `<span><i style="background:${BLUE};opacity:.4"></i>${this._t("bypass_open")}</span>` : ""}</div>
-      <div class="hsts" style="--c:4">${statHead}${statRows}</div>`;
+      ${this._statBlock(allSeries.filter((s) => s.pts.length && !s.prev).map((s) => ({ key: hidKey(s), label: s.label, color: s.color, off: isHid(s) })), statHead, statRows)}`;
+  }
+
+  // Key figures under a chart, one row per curve (now, min, max, mean). Collapsible: folded, only the curve names remain as
+  // small switches (still clickable to hide a curve). items: [{ key, label, color, off }].
+  _statBlock(items, head, rows) {
+    if (!items.length) return "";
+    const open = this._hstOpen !== false;
+    const btn = `<button class="lnk twhyb" data-act="hsts" aria-expanded="${open}">${this._icon(open ? "mdi:chevron-up" : "mdi:chevron-down")}${this._t("measure")}</button>`;
+    if (open) return `<div class="hstt">${btn}</div><div class="hsts" style="--c:4">${head}${rows}</div>`;
+    const chips = items.map((s) => `<span class="tg ${s.off ? "off" : ""}" role="button" tabindex="0" aria-pressed="${!s.off}" data-act="ser" data-v="${esc(s.key)}"><i style="background:${s.color}"></i>${s.label}</span>`).join("");
+    return `<div class="hstt">${btn}</div><div class="legend hlg">${chips}</div>`;
   }
 
   // Several measurements one below the other (lanes) on one shared time axis, one crosshair and one tooltip.
@@ -97,6 +108,10 @@ export class ChartsMethods {
     const W = Math.max(300, (this.clientWidth || 680) - 80), pl = 42, pr = 10, pt = 8, pb = 22, gap = o.gap ?? 8, lang = this._hass.language;
     const t1 = Date.now() / 1000, t0 = t1 - RANGE_MS[o.range] / 1000;
     const x = (t) => pl + ((t - t0) / (t1 - t0)) * (W - pl - pr);
+    if (o.H) { // a fixed total height: the lanes share it in proportion
+      const k = (o.H - pt - pb - gap * (lanes.length - 1)) / lanes.reduce((n, l) => n + l.h, 0);
+      lanes.forEach((l) => { l.h = Math.round(l.h * k); });
+    }
     const plot = lanes.reduce((n, l) => n + l.h, 0) + gap * (lanes.length - 1), H = pt + plot + pb;
     const nf = (v) => v.toLocaleString(lang, { maximumFractionDigits: Math.abs(v) < 100 ? 1 : 0 });
     let top = pt, grid = "", body = "", sep = "";
@@ -160,7 +175,7 @@ export class ChartsMethods {
       ${phaseBands}${grid}${sep}${body}${this._timeAxis(o, t0, t1, W, H, x)}<line class="xl" y1="${pt}" y2="${H - pb}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/><g class="xd"></g>
       <rect class="ov" x="${pl}" y="${pt}" width="${W - pl - pr}" height="${plot}" fill="transparent"/></svg><div class="tip" style="display:none"></div></div>
       <div class="legend">${legend}</div>
-      <div class="hsts" style="--c:4">${head}${rows}</div>`;
+      ${this._statBlock(rowsAll.map((s) => ({ key: hidKey(s), label: s.label, color: s.color, off: isHid(s) })), head, rows)}`;
   }
 
   // Hover / touch tooltip for bar charts and sparklines: elements with data-tip="title|value".

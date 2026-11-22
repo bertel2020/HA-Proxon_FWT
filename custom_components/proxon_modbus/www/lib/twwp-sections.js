@@ -1,4 +1,4 @@
-import { BLUE, CORAL, AMBER, GREEN, RANGE_MS, esc } from "./constants.js";
+import { BLUE, CORAL, AMBER, GREEN, RANGE_MS, CHART_H, esc } from "./constants.js";
 
 const PHASE_COLOR = { pv: GREEN, normal: AMBER, minimum: CORAL, night: BLUE };
 const TARGETS = [["twwp_target_normal", "tw_t_normal"], ["twwp_target_pv", "tw_t_pv"], ["twwp_target_min", "tw_t_min"]];
@@ -403,7 +403,7 @@ export class TwwpSectionsMethods {
     if (all) {
       const loaded = metrics.map((x) => ({ m: x, s: this._hget(key(x), () => this._twLoadSeries(x, range)) }));
       const lanes = loaded.some((e) => e.s === undefined) ? undefined : this._twLanes(t, loaded, this._twRefsOn());
-      body = lanes === undefined ? this._skel(260) : lanes.length ? this._laneChart(lanes, { range, phases }) : emptyNote;
+      body = lanes === undefined ? this._skel(300) : lanes.length ? this._laneChart(lanes, { range, phases, H: CHART_H }) : emptyNote;
     } else {
       let series = this._hget(key(m), () => this._twLoadSeries(m, range));
       if (this._hcmp && series) {

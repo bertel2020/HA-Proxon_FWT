@@ -23,7 +23,7 @@ export class HistorySectionsMethods {
     }
     let body;
     if (all) body = this._allBody(d, range, groups);
-    else if (series === undefined) body = this._skel(260);
+    else if (series === undefined) body = this._skel(300);
     else if (!series || !series.some((s) => s.pts.length > 1)) body = `<div class="note">${this._t(range === "30d" || range === "1y" ? "no_stats" : "no_history")}</div>`;
     else body = this._chart(series, { range, unit: METRIC_META[metric].unit, bands: range === "24h" || range === "7d", bypass: series.bypass, energy: metric === "power", key: metric, off0: metric === "circuit" ? [this._t("compressor")] : [] });
     const rb = (v, l) => `<button class="vbtn ${range === v ? "a" : ""}" data-act="hrange" data-v="${v}">${l}</button>`;

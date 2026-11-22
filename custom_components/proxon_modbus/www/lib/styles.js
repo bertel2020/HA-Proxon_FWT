@@ -184,6 +184,8 @@ svg .sh { font-size: 14px; font-weight: 500; }
 .hst:not(.hh):hover { background: var(--secondary-background-color); }
 .hst .n { color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hst .v { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; } .hst b { font-weight: 600; color: var(--primary-text-color); }
+.hstt { margin-top: 8px; }
+.legend.hlg .tg { cursor: pointer; user-select: none; } .legend.hlg .tg.off { opacity: .45; text-decoration: line-through; }
 .hst.tg { cursor: pointer; user-select: none; }
 .hst.tg.off { opacity: .45; } .hst.tg.off .n { text-decoration: line-through; }
 .hst.hh { padding-top: 0; padding-bottom: 2px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; opacity: .8; }

@@ -77,6 +77,7 @@ export class InteractionMethods {
       case "autosw": call("switch", "toggle", { entity_id: c.fan_auto }); break;
       case "hcmp": this._hcmp = !this._hcmp; this._update(); break;
       case "ser": this._hid = this._hid || {}; this._hid[v] = !(v in this._hid ? this._hid[v] : (this._hdef || {})[v]); this._sig = ""; this._update(); break;
+      case "hsts": this._hstOpen = this._hstOpen === false; this._sig = ""; this._update(); break;
       case "hrange": this._histRange = v; this._update(); break;
       case "metric": this._metric = v; this._update(); break;
       case "twrefs": this._twRefs = !this._twRefsOn(); try { localStorage.setItem("proxon_fwt_twrefs", this._twRefs ? "1" : "0"); } catch (e) { /* ignore */ } this._sig = ""; this._update(); break;
