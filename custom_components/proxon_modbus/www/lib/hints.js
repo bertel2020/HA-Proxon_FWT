@@ -167,8 +167,12 @@ export class HintsMethods {
     if (this._ok(c.error_system)) {
       const bad = this._on(c.error_system);
       const chg = c.mode_change_possible && this._ok(c.mode_change_possible) ? `${this._t("mode_change")}: ${this._on(c.mode_change_possible) ? this._t("possible") : this._t("not_possible")}` : "";
-      const byp = c.bypass_active && this._ok(c.bypass_active) ? `<div class="s">${this._icon("mdi:routes")} ${this._t(this._on(c.bypass_active) ? "bypass_open" : "bypass_closed")}</div>` : "";
-      tiles.push(tile(bad ? "mdi:alert-circle-outline" : "mdi:check-circle-outline", bad ? "#db4437" : GREEN, this._t("error"), bad ? this._t("has_error") : this._t("no_error"), chg, byp, c.error_system));
+      tiles.push(tile(bad ? "mdi:alert-circle-outline" : "mdi:check-circle-outline", bad ? "#db4437" : GREEN, this._t("error"), bad ? this._t("has_error") : this._t("no_error"), chg, "", c.error_system));
+      // the bypass is a state of its own, so it gets its own row instead of a line squeezed under the error
+      if (c.bypass_active && this._ok(c.bypass_active)) {
+        const open = this._on(c.bypass_active);
+        tiles.push(tile("mdi:routes", open ? BLUE : "var(--secondary-text-color)", this._t("bypass_t"), this._t(open ? "bp_open" : "bp_closed"), this._t("bp_auto"), "", c.bypass_active));
+      }
     }
     // runtime and starts
     const st = (icon, color, label, val, unit, id) => val === null ? "" : `<div class="mr${id ? " lk" : ""}" ${id ? `role="button" tabindex="0" data-act="more" data-v="${id}"` : ""}><span>${label}</span><b>${val}${unit}</b></div>`;

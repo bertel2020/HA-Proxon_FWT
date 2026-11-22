@@ -60,11 +60,12 @@ ha-card { padding: 14px 16px; display: block; border: 1px solid var(--ha-card-bo
 .k .v.small { font-size: 15px; }
 .kgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .kpiw { container-type: inline-size; }
-.kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); grid-auto-rows: 1fr; gap: 10px; } /* every row equally tall */
 @container (max-width: 900px) { .kpi { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @container (max-width: 640px) { .kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @container (max-width: 520px) { .kpi .ic { width: 28px; height: 28px; } .kpi .k { gap: 6px; } .kpi .v { font-size: 20px; white-space: nowrap; } .kpi .v small { font-size: 12px; } .kpi .lb { font-size: 12px; } }
-.kpi .k { display: flex; gap: 10px; align-items: flex-start; min-width: 0; } /* top-aligned: label and value sit at the same height in every tile, with or without a sparkline or sub line */
+.kpi .k { display: flex; gap: 10px; align-items: flex-start; min-width: 0; padding: 14px; background: var(--card-background-color); border: 1px solid color-mix(in srgb, var(--primary-text-color) 16%, transparent);
+  box-shadow: inset 0 4px 0 var(--kc, var(--divider-color)), 0 2px 6px #0000001a; } /* top-aligned: label and value sit at the same height in every tile, with or without a sparkline or sub line */
 .kpi .k > div:last-child { min-width: 0; }
 .kpi .k.go { cursor: pointer; border-radius: 12px; } .kpi .k.go:hover .ic { filter: brightness(.95); outline: 1px solid color-mix(in srgb, var(--kc) 50%, transparent); }
 .spk { display: block; width: 110px; max-width: 100%; height: 22px; margin-top: 2px; }
@@ -231,7 +232,7 @@ svg .sh { font-size: 14px; font-weight: 500; }
 .srow:first-child { border-top: 0; padding-top: 0; } .srow:last-child { padding-bottom: 0; }
 .srow .ic { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; flex: none; color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); --mdc-icon-size: 20px; }
 .srow .b { min-width: 0; flex: 1; } .srow .sl { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; font-size: 14px; } .srow .sl b { font-weight: 500; text-align: right; }
-.srow .s { font-size: 14px; color: var(--secondary-text-color); margin-top: 2px; } .srow .s.sw { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; } .srow .vbtn { margin-top: 8px; }
+.srow .s { font-size: 14px; color: var(--secondary-text-color); margin-top: 4px; } .srow .s.sw { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; } .srow .vbtn { margin-top: 8px; }
 .dstat { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 32px; }
 .dsr { display: flex; gap: 32px; } .dsr b { display: block; font-size: 22px; font-weight: 500; } .dsr small { color: var(--secondary-text-color); font-size: 12.5px; }
 .mtgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 4px 24px; }
