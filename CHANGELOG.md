@@ -43,10 +43,12 @@
 - **Panel – Warmwasser:** Die Schaltschwellen stehen jetzt in der Karte Betrieb, die Sollwerte unter dem Speicher. Der Speicher ist höher, der Füllstand folgt der Wassertemperatur, und die drei Sollwerte sind als Marken an der Kante eingezeichnet.
 - **Panel – Charts:** Alle Linien-Charts sind gleich hoch (300 px), die Balken-Charts etwas höher als bisher. Die Spalte Σ (kWh) unter den Charts entfällt, die Energie steht in der Energie-Karte.
 - **Panel – Status und Wartung:** Der Gerätefilter steht direkt nach dem Systemfehler.
+- **Panel – Warmwasser, Status:** Liegt das Wasser im Schaltabstand, zeigt die Statusleiste statt „Nichts zu tun“ jetzt „Heizt weiter“ (bis zur oberen Grenze) bzw. „Pausiert“ (mit der Temperatur, ab der es wieder startet), je nachdem ob die Wärmepumpe läuft. Der PV-Status „Zu kalt“ heißt „PV gesperrt: zu kalt draußen“.
 
 **Korrigiert**
 - Beschriftungen von Referenzlinien (zum Beispiel „Soll 53°“ und „Soll PV 60°“) überlagern sich nicht mehr.
 - Eine flache Kurve bekommt eine lesbare Achse statt dreimal desselben Wertes.
+- **Schreiben:** Bestätigt das Gerät einen geschriebenen Wert (zum Beispiel die Raum-Solltemperatur) nach den 2 Sekunden Wartezeit noch nicht, wird nach 3, 6 und 10 Sekunden erneut gelesen, bis er bestätigt ist. Der Wert sprang zuvor kurz auf den alten zurück und stimmte erst nach dem nächsten Abruf (bis 30 s).
 
 ## 2.4.3 – 2026-11-20
 

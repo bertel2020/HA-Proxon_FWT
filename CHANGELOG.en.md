@@ -43,10 +43,12 @@
 - **Panel – hot water:** The switching thresholds now sit in the Operation card, the targets below the tank. The tank is taller, its fill level follows the water temperature, and the three targets are drawn as marks at its edge.
 - **Panel – charts:** All line charts have the same height (300 px), the bar charts are somewhat taller than before. The Σ (kWh) column below the charts is gone; the energy is in the Energy card.
 - **Panel – status and maintenance:** The device filter now follows the system error directly.
+- **Panel – hot water, status:** When the water is inside the switching band, the status bar now says "Keeps heating" (up to the upper limit) or "Paused" (with the temperature at which it starts again), depending on whether the heat pump runs, instead of "Nothing to do". The PV status "Too cold" is now "PV blocked: too cold outside".
 
 **Fixed**
 - Labels of reference lines (for example "Target 53°" and "PV target 60°") no longer overlap.
 - A flat curve gets a readable axis instead of the same value three times.
+- **Writing:** If the unit has not yet confirmed a written value (for example the room target temperature) after the 2 second wait, it is read again after 3, 6 and 10 seconds until confirmed. The value used to jump back to the old one briefly and was only right after the next poll (up to 30 s).
 
 ## 2.4.3 – 2026-11-20
 
