@@ -5,6 +5,7 @@
 ## 2.5.0 – 2026-11-22
 
 **New**
+- Mobile view reworked: chart value table with a separate name row, room cards/list/comparison without overflow at 320 px, system schema and air paths swipeable instead of tiny, hot water set points as large row steppers, two-column KPI tiles, room header and view switch adjusted.
 - **Panel – hot water, unit picture:** The unit looks more like a hot water heat pump: a fan unit with a ring and five blades, vent slots, feet and a shadow. The water has a colour gradient with a wave line at the surface and a sheen strip, and bubbles rise while it heats. The reading sits on a light field, so it stays legible on every water colour.
 - **Panel – hot water, history:** The chart is taller (420 instead of 300 px), the same in "All" and for single measurements.
 - **Panel – history, "All":** The lanes are taller (air and refrigerant circuit 150 px, drives 130, power 110, heat recovery and PTC 100) with larger gaps. The curves are calmer: a moving average over about 20 minutes smooths the sawtooth (the table below still shows the real values), the lines are thinner and the heat pump bands and grid lines are paler.

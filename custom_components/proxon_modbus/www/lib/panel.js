@@ -131,7 +131,7 @@ export class ProxonFwtPanel extends ProxonFwtBase {
       ${rows.map(([n, i], k) => {
         const pct = Math.max(-1, Math.min(1, i.dev / 2)) * 50;
         return `<div class="crow ${k === 0 ? "first" : ""}" style="--c:${i.col}" role="button" tabindex="0" aria-haspopup="dialog" data-act="rtoggle" data-v="${n}">
-          <div class="n">${this._icon(this._roomIcon(i.r.name))}${i.r.name}</div>
+          <div class="n">${this._icon(this._roomIcon(i.r.name))}<span>${i.r.name}</span></div>
           <div class="axis"><div class="zero"></div><div class="bar" style="left:${pct < 0 ? 50 + pct : 50}%;width:${Math.abs(pct)}%"></div><div class="dot" style="left:${50 + pct}%"></div></div>
           <div class="v"><b>${i.cur == null ? "–" : this._fmt(i.cur) + "°"}</b><small>→ ${i.tgt == null ? "–" : this._fmt(i.tgt, 0) + "°"}</small></div></div>
 `;
@@ -167,7 +167,7 @@ export class ProxonFwtPanel extends ProxonFwtBase {
     let rows = all.filter(([, i]) => filter === "all" || (filter === "heat" && i.heats) || (filter === "ena" && i.ptcE && this._on(i.ptcE)) || (filter === "dev" && Math.abs(i.dev) > 0.3) || (filter === "co2" && i.co2 != null && i.co2 > 800));
     if (filter === "dev") rows = rows.sort((a, b) => Math.abs(b[1].dev) - Math.abs(a[1].dev));
     const seg = [["cards", "mdi:view-grid-outline"], ["cmp", "mdi:chart-bar"], ["list", "mdi:format-list-bulleted"]]
-      .map(([k, ic]) => `<button class="${k === view ? "a" : ""}" data-act="rview" data-v="${k}" aria-pressed="${k === view}">${this._icon(ic)}${this._t(`rv_${k}`)}</button>`).join("");
+      .map(([k, ic]) => `<button class="${k === view ? "a" : ""}" data-act="rview" data-v="${k}" aria-pressed="${k === view}">${this._icon(ic)}<span class="rl">${this._t(`rv_${k}`)}</span></button>`).join("");
     const chips = [["all", ""], ["heat", "mdi:fire"], ["ena", "mdi:fire-circle"], ["dev", "mdi:swap-vertical"], ["co2", "mdi:molecule-co2"]]
       .map(([k, ic]) => `<button class="fchip ${k === filter ? "a" : ""}" data-act="rfilter" data-v="${k}" aria-pressed="${k === filter}">${ic ? this._icon(ic) : ""}${this._t(`rf_${k}`)}</button>`).join("");
     const body = !rows.length ? `<div class="note" style="text-align:center;padding:18px">${this._t("rs_none")}</div>`

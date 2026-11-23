@@ -168,7 +168,7 @@ export class SectionsMethods {
       ${box(inn, 52, CORAL, this._t("extract"), c.temp_extract_air)}${box(inn, 122, CORAL, this._t("supply"), c.temp_supply_air)}
       <text class="st" x="340" y="205" text-anchor="middle">${this._t("exchanger")}</text></svg>`;
     const bypass = c.bypass_active && this._ok(c.bypass_active) ? this._t(this._on(c.bypass_active) ? "bypass_open" : "bypass_closed") : "";
-    return `<ha-card>${this._header("mdi:swap-horizontal", this._t("air"), bypass)}${svg}</ha-card>`;
+    return `<ha-card>${this._header("mdi:swap-horizontal", this._t("air"), bypass)}<div class="svgs">${svg}</div></ha-card>`;
   }
 
   // Rounded polyline path (corner radius r) through the given points.
@@ -269,7 +269,7 @@ export class SectionsMethods {
     const heating = this._on(c.heat_pump_heating) || cool;
     const chips = `${c.bypass_active && this._ok(c.bypass_active) ? `<span class="chip ${bypass ? "a" : ""}">${this._icon("mdi:routes")}${this._t(bypass ? "bypass_open" : "bypass_closed")}</span>` : ""}
       ${c.heat_pump_heating ? `<span class="chip ${cool ? "a" : heating ? "g" : ""}">${this._icon(cool ? "mdi:snowflake" : heating ? "mdi:fire" : "mdi:pause")}${this._t(cool ? "hp_cooling" : heating ? "hp_heating" : "hp_idle")}</span>` : ""}`;
-    return `<ha-card>${this._header("mdi:sitemap-outline", this._t("schema"), chips)}${svg}<div class="note">${this._t("probes")}</div></ha-card>`;
+    return `<ha-card>${this._header("mdi:sitemap-outline", this._t("schema"), chips)}<div class="svgs">${svg}</div><div class="note">${this._t("probes")}</div></ha-card>`;
   }
 
   // The wish stage is a quiet small switch (neutral, numbers only), so it is not mistaken for the operating stage above it.
@@ -473,7 +473,7 @@ export class SectionsMethods {
         <b>${i.cur == null ? "–" : this._fmt(i.cur) + "°"} <span class="lb">→ ${i.tgt == null ? "–" : this._fmt(i.tgt, 0) + "°"}</span></b></div>`).join("");
     }
     return `<ha-card><div class="h">${this._icon("mdi:home-outline")}${this._t("rooms")}<span class="lb" style="margin-left:6px">${heating} ${this._t("of")} ${rooms.length} ${this._t("heating_n")}</span>
-      <span class="r"><span class="lb">${this._t("heatmap")}</span>
+      <span class="r vsw"><span class="lb">${this._t("heatmap")}</span>
       <button class="vbtn ${this._view === "tiles" ? "a" : ""}" data-act="view" data-v="tiles">${this._icon("mdi:view-grid-outline")}${this._t("tiles")}</button>
       <button class="vbtn ${this._view === "list" ? "a" : ""}" data-act="view" data-v="list">${this._icon("mdi:format-list-bulleted")}${this._t("list")}</button></span></div>${list}${this._ptcLine(d)}<div class="rlegend"><span>${this._icon("mdi:arrow-down")}${this._t("legend_cool")}</span><span>${this._icon("mdi:check")}${this._t("legend_ok")}</span><span>${this._icon("mdi:arrow-up")}${this._t("legend_warm")}</span><span>${this._icon("mdi:gesture-tap")}${this._t("r_tapnote")}</span></div>${this._drawerMode ? "" : this._roomPopup(info)}</ha-card>`;
   }
