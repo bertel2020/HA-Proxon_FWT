@@ -177,7 +177,7 @@ svg text { fill: var(--primary-text-color); font-family: inherit; }
 svg .st { font-size: 13px; fill: var(--secondary-text-color); }
 svg .sh { font-size: 14px; font-weight: 500; }
 .empty { padding: 16px; color: var(--secondary-text-color); }
-.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--secondary-text-color); margin-top: 6px; }
+.legend { display: flex; gap: 4px 14px; flex-wrap: wrap; font-size: 13px; color: var(--secondary-text-color); margin-top: 6px; }
 .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
 .panel { padding: 16px; max-width: 1500px; margin: 0 auto; }
 .bar-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
@@ -185,7 +185,7 @@ svg .sh { font-size: 14px; font-weight: 500; }
 .bar-top .title ha-icon { --mdc-icon-size: 26px; color: var(--primary-color); }
 .bar-top .grow { flex: 1; }
 .menu { display: none; }
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--divider-color); margin: 0 0 14px; overflow-x: auto; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--divider-color); margin: 0 0 14px; overflow-x: auto; position: sticky; top: 0; z-index: 5; background: var(--primary-background-color, var(--card-background-color)); }
 .tabbtn { font: inherit; font-size: 14px; display: inline-flex; gap: 6px; align-items: center; padding: 10px 14px; border: 0; border-bottom: 2px solid transparent;
   background: none; color: var(--secondary-text-color); cursor: pointer; white-space: nowrap; }
 .tabbtn ha-icon { --mdc-icon-size: 20px; }
@@ -411,7 +411,7 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
 .srow2 { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--divider-color); font-size: 14px; }
 .srow2:first-child { border-top: 0; padding-top: 0; } .srow2:last-child { padding-bottom: 0; }
 .srow2 .ic { --mdc-icon-size: 20px; display: inline-flex; flex: none; } .srow2 .lb2 { min-width: 0; } .srow2 b { margin-left: auto; font-weight: 500; text-align: right; }
-.srow2.go { cursor: pointer; }
+.srow2.go { cursor: pointer; } .srow2 > .lk { margin-left: auto; }
 /* History tab: the sections share one surface, separated by lines. */
 .panel .hsurf { background: var(--ha-card-background, var(--card-background-color)); border-radius: 12px; padding: 0 18px; box-shadow: var(--ha-card-box-shadow, none); }
 .panel .hsurf ha-card { background: none; box-shadow: none; border-radius: 0; padding: 16px 0; }
@@ -533,6 +533,7 @@ button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outlin
   .tw-hist { grid-column: 1 / -1; grid-row: 2; } /* the history uses the full width */
   .twsb { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); align-items: center; gap: 24px; }
 }
+@media (pointer: coarse) { .vbtn, .fchip, .rseg button, .pseg button { min-height: 36px; } .ins .x { width: 40px; height: 40px; } .rsheet .x, .rsheet .close { min-width: 40px; min-height: 40px; } }
 `;
 
 let SHEET; // one constructable stylesheet shared by every card/panel instead of a <style> per render

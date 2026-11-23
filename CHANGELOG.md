@@ -5,6 +5,7 @@
 ## 2.5.0 – 2026-11-22
 
 **Neu**
+- Mobile Feinschliff: Referenz-Labels und Zeitachse der Charts ohne Überdeckung, größere Touch-Ziele auf Touchgeräten, Tab-Leiste bleibt im Querformat oben stehen, „OK“ in der Status-Liste rechtsbündig, Legenden mit engerem Zeilenabstand, Messpunkt-Beschriftung im Gerätebild mit Abstand zum Rand.
 - Mobile Ansicht überarbeitet: Messwerte-Tabelle der Charts mit eigener Namenszeile, Raumkarten/-liste/-vergleich ohne Überlauf bei 320 px, Anlagenschema und Luftwege seitlich wischbar statt winzig, Warmwasser-Sollwerte als große Zeilen-Stepper, Kennzahl-Kacheln zweispaltig, Kopfzeile und Umschalter der Räume angepasst.
 - **Panel – Warmwasser, Gerätebild:** Das Gerät sieht mehr nach einer Warmwasser-Wärmepumpe aus: Lüftereinheit mit Ring und fünf Flügeln, Lüftungsschlitze, Füße und Schatten. Das Wasser hat einen Farbverlauf mit Wellenlinie an der Oberfläche und Glanzstreifen, beim Heizen steigen Bläschen auf. Der Messwert steht auf einem hellen Feld und ist so auf jeder Wasserfarbe lesbar.
 - **Panel – Warmwasser, Verlauf:** Der Chart ist höher (420 statt 300 px), in „Alle“ und bei einzelnen Messwerten gleich.

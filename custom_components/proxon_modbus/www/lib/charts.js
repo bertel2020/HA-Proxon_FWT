@@ -23,12 +23,12 @@ export class ChartsMethods {
       : o.range === "7d" ? new Date(t * 1000).toLocaleDateString(lang, { weekday: "short" })
         : o.range === "1y" ? new Date(t * 1000).toLocaleDateString(lang, { month: "short" })
         : new Date(t * 1000).toLocaleDateString(lang, { day: "2-digit", month: "2-digit" });
-    const xt = ticks.map((t) => `<text class="st" x="${x(t).toFixed(1)}" y="${H - 5}" text-anchor="${x(t) > W - 24 ? "end" : "middle"}" style="font-size:12px">${tl(t)}</text>`).join("");
+    const xt = ticks.map((t) => `<text class="st" x="${x(t).toFixed(1)}" y="${H - 5}" text-anchor="${x(t) > W - 24 ? "end" : x(t) < 56 ? "start" : "middle"}" style="font-size:12px">${tl(t)}</text>`).join("");
     return xt;
   }
 
   _chart(allSeries, o) {
-    const W = Math.max(300, (this.clientWidth || 680) - 80), H = o.H || CHART_H, pl = 42, pr = 10, pt = 10, pb = 22;
+    const W = Math.max(260, (this.clientWidth || 680) - 80), H = o.H || CHART_H, pl = 42, pr = 10, pt = 10, pb = 22;
     const lang = this._hass.language;
     const ms = RANGE_MS[o.range] / 1000;
     const t1 = Date.now() / 1000, t0 = t1 - ms;
@@ -74,7 +74,7 @@ export class ChartsMethods {
     const refLines = [...(o.refs || [])].sort((m, n) => n.v - m.v).map((r) => {
       const ry = y(r.v), ly = Math.max(ry - 4 < pt + 9 ? ry + 13 : ry - 4, lastLy + 13); lastLy = ly;
       return `<line x1="${pl}" x2="${W - pr}" y1="${ry.toFixed(1)}" y2="${ry.toFixed(1)}" stroke="var(--secondary-text-color)" stroke-width="1" stroke-dasharray="4 4" opacity=".75"/>
-      <text class="st" x="${W - pr - 2}" y="${ly.toFixed(1)}" text-anchor="end" style="font-size:12px">${r.label}</text>`;
+      <text class="st" x="${W - pr - 2}" y="${ly.toFixed(1)}" text-anchor="end" style="font-size:12px;paint-order:stroke;stroke:var(--card-background-color);stroke-width:3px">${r.label}</text>`;
     }).join("");
     const lines = series.map((s) => `<polyline fill="none" stroke="${s.color}" stroke-width="${s.prev ? 1.4 : 1.8}" ${s.prev ? 'stroke-dasharray="5 4" opacity=".55"' : ""} stroke-linejoin="round" points="${(s.step ? this.constructor._stairs(s.pts) : s.pts).map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/>`).join("");
     // curves with their own stat row are named there; the legend keeps only the rest (previous period, bands)
@@ -110,7 +110,7 @@ export class ChartsMethods {
   // lanes: [{ h, axis, series: [{ label, short, color, pts, kind: "line" | "area", fmt, energy }], refs }]. A lane with an axis has a
   // common scale with grid and numbers; a lane without one gives each curve a scale of its own (told apart by colour and name only).
   _laneChart(lanes, o) {
-    const W = Math.max(300, (this.clientWidth || 680) - 80), pl = 42, pr = 10, pt = 8, pb = 22, gap = o.gap ?? 8, lang = this._hass.language;
+    const W = Math.max(260, (this.clientWidth || 680) - 80), pl = 42, pr = 10, pt = 8, pb = 22, gap = o.gap ?? 8, lang = this._hass.language;
     const t1 = Date.now() / 1000, t0 = t1 - RANGE_MS[o.range] / 1000;
     const x = (t) => pl + ((t - t0) / (t1 - t0)) * (W - pl - pr);
     if (o.H) { // a fixed total height: the lanes share it in proportion
@@ -125,7 +125,7 @@ export class ChartsMethods {
     const hidKey = (s) => `${o.key || ""}|${s.hkey ?? s.label}`, hid = this._hid || {}, isHid = (s) => !!hid[hidKey(s)];
     lanes.forEach((lane, li) => {
       const lt = top, bot = top + lane.h, all = lane.series.filter((s) => s.pts.length && !isHid(s)); // lt: the top of this lane, kept for the scale functions
-      if (li) gaps += `<rect x="0" y="${(top - gap).toFixed(1)}" width="${W}" height="${gap}" fill="var(--card-background-color)"/>`;
+      if (li) gaps += `<rect x="${pl}" y="${(top - gap).toFixed(1)}" width="${W - pl}" height="${gap}" fill="var(--card-background-color)"/>`;
       if (lane.title) titles += `<text x="${pl + 6}" y="${(lt + 12).toFixed(1)}" font-size="11" font-weight="500" fill="var(--secondary-text-color)" style="paint-order:stroke;stroke:var(--card-background-color);stroke-width:3px">${lane.title}</text>`;
       if (li) sep += `<line x1="${pl}" x2="${W - pr}" y1="${(top - gap / 2).toFixed(1)}" y2="${(top - gap / 2).toFixed(1)}" stroke="var(--divider-color)" stroke-width=".8"/>`;
       let ys = null;
@@ -253,7 +253,7 @@ export class ChartsMethods {
   _barChart(rows, { key, label, color, unit, range, out, ref, stamp }) {
     const lang = this._hass.language, data = rows.filter((m) => m[key] !== undefined);
     if (!data.length) return `<div class="note">${this._t("no_stats")}</div>`;
-    const W = Math.max(300, (this.clientWidth || 680) - 80), H = 260, pl = 36, pr = out ? 34 : 10, pt = 12, pb = 22;
+    const W = Math.max(260, (this.clientWidth || 680) - 80), H = 260, pl = 36, pr = out ? 34 : 10, pt = 12, pb = 22;
     const vals = data.map((m) => m[key]), max = Math.max(1, Math.ceil(Math.max(...vals) * 1.05));
     const outs = out ? data.filter((m) => m.out !== undefined).map((m) => m.out) : [];
     const oLo = outs.length ? Math.floor(Math.min(...outs) - 1) : 0, oHi = outs.length ? Math.ceil(Math.max(...outs) + 1) : 1;

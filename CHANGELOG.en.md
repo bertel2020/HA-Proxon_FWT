@@ -5,6 +5,7 @@
 ## 2.5.0 – 2026-11-22
 
 **New**
+- Mobile polish: chart reference labels and time axis no longer overlap, larger touch targets on touch devices, tab bar stays at the top in landscape, "OK" in the status list right-aligned, legends with tighter line spacing, measuring-point label in the device picture kept off the edge.
 - Mobile view reworked: chart value table with a separate name row, room cards/list/comparison without overflow at 320 px, system schema and air paths swipeable instead of tiny, hot water set points as large row steppers, two-column KPI tiles, room header and view switch adjusted.
 - **Panel – hot water, unit picture:** The unit looks more like a hot water heat pump: a fan unit with a ring and five blades, vent slots, feet and a shadow. The water has a colour gradient with a wave line at the surface and a sheen strip, and bubbles rise while it heats. The reading sits on a light field, so it stays legible on every water colour.
 - **Panel – hot water, history:** The chart is taller (420 instead of 300 px), the same in "All" and for single measurements.

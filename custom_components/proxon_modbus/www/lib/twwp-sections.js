@@ -208,10 +208,10 @@ export class TwwpSectionsMethods {
         <g fill="var(--primary-text-color)" opacity=".4">${[14, 23, 32, 41].map((y) => `<rect x="68" y="${y}" width="30" height="4" rx="2"/>`).join("")}</g>
         <circle cx="92" cy="58" r="4.5" fill="${heats ? GREEN : "var(--divider-color)"}" stroke="var(--primary-text-color)" stroke-opacity=".25"/>
         ${this._lk(c.outer_temp, `<text x="36" y="66" font-size="14" font-weight="700" text-anchor="middle" fill="var(--primary-text-color)">${outer === null ? "" : this._fmt(outer) + "°"}</text>`, "g")}
-        <rect x="6" y="124" width="100" height="52" rx="14" fill="var(--card-background-color)" opacity=".92"/>
+        <rect x="2" y="124" width="108" height="52" rx="14" fill="var(--card-background-color)" opacity=".92"/>
         <circle cx="18" cy="146" r="5" fill="var(--card-background-color)" stroke="var(--primary-text-color)" stroke-width="1.8"/>
         ${this._lk(c.water_temp || t.heater, `<text x="64" y="153" text-anchor="middle" font-size="27" font-weight="700" fill="var(--primary-text-color)">${w === null ? "–" : this._fmt(w) + "°"}</text>`, "g")}
-        <text x="62" y="170" text-anchor="middle" font-size="11" fill="var(--secondary-text-color)">${this._t("tw_mp")}</text>
+        <text x="58" y="170" text-anchor="middle" font-size="10.5" fill="var(--secondary-text-color)">${this._t("tw_mp")}</text>
         ${marks}
       </g></svg>`;
     const chip = bad ? `<span class="chip r">${this._t("tw_problem")}</span>` : prog ? `<span class="chip ${prog === "pv" ? "g" : prog === "minimum" ? "w" : prog === "normal" ? "a" : ""}">${this._t(`tw_p_${prog}`)}</span>` : "";
