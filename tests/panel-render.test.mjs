@@ -35,7 +35,7 @@ const num = { temp_supply_air: "19.4", temp_fresh_air: "4.1", temp_exhaust_air: 
 for (const [k, v] of Object.entries(num)) ent(`sensor.${k}`, "central", { translation_key: k }, v, { unit_of_measurement: k === "power_consumption" ? "W" : "" });
 ent("select.operating_mode", "central", { translation_key: "operating_mode" }, "eco_winter", { options: ["off", "eco_winter", "eco_summer", "comfort"] });
 ent("select.fan_stage", "central", { translation_key: "fan_stage" }, "stage_2", { options: ["off", "stage_1", "stage_2", "stage_3", "stage_4"] });
-for (const k of ["fan_auto", "fan_intensive", "fan_stage_restore", "cooling_enable", "boost"]) ent(`switch.${k}`, "central", { translation_key: k }, k === "fan_auto" ? "on" : "off");
+for (const k of ["fan_auto", "fan_intensive", "fan_stage_restore", "ptc_fan_boost", "cooling_enable", "boost"]) ent(`switch.${k}`, "central", { translation_key: k }, k === "fan_auto" ? "on" : "off");
 for (const k of ["heat_pump_heating", "heat_pump_cooling", "heat_pump_continuous", "bypass_active", "filter_device", "filter_recirculation", "error_system", "mode_change_possible", "fan_stage_4_selectable", "intensive_ventilation_selectable", "cooling_available"]) ent(`binary_sensor.${k}`, "central", { translation_key: k }, k === "heat_pump_heating" || k === "mode_change_possible" || k === "fan_stage_4_selectable" ? "on" : "off");
 ent("sensor.last_write_error", "central", { translation_key: "last_write_error" }, "none", {});
 ent("button.filter_changed", "central", { translation_key: "filter_changed" }, "unknown");
@@ -117,6 +117,22 @@ test("boost ventilation sits in the Operation card; there is no quick-actions ca
   assert.ok(!html.includes("Schnellaktionen"));
   const rooms = await render(panel, () => { panel._tab = "rooms"; });
   assert.ok(!rooms.includes('data-act="allroom"'));
+});
+
+test("the Operation card has the switch for fan stage 4 while the PTC heats, and it toggles the switch entity", async () => {
+  const panel = new X.ProxonFwtPanel();
+  panel.hass = hass;
+  const html = await render(panel, () => { panel._tab = "overview"; });
+  const op = html.slice(html.indexOf('class="opw"'));
+  assert.ok(op.includes("Stufe 4 bei aktivem PTC") && op.includes('data-act="ptcfansw"'), "switch row in the Operation card");
+  const calls = [];
+  panel._hass.callService = async (...a) => { calls.push(a); };
+  panel._click({ composedPath: () => [{ dataset: { act: "ptcfansw" } }] });
+  await tick();
+  assert.deepEqual(calls[0], ["switch", "toggle", { entity_id: "switch.ptc_fan_boost" }]);
+  const en = new X.ProxonFwtPanel();
+  en.hass = { ...hass, language: "en" };
+  assert.ok((await render(en, () => { en._tab = "overview"; })).includes("Stage 4 while PTC heats"), "English text");
 });
 
 // ---- hot water heat pump (TWWP) ---------------------------------------------

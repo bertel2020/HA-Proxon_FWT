@@ -310,13 +310,15 @@ export class SectionsMethods {
       restore = `<div class="row">${this._icon("mdi:fan-clock")}${this._t("fan_restore")}<span class="sp"><ha-switch data-act="restoresw" ${this._on(c.fan_stage_restore) ? "checked" : ""} ${this._ok(c.fan_stage_restore) ? "" : "disabled"}></ha-switch></span></div>
         <div class="note rsub prefrow"><span>${this._t("fan_pref")}${prefLabel ? "" : `: ${this._t("fan_pref_none")}`}</span>${this._prefSeg(c, pref)}</div>`;
     }
+    const ptcFan = c.ptc_fan_boost
+      ? `<div class="row">${this._icon("mdi:fan-plus")}${this._t("ptc_fan")}<span class="sp"><ha-switch data-act="ptcfansw" ${this._on(c.ptc_fan_boost) ? "checked" : ""} ${this._ok(c.ptc_fan_boost) ? "" : "disabled"}></ha-switch></span></div>` : "";
     const hp = this._on(c.heat_pump_cooling) ? this._t("hp_cooling") : this._on(c.heat_pump_heating) ? this._t("hp_heating") : this._t("hp_idle");
     const right = [c.heat_pump_heating ? hp : "", current].filter(Boolean).join(" · ");
     const cool = !this._isPanel && c.cooling_enable
       ? `<div class="row">${this._icon("mdi:snowflake")}${this._t("cooling_enable")}<span class="sp"><ha-switch data-act="coolsw" ${this._on(c.cooling_enable) ? "checked" : ""} ${this._ok(c.cooling_enable) ? "" : "disabled"}></ha-switch></span></div>` : "";
     const inner = `${o.bare ? "" : this._header("mdi:tune-variant", this._t("operation"), right)}
       ${c.operating_mode ? `<div class="lbl2">${this._t("mode")}</div>` : ""}${modeHtml}${fanHtml}${inline}
-      ${desc ? `<div class="note">${desc}</div>` : ""}${restore}${this._boostBlock(c, true)}${cool}`;
+      ${desc ? `<div class="note">${desc}</div>` : ""}${restore}${ptcFan}${this._boostBlock(c, true)}${cool}`;
     return o.bare ? `<div class="opw bare">${inner}</div>` : `<ha-card class="opw">${inner}</ha-card>`;
   }
 

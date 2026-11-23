@@ -121,6 +121,7 @@ export class InteractionMethods {
       case "boostmin": { const c = this._d.central; if (c.boost) call("proxon_modbus", "start_boost", { entity_id: c.boost, minutes: Number(v) }); break; }
       case "filterchg": if (c.filter_changed && window.confirm(this._t("f_confirm"))) call("button", "press", { entity_id: c.filter_changed }); break;
       case "prefstage": call("select", "select_option", { entity_id: c.fan_stage_preferred, option: v }); break;
+      case "ptcfansw": call("switch", "toggle", { entity_id: c.ptc_fan_boost }); break;
       case "restoresw": call("switch", "toggle", { entity_id: c.fan_stage_restore }); break;
       case "intensive": call("switch", "toggle", { entity_id: c.fan_intensive }); break;
       case "coolsw": call("switch", "toggle", { entity_id: c.cooling_enable }); break;

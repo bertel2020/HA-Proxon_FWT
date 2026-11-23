@@ -38,7 +38,7 @@
 - **Panel – history:** New views **All** (air, heat recovery, refrigerant circuit, drives and power as lanes on one time axis, with running bands and bypass phases), **Refrigerant circuit** (the six temperatures, the compressor temperature starts hidden) and **Drives** (compressor, supply and extract fan in rpm). "All" is the default and replaces the "Compressor" chip.
 - **Panel – table below the charts:** Now uniform with **Now**, min, max and mean (the now value comes from the live sensor). A click on a row hides the curve and the scale adjusts. The table can be folded; the curve names then stay as switches.
 - **Panel – key figures:** New **Compressor** tile (speed with a 24 hour curve, opens the drives in the history). The grid is 3 × 2, and 2 × 3 on mobile.
-- **Switch "Fan stage 4 while PTC heats":** When on (default: off) and a PTC element of a room heats, the ventilation runs at stage 4 (as intensive ventilation on units that offer it). Two polls without an active PTC later it returns to the previous stage and automatic. A boost you started yourself is left alone.
+- **Switch "Fan stage 4 while PTC heats":** When on (default: off) and a PTC element of a room heats, the ventilation runs at stage 4 (as intensive ventilation on units that offer it). Two polls without an active PTC later it returns to the previous stage and automatic. A boost you started yourself is left alone. The switch is also in the panel, in the Operation card.
 
 **Changed**
 - **Panel – hot water:** The switching thresholds now sit in the Operation card, the targets below the tank. The tank is taller, its fill level follows the water temperature, and the three targets are drawn as marks at its edge.
