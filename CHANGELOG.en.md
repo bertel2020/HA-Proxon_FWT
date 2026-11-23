@@ -2,7 +2,7 @@
 
 *[🇩🇪 Deutsche Version](CHANGELOG.md)*
 
-## 2.5.0 – 2026-11-22
+## 2.6.0 – 2026-11-23
 
 **New**
 - History "all in one": phases with the PTC auxiliary heater running are shaded as a coloured band (legend "PTC running").
@@ -23,6 +23,18 @@
 - **Panel – hot water, tank picture:** At night the picture shows a moon instead of the sun and no PV arrow. The unit has more contrast: darker fan and housing, a stronger water fill, a larger outdoor temperature; the highlight strip behind the measuring point is gone.
 - **Panel – key figures and diagnosis:** All key figure tiles are the same height and have a border, a shadow and a bar on top in the colour of the figure. In the diagnosis the bypass is a row of its own instead of an extra line under "System error".
 - **Panel – hot water, new layout:** A status bar over the full width shows the controller's decision large and in colour (night indigo, normal orange, PV green) with a 24-hour bar of the program phases and a "now" mark. The history uses the full width, with the main picture and the control side by side above it. The tank picture is larger: thicker sun rays, bigger labels for the targets and a moon on the unit at night. The "Measurements" button is now a pill like the other buttons.
+- **Switch "Fan stage 4 while PTC heats":** When on (default: off) and a PTC element of a room heats, the ventilation runs at stage 4 (as intensive ventilation on units that offer it). Two polls without an active PTC later it returns to the previous stage and automatic. A boost you started yourself is left alone. The switch is also in the panel, in the Operation card.
+
+**Changed**
+- **Panel – hot water, status:** When the water is inside the switching band, the status bar now says "Keeps heating" (up to the upper limit) or "Paused" (with the temperature at which it starts again), depending on whether the heat pump runs, instead of "Nothing to do". The PV status "Too cold" is now "PV blocked: too cold outside".
+
+**Fixed**
+- **Writing:** If the unit has not yet confirmed a written value (for example the room target temperature) after the 2 second wait, it is read again after 3, 6 and 10 seconds until confirmed. The value used to jump back to the old one briefly and was only right after the next poll (up to 30 s).
+- **Panel and dashboard card:** The frontend files are served under a path with the version and a file hash. After a change without a new version number the browser used to keep showing the old interface from its cache, even after a reload.
+
+## 2.5.0 – 2026-11-22
+
+**New**
 - **Panel – hot water, "Control" card:** The cards "Operation" and "Targets" are merged into one. On top the switch (automatic or dry run), below it in plain words what the controller decided and why (e.g. "Night rest · heat pump locked – heats again only when the water falls below 42°"), with the PV status and the time. The scale of the switching thresholds is now HTML with readable text, marks that do not overlap, "target reached" in green and a one-line legend. Minimum, normal and PV are set right below it (tiles with plus and minus), the switching band sits in a quiet line with "Change". In the wide layout the main picture and the history are on the left, the control on the right; no card is stretched any more.
 - **Panel – room popup:** The temperature curve is thinner (a fixed 1.5 px instead of a line that grows with the width).
 - **Dashboard card – room popup:** A room tile (or list row) now opens its details as a popup, on phones as a sheet you can swipe away, instead of showing them under the list. On closing (Escape, the cross, a tap outside) the focus returns to the tile.
@@ -38,19 +50,15 @@
 - **Panel – history:** New views **All** (air, heat recovery, refrigerant circuit, drives and power as lanes on one time axis, with running bands and bypass phases), **Refrigerant circuit** (the six temperatures, the compressor temperature starts hidden) and **Drives** (compressor, supply and extract fan in rpm). "All" is the default and replaces the "Compressor" chip.
 - **Panel – table below the charts:** Now uniform with **Now**, min, max and mean (the now value comes from the live sensor). A click on a row hides the curve and the scale adjusts. The table can be folded; the curve names then stay as switches.
 - **Panel – key figures:** New **Compressor** tile (speed with a 24 hour curve, opens the drives in the history). The grid is 3 × 2, and 2 × 3 on mobile.
-- **Switch "Fan stage 4 while PTC heats":** When on (default: off) and a PTC element of a room heats, the ventilation runs at stage 4 (as intensive ventilation on units that offer it). Two polls without an active PTC later it returns to the previous stage and automatic. A boost you started yourself is left alone. The switch is also in the panel, in the Operation card.
 
 **Changed**
 - **Panel – hot water:** The switching thresholds now sit in the Operation card, the targets below the tank. The tank is taller, its fill level follows the water temperature, and the three targets are drawn as marks at its edge.
 - **Panel – charts:** All line charts have the same height (300 px), the bar charts are somewhat taller than before. The Σ (kWh) column below the charts is gone; the energy is in the Energy card.
 - **Panel – status and maintenance:** The device filter now follows the system error directly.
-- **Panel – hot water, status:** When the water is inside the switching band, the status bar now says "Keeps heating" (up to the upper limit) or "Paused" (with the temperature at which it starts again), depending on whether the heat pump runs, instead of "Nothing to do". The PV status "Too cold" is now "PV blocked: too cold outside".
 
 **Fixed**
 - Labels of reference lines (for example "Target 53°" and "PV target 60°") no longer overlap.
 - A flat curve gets a readable axis instead of the same value three times.
-- **Writing:** If the unit has not yet confirmed a written value (for example the room target temperature) after the 2 second wait, it is read again after 3, 6 and 10 seconds until confirmed. The value used to jump back to the old one briefly and was only right after the next poll (up to 30 s).
-- **Panel and dashboard card:** The frontend files are served under a path with the version and a file hash. After a change without a new version number the browser used to keep showing the old interface from its cache, even after a reload.
 
 ## 2.4.3 – 2026-11-20
 

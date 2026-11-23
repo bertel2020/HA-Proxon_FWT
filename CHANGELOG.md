@@ -2,7 +2,7 @@
 
 *[🇬🇧 English version](CHANGELOG.en.md)*
 
-## 2.5.0 – 2026-11-22
+## 2.6.0 – 2026-11-23
 
 **Neu**
 - Verlauf „alles in einem“: Phasen mit laufender PTC-Zusatzheizung werden als farbiges Band hinterlegt (Legende „PTC läuft“).
@@ -23,6 +23,18 @@
 - **Panel – Warmwasser, Speicherbild:** In der Nacht zeigt das Bild einen Mond statt der Sonne und keinen PV-Pfeil. Das Gerät ist kontrastreicher: dunkler Lüfter und Gehäuse, kräftigere Wasserfüllung, größere Außentemperatur; der Glanzstreifen hinter dem Messpunkt entfällt.
 - **Panel – Kennzahlen und Diagnose:** Alle Kennzahlen-Kacheln sind gleich hoch, haben einen Rahmen, einen Schatten und oben einen Balken in der Farbe der Kennzahl. In der Diagnose steht der Bypass als eigene Zeile mit etwas mehr Abstand statt als Zusatzzeile unter „Systemfehler“.
 - **Panel – Warmwasser, neues Layout:** Eine Statusleiste über die ganze Breite zeigt die Entscheidung der Regelung groß und farbig (Nacht indigo, Normalbetrieb orange, PV grün) mit einem 24-Stunden-Balken der Programmphasen und der Marke „jetzt“. Der Verlauf nutzt die volle Breite, Hauptbild und Regelung stehen darüber nebeneinander. Das Speicherbild ist größer: dicke Sonnenstrahlen, größere Beschriftung der Sollwerte und ein Mond am Gerät in der Nacht. Der Knopf „Messwerte“ ist jetzt eine Pille wie die übrigen Knöpfe.
+- **Schalter „Lüfterstufe 4 bei aktivem PTC“:** Ist er an (Standard: aus) und ein PTC-Element eines Raums heizt, läuft die Lüftung auf Stufe 4 (bei Geräten mit Intensivlüftung als Intensivlüftung). Zwei Abfragen ohne aktives PTC später geht sie auf Stufe und Automatik von vorher zurück. Ein selbst gestartetes Stoßlüften bleibt unberührt. Der Schalter steht auch im Panel in der Karte Betrieb.
+
+**Geändert**
+- **Panel – Warmwasser, Status:** Liegt das Wasser im Schaltabstand, zeigt die Statusleiste statt „Nichts zu tun“ jetzt „Heizt weiter“ (bis zur oberen Grenze) bzw. „Pausiert“ (mit der Temperatur, ab der es wieder startet), je nachdem ob die Wärmepumpe läuft. Der PV-Status „Zu kalt“ heißt „PV gesperrt: zu kalt draußen“.
+
+**Korrigiert**
+- **Schreiben:** Bestätigt das Gerät einen geschriebenen Wert (zum Beispiel die Raum-Solltemperatur) nach den 2 Sekunden Wartezeit noch nicht, wird nach 3, 6 und 10 Sekunden erneut gelesen, bis er bestätigt ist. Der Wert sprang zuvor kurz auf den alten zurück und stimmte erst nach dem nächsten Abruf (bis 30 s).
+- **Panel und Dashboard-Karte:** Die Frontend-Dateien werden unter einem Pfad mit Versionsnummer und Datei-Hash ausgeliefert. Nach einer Änderung ohne neue Versionsnummer zeigte der Browser sonst weiter die alte Oberfläche aus dem Cache, auch nach „Neu laden“.
+
+## 2.5.0 – 2026-11-22
+
+**Neu**
 - **Panel – Warmwasser, Karte „Regelung“:** Die Karten „Betrieb“ und „Sollwerte“ sind zu einer Karte zusammengeführt. Oben der Schalter (Automatik oder Probelauf), darunter in Klartext, was die Regelung entschieden hat und warum (z. B. „Nachtruhe · Wärmepumpe gesperrt – heizt erst wieder, wenn das Wasser unter 42° fällt“), mit PV-Status und Zeitpunkt. Die Skala der Schaltschwellen ist jetzt HTML mit gut lesbarer Schrift, Marken ohne Überlappung, „Soll erreicht“ in Grün und einer einzeiligen Legende. Minimum, Normal und PV stellt man direkt darunter ein (Kacheln mit Plus und Minus), der Schaltabstand steht in einer ruhigen Zeile mit „Ändern“. Im breiten Layout stehen Hauptbild und Verlauf links, die Regelung rechts; keine Karte wird mehr gestreckt.
 - **Panel – Raum-Popup:** Die Temperaturkurve ist dünner (feste 1,5 px statt einer mit der Breite wachsenden Linie).
 - **Dashboard-Karte – Raum-Popup:** Eine Raum-Kachel (oder Listenzeile) öffnet die Details jetzt als Popup, am Handy als Sheet zum Wegwischen, statt sie unter der Liste einzublenden. Der Fokus kehrt beim Schließen (Escape, Kreuz, Tipp daneben) zur Kachel zurück.
@@ -38,19 +50,15 @@
 - **Panel – Verlauf:** Neue Ansichten **Alle** (Luft, Rückwärmzahl, Kältekreis, Antriebe und Leistung als Spuren auf einer gemeinsamen Zeitachse, mit Laufbändern und Bypass-Phasen), **Kältekreis** (die sechs Temperaturen, die Kompressor-Temperatur startet ausgeblendet) und **Antriebe** (Kompressor, Zu- und Abluft in rpm). „Alle“ ist voreingestellt und ersetzt den Chip „Kompressor“.
 - **Panel – Tabelle unter den Charts:** Einheitlich mit **Jetzt**, Min, Max und Ø (der Jetzt-Wert kommt vom aktuellen Sensor). Ein Klick auf eine Zeile blendet die Kurve aus, die Skala passt sich an. Die Tabelle lässt sich einklappen; dann bleiben die Kurvennamen als Schalter.
 - **Panel – Kennzahlen:** Neue Kachel **Kompressor** (Drehzahl mit 24‑Stunden-Kurve, öffnet im Verlauf die Antriebe). Das Raster ist 3 × 2 und mobil 2 × 3.
-- **Schalter „Lüfterstufe 4 bei aktivem PTC“:** Ist er an (Standard: aus) und ein PTC-Element eines Raums heizt, läuft die Lüftung auf Stufe 4 (bei Geräten mit Intensivlüftung als Intensivlüftung). Zwei Abfragen ohne aktives PTC später geht sie auf Stufe und Automatik von vorher zurück. Ein selbst gestartetes Stoßlüften bleibt unberührt. Der Schalter steht auch im Panel in der Karte Betrieb.
 
 **Geändert**
 - **Panel – Warmwasser:** Die Schaltschwellen stehen jetzt in der Karte Betrieb, die Sollwerte unter dem Speicher. Der Speicher ist höher, der Füllstand folgt der Wassertemperatur, und die drei Sollwerte sind als Marken an der Kante eingezeichnet.
 - **Panel – Charts:** Alle Linien-Charts sind gleich hoch (300 px), die Balken-Charts etwas höher als bisher. Die Spalte Σ (kWh) unter den Charts entfällt, die Energie steht in der Energie-Karte.
 - **Panel – Status und Wartung:** Der Gerätefilter steht direkt nach dem Systemfehler.
-- **Panel – Warmwasser, Status:** Liegt das Wasser im Schaltabstand, zeigt die Statusleiste statt „Nichts zu tun“ jetzt „Heizt weiter“ (bis zur oberen Grenze) bzw. „Pausiert“ (mit der Temperatur, ab der es wieder startet), je nachdem ob die Wärmepumpe läuft. Der PV-Status „Zu kalt“ heißt „PV gesperrt: zu kalt draußen“.
 
 **Korrigiert**
 - Beschriftungen von Referenzlinien (zum Beispiel „Soll 53°“ und „Soll PV 60°“) überlagern sich nicht mehr.
 - Eine flache Kurve bekommt eine lesbare Achse statt dreimal desselben Wertes.
-- **Schreiben:** Bestätigt das Gerät einen geschriebenen Wert (zum Beispiel die Raum-Solltemperatur) nach den 2 Sekunden Wartezeit noch nicht, wird nach 3, 6 und 10 Sekunden erneut gelesen, bis er bestätigt ist. Der Wert sprang zuvor kurz auf den alten zurück und stimmte erst nach dem nächsten Abruf (bis 30 s).
-- **Panel und Dashboard-Karte:** Die Frontend-Dateien werden unter einem Pfad mit Versionsnummer und Datei-Hash ausgeliefert. Nach einer Änderung ohne neue Versionsnummer zeigte der Browser sonst weiter die alte Oberfläche aus dem Cache, auch nach „Neu laden“.
 
 ## 2.4.3 – 2026-11-20
 
