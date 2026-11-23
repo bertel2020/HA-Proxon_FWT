@@ -117,6 +117,7 @@ async def async_setup_entry(
     ]
     entities.append(ProxonFanRestoreSwitch(coordinator, entry.entry_id, device_name))
     entities.append(ProxonBoostSwitch(coordinator, entry.entry_id, device_name))
+    entities.append(ProxonPtcFanSwitch(coordinator, entry.entry_id, device_name))
 
     room_names = entry.options.get(CONF_ROOM_NAMES, [])
     for i, room_name in enumerate(room_names):
@@ -284,6 +285,45 @@ class ProxonFanRestoreSwitch(_BoostServiceGuard, ProxonCentralEntity, SwitchEnti
     async def async_turn_off(self, **kwargs: Any) -> None:
         self.coordinator.fan_tracker.enabled = False
         self.async_write_ha_state()
+
+
+class ProxonPtcFanSwitch(_BoostServiceGuard, ProxonCentralEntity, SwitchEntity, RestoreEntity):
+    """Fan to stage 4 while a PTC element heats, back to the previous setting afterwards.
+
+    Purely a software feature, off by default. It uses the boost ventilation (stage 4 in Eco mode, the
+    intensive ventilation where the unit offers that instead) and ends it again when no PTC is active.
+    """
+
+    _attr_translation_key = "ptc_fan_boost"
+    _attr_icon = "mdi:fan-plus"
+    _blocks = frozenset()
+
+    def __init__(self, coordinator: ProxonModbusCoordinator, entry_id: str, device_name: str) -> None:
+        super().__init__(coordinator, entry_id, device_name, "ptc_fan_boost")
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        last = await self.async_get_last_state()
+        self.coordinator.ptc_fan_enabled = last is not None and last.state == "on"
+
+    @property
+    def available(self) -> bool:
+        return True  # a software setting: stays available while the unit is offline
+
+    @property
+    def is_on(self) -> bool:
+        return self.coordinator.ptc_fan_enabled
+
+    async def _async_set(self, on: bool) -> None:
+        self.coordinator.ptc_fan_enabled = on
+        self.async_write_ha_state()
+        self.coordinator.follow_ptc()
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        await self._async_set(True)
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        await self._async_set(False)
 
 
 class ProxonRoomPtcEnableSwitch(_BoostServiceGuard, ProxonRoomEntity, SwitchEntity):

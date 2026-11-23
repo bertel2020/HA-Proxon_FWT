@@ -38,6 +38,7 @@
 - **Panel – Verlauf:** Neue Ansichten **Alle** (Luft, Rückwärmzahl, Kältekreis, Antriebe und Leistung als Spuren auf einer gemeinsamen Zeitachse, mit Laufbändern und Bypass-Phasen), **Kältekreis** (die sechs Temperaturen, die Kompressor-Temperatur startet ausgeblendet) und **Antriebe** (Kompressor, Zu- und Abluft in rpm). „Alle“ ist voreingestellt und ersetzt den Chip „Kompressor“.
 - **Panel – Tabelle unter den Charts:** Einheitlich mit **Jetzt**, Min, Max und Ø (der Jetzt-Wert kommt vom aktuellen Sensor). Ein Klick auf eine Zeile blendet die Kurve aus, die Skala passt sich an. Die Tabelle lässt sich einklappen; dann bleiben die Kurvennamen als Schalter.
 - **Panel – Kennzahlen:** Neue Kachel **Kompressor** (Drehzahl mit 24‑Stunden-Kurve, öffnet im Verlauf die Antriebe). Das Raster ist 3 × 2 und mobil 2 × 3.
+- **Schalter „Lüfterstufe 4 bei aktivem PTC“:** Ist er an (Standard: aus) und ein PTC-Element eines Raums heizt, läuft die Lüftung auf Stufe 4 (bei Geräten mit Intensivlüftung als Intensivlüftung). Zwei Abfragen ohne aktives PTC später geht sie auf Stufe und Automatik von vorher zurück. Ein selbst gestartetes Stoßlüften bleibt unberührt.
 
 **Geändert**
 - **Panel – Warmwasser:** Die Schaltschwellen stehen jetzt in der Karte Betrieb, die Sollwerte unter dem Speicher. Der Speicher ist höher, der Füllstand folgt der Wassertemperatur, und die drei Sollwerte sind als Marken an der Kante eingezeichnet.

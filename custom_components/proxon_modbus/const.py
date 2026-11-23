@@ -90,6 +90,12 @@ WRITE_SETTLE_DELAY = 2
 # Extra refreshes (seconds after the write) while the unit has not yet reported the written value:
 # the "Ist" register can lag more than WRITE_SETTLE_DELAY, which made the shown value jump back.
 WRITE_FOLLOWUP_DELAYS = (3, 6, 10)
+# Fan boost while a PTC element heats: safety cap of one boost (only matters when HA stops mid-boost; while the
+# PTC still runs, the boost is extended before it ends) and the number of polls without an active PTC before
+# the fan goes back (bridges short PTC pauses).
+PTC_FAN_BOOST_MINUTES = 30
+PTC_FAN_EXTEND_BELOW_MINUTES = 10
+PTC_FAN_END_POLLS = 2
 REFRESH_COOLDOWN = 1  # s, minimum gap between two refreshes requested after writes
 
 DEFAULT_NUM_ROOMS = 7

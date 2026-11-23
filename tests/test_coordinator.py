@@ -360,3 +360,111 @@ def test_followup_refresh_stops_after_all_delays(coord, monkeypatch):
     base = len(calls)
     run(coro)
     assert len(calls) == base + 3
+
+
+def ptc_rooms(c, *active):
+    c.data.rooms = {i: types.SimpleNamespace(ptc_active=a) for i, a in enumerate(active)}
+
+
+def ptc_tasks(c):
+    """The PTC background tasks scheduled so far (taken off the list); the write follow-ups are closed."""
+    tasks, c.config_entry.tasks = c.config_entry.tasks, []
+    for name, coro in tasks:
+        if not name.startswith("proxon_ptc"):
+            coro.close()
+    return [t for t in tasks if t[0].startswith("proxon_ptc")]
+
+
+def ptc_setup(coord, enabled=True):
+    c, hub = make(coord)
+    fan_state(c, mode=1, stage=2, auto=True)
+    c.config_entry.keep = True
+    c.ptc_fan_enabled = enabled
+    return c, hub
+
+
+def test_ptc_raises_the_fan_and_puts_it_back_when_the_ptc_stops(coord):
+    c, hub = ptc_setup(coord)
+    ptc_rooms(c, False, True)
+    c.follow_ptc()
+    (name, coro), = ptc_tasks(c)
+    assert name == "proxon_ptc_fan_start"
+    run(coro)
+    assert hub.writes == [(coord.REG_FAN_AUTO_WRITE, 0), (coord.REG_FAN_STAGE_WRITE, 4)]
+    assert c.boost.active and c._ptc_boost
+    # still heating: nothing more to do
+    ptc_tasks(c)
+    c.follow_ptc()
+    assert not ptc_tasks(c)
+    # the PTC stops: the fan stays up for one more poll, then goes back
+    hub.writes.clear()
+    ptc_rooms(c, False, False)
+    c.follow_ptc()
+    assert not ptc_tasks(c)
+    c.follow_ptc()
+    (name, coro), = ptc_tasks(c)
+    assert name == "proxon_ptc_fan_end"
+    fan_state(c, mode=1, stage=4, auto=False)
+    run(coro)
+    assert hub.writes == [(coord.REG_FAN_STAGE_WRITE, 2), (coord.REG_FAN_AUTO_WRITE, 1)]
+    assert not c.boost.active and not c._ptc_boost
+
+
+def test_ptc_pause_between_two_polls_does_not_lower_the_fan(coord):
+    c, _ = ptc_setup(coord)
+    ptc_rooms(c, True)
+    c.follow_ptc()
+    run(ptc_tasks(c)[0][1])
+    ptc_rooms(c, False)
+    c.follow_ptc()  # one poll without PTC
+    ptc_rooms(c, True)
+    c.follow_ptc()
+    ptc_rooms(c, False)
+    c.follow_ptc()  # the idle count starts again
+    assert not ptc_tasks(c)
+
+
+def test_ptc_does_nothing_with_the_switch_off_or_during_another_boost(coord):
+    c, _ = ptc_setup(coord, enabled=False)
+    ptc_rooms(c, True)
+    c.follow_ptc()
+    assert not ptc_tasks(c)
+    c.ptc_fan_enabled = True
+    run(c.async_start_boost(15))  # the user's own boost
+    c.follow_ptc()
+    assert not ptc_tasks(c)
+    ptc_rooms(c, False)
+    for _ in range(3):
+        c.follow_ptc()
+    assert not ptc_tasks(c), "a boost that is not ours is never ended"
+    assert c.boost.active
+
+
+def test_switching_the_feature_off_ends_its_boost(coord):
+    c, _ = ptc_setup(coord)
+    ptc_rooms(c, True)
+    c.follow_ptc()
+    run(ptc_tasks(c)[0][1])
+    c.ptc_fan_enabled = False
+    c.follow_ptc()
+    (name, coro), = ptc_tasks(c)
+    coro.close()
+    assert name == "proxon_ptc_fan_end"
+
+
+def test_ptc_boost_is_extended_while_the_ptc_still_runs(coord):
+    c, hub = ptc_setup(coord)
+    ptc_rooms(c, True)
+    c.follow_ptc()
+    run(ptc_tasks(c)[0][1])
+    assert c.boost.remaining(time.time()) > coord.PTC_FAN_EXTEND_BELOW_MINUTES * 60
+    c.follow_ptc()
+    assert not ptc_tasks(c), "plenty of time left: nothing to do"
+    c.boost.until = time.time() + 60  # about to end
+    hub.writes.clear()
+    c.follow_ptc()
+    (name, coro), = ptc_tasks(c)
+    assert name == "proxon_ptc_fan_extend"
+    run(coro)
+    assert hub.writes == [], "extending writes nothing to the unit"
+    assert c.boost.remaining(time.time()) > 25 * 60 and c._ptc_boost

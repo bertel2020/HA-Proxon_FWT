@@ -65,6 +65,9 @@ from .const import (
     REG_TEMP_PRE_CONDENSER,
     REG_TEMP_PRE_EVAPORATOR,
     REG_TEMP_SUPPLY_AIR,
+    PTC_FAN_BOOST_MINUTES,
+    PTC_FAN_EXTEND_BELOW_MINUTES,
+    PTC_FAN_END_POLLS,
     REFRESH_COOLDOWN,
     WRITE_FOLLOWUP_DELAYS,
     WRITE_SETTLE_DELAY,
@@ -192,6 +195,12 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
         self._boost_end_fails = 0
         self._boost_store: Store = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}.boost")
         self._boost_cancel: CALLBACK_TYPE | None = None
+        # Fan to stage 4 while a PTC element heats (the "ptc_fan_boost" switch), done as a boost that this
+        # feature owns: it ends the boost again once no PTC has been active for a moment.
+        self.ptc_fan_enabled = False
+        self._ptc_boost = False
+        self._ptc_idle_polls = 0
+        self._ptc_task: asyncio.Task | None = None
         self._scan_interval = scan_interval
         self._last_poll: float | None = None
         self._fail_since: float | None = None
@@ -217,7 +226,58 @@ class ProxonModbusCoordinator(DataUpdateCoordinator[ProxonData]):
         if not self.boost.active and not self._boost_lock.locked():
             self._track_fan_stage(data)
         self._track_stats(data)
+        self.follow_ptc(data)
         return data
+
+    def follow_ptc(self, data: ProxonData | None = None) -> None:
+        """Raise the fan while a PTC element heats and put it back afterwards (switch "ptc_fan_boost").
+
+        Runs after every poll and when the switch is changed. The work is done in a background task:
+        a boost writes registers and waits, which must not hold up the poll itself.
+        """
+        data = data or self.data
+        if data is None or BLOCK_PTC in data.failed or self.config_entry is None:
+            return
+        if not self.boost.active:
+            self._ptc_boost = False  # ended by the timer, by the user or by the restore
+        if self._ptc_task is not None and not self._ptc_task.done():
+            return
+        if self.ptc_fan_enabled and any(room.ptc_active for room in data.rooms.values()):
+            self._ptc_idle_polls = 0
+            if self._boost_lock.locked():
+                return
+            remaining = self.boost.remaining(time.time())
+            if not self.boost.active and self.boost_possible:
+                name = "proxon_ptc_fan_start"
+            elif self._ptc_boost and remaining is not None and remaining < PTC_FAN_EXTEND_BELOW_MINUTES * 60:
+                name = "proxon_ptc_fan_extend"  # the PTC still runs: no write, only a later end
+            else:
+                return
+            self._ptc_task = self.config_entry.async_create_background_task(
+                self.hass, self._async_ptc_boost_start(), name
+            )
+            return
+        self._ptc_idle_polls += 1
+        if self._ptc_boost and (not self.ptc_fan_enabled or self._ptc_idle_polls >= PTC_FAN_END_POLLS):
+            self._ptc_task = self.config_entry.async_create_background_task(
+                self.hass, self._async_ptc_boost_end(), "proxon_ptc_fan_end"
+            )
+
+    async def _async_ptc_boost_start(self) -> None:
+        if self.boost.active and not self._ptc_boost:  # a boost started meanwhile belongs to someone else
+            return
+        try:
+            await self.async_start_boost(PTC_FAN_BOOST_MINUTES)
+        except (ProxonModbusError, HomeAssistantError):
+            return  # the write error is recorded; the next poll tries again
+        self._ptc_boost = True
+
+    async def _async_ptc_boost_end(self) -> None:
+        try:
+            await self.async_end_boost()
+        except ProxonModbusError:
+            return  # async_end_boost retries on its own; the flag clears once the boost is gone
+        self._ptc_boost = False
 
     def _set_issue(
         self,

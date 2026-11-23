@@ -373,6 +373,7 @@
       "cooling_enable": { "name": "Cooling enabled" },
       "boost": { "name": "Boost ventilation" },
       "fan_stage_restore": { "name": "Restore fan stage after heat pump" },
+      "ptc_fan_boost": { "name": "Fan stage 4 while PTC heats" },
       "fan_auto": { "name": "Fan auto mode" },
       "fan_intensive": { "name": "Intensive ventilation" },
       "ptc_enable": { "name": "PTC element enabled" },

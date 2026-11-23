@@ -373,6 +373,7 @@
       "cooling_enable": { "name": "Kühlung freigegeben" },
       "boost": { "name": "Stoßlüften" },
       "fan_stage_restore": { "name": "Lüfterstufe nach Wärmepumpe wiederherstellen" },
+      "ptc_fan_boost": { "name": "Lüfterstufe 4 bei aktivem PTC" },
       "fan_auto": { "name": "Lüfter-Automatik" },
       "fan_intensive": { "name": "Intensivlüftung" },
       "ptc_enable": { "name": "PTC-Element freigegeben" },
