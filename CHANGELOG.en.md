@@ -50,6 +50,7 @@
 - Labels of reference lines (for example "Target 53°" and "PV target 60°") no longer overlap.
 - A flat curve gets a readable axis instead of the same value three times.
 - **Writing:** If the unit has not yet confirmed a written value (for example the room target temperature) after the 2 second wait, it is read again after 3, 6 and 10 seconds until confirmed. The value used to jump back to the old one briefly and was only right after the next poll (up to 30 s).
+- **Panel and dashboard card:** The frontend files are served under a path with the version and a file hash. After a change without a new version number the browser used to keep showing the old interface from its cache, even after a reload.
 
 ## 2.4.3 – 2026-11-20
 

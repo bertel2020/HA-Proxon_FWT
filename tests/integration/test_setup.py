@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from homeassistant.components import frontend
@@ -30,7 +31,8 @@ async def test_setup_creates_devices_and_entities(hass, setup_integration):
 
 async def test_panel_and_card_module_are_registered(hass, setup_integration):
     await setup_integration()
-    assert hass.data[DOMAIN]["module_url"] == f"/{DOMAIN}/{VERSION}/proxon-fwt-card.js"
+    # the path carries the version and a hash of the frontend files, so changed files are never served from the browser cache
+    assert re.fullmatch(rf"/{DOMAIN}/{re.escape(VERSION)}-[0-9a-f]{{8}}/proxon-fwt-card\.js", hass.data[DOMAIN]["module_url"])
     assert "proxon-fwt" in hass.data[frontend.DATA_PANELS]
     assert hass.data[frontend.DATA_EXTRA_MODULE_URL].urls  # the card module is loaded in the frontend
 
@@ -38,18 +40,19 @@ async def test_panel_and_card_module_are_registered(hass, setup_integration):
 async def test_frontend_files_are_served_under_the_versioned_path(hass, hass_client, setup_integration):
     await setup_integration()
     client = await hass_client()
+    base = hass.data[DOMAIN]["module_url"].rsplit("/", 1)[0]
     for path in (
-        f"/{DOMAIN}/{VERSION}/proxon-fwt-card.js",
-        f"/{DOMAIN}/{VERSION}/lib/base.js",
-        f"/{DOMAIN}/{VERSION}/lib/panel.js",
-        f"/{DOMAIN}/{VERSION}/lib/text.js",
+        f"{base}/proxon-fwt-card.js",
+        f"{base}/lib/base.js",
+        f"{base}/lib/panel.js",
+        f"{base}/lib/text.js",
         f"/{DOMAIN}/proxon-fwt-card.js",  # legacy manual resource
         f"/{DOMAIN}/lib/base.js",
     ):
         resp = await client.get(path)
         assert resp.status == 200, path
         assert "javascript" in resp.headers["Content-Type"], path
-    assert (await client.get(f"/{DOMAIN}/{VERSION}/lib/does-not-exist.js")).status == 404
+    assert (await client.get(f"{base}/lib/does-not-exist.js")).status == 404
 
 
 async def test_websocket_settings(hass, hass_ws_client, setup_integration):

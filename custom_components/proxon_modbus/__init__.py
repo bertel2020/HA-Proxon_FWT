@@ -1,6 +1,7 @@
 """The Proxon FWT Modbus integration."""
 from __future__ import annotations
 
+import hashlib
 from datetime import timedelta
 from pathlib import Path
 
@@ -154,22 +155,35 @@ def _ws_settings(
     connection.send_result(msg["id"], result)
 
 
+def _www_fingerprint(www: Path) -> str:
+    """Short hash of every bundled frontend file (names and contents)."""
+    digest = hashlib.sha1(usedforsecurity=False)
+    for file in sorted(www.rglob("*")):
+        if file.is_file():
+            digest.update(file.relative_to(www).as_posix().encode())
+            digest.update(file.read_bytes())
+    return digest.hexdigest()[:8]
+
+
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Serve the bundled dashboard card and load it in the frontend.
 
     The card is a small set of ES modules shipped with the integration, so it
     is available as `custom:proxon-fwt-card` without adding a Lovelace
     resource. The whole `www` folder is served below a path that contains the
-    integration version, so the browser fetches every module anew after an
-    update (the modules import each other by relative path).
+    integration version and a hash of the files, so the browser fetches every
+    module anew after any change, even one made without a version bump (the
+    modules import each other by relative path, so a query string would not
+    reach them).
     """
     websocket_api.async_register_command(hass, _ws_settings)
     integration = await async_get_integration(hass, DOMAIN)
     www = Path(__file__).parent / "www"
+    asset_version = f"{integration.version}-{await hass.async_add_executor_job(_www_fingerprint, www)}"
     await hass.http.async_register_static_paths(
         [
             StaticPathConfig(
-                f"/{DOMAIN}/{integration.version}",
+                f"/{DOMAIN}/{asset_version}",
                 str(www),
                 cache_headers=False,
             ),
@@ -183,7 +197,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             ),
         ]
     )
-    module_url = f"/{DOMAIN}/{integration.version}/{CARD_FILENAME}"
+    module_url = f"/{DOMAIN}/{asset_version}/{CARD_FILENAME}"
     add_extra_js_url(hass, module_url)
     hass.data.setdefault(DOMAIN, {})["module_url"] = module_url
     return True

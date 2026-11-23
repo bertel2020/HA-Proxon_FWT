@@ -50,6 +50,7 @@
 - Beschriftungen von Referenzlinien (zum Beispiel „Soll 53°“ und „Soll PV 60°“) überlagern sich nicht mehr.
 - Eine flache Kurve bekommt eine lesbare Achse statt dreimal desselben Wertes.
 - **Schreiben:** Bestätigt das Gerät einen geschriebenen Wert (zum Beispiel die Raum-Solltemperatur) nach den 2 Sekunden Wartezeit noch nicht, wird nach 3, 6 und 10 Sekunden erneut gelesen, bis er bestätigt ist. Der Wert sprang zuvor kurz auf den alten zurück und stimmte erst nach dem nächsten Abruf (bis 30 s).
+- **Panel und Dashboard-Karte:** Die Frontend-Dateien werden unter einem Pfad mit Versionsnummer und Datei-Hash ausgeliefert. Nach einer Änderung ohne neue Versionsnummer zeigte der Browser sonst weiter die alte Oberfläche aus dem Cache, auch nach „Neu laden“.
 
 ## 2.4.3 – 2026-11-20
 
