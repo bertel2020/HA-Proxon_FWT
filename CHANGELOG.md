@@ -5,6 +5,8 @@
 ## 2.5.0 – 2026-11-22
 
 **Neu**
+- Verlauf „alles in einem“: Phasen mit laufender PTC-Zusatzheizung werden als farbiges Band hinterlegt (Legende „PTC läuft“).
+- Verlauf: Leistungs-Kurven (Leistung, PTC-Leistung) werden als Treppe gezeichnet. Ein Sensor, der nur bei Änderung meldet, ergab zuvor eine schräge Rampe statt der gehaltenen 0-W-Linie.
 - Mobile Feinschliff: Referenz-Labels und Zeitachse der Charts ohne Überdeckung, größere Touch-Ziele auf Touchgeräten, Tab-Leiste bleibt im Querformat oben stehen, „OK“ in der Status-Liste rechtsbündig, Legenden mit engerem Zeilenabstand, Messpunkt-Beschriftung im Gerätebild mit Abstand zum Rand.
 - Mobile Ansicht überarbeitet: Messwerte-Tabelle der Charts mit eigener Namenszeile, Raumkarten/-liste/-vergleich ohne Überlauf bei 320 px, Anlagenschema und Luftwege seitlich wischbar statt winzig, Warmwasser-Sollwerte als große Zeilen-Stepper, Kennzahl-Kacheln zweispaltig, Kopfzeile und Umschalter der Räume angepasst.
 - **Panel – Warmwasser, Gerätebild:** Das Gerät sieht mehr nach einer Warmwasser-Wärmepumpe aus: Lüftereinheit mit Ring und fünf Flügeln, Lüftungsschlitze, Füße und Schatten. Das Wasser hat einen Farbverlauf mit Wellenlinie an der Oberfläche und Glanzstreifen, beim Heizen steigen Bläschen auf. Der Messwert steht auf einem hellen Feld und ist so auf jeder Wasserfarbe lesbar.

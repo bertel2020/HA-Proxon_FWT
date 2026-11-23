@@ -278,10 +278,22 @@ export class TwwpSectionsMethods {
     const f = (v) => (v === null ? "–" : this._fmt(v, v % 1 ? 1 : 0));
     const d = (a, b, sign) => (a === null || b === null ? null : a + sign * b);
     const args = [f(tm), f(tn), f(tp), f(d(tn, lo, -1)), f(d(tn, hi, 1)), f(d(tp, lo, -1)), f(d(tp, hi, 1))];
-    const look = { pv: [GREEN, "mdi:white-balance-sunny"], normal: [AMBER, "mdi:fire"], pv_end: [AMBER, "mdi:fire"], minimum: [AMBER, "mdi:snowflake-alert"],
+    let look = { pv: [GREEN, "mdi:white-balance-sunny"], normal: [AMBER, "mdi:fire"], pv_end: [AMBER, "mdi:fire"], minimum: [AMBER, "mdi:snowflake-alert"],
       night: ["#7F77DD", "mdi:weather-night"], target_reached: [GREEN, "mdi:check-circle-outline"], pv_target_reached: [GREEN, "mdi:check-circle-outline"],
       locked: [AMBER, "mdi:timer-sand"], sensor_unavailable: ["#db4437", "mdi:alert-circle-outline"] }[rs.state] || ["#8a8f98", "mdi:pause-circle-outline"];
-    return [this._t(`tw_s_${rs.state}`), this._t(`tw_x_${rs.state}`, ...args), look[0], look[1]];
+    // "None" only means that no rule fires inside the hysteresis band: say whether the heat pump is running through it.
+    let key = rs.state, detail = args;
+    if (key === "none") {
+      const c = this._twCfg(t), pw = c.power_entity ? this._twPowerW(c.power_entity) : null;
+      const on = pw !== null ? pw > 100 : c.enable_switch && this._state(c.enable_switch) ? this._on(c.enable_switch) : null;
+      const prog = this._ok(t.ents.twwp_program) ? this._state(t.ents.twwp_program).state : null, pv = prog === "pv";
+      if (on !== null) {
+        key = on ? "none_run" : "none_idle";
+        detail = [on ? (pv ? args[6] : args[4]) : (pv ? args[5] : args[3])];
+        if (on) look = [AMBER, "mdi:fire"];
+      }
+    }
+    return [this._t(`tw_s_${key}`), this._t(`tw_x_${key}`, ...detail), look[0], look[1]];
   }
 
   // Day strip: the program phases of the last 24 hours as one bar, "now" at the right end. The same phase history the chart uses.

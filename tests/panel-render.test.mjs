@@ -861,7 +861,7 @@ test("the room popup curve has a fixed thin stroke that does not scale with the 
 test("the control card says in plain words what was decided, for every reason", async () => {
   const cases = { pv: "Heizt mit PV-Überschuss", pv_target_reached: "PV-Soll erreicht", minimum_end: "Minimum erreicht", minimum: "Heizt auf das Minimum",
     night: "Nachtruhe · Wärmepumpe gesperrt", night_end: "Nacht beendet", pv_end: "PV-Überschuss vorbei", normal: "Heizt im Normalbetrieb",
-    target_reached: "Soll erreicht", none: "Nichts zu tun", locked: "Wartet auf Mindestlauf- oder Pausenzeit", sensor_unavailable: "Wassersensor nicht verfügbar" };
+    target_reached: "Soll erreicht", none: "Heizt weiter", locked: "Wartet auf Mindestlauf- oder Pausenzeit", sensor_unavailable: "Wassersensor nicht verfügbar" };
   for (const [reason, text] of Object.entries(cases)) {
     const panel = new X.ProxonFwtPanel();
     panel.hass = { ...twHass, states: { ...twStates, "sensor.tw_reason": { ...twStates["sensor.tw_reason"], state: reason } } };
@@ -870,6 +870,22 @@ test("the control card says in plain words what was decided, for every reason", 
     assert.ok(html.includes(`<b>${text}</b>`), reason);
     assert.ok(!/\{\d\}/.test(html.slice(html.indexOf('class="twst"'), html.indexOf('class="twgrid"'))), `${reason}: no placeholder left`);
   }
+  // "none" is only the dead zone of the hysteresis: it must say whether the heat pump runs through it
+  const none = async (power, program = "normal") => {
+    const q = new X.ProxonFwtPanel();
+    q.hass = { ...twHass, states: { ...twStates, "sensor.tw_reason": { ...twStates["sensor.tw_reason"], state: "none" },
+      "sensor.tw_power": { ...twStates["sensor.tw_power"], state: power }, "sensor.tw_program": { ...twStates["sensor.tw_program"], state: program } } };
+    return render(q, () => { q._tab = "warm"; });
+  };
+  const running = await none("355");
+  assert.ok(running.includes("<b>Heizt weiter</b>") && running.includes("Bis das Wasser 54° erreicht"), "running: keeps heating up to the upper limit");
+  assert.ok(!running.includes("Nichts zu tun"), "running: not 'nothing to do'");
+  const idle = await none("2");
+  assert.ok(idle.includes("<b>Pausiert</b>") && idle.includes("unter 50° fällt"), "idle: says when it starts again");
+  assert.ok((await none("355", "pv")).includes("Bis das Wasser 61° erreicht"), "PV program uses the PV limits");
+  const cold = new X.ProxonFwtPanel();
+  cold.hass = { ...twHass, states: { ...twStates, "sensor.tw_pv_status": { ...twStates["sensor.tw_pv_status"], state: "too_cold" } } };
+  assert.ok((await render(cold, () => { cold._tab = "warm"; })).includes("PV gesperrt: zu kalt draußen"), "too cold names what is blocked");
   const night = new X.ProxonFwtPanel();
   night.hass = { ...twHass, states: { ...twStates, "sensor.tw_reason": { ...twStates["sensor.tw_reason"], state: "night" } } };
   assert.ok((await render(night, () => { night._tab = "warm"; })).includes("Heizt erst wieder, wenn das Wasser unter 42° fällt."), "the minimum comes from the target");

@@ -5,6 +5,8 @@
 ## 2.5.0 – 2026-11-22
 
 **New**
+- History "all in one": phases with the PTC auxiliary heater running are shaded as a coloured band (legend "PTC running").
+- History: power curves (power, PTC power) are drawn as a staircase. A sensor that only reports changes used to give a sloped ramp instead of the held 0 W line.
 - Mobile polish: chart reference labels and time axis no longer overlap, larger touch targets on touch devices, tab bar stays at the top in landscape, "OK" in the status list right-aligned, legends with tighter line spacing, measuring-point label in the device picture kept off the edge.
 - Mobile view reworked: chart value table with a separate name row, room cards/list/comparison without overflow at 320 px, system schema and air paths swipeable instead of tiny, hot water set points as large row steppers, two-column KPI tiles, room header and view switch adjusted.
 - **Panel – hot water, unit picture:** The unit looks more like a hot water heat pump: a fan unit with a ring and five blades, vent slots, feet and a shadow. The water has a colour gradient with a wave line at the surface and a sheen strip, and bubbles rise while it heats. The reading sits on a light field, so it stays legible on every water colour.

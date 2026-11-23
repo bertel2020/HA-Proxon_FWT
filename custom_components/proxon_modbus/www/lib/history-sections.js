@@ -21,6 +21,8 @@ export class HistorySectionsMethods {
       const prev = this._hget(`s|${range}|${metric}|prev`, () => this._loadSeries(range, metric, defs, true));
       if (prev) { const b = series.bypass; series = [...series, ...prev]; series.bypass = b; }
     }
+    // Power sensors only report changes: the last value holds (staircase) instead of a ramp between two far apart points.
+    if (series && (metric === "power" || metric === "ptc") && range !== "30d" && range !== "1y") series = Object.assign(series.map((x) => ({ ...x, step: true })), { bypass: series.bypass });
     let body;
     if (all) body = this._allBody(d, range, groups);
     else if (series === undefined) body = this._skel(300);
@@ -46,15 +48,23 @@ export class HistorySectionsMethods {
     const h = { temp: 150, eff: 100, circuit: 150, drives: 130, power: 110, ptc: 100 };
     const lanes = loaded.map(({ m, s }) => {
       const list = (s || []).filter((x) => x.pts.length > 1 && !(m === "circuit" && x.label === comp))
-        .map((x) => ({ ...x, hkey: `${m}|${x.label}`, kind: "line", fmt: fmt[m], energy: m === "power" || m === "ptc", smooth: m === "power" || m === "ptc" ? 0 : 5 }));
+        .map((x) => ({ ...x, hkey: `${m}|${x.label}`, kind: "line", fmt: fmt[m], energy: m === "power" || m === "ptc", smooth: m === "power" || m === "ptc" ? 0 : 5, step: (m === "power" || m === "ptc") && range !== "30d" && range !== "1y" }));
       return list.length && { h: h[m], axis: true, title: title[m], series: list };
     }).filter(Boolean);
     if (!lanes.length) return `<div class="note">${this._t(range === "30d" || range === "1y" ? "no_stats" : "no_history")}</div>`;
     const hp = this._hp(), short = range === "24h" || range === "7d";
     const bypass = (loaded.map((e) => e.s && e.s.bypass).find((b) => b && b.length)) || [];
+    // PTC running: the phases in which the PTC power is above zero (a value holds until the next report).
+    const ptcPts = ((loaded.find((e) => e.m === "ptc") || {}).s || []).flatMap((x) => x.pts), ptcIv = [], tEnd = Date.now() / 1000;
+    ptcPts.forEach(([t, v], i) => {
+      if (!(v > 0)) return;
+      const to = ptcPts[i + 1] ? ptcPts[i + 1][0] : tEnd, last = ptcIv[ptcIv.length - 1];
+      if (last && last[1] === t) last[1] = to; else ptcIv.push([t, to]);
+    });
     const phases = [
       short && hp && hp.iv.length ? { iv: hp.iv, color: "#3fa660", label: this._t("hp_runs") } : null,
       short && bypass.length ? { iv: bypass, color: BLUE, label: this._t("bypass_open") } : null,
+      short && ptcIv.length ? { iv: ptcIv, color: CORAL, label: this._t("ptc_runs") } : null,
     ].filter(Boolean);
     return this._laneChart(lanes, { range, phases, gap: 26, key: "all", soft: true });
   }
