@@ -378,7 +378,7 @@ svg .sh { font-size: 14px; font-weight: 500; }
 button:focus-visible, [role="button"]:focus-visible, .hot:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; border-radius: 8px; }
 @media (max-width: 640px) {
   .panel { padding: 12px 12px 84px; }
-  .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; margin: 0; justify-content: space-around; overflow: visible;
+  .tabs { position: fixed; top: auto; left: 0; right: 0; bottom: 0; z-index: 10; margin: 0; justify-content: space-around; overflow: visible;
     background: var(--card-background-color); border-top: 1px solid var(--divider-color); border-bottom: 0; padding-bottom: env(safe-area-inset-bottom, 0); }
   .tabbtn { flex: 1; flex-direction: column; gap: 2px; font-size: 12px; padding: 8px 2px 6px; border-bottom: 0; border-top: 2px solid transparent; position: relative; }
   .tabbtn.a { border-top-color: var(--primary-color); }

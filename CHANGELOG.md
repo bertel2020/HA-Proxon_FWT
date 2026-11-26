@@ -2,6 +2,11 @@
 
 *[🇬🇧 English version](CHANGELOG.en.md)*
 
+## 2.6.1 – 2026-11-26
+
+**Behoben**
+- **Panel – mobile Ansicht:** Die Tab-Leiste am unteren Rand war auf dem Handy über die ganze Bildschirmhöhe gestreckt und verdeckte den Inhalt. Sie ist wieder nur so hoch wie die Tabs.
+
 ## 2.6.0 – 2026-11-23
 
 **Neu**

@@ -2,6 +2,11 @@
 
 *[🇩🇪 Deutsche Version](CHANGELOG.md)*
 
+## 2.6.1 – 2026-11-26
+
+**Fixed**
+- **Panel – mobile view:** On phones the tab bar at the bottom was stretched over the full screen height and covered the content. It is only as tall as the tabs again.
+
 ## 2.6.0 – 2026-11-23
 
 **New**
