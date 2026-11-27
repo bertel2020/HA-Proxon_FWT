@@ -2,6 +2,11 @@
 
 *[🇩🇪 Deutsche Version](CHANGELOG.md)*
 
+## 2.6.2 – 2026-11-27
+
+**Fixed**
+- **Card:** The card `title` is now HTML-escaped in the header, so characters like `<` or quotes are no longer interpreted as markup.
+
 ## 2.6.1 – 2026-11-26
 
 **Fixed**

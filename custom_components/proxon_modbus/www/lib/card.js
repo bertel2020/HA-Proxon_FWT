@@ -1,4 +1,4 @@
-import { resolveSections, GRID_SECTIONS, PRESETS, LAYOUTS, TAB_GROUPS } from "./constants.js";
+import { resolveSections, GRID_SECTIONS, PRESETS, LAYOUTS, TAB_GROUPS, esc } from "./constants.js";
 import { ProxonFwtBase } from "./compose.js";
 
 export class ProxonFwtCard extends ProxonFwtBase {
@@ -69,7 +69,7 @@ export class ProxonFwtCard extends ProxonFwtBase {
     if (!tabs.length) return "";
     const cur = tabs.find((t) => t.id === this._ctab) || tabs[0];
     const bar = tabs.length > 1 ? `<div class="ctabs" role="tablist">${tabs.map((t) => `<button class="ctab ${t.id === cur.id ? "a" : ""}" role="tab" aria-selected="${t.id === cur.id}" data-act="ctab" data-v="${t.id}" aria-label="${t.label}">${this._icon(t.icon)}<span>${t.label}</span></button>`).join("")}</div>` : "";
-    return `<ha-card class="tabcard">${o ? o.head : `<div class="ovh"><b>${this._config.title || "Proxon FWT"}</b></div>`}${bar}<div class="cbody">${cur.html}</div></ha-card>`;
+    return `<ha-card class="tabcard">${o ? o.head : `<div class="ovh"><b>${esc(this._config.title || "Proxon FWT")}</b></div>`}${bar}<div class="cbody">${cur.html}</div></ha-card>`;
   }
 
   _render() {

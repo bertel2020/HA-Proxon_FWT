@@ -2,6 +2,11 @@
 
 *[🇬🇧 English version](CHANGELOG.en.md)*
 
+## 2.6.2 – 2026-11-27
+
+**Behoben**
+- **Karte:** Der Karten-Titel (`title`) wird jetzt im Kopf HTML-escaped, Sonderzeichen wie `<` oder Anführungszeichen werden nicht mehr als Markup interpretiert.
+
 ## 2.6.1 – 2026-11-26
 
 **Behoben**

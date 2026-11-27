@@ -347,7 +347,7 @@ export class SectionsMethods {
     const chip = (id, icon, label) => id && this._ok(id) && this._on(id) ? `<span class="chip lk a" role="button" tabindex="0" data-act="more" data-v="${id}">${this._icon(icon)}${label}</span>` : "";
     const chips = chip(c.heat_pump_continuous, "mdi:autorenew", this._t("hp_continuous")) + chip(c.cooling_available, "mdi:snowflake-check", this._t("cooling_available"));
     if (!state && !tiles && !sub) return null;
-    const head = `<div class="ovh"><b>${this._config.title || "Proxon FWT"}</b>${state ? this._lk(cool ? c.heat_pump_cooling : c.heat_pump_heating, `<span class="spill" style="--c:${state[1]}">${state[0]}</span>`) : ""}</div>
+    const head = `<div class="ovh"><b>${esc(this._config.title || "Proxon FWT")}</b>${state ? this._lk(cool ? c.heat_pump_cooling : c.heat_pump_heating, `<span class="spill" style="--c:${state[1]}">${state[0]}</span>`) : ""}</div>
       ${sub ? `<div class="ovs">${sub}</div>` : ""}`;
     return { head, body: `<div class="ovt">${tiles}</div>${chips ? `<div class="chips" style="margin:8px 0 0">${chips}</div>` : ""}` };
   }
